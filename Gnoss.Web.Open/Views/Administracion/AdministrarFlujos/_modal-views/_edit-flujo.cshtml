@@ -1,0 +1,321 @@
+﻿@model FlujoViewModel
+@{
+    CommunityModel Comunidad = Html.GetComunidad();
+    HeaderModel cabecera = Html.GetCabecera();
+    string multiIdiomaTabId = @Guid.NewGuid().ToString().Substring(0, 5);
+    string listaEstadosHack = "";
+}
+
+<div class="modal-header">
+    <p class="modal-title">
+        <span class="material-icons">edit</span>
+        @(Model.Nuevo? @Html.GetText("DEVTOOLS", "CREAR") : @Html.GetText("DEVTOOLS", "EDITAR")) @Html.GetText("DEVTOOLS", "FLUJODETRABAJO").ToLower()
+    </p>
+    <span class="material-icons cerrar" data-dismiss="modal" aria-label="Close">close</span>
+</div>
+<div class="modal-body">
+    <div class="formulario-edicion">
+        <div id="panContenidoMultiIdioma" class="contenido-multiIdioma panContenidoMultiIdioma basicInfo"></div>
+        <div class="inputsMultiIdioma multiIdiomaContainer" data-idmultiidiomatab="navigation_@multiIdiomaTabId">
+            <div class="form-group mb-3">
+                <input type="text" id="txtNombreFlujo" name="workflowName" data-labeltext="@Html.GetText("DEVTOOLS", "TITULO")"
+                       class="form-control not-outline multiIdioma" value="@Model.Nombre" data-on-input-function="operativaGestionFlujos.handleOnInputNameChanged(event, 'component-name')" />
+            </div>
+            <div class="form-group mb-3">
+                <textarea id="txtDescripcionFlujo" rows="4" cols="30"
+                          name="workflowDescription"
+                          class="multiIdioma noCKE"
+                          data-labeltext="@Html.GetText("DEVTOOLS", "DESCRIPCION")">@Model.Descripcion</textarea>
+            </div>
+        </div>
+        <div class="tab-content">
+            @* Seccion de estados*@
+            <div class="form-group mb-4">
+                <label class="control-label d-block">@Html.GetText("DEVTOOLS", "ESTADOS")</label>
+                <div class="autocompletar autocompletar-estados form-group">
+                    @* Input donde introduce el modal *@
+                    <div class="input-wrap form-sticky-button">
+                        <input type="text"
+                               placeholder="@Html.GetText("DEVTOOLS", "AÑADIRESTADO")"
+                               id="txtEstado"
+                               class="form-control"
+                               autocomplete="off" />
+                        <a href="javascript: void(0);" class="btn">
+                            <span class="material-icons">add_circle_outline</span>
+                        </a>
+                    </div>
+                    @* Formulario que se va a clonar por JS y se rellenará*@
+                    <div class="formulario-oculto d-none">
+
+                        <div class="form-group mb-4">
+                            @foreach (KeyValuePair<string, string> idioma in cabecera.Languajes)
+                            {
+                                string clase = $"nombre-form-oculto-{idioma.Key}";
+                                <input class="form-control nombre-form-oculto @clase" type="text" placeholder="Nombre estado" lang="@idioma.Key" />
+                            }
+                        </div>
+                        @* Tipos de Estado RadioBtn*@
+                        <div class="form-group mb-4">
+                            <label class="control-label d-block">@Html.GetText("DEVTOOLS", "TIPOESTADO")</label>
+                            <div class="form-check form-check-inline">
+                                <input class="form-check-input tipo-estado"
+                                       type="radio"
+                                       name="tipo-estado"
+                                       id="estado-inicial"
+                                       value="@((short)TipoEstado.Inicial)" />
+                                <label class="form-check-label" for="estado-inicial">@Html.GetText("DEVTOOLS", "ESTADOINICIAL")</label>
+                            </div>
+                            <div class="form-check form-check-inline">
+                                <input class="form-check-input tipo-estado"
+                                       type="radio"
+                                       name="tipo-estado"
+                                       id="estado-intermedio"
+                                       value="@((short)TipoEstado.Intermedio)" />
+                                <label class="form-check-label" for="estado-intermedio">@Html.GetText("DEVTOOLS", "ESTADOINTERMEDIO")</label>
+                            </div>
+                            <div class="form-check form-check-inline">
+                                <input class="form-check-input tipo-estado"
+                                       type="radio"
+                                       name="tipo-estado"
+                                       id="estado-final"
+                                       value="@((short)TipoEstado.Final)" />
+                                <label class="form-check-label" for="estado-final">@Html.GetText("DEVTOOLS", "ESTADOFINAL")</label>
+                            </div>
+                        </div>
+                        @* Estado publico RadioBtn*@
+                        <div class="form-group mb-4">
+                            <label class="control-label d-block">@Html.GetText("COMADMIN", "PUBLICO")</label>
+                            <div class="form-check form-check-inline">
+                                <input class="form-check-input estadoVisibleSinAcceso"
+                                       type="radio"
+                                       data-value="si"
+                                       name="estadoPublico"
+                                       id="estado-publico-si"
+                                       checked />
+                                <label class="form-check-label" for="EstadoPublico_SI">@Html.GetText("COMMON", "SI")</label>
+                            </div>
+
+                            <div class="form-check form-check-inline">
+                                <input class="form-check-input estadoVisibleSinAcceso"
+                                       type="radio"
+                                       data-value="no"
+                                       name="estadoPublico"
+                                       id="estado-publico-no" />
+                                <label class="form-check-label" for="EstadoPublico_NO">@Html.GetText("COMMON", "NO")</label>
+                            </div>
+                        </div>
+                        @* Seccion de color estado*@
+                        <div class="form-group mb-4">
+                            <label class="control-label d-block">@Html.GetText("DEVTOOLS","COLOR")</label>
+                            <input type="color" class="color-estado" value="#80C8F7" />
+                        </div>
+                        @* Seccion de editores estado*@
+                        <div class="form-group mb-4">
+                            <label class="control-label d-block">@Html.GetText("DEVTOOLS", "AGREGAREDITOR")</label>
+                            <div class="autocompletar editores mb-4">
+                                <div class="input-wrap">
+                                    <input type="text"
+                                           placeholder="@Html.GetText("DEVTOOLS", "AGREGARUSUARIOYGRUPO")"
+                                           id="txtUsuario"
+                                           class="form-control"
+                                           autocomplete="off" />
+                                    <a href="javascript: void(0);" class="btn">
+                                        <span class="material-icons">search</span>
+                                    </a>
+                                </div>
+                                <input type="hidden" id="txtEditores_Hack" value="" />
+                                <div class="tag-list mb-4">
+                                    <!-- aqui van las tags de editores -->
+                                </div>
+                            </div>
+                        </div>
+                        @* Seccion de lectores estado*@
+                        <div class="form-group mb-4 estado-lectores d-none">
+                            <label class="control-label d-block">@Html.GetText("DEVTOOLS", "AGREGARLECTOR")</label>
+                            <div class="autocompletar lectores mb-4">
+                                <div class="input-wrap">
+                                    <input type="text"
+                                           placeholder="@Html.GetText("DEVTOOLS", "AGREGARUSUARIOYGRUPO")"
+                                           id="txtLectores"
+                                           class="form-control txtAutocomplete"
+                                           data-avoid-autocomplete-with-enter-button="true"
+                                           autocomplete="off" />
+                                    <a href="javascript: void(0);" class="btn">
+                                        <span class="material-icons">search</span>
+                                    </a>
+                                </div>
+                                <input type="hidden" id="txtLectores_Hack" value="" />
+                                <div class="tag-list mb-4">
+                                    <!-- aqui van las tags de lectores -->
+                                </div>
+                            </div>
+                        </div>
+                        <button type="button" class="btn btn-primary uppercase">
+                            @Html.GetText("DEVTOOLS", "ACEPTAR")
+                        </button>
+                        <button type="button" class="btn btn-grey uppercase">
+                            @Html.GetText("DEVTOOLS", "CANCELAR")
+                        </button>
+                    </div>
+
+                    <div class="tag-list mb-4">
+                        @foreach (var estado in Model.Estados.OrderBy(e => e.TipoEstado).ThenBy(e => e.Nombre))
+                        {
+                            listaEstadosHack += $"{estado.EstadoID}:{Html.ObtenerTextoIdiomaUsuario(estado.Nombre)}@@@";
+                            @Html.PartialView("_partial-views/_ficha-estado", estado)
+                        }
+                    </div>
+                </div>
+            </div>
+            @* Seccion de transiciones*@
+            <div class="form-group mb-4">
+                <label class="control-label d-block">@Html.GetText("DEVTOOLS", "TRANSICIONES")</label>
+                <div class="autocompletar autocompletar-transiciones form-group">
+                    @* Input donde introduce el modal *@
+                    <div class="input-wrap form-sticky-button">
+                        <input type="text"
+                               placeholder="@Html.GetText("DEVTOOLS", "AÑADIRTRANSICION")"
+                               id="txtTransicion"
+                               class="form-control"
+                               autocomplete="off"
+                               @(Model.Nuevo ? "disabled" : "") />
+                        <a href="javascript: void(0);" class="btn">
+                            <span class="material-icons">add_circle_outline</span>
+                        </a>
+                    </div>
+                    @* Formulario que se va a clonar por JS y se rellenará*@
+                    <div class="formulario-oculto d-none">
+                        <div class="form-group mb-4">
+                            @foreach (KeyValuePair<string, string> idioma in cabecera.Languajes)
+                            {
+                                string clase = $"nombre-form-oculto-{idioma.Key}";
+                                <input class="form-control nombre-form-oculto @clase" type="text" placeholder="Nombre estado" lang="@idioma.Key" />
+                            }
+                        </div>
+                        <div class="form-group mb-4">
+                            <label class="control-label d-block">@Html.GetText("DEVTOOLS", "AÑADIRRESPONSABLE")</label>
+                            <div class="autocompletar responsables mb-4">
+                                <div class="input-wrap">
+                                    <input type="text"
+                                           placeholder="@Html.GetText("DEVTOOLS", "AGREGARUSUARIOYGRUPO")"
+                                           id="txtResponsables"
+                                           class="form-control"
+                                           autocomplete="off" />
+                                    <a href="javascript: void(0);" class="btn">
+                                        <span class="material-icons">search</span>
+                                    </a>
+                                </div>
+                                <input type="hidden" id="txtResponsables_Hack" value="" />
+                                <div class="tag-list mb-4">
+                                    <!-- aqui van las tags de responsables -->
+                                </div>
+                            </div>
+                        </div>
+                        @* Seccion del select estado origen y estado destino*@
+                        <div class="form-row">
+                            <div class="form-group mb-4 col-md-6">
+                                <label class="control-label d-block">@Html.GetText("DEVTOOLS", "ESTADOORIGEN")</label>
+                                <select class="form-control select-origin" name="origen">
+                                    <option value="">@Html.GetText("DEVTOOLS", "SELECCIONESTADOINICIO")</option>
+                                    @* Se rellenan el resto de option por JS*@
+                                </select>
+                            </div>
+                            <div class="form-group mb-4 col-md-6">
+                                <label class="control-label d-block">@Html.GetText("DEVTOOLS", "ESTADODESTINO")</label>
+                                <select class="form-control select-end" name="final">
+                                    <option value="">@Html.GetText("DEVTOOLS", "SELECCIONESTADODESTINO")</option>
+                                    @* Se rellenan el resto de option por JS*@
+                                </select>
+                            </div>
+                        </div>
+                        <button type="button" class="btn btn-primary uppercase">
+                            @Html.GetText("DEVTOOLS", "ACEPTAR")
+                        </button>
+                        <button type="button" class="btn btn-grey uppercase">
+                            @Html.GetText("DEVTOOLS", "CANCELAR")
+                        </button>
+                    </div>
+                    <input type="hidden" id="txtTransicion_Hack" value="" />
+                    <div class="tag-list mb-4">
+                        @foreach (var transicion in Model.Transiciones.OrderBy(t => t.Nombre))
+                        {
+                            @Html.PartialView("_partial-views/_ficha-transicion", transicion)
+                        }
+                    </div>
+                </div>
+            </div>
+            @* Seccion de tipos de recursos*@
+            <div class="form-group mb-4">
+                <label class="control-label d-block">@Html.GetText("DEVTOOLS", "TIPOSDECONTENIDO")</label>
+                <div class="autocompletar autocompletar-recursos form-group">
+                    <select class="form-control select-recursos"
+                            name="tipo-recursos"
+                            @(Model.Nuevo ? "disabled" : "")>
+                        <option value="">@Html.GetText("DEVTOOLS", "SELECCIONCONTENIDO")</option>
+                        @foreach (TiposContenidos tipo in Model.TiposRecursos.Keys)
+                        {
+                            if (Model.TiposRecursos[tipo] && tipo != TiposContenidos.RecursoSemantico)
+                            {
+                                continue;
+                            }
+                            if (tipo.Equals(TiposContenidos.RecursoSemantico))
+                            {
+                                foreach (Guid clave in Model.OntologiasProyecto.Keys)
+                                {
+                                    if (!Model.OntologiasProyectoNombre.Contains(Model.OntologiasProyecto[clave]))
+                                    {
+                                        <option data-onto-id="@clave" data-onto-name="@Model.OntologiasProyecto[clave]" value="@((short)tipo)">@Html.ObtenerTextoDeIdioma(Model.OntologiasProyecto[clave])</option>
+                                    }
+                                }
+                            }
+                            else
+                            {
+                                <option value="@((short)tipo)">@Html.GetText("DEVTOOLS", Enum.GetName(typeof(TiposContenidos), tipo))</option>
+                            }
+                        }
+                    </select>
+                    <input type="hidden" id="txtTransicion_Hack" value="" />
+                    <div class="tag-list mb-4">
+                        @foreach (var tipo in Model.TiposRecursos.Where(item => item.Value && item.Key != TiposContenidos.RecursoSemantico).Select(item => item.Key).ToList())
+                        {
+                            string titulo = Html.GetText("DEVTOOLS", Enum.GetName(typeof(TiposContenidos), tipo));
+                            <div class="tag" title="@titulo">
+                                <div class="tag-wrap">
+                                    <span class="tag-text ">
+                                        <span class="tag-label" value="@((short)tipo)">@titulo</span>
+                                    </span>
+                                    <input type="hidden" value="@((short)tipo)">
+                                    <span class="tag-remove material-icons">delete</span>
+                                </div>
+                            </div>
+                        }
+                        @if (Model.TiposRecursos[TiposContenidos.RecursoSemantico])
+                        {
+                            @foreach (Guid clave in Model.OntologiasProyecto.Keys)
+                            {
+                                string nombreOntologia = Html.ObtenerTextoDeIdioma(Model.OntologiasProyecto[clave]);
+                                if (Model.OntologiasProyectoNombre.Contains(nombreOntologia))
+                                {
+                                    <div class="tag" data-id="@clave" data-onto-name="@Model.OntologiasProyecto[clave]" title="@nombreOntologia">
+                                        <div class="tag-wrap">
+                                            <span class="tag-text ">
+
+                                                <span class="tag-label">@nombreOntologia</span>
+                                                
+                                            </span>
+                                            <input type="hidden" value="@((short)TiposContenidos.RecursoSemantico)">
+                                            <span class="tag-remove material-icons">delete</span>
+                                        </div>
+                                    </div>
+                                }
+                            }
+                        }
+                    </div>
+                </div>
+            </div>
+            <div class="panelBotonera">
+                <a class="btn btn-primary uppercase btnGuardarFlujo">Guardar</a>
+            </div>
+        </div>
+    </div>
+</div>

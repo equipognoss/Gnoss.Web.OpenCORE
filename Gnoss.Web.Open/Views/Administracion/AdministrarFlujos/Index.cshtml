@@ -1,0 +1,271 @@
+﻿@model AdministrarFlujosViewModel
+@{
+    CommunityModel Comunidad = Html.GetComunidad();
+    HeaderModel cabecera = Html.GetCabecera();
+    Layout = "~/Views/Shared/Layout/_Layout_Admin.cshtml";
+    // Contador del nº de pestañas listadas
+    int contNumPestañasVisibles = 0;
+    // Nº de pestañas de idiomas a visualizar en la sección Tab
+    int numMaxPestañasIdiomasVisibles = 3;
+    ViewBag.IdiomaPorDefecto = Model.IdiomaPorDefecto;
+    string urlShowWorkflow = Html.GetComunidad().Url + "/" + Html.GetText("URLSEM", "ADMINISTRARFLUJOS") + "/show-workflow";
+    string urlEditWorkflow = Html.GetComunidad().Url + "/" + Html.GetText("URLSEM", "ADMINISTRARFLUJOS") + "/edit-workflow";
+    string urlSaveWorkflow = Html.GetComunidad().Url + "/" + Html.GetText("URLSEM", "ADMINISTRARFLUJOS") + "/save-workflow";
+    string urlDeleteWorkflow = Html.GetComunidad().Url + "/" + Html.GetText("URLSEM", "ADMINISTRARFLUJOS") + "/delete-workflow";
+    string urlDeleteState = Html.GetComunidad().Url + "/" + Html.GetText("URLSEM", "ADMINISTRARFLUJOS") + "/delete-state";
+    string urlDeleteTransition = Html.GetComunidad().Url + "/" + Html.GetText("URLSEM", "ADMINISTRARFLUJOS") + "/delete-transition";
+
+    string idiomas = "";
+    foreach (string idiomaKey in Model.Idiomas.Keys)
+    {
+        idiomas += idiomaKey + "|" + Model.Idiomas[idiomaKey] + "&&&";
+    }
+}
+<input type="hidden" id="idiomasComunidad" value="@idiomas" />
+<input type="hidden" id="idiomaDefecto" value="@Model.IdiomaPorDefecto" />
+@* Migas de Pan *@
+<div class="col col-12 col-breadcrumb">
+    <ul>
+        <li>
+            <a href="@Comunidad.Url/@Html.GetText("URLSEM", "ADMINISTRARCOMUNIDADHOME")">@Html.GetText("ADMINISTRACIONPAGINAS", "HOME")</a>
+        </li>
+        <li>
+            <a href="@Html.GetText("URLSEM", "ADMINISTRARCOMUNIDADSECTION")/comunidad">@Html.GetText("DEVTOOLS", "COMUNIDAD")</a>
+        </li>
+        <li>
+            @Html.GetText("COMADMINCOMUNIDAD", "ADMINISTRARFLUJOS")
+        </li>
+    </ul>
+</div>
+
+@* Contenido Central *@
+<div class="formulario-edicion background-blanco">
+    @* Panel de idiomas *@	
+    @if (Html.ObtenerEdicionMultiIidoma())
+    {
+        <ul class="nav nav-tabs @( (cabecera.Languajes.Count > 1) ? "" : "d-none")" id="tabIdiomasFlujos" role="tablist">
+            @* Títulos de Tabs con los diferentes idiomas a visualizar de categorías. De momento ignoro el dropdown *@
+            @foreach (KeyValuePair<string, string> idioma in cabecera.Languajes)
+            {
+                if (contNumPestañasVisibles < numMaxPestañasIdiomasVisibles)
+                {
+                    <li class="nav-item" role="presentation">
+                        <a class="tabIdiomaItem nav-link @( Model.IdiomaPorDefecto == idioma.Key ? "active" : null)"
+                           id="@("ver_flujos_" + idioma.Key)" data-toggle="tab" href="#ver_flujos_@idioma.Key"
+                           data-language="@idioma.Key"
+                           role="tab"
+                           aria-selected="@(contNumPestañasVisibles == 0 ? "true" : "false")">@Html.GetText("COMADMINCATEGORIAS", "VEREN_IDIOMA", idioma.Value)</a>
+                    </li>
+                    contNumPestañasVisibles += 1;
+                }
+            }
+            @* Controlar si es necesario mostrar el resto de categorías en un DropDown *@
+            @if (contNumPestañasVisibles < cabecera.Languajes.Count)
+            {
+                @* Dropdown para resto de categorías *@
+                <li class="nav-item">
+                    <div class="dropdown">
+                        @* Desplegable del dropdown *@
+                        <a class="nav-link dropdown-toggle"
+                           data-toggle="dropdown"
+                           href="#"
+                           role="button"
+                           aria-haspopup="true"
+                           aria-expanded="false">@Html.GetText("DEVTOOLS", "OTROSIDIOMAS")</a>
+                        @* Sección para mostrar items del dropdown*@
+                        <div class="dropdown-menu dropdown-menu-left basic-dropdown dropdown-idiomas">
+                            <ul class="no-list-style">
+                                @* Pintado del resto de pestañas en Dropdown *@									
+                                                                                 @for (int i = contNumPestañasVisibles; i < cabecera.Languajes.Count; i++)
+                                {
+                                    var item = cabecera.Languajes.ElementAt(i);
+                                    var itemKey = item.Key;
+                                    var itemValue = item.Value;
+
+                                    @* Cada item del dropdown *@
+                                    <li role="presentation">
+                                        <a id="@("ver_paginas_" + itemKey)"
+                                           class="item-dropdown tabIdiomaItem @( Model.IdiomaPorDefecto == itemKey ? "active" : null)"
+                                           data-toggle="tab"
+                                           href="#@("litVer" + itemKey)"
+                                           data-language="@itemKey">
+                                            @Html.GetText("COMADMINCATEGORIAS", "VEREN_IDIOMA", itemValue)
+                                        </a>
+                                    </li>
+                                }
+                            </ul>
+                        </div>
+                    </div>
+                </li>
+            }
+        </ul>
+    }
+    else
+    {
+        KeyValuePair<string, string> idioma = new KeyValuePair<string, string>("es", "español");
+        <ul class="nav nav-tabs" id="tabIdiomasPaginas" role="tablist">
+            <li class="nav-item" role="presentation">
+                <a class="tabIdiomaItem nav-link @( Model.IdiomaPorDefecto == idioma.Key ? "active" : null)"
+                   id="@("ver_paginas_" + idioma.Key)" data-toggle="tab" href="#ver_flujos_@idioma.Key"
+                   data-language="@idioma.Key"
+                   role="tab"
+                   aria-selected="@(contNumPestañasVisibles == 0 ? "true" : "false")">@Html.GetText("COMADMINCATEGORIAS", "VEREN_IDIOMA", idioma.Value)</a>
+            </li>
+        </ul>
+    }
+    <div class="tab-content">
+        <div id="panelListadoFlujos"
+             class="tab-pane fade show active"
+             role="tabpanel"
+             aria-labelledby="panelListadoFlujos">
+
+            @* Contenedor del Título de la Sección + Buscador *@
+            <div class="row">
+                @* Título de la sección de cláusulas + Nº de páginas *@
+                <div class="col col-12 header-listado">
+                    <div class="h1-container">
+                        <h1>
+                            @Html.GetText("COMADMINCOMUNIDAD", "ADMINISTRARFLUJOS")
+                            <span id="numFlujos" class="numResultados">@Model.ListaFlujos.Count</span>
+                        </h1>
+                    </div>
+                    @* Botón para crear item *@						
+                    <div class="acciones d-flex align-items-center">
+                        <a class="btn btn-outline-primary btnAddWorkflow" data-toggle="modal" data-target="#modal-nuevo-workflow">
+                            <span class="material-icons">add</span>
+                            @Html.GetText("DEVTOOLS", "NUEVOFLUJO")
+                        </a>
+                    </div>
+                </div>
+
+                @* Buscador de flujos *@
+                <div class="col col-12 header-buscador">
+                    <div class="wrapCol">
+                        <div class="col-buscador" style="width: 100%">
+                            @* Formulario para búsquedas de cláusulas *@
+                            <form id="formBuscadorFlujos" onsubmit="return false;">
+                                <fieldset>
+                                    <legend class="nota">facetas</legend>
+                                    <div class="finderUtils" id="divCajaBusqueda">
+                                        <div class="group finderSection">
+                                            @* Input para realizar la búsqueda de páginas *@
+                                            <input type="text"
+                                                   id="txtBuscarFlujo"
+                                                   class="not-outline finderSectionText autocompletar ac_input"
+                                                   autocomplete="off"
+                                                   placeholder="@Html.GetText("DEVTOOLS", "BUSCARENLASECCION")" />
+                                            @* Botón para realizar la búsqueda *@
+                                            <input title="Buscar"
+                                                   type="button"
+                                                   class="findAction"
+                                                   id="inputLupa" />
+                                            @* Botón para Facetas de la búsqueda *@
+                                            <a href="javascript: void(0);" class="btn-filtrar-movil">
+                                                <span class="material-icons">filter_list</span>
+                                                <span class="texto">@Html.GetText("DEVTOOLS", "FILTRAR")</span>
+                                            </a>
+                                        </div>
+                                    </div>
+                                </fieldset>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+                @* Contenido o tabla con los flujos de la comunidad*@
+                <div class="col col-12 col-contenido">
+                    <div class="wrapCol">
+                        <table class="display nowrap table table-sm tabla-workflows">
+                            @* Cabecera del listado de flujos *@
+                            <thead>
+                                <tr>
+                                    <th class="th-nombre">@Html.GetText("DEVTOOLS", "NOMBRE")</th>
+                                    <th class="th-desc" ">@Html.GetText("DEVTOOLS", "DESCRIPCION")</th>
+                                    <th class="th-ambito">@Html.GetText("DEVTOOLS", "TIPOS")</th>
+                                    <th class="th-creacion">@Html.GetText("DEVTOOLS", "FECHA")</th>
+                                    <th class="th-acciones">@Html.GetText("ADMINISTRACIONBASICA", "ACCIONES")</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @* Contenido de la tabla de flujos*@
+                                @foreach (var flujo in Model.ListaFlujos)
+                                {
+                                    @Html.PartialView("_partial-views/_flujo-item", flujo)
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                    <div id="modal-editar-workflow" class="modal modal-top fade modal-edicion modal-con-tabs modal-flujo" role="dialog" aria-modal="true">
+                        <div class="modal-dialog" role="document">
+                            <div class="modal-content">
+                            </div>
+                        </div>
+                    </div>
+                    <div id="modal-nuevo-workflow" class="modal modal-top fade modal-edicion modal-con-tabs modal-flujo" role="dialog" aria-modal="true">
+                        <div class="modal-dialog" role="document">
+                            <div class="modal-content">
+                                @{
+                                    FlujoViewModel modelo = new FlujoViewModel();
+                                    modelo.FlujoID = Guid.NewGuid();
+                                    modelo.Nuevo = true;
+                                    modelo.OntologiasProyecto = ViewBag.DiccionarioOntologias;
+                                }
+                                @Html.PartialView("_modal-views/_edit-flujo", modelo)
+                            </div>
+                        </div>
+                    </div>
+                    <div id="modal-diagrama-workflow" class="modal modal-top fade modal-edicion modal-con-tabs workflow-diagram" role="dialog" aria-modal="true">
+                        <div class="modal-dialog" role="document">
+                            <div class="modal-content">
+                            </div>
+                        </div>
+                    </div>
+                    <div id="modal-delete-workflow" class="modal modal-top fade modal-edicion" role="dialog" aria-modal="true">
+                        <div class="modal-dialog" role="document">
+                            <div class="modal-content">
+                                @Html.PartialView("_modal-views/_confirm-delete")
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@* Carga de operativa *@
+@section operativaScript {
+    <script type="text/javascript" src="@Html.GetBaseUrlStatic()/responsive/theme/logic/estructura.js?v=@Html.GetVersion()"></script>
+    <!--TFG FRAN-->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.js"></script>
+    <script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
+    <script src="https://code.highcharts.com/highcharts.js"></script>
+    <script src="https://code.highcharts.com/modules/heatmap.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/mermaid@11.12.0/dist/mermaid.min.js"></script>
+    <script>
+        google.charts.load('current', { 'packages': ['table'] });
+    </script>
+    <script type="text/javascript">
+        (function ($) {
+            // Permitir o no guardar datos
+            const pParams =
+            {
+                urlShowWorkflow: "@urlShowWorkflow",
+                urlSaveWorkflow: "@urlSaveWorkflow",
+                urlDeleteWorkflow: "@urlDeleteWorkflow",
+                urlDeleteState: "@urlDeleteState",
+                urlDeleteTransition: "@urlDeleteTransition",
+                urlEditWorkflow: "@urlEditWorkflow"
+            }
+            // Operativa funcionamiento de Páginas
+            operativaGestionFlujos.init(pParams);
+            // Operativa funcionamiento de filtros
+            operativaAsistenteFiltros.init();
+        })();
+        handlePopOverNode = function (id, content) {
+            let node = $(`g[id*="${id}"]`);
+            if(node.data("content") != '') return;
+            node.attr("data-content", content);
+        }
+    </script>
+}

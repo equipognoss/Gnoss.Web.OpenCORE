@@ -1,0 +1,44 @@
+﻿@model TransicionViewModel
+@{
+    TransicionViewModel transicion = Model;
+    string collapseId = $"panel_collapse_{Model.TransicionID.ToString().Substring(0, 5)}";
+    string htmlNombreIdentidad = "";
+    foreach (Guid transicionIdentidadID in transicion.ListaNombreTransicionIdentidad.Keys)
+    {
+        htmlNombreIdentidad += PintarTags(transicion.ListaNombreTransicionIdentidad[transicionIdentidadID], transicionIdentidadID, false);
+    }
+
+    foreach (Guid transicionGrupoID in transicion.ListaNombreTransicionGrupo.Keys)
+    {
+        htmlNombreIdentidad += PintarTags(transicion.ListaNombreTransicionGrupo[transicionGrupoID], transicionGrupoID, true);
+    }
+}
+
+<div class="tag" data-id="@transicion.TransicionID" title="@transicion.Nombre">
+    <div class="tag-wrap">
+        <span class="tag-text">
+            <span class="tag-label">@Html.ObtenerTextoIdiomaUsuario(transicion.Nombre)</span>
+            <span class="users responsibles">
+                <span class="user-label">@Html.GetText("DEVTOOLS","RESPONSABLES")</span>
+                @Html.Raw(htmlNombreIdentidad)
+            </span>
+            <span class="transition">
+                <span class="transition-label" data-publico="@Model.EstadoOrigen.Publico" data-eliminado="@transicion.EstadoOrigen.Eliminado"  data-tipo="@((short)transicion.EstadoOrigen.TipoEstado)" data-id="@transicion.EstadoOrigen.EstadoID" title="@transicion.EstadoOrigen.Nombre">@Html.ObtenerTextoIdiomaUsuario(transicion.EstadoOrigen.Nombre)</span>
+                <span class="material-icons arrow-icon">arrow_right_alt</span>
+                <span class="transition-label" data-publico="@Model.EstadoOrigen.Publico" data-eliminado="@transicion.EstadoDestino.Eliminado" data-tipo="@((short)transicion.EstadoDestino.TipoEstado)" data-id="@transicion.EstadoDestino.EstadoID" title="@transicion.EstadoDestino.Nombre">@Html.ObtenerTextoIdiomaUsuario(transicion.EstadoDestino.Nombre)</span>
+            </span>
+        </span>
+        <span class="tag-edit material-icons">edit</span>
+        <span class="tag-remove material-icons">delete</span>
+    </div>
+    <input type="hidden" data-estado-origen-id="@transicion.EstadoOrigen.EstadoID" data-estado-fin-id="@transicion.EstadoDestino.EstadoID" value="@transicion.Nombre">
+</div>
+
+@functions {
+    public string PintarTags(string pNombre, Guid pIdentidadID, bool pGrupo)
+    {
+        string resultado = "";
+        resultado += $"<span data-grupo='{pGrupo}' data-id='{pIdentidadID}'>{pNombre}</span>";
+        return resultado;
+    }
+}

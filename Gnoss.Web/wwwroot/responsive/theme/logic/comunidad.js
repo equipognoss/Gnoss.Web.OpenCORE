@@ -4990,7 +4990,7 @@ const operativaGestionDeRoles = {
 
         permisos += $('#GestionarInformacionGeneral').is(':checked') ? "1" : "0";
         //permisos += $('#GestionarTiposDeContenidosYPermisos').is(':checked') ? "1" : "0";
-        permisos += "0";
+        permisos += $('#GestionarFlujos').is(':checked') ? "1" : "0";
         permisos += $('#GestionarInteraccionesSociales').is(':checked') ? "1" : "0";
         permisos += $('#GestionarMiembros').is(':checked') ? "1" : "0";
         permisos += $('#GestionarSolicitudesDeAccesoAGrupo').is(':checked') ? "1" : "0";
@@ -5154,6 +5154,9 @@ const operativaGestionDeRoles = {
         // version debate
         permisos += $('#RestaurarVersionDebate').is(':checked') ? "1" : "0";
         permisos += $('#EliminarVersionDebate').is(':checked') ? "1" : "0";
+
+        // certificar
+        permisos += $('#CertificarRecurso').is(':checked') ? "1" : "0";
 
         return permisos;
     },

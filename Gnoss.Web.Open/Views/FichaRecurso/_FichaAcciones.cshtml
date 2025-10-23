@@ -37,6 +37,22 @@
 
                 </div>
                 break;
+            case "delete-version":
+                <div>
+                    <h3>
+                        @Html.GetText("PERFILBASE", "DESEAELIMINARVERSION")
+                    </h3>
+                    @{
+                        string funcionAceptarEliminar = "AccionRecurso_MostrarHistorial_Aceptar('" + fichaRecurso.ListActions.UrlDeleteVersion + "', '" + fichaRecurso.Key + "')";
+                    }
+                    <input type="button" class="btn btn-primary" onclick="@funcionAceptarEliminar" value="@Html.GetText("COMMON", "SI")" />
+                    @{
+                        string funcionCancelarEliminar = "CerrarPanelAccion('despAccionRec_history')";
+                    }
+                    <input type="button" class="btn btn-outline-primary" onclick="@funcionCancelarEliminar" value="@Html.GetText("COMMON", "NO")" />
+
+                </div>
+                break;
             case "add-categories":
                 @Html.PartialView("_modal-views/_categories", Model)
                 break;
@@ -128,6 +144,12 @@
                 break;
             case "add-metadescription":
                 @Html.PartialView("_modal-views/_metadescription", Model)
+                break;
+            case "transition":
+                @Html.PartialView("_modal-views/_transition", Model)
+                break;
+            case "transition-history":
+                @Html.PartialView("_modal-views/_transition-history", Model)
                 break;
         }
     }

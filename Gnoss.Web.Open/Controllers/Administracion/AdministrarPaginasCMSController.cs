@@ -3,12 +3,17 @@ using Es.Riam.Gnoss.AD.EncapsuladoDatos;
 using Es.Riam.Gnoss.AD.EntityModel;
 using Es.Riam.Gnoss.AD.EntityModel.Models.ProyectoDS;
 using Es.Riam.Gnoss.AD.EntityModelBASE;
+using Es.Riam.Gnoss.AD.Flujos;
 using Es.Riam.Gnoss.AD.ServiciosGenerales;
 using Es.Riam.Gnoss.AD.Virtuoso;
 using Es.Riam.Gnoss.CL;
 using Es.Riam.Gnoss.CL.CMS;
 using Es.Riam.Gnoss.Elementos.CMS;
+using Es.Riam.Gnoss.Elementos.Notificacion;
 using Es.Riam.Gnoss.Logica.CMS;
+using Es.Riam.Gnoss.Logica.Facetado;
+using Es.Riam.Gnoss.Logica.Flujos;
+using Es.Riam.Gnoss.Logica.Notificacion;
 using Es.Riam.Gnoss.Util.Configuracion;
 using Es.Riam.Gnoss.Util.General;
 using Es.Riam.Gnoss.UtilServiciosWeb;
@@ -16,9 +21,11 @@ using Es.Riam.Gnoss.Web.Controles.Administracion;
 using Es.Riam.Gnoss.Web.Controles.ServiciosGenerales;
 using Es.Riam.Gnoss.Web.MVC.Filters;
 using Es.Riam.Gnoss.Web.MVC.Models.Administracion;
+using Es.Riam.Gnoss.Web.MVC.Models.Flujos;
 using Es.Riam.Gnoss.Web.MVC.Models.ViewModels;
 using Es.Riam.Interfaces.InterfacesOpen;
 using Es.Riam.InterfacesOpen;
+using Es.Riam.Util;
 using Gnoss.Web.Open.Filters;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
@@ -191,7 +198,15 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
 		[TypeFilter(typeof(PermisosContenidos), Arguments = new object[] { new ulong[] { (ulong)PermisoContenidos.RestaurarVersionPagina } })]
 		public ActionResult AddCommentVersion(Guid pVersionID)
         {
-            return PartialView("_partial-views/_add-comment-restore", pVersionID);
+            try
+            {
+                return PartialView("_partial-views/_add-comment-restore", pVersionID);
+            }
+            catch (Exception ex)
+            {
+                mlogger.LogError($"ERROR: ${ex.Message}\r\nStackTrace: {ex.StackTrace}");
+                return GnossResultERROR(UtilIdiomas.GetText("DEVTOOLS", "ERRORCARGAFORMULARIO"));
+            }
         }
 
         [HttpPost]
@@ -207,7 +222,13 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
 
                 AdministrarPaginasCMSViewModel modeloRestaurar = controladorPaginasCMS.RestaurarVersionPaginaCMS(pVersionID, IdentidadActual.Clave, pComentario);
 
-                if (iniciado)
+                using(CMSCL cmsCL = new CMSCL(mEntityContext, mLoggingService, mRedisCacheWrapper, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<CMSCL>(), mLoggerFactory))
+                {
+					cmsCL.InvalidarCacheQueContengaCadena(ProyectoSeleccionado.Clave.ToString());
+				}                
+				mGnossCache.VersionarCacheLocal(ProyectoSeleccionado.Clave);
+
+				if (iniciado)
                 {
                     HttpResponseMessage resultado = InformarCambioAdministracion("PaginasCMS", JsonConvert.SerializeObject(modeloRestaurar, Formatting.Indented));
 
@@ -217,13 +238,31 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
                     }
                 }
 
-                return GnossResultOK();
+                return GnossResultOK(UtilIdiomas.GetText("DEVTOOLS", "RESTAURARVERSIONESTRUCTURAPAGINA"));
             }
 			catch (Exception ex)
 			{
-				GuardarLogError(ex);
-				return GnossResultERROR(ex.Message);
+                mlogger.LogError($"ERROR: ${ex.Message}\r\nStackTrace: {ex.StackTrace}");
+                return GnossResultERROR(UtilIdiomas.GetText("DEVTOOLS", "ERRORRESTAURARVERSIONESTRUCTURAPAGINA"));
 			}
+        }
+
+        [HttpPost]
+        [TypeFilter(typeof(PermisosContenidos), Arguments = new object[] { new ulong[] { (ulong)PermisoContenidos.EliminarVersionPagina } })]
+        public ActionResult EliminarVersion(Guid pPestanyaID, Guid pVersionID)
+        {
+            try
+            {
+                ControladorPaginasCMS controladorPaginasCMS = new ControladorPaginasCMS(ProyectoSeleccionado, mLoggingService, mEntityContext, mConfigService, mRedisCacheWrapper, mVirtuosoAD, mServicesUtilVirtuosoAndReplication, mAvailableServices, mLoggerFactory.CreateLogger<ControladorPaginasCMS>(), mLoggerFactory);
+
+                controladorPaginasCMS.EliminarVersionPaginaCMS(pPestanyaID, pVersionID);
+
+                return GnossResultOK(UtilIdiomas.GetText("DEVTOOLS", "VERSIONESTRUCTURAPAGINAELIMINADO"));
+            }
+            catch (Exception ex) {
+                mlogger.LogError($"ERROR: ${ex.Message}\r\nStackTrace: {ex.StackTrace}");
+                return GnossResultERROR(UtilIdiomas.GetText("DEVTOOLS", "ERRORELIMINARVERSIONESTRUCTURAPAGINA"));
+            }
         }
 
         /// <summary>
@@ -358,7 +397,97 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
             return PartialView("../Shared/Layout/_partial-views/_layout-left-cms-dinamic-components-admin", listaComponentesBuscados);
         }
 
-        private void Guardar(string estructura, string propiedadComponente, bool MostrarSoloCuerpo, bool borrador = true)
+        public ActionResult CargarModalRealizarTransicion(Guid pPestanyaID, Guid pTransicionID)
+        {
+			try
+			{				
+				CambiarEstadoPaginasCMSViewModel model = new CambiarEstadoPaginasCMSViewModel();
+				model.TransicionID = pTransicionID;
+				model.PestanyaID = pPestanyaID;
+				model.Nombre = UtilCadenas.ObtenerTextoDeIdioma(mPestanya.Nombre, UtilIdiomas.LanguageCode, ParametrosGeneralesRow.IdiomaDefecto);
+
+				return PartialView("_modal-views/_change-state", model);
+			}
+			catch (Exception ex)
+			{
+				mLoggingService.GuardarLogError(ex, mlogger);
+				return GnossResultERROR();
+			}
+		}
+
+        public ActionResult ObtenerHistorialDeTransiciones(Guid pPestanyaID)
+        {
+			try
+			{
+				UtilFlujos utilFlujos = new UtilFlujos(mEntityContext, mLoggingService, mConfigService, mLoggerFactory.CreateLogger<UtilFlujos>(), mLoggerFactory);				
+				HistorialTransicionesPaginasCMSViewModel modelo = new HistorialTransicionesPaginasCMSViewModel();
+
+				modelo.ListaTransiciones = utilFlujos.ObtenerHistorialDeTransiciones(pPestanyaID, TipoContenidoFlujo.PaginaCMS, UtilIdiomas.LanguageCode, ParametrosGeneralesRow.IdiomaDefecto);
+				modelo.PestanyaID = pPestanyaID;
+				modelo.NombrePagina = UtilCadenas.ObtenerTextoDeIdioma(mPestanya.Nombre, UtilIdiomas.LanguageCode, ParametrosGeneralesRow.IdiomaDefecto);
+                modelo.Fecha = mPestanya.FechaModificacion;
+                modelo.NombreEditor = mPestanya.UltimoEditor ?? "-";
+
+				return PartialView("_modal-views/_transition-history", modelo);
+			}
+			catch (Exception ex)
+			{
+				mLoggingService.GuardarLogError(ex, mlogger);
+				return GnossResultERROR(UtilIdiomas.GetText("FLUJOS", "HISTORIALERROR"));
+			}
+		}
+
+        public ActionResult RealizarTransicion(Guid pContenidoID, Guid pTransicionID, string pComentario)
+        {
+			try
+			{				
+                CargarEstado(pContenidoID);
+                if (mPaginaModel.Estado != null)
+                {
+					bool tienePermiso = mPaginaModel.Estado.Transiciones.Any(t => t.TransicionID.Equals(pTransicionID));
+
+					if (tienePermiso)
+					{
+						UtilFlujos utilFlujos = new UtilFlujos(mEntityContext, mLoggingService, mConfigService, mLoggerFactory.CreateLogger<UtilFlujos>(), mLoggerFactory);
+						FlujosCN flujosCN = new FlujosCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<FlujosCN>(), mLoggerFactory);
+						FacetadoCN facetadoCN = new FacetadoCN(UrlIntragnoss, ProyectoSeleccionado.Clave.ToString(), mEntityContext, mLoggingService, mConfigService, mVirtuosoAD, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<FacetadoCN>(), mLoggerFactory);
+						NotificacionCN notificacionCN = new NotificacionCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<NotificacionCN>(), mLoggerFactory);
+						DataWrapperNotificacion notificacionDW = new DataWrapperNotificacion();
+						GestionNotificaciones gestorNotificaciones = new GestionNotificaciones(notificacionDW, mLoggingService, mEntityContext, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<GestionNotificaciones>(), mLoggerFactory);
+
+						pComentario = pComentario ?? "";
+
+						// Cambiar estado en base de datos y añadir al historial
+                        short ubicacion = ProyectoSeleccionado.GestorProyectos.DataWrapperProyectos.ListaProyectoPestanyaCMS.Where(pest => pest.PestanyaID.Equals(pContenidoID)).Select(x => x.Ubicacion).FirstOrDefault();
+						Guid estadoDestino = flujosCN.ObtenerEstadoDestinoTransicion(pTransicionID);
+						flujosCN.CambiarEstadoContenido(pContenidoID, estadoDestino, TipoContenidoFlujo.PaginaCMS);
+						flujosCN.GuardarHistorialTransicionPestanyaCMS(pContenidoID, ubicacion, pTransicionID, pComentario, IdentidadActual.Clave);
+
+						// Cambiar estado en Virtuoso                    
+						facetadoCN.ModificarEstadoDeContenido(ProyectoSeleccionado.Clave, mPaginaModel.Estado.EstadoID, estadoDestino, pContenidoID);
+
+						// Enviar correo de aviso a lectores y editores de los estados de origen y destino					
+						string urlPagina = $"{mControladorBase.UrlsSemanticas.ObtenerURLAdministracionComunidad(UtilIdiomas, BaseURLIdioma, ProyectoSeleccionado.NombreCorto, "ADMINISTRARCOMUNIDADCMSEDITARPAGINA")}/{pContenidoID}";
+						gestorNotificaciones.EnviarCorreoAvisoCambioDeEstado(pTransicionID, ProyectoSeleccionado.Clave, pComentario, urlPagina, UtilCadenas.ObtenerTextoDeIdioma(mPestanya.Nombre, UtilIdiomas.LanguageCode, ParametrosGeneralesRow.IdiomaDefecto), IdentidadActual.Nombre());
+						notificacionCN.ActualizarNotificacion(mAvailableServices);
+
+						notificacionCN.Dispose();
+						facetadoCN.Dispose();
+						flujosCN.Dispose();
+					}
+
+					return GnossResultOK(UtilIdiomas.GetText("FLUJOS", "TRANSICIONREALIZADA"));
+				}
+			}
+			catch (Exception ex)
+			{
+				mLoggingService.GuardarLogError(ex, mlogger);				
+			}
+
+			return GnossResultERROR(UtilIdiomas.GetText("FLUJOS", "TRANSICIONERROR"));
+		}
+
+		private void Guardar(string estructura, string propiedadComponente, bool MostrarSoloCuerpo, bool borrador = true)
         {
             ControladorPaginasCMS contrPaginasCMS = new ControladorPaginasCMS(ProyectoSeleccionado, mLoggingService, mEntityContext, mConfigService, mRedisCacheWrapper, mVirtuosoAD, mServicesUtilVirtuosoAndReplication, mAvailableServices, mLoggerFactory.CreateLogger<ControladorPaginasCMS>(), mLoggerFactory);
 
@@ -405,6 +534,23 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
             return error;
         }
 
+        private void CargarEstado(Guid pPestanyaID)
+        {
+			FlujosCN flujosCN = new FlujosCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<FlujosCN>(), mLoggerFactory);
+			UtilFlujos utilFlujos = new UtilFlujos(mEntityContext, mLoggingService, mConfigService, mLoggerFactory.CreateLogger<UtilFlujos>(), mLoggerFactory);
+            Guid estadoID = flujosCN.ObtenerEstadoIDDeContenido(pPestanyaID, TipoContenidoFlujo.PaginaCMS);
+
+            if (!estadoID.Equals(Guid.Empty))
+            {
+                if (mPaginaModel == null)
+                {
+                    mPaginaModel = new AdministrarPaginasCMSViewModel();
+                }
+				mPaginaModel.Estado = utilFlujos.ObtenerEstadoDeContenido(estadoID, IdentidadActual.Clave, UtilIdiomas.LanguageCode, ParametrosGeneralesRow.IdiomaDefecto);
+				mPaginaModel.HistorialTransiciones = utilFlujos.ObtenerHistorialDeTransiciones(pPestanyaID, TipoContenidoFlujo.PaginaCMS, UtilIdiomas.LanguageCode, ParametrosGeneralesRow.IdiomaDefecto);
+			}			
+		}
+
         #endregion
 
         #region Propiedades
@@ -426,6 +572,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
                         mPaginaModel.Key = PestanyaID.Value;
                         mPestanya = ProyectoSeleccionado.GestorProyectos.DataWrapperProyectos.ListaProyectoPestanyaMenu.FirstOrDefault(pest => pest.PestanyaID.Equals(mPaginaModel.Key));
                         mPaginaModel.FechaModificacion = mPestanya.FechaModificacion;
+                        CargarEstado(PestanyaID.Value);
                     }
 
                     CMSCN CMSCN = new CMSCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<CMSCN>(), mLoggerFactory);

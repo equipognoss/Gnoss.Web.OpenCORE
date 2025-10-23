@@ -1,6 +1,7 @@
 ﻿using Es.Riam.AbstractsOpen;
 using Es.Riam.Gnoss.AD.EncapsuladoDatos;
 using Es.Riam.Gnoss.AD.EntityModel;
+using Es.Riam.Gnoss.AD.EntityModel.Models.Documentacion;
 using Es.Riam.Gnoss.AD.EntityModelBASE;
 using Es.Riam.Gnoss.AD.Notificacion;
 using Es.Riam.Gnoss.AD.ServiciosGenerales;
@@ -132,7 +133,12 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                     DocumentacionCN docCN = new DocumentacionCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<DocumentacionCN>(), mLoggerFactory);
                     nombreEnlace = UtilCadenas.ObtenerTextoDeIdioma(docCN.ObtenerTituloDocumentoPorID(recursoID), IdiomaUsuario, null);
                     DataWrapperDocumentacion dwDocumentacion = docCN.ObtenerVersionesDocumentoPorID(recursoID);
-                    Guid recursoOrginalIDAux = dwDocumentacion.ListaVersionDocumento.FirstOrDefault().DocumentoOriginalID;
+                    VersionDocumento version = dwDocumentacion.ListaVersionDocumento.FirstOrDefault();
+                    Guid recursoOrginalIDAux = Guid.Empty;
+                    if (version != null)
+                    {
+                        recursoOrginalIDAux = version.DocumentoOriginalID;
+                    }
                     recursoOriginalID = recursoOrginalIDAux == Guid.Empty ? recursoID : recursoOrginalIDAux;
                     ultimaVersion = docCN.ObtenerDocumentoPorID(recursoID).ListaDocumento.FirstOrDefault().UltimaVersion;
                 }

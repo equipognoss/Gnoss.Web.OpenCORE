@@ -590,7 +590,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
 						RolModel rolModel = new RolModel();
 						rolModel.Nombre = UtilCadenas.ObtenerTextoDeIdioma(rol.Nombre, UtilIdiomas.LanguageCode, null);
 						rolModel.RolID = rol.RolID;
-						rolModel.Descripcion = UtilCadenas.ObtenerTextoDeIdioma(rol.Descripcion, UtilIdiomas.LanguageCode, null);
+						rolModel.Descripcion = HttpUtility.HtmlDecode(UtilCadenas.ObtenerTextoDeIdioma(rol.Descripcion, UtilIdiomas.LanguageCode, null));
                         rolModel.Tipo = (short)AmbitoRol.Ecosistema;
 						model.Roles.Add(rolModel);
 
@@ -611,7 +611,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
 						RolModel rolModel = new RolModel();
 						rolModel.Nombre = UtilCadenas.ObtenerTextoDeIdioma(rol.Nombre, UtilIdiomas.LanguageCode, null);
 						rolModel.RolID = rol.RolID;
-						rolModel.Descripcion = UtilCadenas.ObtenerTextoDeIdioma(rol.Descripcion, UtilIdiomas.LanguageCode, null);
+						rolModel.Descripcion = HttpUtility.HtmlDecode(UtilCadenas.ObtenerTextoDeIdioma(rol.Descripcion, UtilIdiomas.LanguageCode, null));
                         rolModel.Tipo = rol.Tipo;
 
 						model.Roles.Add(rolModel);
@@ -657,7 +657,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
 					RolModel rolModel = new RolModel();
 					rolModel.Nombre = UtilCadenas.ObtenerTextoDeIdioma(rol.Nombre, UtilIdiomas.LanguageCode, null);
 					rolModel.RolID = rol.RolID;
-					rolModel.Descripcion = UtilCadenas.ObtenerTextoDeIdioma(rol.Descripcion, UtilIdiomas.LanguageCode, null);
+					rolModel.Descripcion = HttpUtility.HtmlDecode(UtilCadenas.ObtenerTextoDeIdioma(rol.Descripcion, UtilIdiomas.LanguageCode, null));
                     rolModel.Tipo = rol.Tipo;
 
 					model.Roles.Add(rolModel);

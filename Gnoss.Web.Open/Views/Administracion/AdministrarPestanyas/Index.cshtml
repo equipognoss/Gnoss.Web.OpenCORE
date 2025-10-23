@@ -25,7 +25,8 @@ Variables
     ViewBag.AdministrarPestanyasViewModel = Model;
     // Control de poder guardar datos según el estado de CI/CD
     bool allowSaveData = true;
-    string urlLoadStructHistory = Html.GetComunidad().Url + "/" + Html.GetText("URLSEM", "ADMINISTRARCMSPAGINAHISTORIAL") + "/load-history";
+    string urlBasePageCMSHistory = Html.GetComunidad().Url + "/" + Html.GetText("URLSEM", "ADMINISTRARCMSPAGINAHISTORIAL");
+    string urlBasePageCMS = Html.GetComunidad().Url + "/" + Html.GetText("URLSEM", "ADMINISTRARCOMUNIDADCMSEDITARPAGINA");
 }
 
 @{
@@ -278,6 +279,9 @@ Variables
 
     @* Modal para eliminación de la página *@
     @Html.PartialView("_modal-views/_delete-page")
+    @* Modal para eliminacion de la version de la configuracion de la página*@
+    @Html.PartialView("_modal-views/_confirm-delete", Html.GetText("DEVTOOLS", "DESEAELIMINARVERSIONCONFIGPAGINA"))
+    @Html.PartialView("_modal-views/_confirm-delete", Html.GetText("DEVTOOLS", "DESEAELIMINARVERSIONESTRUCTURAPAGINA"))
     <div id="modal-comparar-versiones"
          class="modal modal-top fade modal-edicion modal-con-tabs"
          role="dialog"
@@ -318,7 +322,8 @@ Variables
             const pParams =
             {
                 allowSaveData: "@allowSaveData",
-                urlLoadStructHistory: "@urlLoadStructHistory"
+                urlBasePageCMS: "@urlBasePageCMS",
+                urlBasePageCMSHistory: "@urlBasePageCMSHistory"
             }
 
             // Operativa funcionamiento de Páginas

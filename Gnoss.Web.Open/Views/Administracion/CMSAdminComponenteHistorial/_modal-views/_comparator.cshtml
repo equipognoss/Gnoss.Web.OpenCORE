@@ -30,6 +30,7 @@
 
 }
 <input type="hidden" id="componentVersionRestoreData" data-component-id="@Model.ComponenteVersion1.ComponenteID" data-version-id="@Model.ComponenteVersion2.VersionID" />
+<input type="hidden" id="txtUrlAddCommentComponentItem" value="@urlAddCommentComponentItem" />
 <div class="modal-header">
     <p class="modal-title">
         <span class="material-icons">compare</span>
@@ -106,7 +107,7 @@
                         @cabecera1
                         @if (componenteVersion1.VersionActual)
                         {
-                            <span data-version-id="f1c038cc-032b-45ef-9be0-d56bcbad9738">@Html.GetText("HISTORIALVERSIONES", "VERSIONACTUAL")</span>
+                            <span class="chip" data-version-id="f1c038cc-032b-45ef-9be0-d56bcbad9738">@Html.GetText("HISTORIALVERSIONES", "VERSIONACTUAL")</span>
                         }
                     </p>
                     <p class="date">
@@ -128,7 +129,7 @@
                         @cabecera2
                         @if (componenteVersion2.VersionActual)
                         {
-                            <span class="badge-success badge-pill">@Html.GetText("HISTORIALVERSIONES", "VERSIONACTUAL")</span>
+                            <span class="chip">@Html.GetText("HISTORIALVERSIONES", "VERSIONACTUAL")</span>
                         }
                     </p>
                     <p class="date">
@@ -156,11 +157,3 @@
         @* </div> *@
     </div>
 </div>
-<script type="text/javascript">
-    (function ($) {
-        pParams = {
-            urlAddCommentComponentItem: "@urlAddCommentComponentItem"
-        }
-        operativaGestionComparadorCMS.init(pParams);
-    })();
-</script>

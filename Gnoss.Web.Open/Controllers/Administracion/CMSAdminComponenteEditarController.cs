@@ -5,6 +5,7 @@ using Es.Riam.Gnoss.AD.EncapsuladoDatos;
 using Es.Riam.Gnoss.AD.EntityModel;
 using Es.Riam.Gnoss.AD.EntityModel.Models.VistaVirtualDS;
 using Es.Riam.Gnoss.AD.EntityModelBASE;
+using Es.Riam.Gnoss.AD.Flujos;
 using Es.Riam.Gnoss.AD.Live;
 using Es.Riam.Gnoss.AD.Parametro;
 using Es.Riam.Gnoss.AD.ServiciosGenerales;
@@ -14,9 +15,13 @@ using Es.Riam.Gnoss.CL.ParametrosAplicacion;
 using Es.Riam.Gnoss.CL.ParametrosProyecto;
 using Es.Riam.Gnoss.Elementos.CMS;
 using Es.Riam.Gnoss.Elementos.Documentacion;
+using Es.Riam.Gnoss.Elementos.Notificacion;
 using Es.Riam.Gnoss.Elementos.ServiciosGenerales;
 using Es.Riam.Gnoss.Logica.CMS;
 using Es.Riam.Gnoss.Logica.Documentacion;
+using Es.Riam.Gnoss.Logica.Facetado;
+using Es.Riam.Gnoss.Logica.Flujos;
+using Es.Riam.Gnoss.Logica.Notificacion;
 using Es.Riam.Gnoss.Logica.ParametroAplicacion;
 using Es.Riam.Gnoss.Logica.ServiciosGenerales;
 using Es.Riam.Gnoss.Util.Configuracion;
@@ -25,6 +30,7 @@ using Es.Riam.Gnoss.UtilServiciosWeb;
 using Es.Riam.Gnoss.Web.Controles.Administracion;
 using Es.Riam.Gnoss.Web.MVC.Filters;
 using Es.Riam.Gnoss.Web.MVC.Models.Administracion;
+using Es.Riam.Gnoss.Web.MVC.Models.Flujos;
 using Es.Riam.Gnoss.Web.MVC.Models.ViewModels;
 using Es.Riam.Interfaces.InterfacesOpen;
 using Es.Riam.InterfacesOpen;
@@ -356,6 +362,25 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
         }
 
         [HttpPost]
+        [TypeFilter(typeof(PermisosContenidos), Arguments = new object[] { new ulong[] { (ulong)PermisoContenidos.RestaurarVersionCMS, (ulong)PermisoContenidos.EliminarVersionCMS } })]
+        public ActionResult DeleteVersion(Guid idComponente, Guid versionIdComponente)
+        {
+            try
+            {
+                ControladorComponenteCMS controladorComponenteCMS = new ControladorComponenteCMS(ProyectoSeleccionado, ParametroProyecto, mLoggingService, mEntityContext, mConfigService, mRedisCacheWrapper, mEntityContextBASE, mVirtuosoAD, mGnossCache, mHttpContextAccessor, mServicesUtilVirtuosoAndReplication, mAvailableServices, mLoggerFactory.CreateLogger<ControladorComponenteCMS>(), mLoggerFactory);
+
+                controladorComponenteCMS.EliminarVersionComponente(idComponente, versionIdComponente);
+            }
+            catch (Exception ex)
+            {
+                mlogger.LogError(ex, ex.Message);
+                return GnossResultERROR(UtilIdiomas.GetText("DEVTOOLS", "ERRORELIMINARVERSIONCMS"));
+            }
+
+            return GnossResultOK(UtilIdiomas.GetText("DEVTOOLS", "VERSIONCMSELIMINADO"));
+        }
+
+        [HttpPost]
 		[TypeFilter(typeof(PermisosContenidos), Arguments = new object[] { new ulong[] { (ulong)PermisoContenidos.RestaurarVersionCMS, (ulong)PermisoContenidos.EditarComponenteCMS } })]
 		public ActionResult AddCommentVersion(Guid pComponenteID, Guid pVersionID)
         {
@@ -364,6 +389,94 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
             modelo.VersionID = pVersionID;
             modelo.Autor = IdentidadActual.Nombre();
             return GnossResultHtml("_modal-views/_add-version-comment", modelo);
+        }
+
+		public ActionResult ObtenerHistorialTransiciones(Guid pComponenteID)
+        {
+            try
+            {
+				UtilFlujos utilFlujos = new UtilFlujos(mEntityContext, mLoggingService, mConfigService, mLoggerFactory.CreateLogger<UtilFlujos>(), mLoggerFactory);
+				CMSCN cmsCN = new CMSCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<CMSCN>(), mLoggerFactory);
+				CMSAdminHistorialTransicionesViewModel modelo = new CMSAdminHistorialTransicionesViewModel();
+
+				modelo.ListaTransiciones = utilFlujos.ObtenerHistorialDeTransiciones(pComponenteID, TipoContenidoFlujo.ComponenteCMS, UtilIdiomas.LanguageCode, ParametrosGeneralesRow.IdiomaDefecto);
+                modelo.ComponenteID = pComponenteID;
+                modelo.NombreComponente = UtilCadenas.ObtenerTextoDeIdioma(cmsCN.ObtenerNombreComponentePorIDComponenteEnProyecto(pComponenteID, ProyectoSeleccionado.Clave), UtilIdiomas.LanguageCode, ParametrosGeneralesRow.IdiomaDefecto);
+                modelo.Fecha = cmsCN.ObtenerFechaModificacionDeComponenteEnProyecto(pComponenteID, ProyectoSeleccionado.Clave);
+                cmsCN.Dispose();
+                
+				return PartialView("_modal-views/_transition-history", modelo);
+            }
+            catch(Exception ex)
+            {
+                mLoggingService.GuardarLogError(ex, mlogger);
+                return GnossResultERROR(UtilIdiomas.GetText("FLUJOS", "HISTORIALERROR"));
+            }
+        }
+
+		public ActionResult CargarModalRealizarTransicion(Guid pTransicionID, Guid pComponenteID)
+        {
+            try
+            {
+                CMSCN cmsCN = new CMSCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<CMSCN>(), mLoggerFactory);
+                CMSAdminCambiarEstadoViewModel model = new CMSAdminCambiarEstadoViewModel();
+                model.TransicionID = pTransicionID;
+                model.ComponenteID = pComponenteID;
+                model.Nombre = UtilCadenas.ObtenerTextoDeIdioma(cmsCN.ObtenerNombreComponentePorIDComponenteEnProyecto(pComponenteID, ProyectoSeleccionado.Clave), UtilIdiomas.LanguageCode, ParametrosGeneralesRow.IdiomaDefecto);
+                cmsCN.Dispose();
+
+				return PartialView("_modal-views/_change-state", model);
+            }
+            catch (Exception ex)
+            {
+                mLoggingService.GuardarLogError(ex, mlogger);
+                return GnossResultERROR();
+            }
+		}
+
+		public ActionResult RealizarTransicion(Guid pContenidoID, Guid pTransicionID, string pComentario)
+        {
+            try
+            {
+                UtilFlujos utilFlujos = new UtilFlujos(mEntityContext, mLoggingService, mConfigService, mLoggerFactory.CreateLogger<UtilFlujos>(), mLoggerFactory);
+                EstadoModel estadoDocumento = utilFlujos.ObtenerEstadoDeContenido(CMSComponente.Estado.Value, IdentidadActual.Clave, UtilIdiomas.LanguageCode, ParametrosGeneralesRow.IdiomaDefecto);
+				bool tienePermiso = estadoDocumento.Transiciones.Any(t => t.TransicionID.Equals(pTransicionID));
+
+				if (tienePermiso)
+				{
+					FlujosCN flujosCN = new FlujosCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<FlujosCN>(), mLoggerFactory);
+					FacetadoCN facetadoCN = new FacetadoCN(UrlIntragnoss, ProyectoSeleccionado.Clave.ToString(), mEntityContext, mLoggingService, mConfigService, mVirtuosoAD, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<FacetadoCN>(), mLoggerFactory);
+					NotificacionCN notificacionCN = new NotificacionCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<NotificacionCN>(), mLoggerFactory);
+					DataWrapperNotificacion notificacionDW = new DataWrapperNotificacion();
+					GestionNotificaciones gestorNotificaciones = new GestionNotificaciones(notificacionDW, mLoggingService, mEntityContext, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<GestionNotificaciones>(), mLoggerFactory);
+
+					pComentario = pComentario ?? "";
+
+					// Cambiar estado en base de datos y añadir al historial
+					Guid estadoDestino = flujosCN.ObtenerEstadoDestinoTransicion(pTransicionID);
+					flujosCN.CambiarEstadoContenido(pContenidoID, estadoDestino, TipoContenidoFlujo.ComponenteCMS);
+					flujosCN.GuardarHistorialTransicionComponenteCMS(pContenidoID, pTransicionID, pComentario, IdentidadActual.Clave);
+
+					// Cambiar estado en Virtuoso                    
+					facetadoCN.ModificarEstadoDeContenido(ProyectoSeleccionado.Clave, estadoDocumento.EstadoID, estadoDestino, pContenidoID);
+
+					// Enviar correo de aviso a lectores y editores de los estados de origen y destino					
+					string urlComponente = $"{mControladorBase.UrlsSemanticas.ObtenerURLAdministracionComunidad(UtilIdiomas, BaseURLIdioma, ProyectoSeleccionado.NombreCorto, "ADMINISTRARCOMUNIDADCMSLISTADOCOMPONENTES")}";
+                    gestorNotificaciones.EnviarCorreoAvisoCambioDeEstado(pTransicionID, ProyectoSeleccionado.Clave, pComentario, urlComponente, UtilCadenas.ObtenerTextoDeIdioma(CMSComponente.Nombre, UtilIdiomas.LanguageCode, ParametrosGeneralesRow.IdiomaDefecto), IdentidadActual.Nombre());
+					notificacionCN.ActualizarNotificacion(mAvailableServices);
+
+					notificacionCN.Dispose();
+					facetadoCN.Dispose();
+					flujosCN.Dispose();
+				}
+
+				return GnossResultOK(UtilIdiomas.GetText("FLUJOS", "TRANSICIONREALIZADA"));
+			}
+            catch (Exception ex)
+            {
+                mLoggingService.GuardarLogError(ex, mlogger);
+				return GnossResultERROR(UtilIdiomas.GetText("FLUJOS", "TRANSICIONERROR"));
+			}
         }
 
         private ActionResult GuardarComponente(CMSAdminComponenteEditarViewModel pComponente, string pComentario = null)
@@ -407,7 +520,26 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
                     }
 
                     componenteEdicion = gestorCMS.AgregarNuevoComponente(ProyectoSeleccionado, pComponente.Name, pComponente.Styles, pComponente.Active, (short)TipoComponenteCMSActual, (short)pComponente.CaducidadSeleccionada, new Dictionary<TipoPropiedadCMS, string>(), false);
-                }
+					
+                    Guid? estadoInicial = null;
+					using (FlujosCN flujosCN = new FlujosCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<FlujosCN>(), mLoggerFactory))
+					{
+						estadoInicial = flujosCN.ObtenerEstadoInicialDeTipoContenido(ProyectoSeleccionado.Clave, TiposContenidos.ComponenteCMS);
+						if (estadoInicial.HasValue)
+						{
+							componenteEdicion.FilaComponente.EstadoID = estadoInicial.Value;
+						}
+					}
+
+					using (FacetadoCN facetadoCN = new FacetadoCN(UrlIntragnoss, mEntityContext, mLoggingService, mConfigService, mVirtuosoAD, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<FacetadoCN>(), mLoggerFactory))
+					{
+						if (estadoInicial.HasValue)
+						{
+							facetadoCN.AnyadirEstadoDeContenido(ProyectoSeleccionado.Clave, estadoInicial.Value, componenteEdicion.Clave);
+						}
+						facetadoCN.InsertarTripleRdfTypeDeContenido(ProyectoSeleccionado.Clave, componenteEdicion.Clave, "ComponenteCMS");
+					}
+				}
 
                 pComponente.Type = TipoComponenteCMSActual;
                 // Para IC Notificacion al repositorio.
@@ -852,7 +984,15 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
             {
                 if (mCMSComponente == null && esEdicion)
                 {
-                    Guid idComponente = new Guid(RequestParams("idComponente"));
+                    Guid idComponente = Guid.Empty;
+					if (!string.IsNullOrEmpty(RequestParams("idComponente")))
+					{
+						idComponente = new Guid(RequestParams("idComponente"));
+					}
+                    else if (!string.IsNullOrEmpty(RequestParams("pContenidoID")))
+                    {
+						idComponente = new Guid(RequestParams("pContenidoID"));
+					}
                     GestionCMS gestorCMS = null;
                     using (CMSCN cmsCN = new CMSCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<CMSCN>(), mLoggerFactory))
                     {
@@ -871,7 +1011,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
         {
             get
             {
-                if (!string.IsNullOrEmpty(RequestParams("idComponente")))
+                if (!string.IsNullOrEmpty(RequestParams("idComponente")) || !string.IsNullOrEmpty(RequestParams("pContenidoID")))
                 {
                     return true;
                 }

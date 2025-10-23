@@ -1,10 +1,9 @@
 ﻿@model Guid
 @{
     DateTime fechaActual = DateTime.Now;
-    string urlRestorePestanyaItem = $"{Html.GetComunidad().Url}/{Html.GetText("URLSEM", "ADMINISTRARPESTANYASCOM")}/RestorePage";
     string autor = Html.GetIdentidadActual().PersonName;
 }
-<input type="hidden" id="urlRestorePestanyaVersion" data-url="@urlRestorePestanyaItem" />
+<input type="hidden" id="urlRestorePestanyaVersion"/>
 <div class="modal-header">
     <p class="modal-title">
         <span class="material-icons">restore</span>
@@ -31,28 +30,21 @@
                     </div>
                 </div>
             </div>
-            <div>
+            <div class="form-group">
                 <label class="control-label d-block">@Html.GetText("HISTORIALVERSIONES", "EDITOR")</label>
                 <input type="text" class="form-control"
                        value="@autor" disabled />
             </div>
-            <div>
+            <div class="form-group">
                 @* Label del elemento Html*@
                 <label class="control-label d-block">@Html.GetText("COMMON", "DESCRIPCION")</label>
                 @* Elemento Html *@
                 <textarea id="txt_ComentarioPaginaVersion" class="form-control" cols="20"></textarea>
             </div>
             <div class="panelBotonera">
-                <a class="btn btn-primary uppercase btnRestorePaginaVersion"
+                <a class="btn btn-primary uppercase btnRestorePaginaVersion config"
                    data-dismiss="modal" data-version-id="@Model">@Html.GetText("COMMON", "GUARDAR")</a>
             </div>
         </div>
     </div>
-
-
 </div>
-<script type="text/javascript">
-    (function ($) {
-        operativaGestionRestaurarPagina.init();
-    })();
-</script>

@@ -8,7 +8,7 @@
 <div class="modal-header">
     <p class="modal-title">
         <span class="material-icons">compare</span>
-        Comparar versiones
+        @Html.GetText("HISTORIALVERSIONES", "COMPARARVERSIONES");
     </p>
     <span class="material-icons cerrar" data-dismiss="modal" aria-label="Close">close</span>
 </div>
@@ -21,7 +21,7 @@
                         @Html.GetText("HISTORIALVERSIONES", "VERSION") @modelo1.Version
                         @if (modelo1.VersionActual)
                         {
-                            <span data-version-id="f1c038cc-032b-45ef-9be0-d56bcbad9738">@Html.GetText("HISTORIALVERSIONES", "VERSIONACTUAL")</span>
+                            <span class="chip" data-version-id="@modelo1.VersionID">@Html.GetText("HISTORIALVERSIONES", "VERSIONACTUAL")</span>
                         }
                     </p>
                     <p class="date">
@@ -40,7 +40,7 @@
                         @Html.GetText("HISTORIALVERSIONES", "VERSION") @modelo2.Version
                         @if (modelo2.VersionActual)
                         {
-                            <span data-version-id="f1c038cc-032b-45ef-9be0-d56bcbad9738">@Html.GetText("HISTORIALVERSIONES", "VERSIONACTUAL")</span>
+                            <span class="chip" data-version-id="@modelo2.VersionID">@Html.GetText("HISTORIALVERSIONES", "VERSIONACTUAL")</span>
                         }
                     </p>
                     <p class="date">
@@ -69,17 +69,8 @@
                 </div>
             }
             <div class="panelBotonera">
-                <a class="btn btn-primary uppercase btnAddCommentRestorePageCMS" data-target="#modal-container" data-toggle="modal" data-version-id="@modelo2.VersionID">@Html.GetText("HISTORIALVERSIONES", "RESTAURARVERSION") @modelo2.Version</a>
+                <a class="btn btn-primary uppercase btnAgregarComentarioRestauracion" data-target="#modal-container" data-toggle="modal" data-version-id="@modelo2.VersionID">@Html.GetText("HISTORIALVERSIONES", "RESTAURARVERSION") @modelo2.Version</a>
             </div>
         }
     </div>
 </div>
-<script type="text/javascript">
-
-    (function ($) {
-        pParams = {
-            urlAddCommentRestorePageCMS: "@urlAddCommentRestorePageCMS"
-        }
-        operativaComparadorPestanyasCMS.init(pParams);
-    })();
-</script>

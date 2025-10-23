@@ -1,0 +1,100 @@
+﻿@using static Es.Riam.Gnoss.Web.MVC.Models.ResourceModel.PollModel
+@model ResourceModel
+@{
+    CommunityModel comunidad = Html.GetComunidad();
+}
+
+<div class="form-group @(Model.PropertiesDifferences["title"] ? "error" : "")">
+    <label class="control-label d-block">@Html.GetText("PERFILBASESUBIRRECURSO", "TITULO")</label>
+    <input type="text" class="form-control" value="@Model.Title" readonly="" disabled="disabled">
+</div>
+
+@if (Model.TypeDocument != ResourceModel.DocumentType.Encuesta)
+{
+    <div class="form-group @(Model.PropertiesDifferences["description"] ? "error" : "")">
+        <label class="control-label d-block">@Html.GetText("DEVTOOLS", "DESCRIPCION")</label>
+        <textarea type="text"
+              class="form-control"
+              rows="3"
+              cols="30"
+              readonly>@Html.Raw(Model.Description)
+    </textarea>
+    </div>
+}
+<div class="form-group @(Model.PropertiesDifferences["tags"] ? "error" : "")">
+    <label class="control-label d-block">@Html.GetText("DEVTOOLS", "ETIQUETAS")</label>
+    <div id="tagsContainer" class="contenedor tag-list mb-4">
+        @foreach (string tag in Model.Tags)
+        {
+            <div class="tag" title="@tag">
+                <div class="tag-wrap">
+                    <span class="tag-text">@tag</span>
+                </div>
+            </div>
+        }
+    </div>
+</div>
+
+<div class="form-group @(Model.PropertiesDifferences["categories"] ? "error" : "")">
+    <label class="control-label d-block">@Html.GetText("COMBUSQUEDAAVANZADA", "CATEGORIAS")</label>
+    <div id="tagsContainer" class="contenedor tag-list mb-4">
+        @foreach (CategoryModel categoria in Model.Categories)
+        {
+            <div class="tag" title="@categoria.Name">
+                <div class="tag-wrap">
+                    <span class="tag-text">@categoria.Name</span>
+                </div>
+            </div>
+        }
+    </div>
+</div>
+
+<div class="form-group @(Model.PropertiesDifferences["private"] ? "error" : "")">
+    <label class="control-label d-block">@Html.GetText("DEVTOOLS", "PRIVADO")</label>
+    <div class="form-check form-check-inline">
+        <input class="form-check-input"
+               type="radio"
+               name="ResourcePrivate_@($"{Model.OriginalKey}_{ViewBag.Side}")"
+               data-value="si"
+               id="ResourcePrivate_SI_@Model.OriginalKey"
+               @(Model.Private ? "checked" : "") disabled />
+        <label class="form-check-label" for="ResourcePrivate_SI_@Model.OriginalKey">@Html.GetText("COMMON", "SI")</label>
+    </div>
+    <div class="form-check form-check-inline">
+        <input class="form-check-input"
+               type="radio"
+               name="ResourcePrivate_@($"{Model.OriginalKey}_{ViewBag.Side}")"
+               data-value="no"
+               id="ResourcePrivate_NO_@Model.OriginalKey"
+               @(!Model.Private ? "checked" : "") disabled />
+        <label class="form-check-label" for="ResourcePrivate_NO_@Model.OriginalKey">@Html.GetText("COMMON", "NO")</label>
+    </div>
+</div>
+
+@if (Model.TypeDocument == ResourceModel.DocumentType.Imagen)
+{
+    <div class="form-group @(Model.PropertiesDifferences["image"] ? "error" : "")">
+        <label class="control-label d-block">@Html.GetText("DEVTOOLS", "IMAGEN")</label>
+        <img src="@Model.UrlPreview" alt="@Model.Title" style="width: auto; max-width: 100%;">
+    </div>
+}
+else if (Model.TypeDocument == ResourceModel.DocumentType.Hipervinculo || Model.TypeDocument == ResourceModel.DocumentType.FicheroServidor)
+{
+    <div class="form-group @(Model.PropertiesDifferences["link"] ? "error" : "")">
+        <label class="control-label d-block">@Html.GetText("DEVTOOLS", "ENLACE")</label>
+        <input type="text" class="form-control" value="@Model.Link" readonly="" disabled="disabled">
+    </div>
+}
+else if (Model.TypeDocument == ResourceModel.DocumentType.Encuesta)
+{
+    <div class="form-group pollOptions @(Model.PropertiesDifferences["pollOptions"] ? "error" : "")">
+        <label class="control-label d-block">@Html.GetText("PERFILBASERECURSOEDITAR", "OPCIONESRESPUESTAS")</label>
+        @foreach (PollOptionsModel option in Model.Poll.PollOptions)
+        {
+            <label class="control-label d-block">@option.Name</label>
+            <div class="form-inline mb-3">
+                <input type="text" class="form-control opcion respuestaEncuesta" value="@option.Name" style="flex: 1 0 auto;">
+            </div>
+        }
+    </div>
+}

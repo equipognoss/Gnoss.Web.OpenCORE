@@ -85,13 +85,13 @@
                 <div class="comparar-versiones__header pt-3">
                     <p class="version">
                         @cabecera1
-                        @if (Model[0].VersionActual)
+                        @if (modelo1.VersionActual)
                         {
-                            <span data-version-id="f1c038cc-032b-45ef-9be0-d56bcbad9738">@Html.GetText("HISTORIALVERSIONES", "VERSIONACTUAL")</span>
+                            <span class="chip" data-version-id="@modelo1.VersionID">@Html.GetText("HISTORIALVERSIONES", "VERSIONACTUAL")</span>
                         }
                     </p>
                     <p class="date">
-                        @Model[0].FechaModificacion.ToString("dd/MM/yyyy HH:mm")
+                        @modelo1.FechaModificacion.ToString("dd/MM/yyyy HH:mm")
                     </p>
                 </div>
                 <div class="comparar-versiones__body">
@@ -99,7 +99,7 @@
                         ViewBag.Side = "left";
                     }
                     <div class="comparar-version">
-                        @Html.PartialView("_comparator-views/_comparator-item", Model[0])
+                        @Html.PartialView("_comparator-views/_comparator-item", modelo1)
                     </div>
                 </div>
             </div>
@@ -107,9 +107,9 @@
                 <div class="comparar-versiones__header pt-3">
                     <p class="version">
                         @cabecera2
-                        @if (Model[1].VersionActual)
+                        @if (modelo2.VersionActual)
                         {
-                            <span class="badge-success badge-pill">@Html.GetText("HISTORIALVERSIONES", "VERSIONACTUAL")</span>
+                            <span class="chip" data-version-id="@modelo2.VersionID">@Html.GetText("HISTORIALVERSIONES", "VERSIONACTUAL")</span>
                         }
                     </p>
                     <p class="date">
@@ -121,7 +121,7 @@
                         ViewBag.Side = "right";
                     }
                     <div class="comparar-version">
-                        @Html.PartialView("_comparator-views/_comparator-item", Model[1])
+                        @Html.PartialView("_comparator-views/_comparator-item", modelo2)
                     </div>
                 </div>
             </div>
@@ -129,7 +129,7 @@
         @if (ViewBag.Restaurando)
         {
             <div class="panelBotonera">
-                <a class="btn btn-primary uppercase btnAgregarComentarioRestauracion"
+                <a class="btn btn-primary uppercase btnAgregarComentarioRestauracion config"
                    data-version-id="@modelo2.VersionID"
                    data-target="#modal-container"
                    data-toggle="modal">@Html.GetText("HISTORIALVERSIONES", "RESTAURARVERSION") @cabecera2</a>
@@ -137,11 +137,3 @@
         }
     </div>
 </div>
-
-<script type="text/javascript">
-
-    (function ($) {
-        // Operativa funcionamiento de Páginas
-        operativaComparadorPestanyas.init();
-    })();
-</script>

@@ -1666,23 +1666,66 @@ input.txtBusquedaGraphQuery {height: 37px; width: 200px; padding-right: 20px; pa
 
 .workflows table.table > tbody > tr > td.td-descripcion { width: 530px; }
 
-.workflows .autocompletar .input-wrap,
-.workflows .autocompletar select.form-control { max-width: 100%; margin-bottom: 10px; }
-.workflows .autocompletar .input-wrap input { height: 52px; padding-right: 50px; }
-.workflows .autocompletar .input-wrap .btn { position: absolute; top: 50%; right: 0; transform: translateY(-50%); padding-inline: 15px; color: #ababab; }
-.workflows .autocompletar .input-wrap .btn .material-icons { padding-right: 0; }
-.workflows .autocompletar .input-wrap .btn:hover,
-.workflows .autocompletar .input-wrap .btn:focus { color: var(--c-primario); }
-.workflows .autocompletar .tag-list .tag { width: 100%; margin-right: 0; }
-.workflows .autocompletar .tag-list .tag .tag-wrap { height: 52px; line-height: 52px; background: var(--c-blanco); border: 1px solid var(--c-gris-borde); color: var(--c-texto-claro); margin-left: 20px; }
-.workflows .autocompletar .tag-list .tag .tag-wrap .tag-text { display: flex; align-items: center; gap: 60px; flex: 1; }
-.workflows .autocompletar .tag-list .tag .tag-wrap .tag-text .tag-label { overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
-.workflows .autocompletar .tag-list .tag .tag-wrap .tag-text .transition { display: flex; align-items: center; flex: 1; font-weight: 400; color: #b7b7b7;}
-.workflows .autocompletar .tag-list .tag .tag-wrap .tag-text .transition .transition-label { overflow: hidden; white-space: nowrap; text-overflow: ellipsis; max-width: 150px; padding-inline: 20px; }
-.workflows .autocompletar .tag-list .tag .tag-wrap .tag-edit { height: 38px; line-height: 38px; width: 38px; text-align: center; cursor: pointer; }
-.workflows .autocompletar .tag-list .tag .tag-wrap .tag-remove { background: none; color: var(--c-texto-claro); }
+#modal-nuevo-workflow .autocompletar .input-wrap,
+#modal-nuevo-workflow .autocompletar select.form-control,
+#modal-editar-workflow .autocompletar .input-wrap,
+#modal-editar-workflow .autocompletar select.form-control { max-width: 100%; margin-bottom: 10px; }
+#modal-nuevo-workflow .autocompletar select.form-control,
+#modal-editar-workflow .autocompletar select.form-control { height: 52px; }
+#modal-nuevo-workflow .autocompletar .input-wrap input,
+#modal-editar-workflow .autocompletar .input-wrap input { height: 52px; padding-right: 50px; }
+#modal-nuevo-workflow .autocompletar .input-wrap .btn,
+#modal-editar-workflow .autocompletar .input-wrap .btn { position: absolute; top: 50%; right: 0; transform: translateY(-50%); padding-inline: 15px; color: #ababab; }
+#modal-nuevo-workflow .autocompletar .input-wrap .btn .material-icons,
+#modal-editar-workflow .autocompletar .input-wrap .btn .material-icons { padding-right: 0; }
+#modal-nuevo-workflow .autocompletar .input-wrap .btn:hover,
+#modal-nuevo-workflow .autocompletar .input-wrap .btn:focus,
+#modal-editar-workflow .autocompletar .input-wrap .btn:hover,
+#modal-editar-workflow .autocompletar .input-wrap .btn:focus { color: var(--c-primario); }
+#modal-nuevo-workflow [class*="autocompletar-"] > .tag-list .tag,
+#modal-editar-workflow [class*="autocompletar-"] > .tag-list .tag  { width: 100%; margin-right: 0; }
+#modal-nuevo-workflow [class*="autocompletar-"] > .tag-list .tag .tag-wrap,
+#modal-editar-workflow [class*="autocompletar-"] > .tag-list .tag .tag-wrap { height: 100%; line-height: 100%; background: var(--c-blanco); border: 1px solid var(--c-gris-borde); color: var(--c-texto-claro); margin-left: 20px; padding: 15px 10px; }
+#modal-nuevo-workflow [class*="autocompletar-"] > .tag-list .tag .tag-wrap .tag-text,
+#modal-editar-workflow [class*="autocompletar-"] > .tag-list .tag .tag-wrap .tag-text { display: flex; flex-direction: column; gap: 15px; flex: 1; height: 100%; justify-content: center; }
+#modal-nuevo-workflow [class*="autocompletar-"] > .tag-list .tag .tag-wrap .tag-text .tag-label,
+#modal-editar-workflow [class*="autocompletar-"] > .tag-list .tag .tag-wrap .tag-text .tag-label { overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+#modal-nuevo-workflow [class*="autocompletar-"] > .tag-list .tag .tag-wrap .tag-text .tag-state,
+#modal-editar-workflow [class*="autocompletar-"] > .tag-list .tag .tag-wrap .tag-text .tag-state { font-weight: 300; font-style: italic; }
+#modal-nuevo-workflow [class*="autocompletar-"] > .tag-list .tag .tag-wrap .tag-text .users,
+#modal-editar-workflow [class*="autocompletar-"] > .tag-list .tag .tag-wrap .tag-text .users { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 40px; }
+#modal-nuevo-workflow [class*="autocompletar-"] > .tag-list .tag .tag-wrap .tag-text .users .user-label,
+#modal-editar-workflow [class*="autocompletar-"] > .tag-list .tag .tag-wrap .tag-text .users .user-label { display: block; font-size: 12px; color: #ababab; width: 100%; }
+#modal-nuevo-workflow [class*="autocompletar-"] > .tag-list .tag .tag-wrap .tag-text .transition,
+#modal-editar-workflow [class*="autocompletar-"] > .tag-list .tag .tag-wrap .tag-text .transition { display: flex; align-items: center; flex: 1; font-weight: 400; color: #b7b7b7;}
+#modal-nuevo-workflow [class*="autocompletar-"] > .tag-list .tag .tag-wrap .tag-text .transition .transition-label,
+#modal-editar-workflow [class*="autocompletar-"] > .tag-list .tag .tag-wrap .tag-text .transition .transition-label { overflow: hidden; white-space: nowrap; text-overflow: ellipsis; max-width: 150px; }
+#modal-nuevo-workflow [class*="autocompletar-"] > .tag-list .tag .tag-wrap .tag-text .transition .material-icons,
+#modal-editar-workflow [class*="autocompletar-"] > .tag-list .tag .tag-wrap .tag-text .transition .material-icons { padding-inline: 20px; }
+#modal-nuevo-workflow [class*="autocompletar-"] > .tag-list .tag .tag-wrap .tag-edit,
+#modal-editar-workflow [class*="autocompletar-"] > .tag-list .tag .tag-wrap .tag-edit { height: 38px; line-height: 38px; width: 38px; text-align: center; cursor: pointer; }
+#modal-nuevo-workflow [class*="autocompletar-"] > .tag-list .tag .tag-wrap .tag-remove,
+#modal-editar-workflow [class*="autocompletar-"] > .tag-list .tag .tag-wrap .tag-remove { background: none; color: var(--c-texto-claro); }
 
-.workflows .autocompletar.autocompletar-transiciones .tag-list .tag .tag-wrap .tag-label { width: 150px; }
+#modal-nuevo-workflow [class*="autocompletar-"] .autocompletar .tag-list .tag .tag-wrap,
+#modal-editar-workflow [class*="autocompletar-"] .autocompletar .tag-list .tag .tag-wrap { color: var(--c-primario); background: transparent; border: 1px solid var(--c-primario); }
+#modal-nuevo-workflow [class*="autocompletar-"] .autocompletar .tag-list .tag .tag-wrap .tag-edit,
+#modal-editar-workflow [class*="autocompletar-"] .autocompletar .tag-list .tag .tag-wrap .tag-edit { display: none; }
+#modal-nuevo-workflow [class*="autocompletar-"] .autocompletar .tag-list .tag .tag-wrap .tag-remove,
+#modal-editar-workflow [class*="autocompletar-"] .autocompletar .tag-list .tag .tag-wrap .tag-remove { background: transparent; color: var(--c-primario); }
+
+#modal-nuevo-workflow .autocompletar.active .formulario-oculto,
+#modal-editar-workflow .autocompletar.active .formulario-oculto { border: 1px solid #e4dddd; padding: 15px; margin-block: 15px; }
+#modal-nuevo-workflow .autocompletar.active .formulario-oculto>.input-wrap .btn,
+#modal-editar-workflow .autocompletar.active .formulario-oculto>.input-wrap .btn { display: none; }
+
+#modal-nuevo-workflow .autocompletar.autocompletar-recursos .tag-list .tag-edit,
+#modal-editar-workflow .autocompletar.autocompletar-recursos .tag-list .tag-edit { display: none; }
+
+#modal-nuevo-workflow .form-control:disabled,
+#modal-editar-workflow .form-control:disabled { color: #a2a2a2; height: 52px; }
+#modal-diagrama-workflow .modal-dialog { max-width: 1280px; }
+
 
 
 /* MODAL VERSIONES PAGINA */
@@ -1719,4 +1762,3 @@ input.txtBusquedaGraphQuery {height: 37px; width: 200px; padding-right: 20px; pa
 @media (max-width: 575px) {
     .comparar-versiones__wrap .comparar-versiones__column .comparar-versiones__header { gap: 5px; min-height: 100px; }
 }
-

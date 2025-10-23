@@ -1,0 +1,17 @@
+﻿<div class="modal-header">
+	<p class="modal-title">
+		<span class="material-icons">delete</span>@Html.GetText("DEVTOOLS", "ELIMINAR")
+	</p>
+	<span class="material-icons cerrar" data-dismiss="modal" aria-label="Close">close</span>
+</div>
+<div class="modal-body">
+	<div class="form-group">
+		<label class="control-label">
+			@Html.GetText("DEVTOOLS", "DESEAELIMINARFLUJO")
+		</label>
+	</div>
+	<div class="form-actions">
+		<button data-dismiss="modal" class="btn btn-outline-primary">@Html.GetText("COMMON", "NO")</button>
+		<a class="btn btn-primary btnConfirmDeleteWorkflow">@Html.GetText("COMMON", "SI")</a>
+	</div>
+</div>

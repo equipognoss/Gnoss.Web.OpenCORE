@@ -783,7 +783,43 @@ function refineURL(url = undefined)
  
     return beforeQueryString;     
 }
+function CargarModalTransiciones(url, mostrarLoading) {
+	if (mostrarLoading == 'true') {
+		loadingMostrar();
+	}	
 
+	GnossPeticionAjax(url, null, true).done(function (data) {
+		$('#modal-dinamic-content').html(data);		
+		$('#modal-container').modal('show', this);
+	}).fail(function (data) {
+		mostrarNotificacion("error", data);
+	}).always(function () {
+		if (mostrarLoading == 'true') {
+			loadingOcultar();
+		}		
+	});
+}
+
+function CambiarEstadoDeTipoDeContenido(urlCambiarEstado, contenidoID, transicionID) {
+	loadingMostrar();
+
+	var comentario = encodeURIComponent($('#inptComentario_' + contenidoID).val());
+	var datosPost = {
+		pComentario: comentario,
+		pTransicionID: transicionID,
+		pContenidoID: contenidoID
+	};
+	GnossPeticionAjax(urlCambiarEstado, datosPost, true).done(function (data) {
+		mostrarNotificacion("success", data);
+		setTimeout(function () {
+			window.location.reload();
+		}, 1500);
+	}).fail(function (data) {
+		mostrarNotificacion("error", data);
+	}).always(function () {
+		loadingOcultar();
+	});
+}
 
 /**
  * Acción que se ejecutará y que mostrará información en un modal dinámico que es pintado vía JS.

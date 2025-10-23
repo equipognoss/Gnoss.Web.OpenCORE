@@ -636,6 +636,8 @@ main .container .row-content { min-height: calc(100vh - 165px); }
 .btn-seguir .no-seguir { display: none; }
 .btn-seguir.siguiendo .seguir { display: none; }
 .btn-seguir.siguiendo .no-seguir { display: flex; }
+
+.btn-transition { border-color: white; font-weight: 500; }
 /**/
 
 

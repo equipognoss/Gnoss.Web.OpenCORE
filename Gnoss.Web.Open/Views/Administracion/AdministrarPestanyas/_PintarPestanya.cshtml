@@ -304,7 +304,7 @@ string urlModal = $"{@Html.GetComunidad().Url}/{@Html.GetText("URLSEM", "ADMINIS
 													</a>
 												</li>
 											}
-											if (tabModel.PaginaCMSVersionado)
+											if (tabModel.PaginaCMSVersionado && !tabModel.Type.Equals(TipoPestanyaMenu.Home))
 											{
 												<li>
 													<a class="item-dropdown js-action-edit-component btnHistorialEstructura" data-target="#modal-container" data-toggle="modal">

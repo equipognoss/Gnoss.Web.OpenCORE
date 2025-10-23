@@ -1,4 +1,5 @@
-﻿@model ResourceModel
+﻿@using static Es.Riam.Gnoss.Web.MVC.Models.ResourceModel
+@model ResourceModel
 
 @*
 Descripción
@@ -9,7 +10,7 @@ Vista perteneciente al servicio externo "ServicioResultados" que se utiliza para
 Variables
 ----------------------------------------------------------------
 *@
-@{   
+@{
     // Texto para añadir a modo de clase extra al contenido o descripción del Recurso
     string claseExtraDescripcion = "";
     //string fechaRecurso = Model.PublishDate.ToString("dddd, MMMM. yyyy");
@@ -19,6 +20,22 @@ Variables
     // Nombre que se mostrará para "Seguir" dependiendod el tipo de "Publicador"
     String nombrePublicador = "";
     Boolean permitirFollow = false;
+
+    string ocultoListado = "";
+    string ocultoMosaico = "";
+    string ocultoMapa = "";
+
+    if (Model.ViewSettings != null)
+    {
+        ocultoListado = Model.ViewSettings.VistaDefecto.Equals(TipoVista.Lista) ? "" : "hidden";
+        ocultoMosaico = Model.ViewSettings.VistaDefecto.Equals(TipoVista.Mosaico) ? "" : "hidden";
+        ocultoMapa = Model.ViewSettings.VistaDefecto.Equals(TipoVista.Mapa) ? "" : "hidden";
+    }
+    else
+    {
+        ocultoMosaico = "hidden";
+        ocultoMapa = "hidden";
+    }
 
     UserIdentityModel IdentidadActual = Html.GetIdentidadActual();
 
@@ -82,7 +99,7 @@ Variables
     {
         permitirFollow = true;
         @* Comprobar si se puede seguir o no seguir *@
-        if (publicador.Actions.FollowingProfile)
+        if (publicador.Actions != null && publicador.Actions.FollowingProfile)
         {
             //funcion_seguir = "AccionPerfil_NoSeguir(this, '" + publicador.ListActions.UrlUnfollow + "')";
             funcion_seguir = "AccionPerfil_Seguir_Listado(this, '" + publicador.ListActions.UrlUnfollow + "','" + publisherNameActionFollowUnFollow + "')";
@@ -126,7 +143,7 @@ Variables
                 <div class="check-wrapper">
                     @* Checkbox que permitirá seleccionar/deseleccionar *@
                     <div class="custom-control custom-checkbox">
-                        <input type="checkbox" class="custom-control-input ListaRecursosCheckBox" id="@idCheck">
+                        <input type="checkbox" class="custom-control-input ListaRecursosCheckBox" id="@idCheck" aria-label="@Html.GetText("COMMON", "MARCAR/DESMARCARRECURSO")">
                         <label class="custom-control-label" for="@idCheck"></label>
                     </div>
                 </div>
@@ -137,7 +154,7 @@ Variables
                 <div class="title-wrap">
                     @* Título del recurso + Link*@
                     <h2 class="resource-title">
-                        <a href="@Model.CompletCardLink">@Model.Title</a>
+                        <a href="@Model.CompleteOriginalCardLink">@Model.Title</a>
                     </h2>
                 </div>
 
@@ -179,7 +196,7 @@ Variables
                     {
                         <div class="image-wrap">
                             <div class="image">
-                                <a href="@Model.CompletCardLink">
+                                <a href="@Model.CompleteOriginalCardLink">
                                     <img alt="@Model.Title" title="@Model.Title"
                                          src="@Model.UrlPreview" />
                                 </a>
@@ -210,39 +227,56 @@ Variables
                             @* Contenido o descripción preliminar del Recurso *@
                             @if ((Model.ViewSettings == null) || (!Model.MapView && (Model.ViewSettings.ListView.ShowDescription || Model.ViewSettings.MosaicView.ShowDescription)) || (Model.MapView && Model.ViewSettings.MapView.ShowDescription))
                             {
-                                <p>
-                                    @{
-                                        string descriptionFormatted = Html.CleanHtmlParagraphsStringHtml(Model.Description);
-                                        @Html.Raw(Html.TruncateString(@Html.CleanHtmlFromMultimediaItems(descriptionFormatted), 800))
+                                // Descripción del recurso
+                                if (!string.IsNullOrEmpty(Model.Description))
+                                {
+                                    @if (Model.TypeDocument != DocumentType.Newsletter)
+                                    {
+                                        <p>
+                                            @{
+                                                String descriptionFormatted = Html.CleanHtmlParagraphsStringHtml(Model.Description);
+                                                @Html.Raw(Html.TruncateString(@Html.CleanHtmlFromMultimediaItems(descriptionFormatted), 800))
+                                            }
+                                        </p>
                                     }
-                                </p>
+                                    else
+                                    {
+                                        //Si es newsletter, al ser html la descripción no se pinta
+                                        <p>
+                                            Newsletter.
+                                        </p>
+                                    }
+                                }
                             }
                         </div>
                     </div>
+                </div>
 
-                    @* Opciones de visualización aplicando clase al div (Funcionalidad mantenida para el nuevo Front). *@
-                    @if (Model.ViewSettings != null)
-                    {
-                        if (!Model.MapView && !string.IsNullOrEmpty(Model.ViewSettings.ListView.InfoExtra))
+
+                @* Opciones de visualización aplicando clase al div (Funcionalidad mantenida para el nuevo Front). *@
+                @if (Model.ViewSettings != null)
+                {
+                    <div class="content-properties">
+                        @if (!Model.MapView)
                         {
-                            <div class="listado">
+                            <div class="listado @(ocultoListado)">
                                 @Html.Raw(Model.ViewSettings.ListView.InfoExtra)
                             </div>
                         }
-                        if (!Model.MapView && !string.IsNullOrEmpty(Model.ViewSettings.MosaicView.InfoExtra))
+                        @if (!Model.MapView)
                         {
-                            <div class="mosaico">
+                            <div class="mosaico @(ocultoMosaico)">
                                 @Html.Raw(Model.ViewSettings.MosaicView.InfoExtra)
                             </div>
                         }
-                        if (Model.MapView && !string.IsNullOrEmpty(Model.ViewSettings.MapView.InfoExtra))
+                        @if (Model.MapView && !string.IsNullOrEmpty(Model.ViewSettings.MapView.InfoExtra))
                         {
-                            <div class="mapa">
+                            <div class="mapa @(ocultoMapa)">
                                 @Html.Raw(Model.ViewSettings.MapView.InfoExtra)
                             </div>
                         }
-                    }
-                </div>
+                    </div>
+                }
             </div>
 
             @* Información adicional del recurso (Categorías del recurso, Etiquetas, Nº Vistas, Likes, Seguir al editor/autor) *@
@@ -262,7 +296,7 @@ Variables
                                     <li rel="sioc:topic">
                                         @separador
                                         <a resource="@Model.UrlSearch/@Html.GetText("URLSEM", "TAG")/@categoria"
-                                           href="@Model.UrlSearch/@Html.GetText("URLSEM","CATEGORIA")/@Html.EliminarCaracteresUrlSem(Html.ObtenerTextoDeIdioma(categoria.LanguageName))/@categoria.Key/"
+                                           href="@Model.UrlSearch/@Html.GetText("URLSEM", "CATEGORIA")/@Html.EliminarCaracteresUrlSem(Html.ObtenerTextoDeIdioma(categoria.LanguageName))/@categoria.Key/"
                                            property="skos:prefLabel"
                                            typeof="skos:Concept">
                                             @Html.ObtenerTextoDeIdioma(categoria.LanguageName)
@@ -308,12 +342,12 @@ Variables
                     </div>
 
                     @* Likes del recurso *@
-                    @Html.PartialView("../CargadorResultados/_partial-views/_list-votes", Model)
+                    @Html.PartialView("_partial-views/_list-votes", Model)
 
                     @* Acción de seguir al usuario *@
                     @if (permitirFollow)
                     {
-                        <div class="seguir-usuario followAction_@publisherNameActionFollowUnFollow" @(publicador.Actions.FollowingProfile ? @dataAttributeFollowing : null)>
+                        <div class="seguir-usuario followAction_@publisherNameActionFollowUnFollow" @((publicador.Actions != null && publicador.Actions.FollowingProfile) ? @dataAttributeFollowing : null)>
                             <span class="material-icons icon">@icono_seguir</span>
                             <span class="texto" onclick="@funcion_seguir">@titulo_seguir</span>
                         </div>
@@ -323,11 +357,3 @@ Variables
         </div>
     </article>
 }
-
-
-
-
-
-
-
-

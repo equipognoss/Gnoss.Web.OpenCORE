@@ -179,7 +179,17 @@ Variables
             </div>              
         }
     </div> 
-    
+
+    @* Modal para comparar 2 recursos no semanticos*@
+    <div id="modal-comparar-versiones" class="modal modal-top fade modal-edicion"
+         role="dialog"
+         aria-modal="true">
+        <div class="modal-dialog">
+            <div class="modal-content" id="modal-comparar-versiones-content">
+            </div>
+        </div>
+    </div>
+
 </div>
 <script type="text/javascript">
     // Parámetros para operativaEditarPerfilUsuario
@@ -200,7 +210,6 @@ Variables
 </script>
 <script type="text/javascript">
                             var urlActionSemCms = window.location.href + '/actionsemcms';
-
                             $(document).ready(function () {
                                 cargarGadgets();
                             });

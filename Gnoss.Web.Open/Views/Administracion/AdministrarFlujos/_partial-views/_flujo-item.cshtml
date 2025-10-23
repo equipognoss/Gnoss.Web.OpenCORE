@@ -1,0 +1,109 @@
+﻿@model FlujoViewModel
+@{
+    CommunityModel Comunidad = Html.GetComunidad();
+    HeaderModel cabecera = Html.GetCabecera();
+    Dictionary<string, string> workflowNameDictionary = Html.GetDictionaryValuesFromMultiLanguageItem(Model.Nombre);
+    Dictionary<string, string> workflowDescriptionDictionary = Html.GetDictionaryValuesFromMultiLanguageItem(Model.Descripcion);
+    bool nuevoFlujo = ViewBag.NuevoFlujo ?? false;
+    string tipos = "";
+    foreach(var tipo in Model.TiposRecursos.Where(i => i.Value).Select(i => i.Key).ToList())
+    {
+        if (tipo.Equals(TiposContenidos.RecursoSemantico))
+        {
+            foreach (string nombreOntologia in Model.OntologiasProyectoNombre)
+            {
+                tipos += $"{Html.ObtenerTextoIdiomaUsuario(nombreOntologia)}, ";
+            }
+        }
+        else
+        {
+            tipos += $"{Html.GetText("DEVTOOLS", Enum.GetName(typeof(TiposContenidos), tipo))}, ";
+        }
+    }
+    tipos = tipos.Substring(0, tipos.Length - 2);
+}
+<tr id="@Model.FlujoID">
+    @if (workflowNameDictionary.Count == 0)
+    {
+        @foreach (KeyValuePair<string, string> idioma in cabecera.Languajes)
+        {
+            <td class="td-nombre language-component component-name @(ViewBag.IdiomaPorDefecto == idioma.Key ? "" : "d-none")" data-languageitem="@idioma.Key">
+                <strong>@Model.Nombre</strong>
+            </td>
+        }
+    }
+    else
+    {
+        @foreach (KeyValuePair<string, string> idioma in cabecera.Languajes)
+        {
+
+            <td class="td-nombre language-component component-name @(ViewBag.IdiomaPorDefecto == idioma.Key ? "" : "d-none")" data-languageitem="@idioma.Key">
+                <strong>
+                    @{
+                        string value = "";
+                        @if (workflowNameDictionary.TryGetValue(idioma.Key, out value))
+                        {
+                            @value
+                        }
+                    }
+                </strong>
+            </td>
+        }
+    }
+    @if (workflowDescriptionDictionary.Count == 0)
+    {
+        @foreach (KeyValuePair<string, string> idioma in cabecera.Languajes)
+        {
+            <td class="td-descripcion language-component component-description @(ViewBag.IdiomaPorDefecto == idioma.Key ? "" : "d-none")" data-languageitem="@idioma.Key">
+                <strong>@Model.Descripcion</strong>
+            </td>
+        }
+    }
+    else
+    {
+        @foreach (KeyValuePair<string, string> idioma in cabecera.Languajes)
+        {
+
+            <td class="td-descripcion language-component component-description @(ViewBag.IdiomaPorDefecto == idioma.Key ? "" : "d-none")" data-languageitem="@idioma.Key">
+                <strong>
+                    @{
+                        string value = "";
+                        @if (workflowDescriptionDictionary.TryGetValue(idioma.Key, out value))
+                        {
+                            @value
+                        }
+                    }
+                </strong>
+            </td>
+        }
+    }
+    <td class="td-tipos">@tipos</td>
+    <td class="td-creacion">@Model.Fecha.ToShortDateString()</td>
+    <td class="td-acciones">
+        <div class="dropdown">
+            <a class="dropdown-toggle"
+               data-toggle="dropdown"
+               aria-expanded="false">
+                <span class="material-icons">more_vert</span>
+                <span class="texto">@Html.GetText("ADMINISTRACIONBASICA", "ACCIONES")</span>
+            </a>
+            <div class="dropdown-menu basic-dropdown dropdown-icons dropdown-menu-right"
+                 style="will-change: transform">
+                <a class="item-dropdown btnShowWorkflowDiagram">
+                    <span class="material-icons">visibility</span>
+                    <span class="texto">@Html.GetText("DEVTOOLS", "VER")</span>
+                </a>
+                <a class="item-dropdown btnEditWorkflow"
+                   data-toggle="modal"
+                   data-target="#modal-editar-workflow">
+                    <span class="material-icons">edit</span>
+                    <span class="texto">@Html.GetText("COMMON", "EDITAR")</span>
+                </a>
+                <a class="item-dropdown btnDeleteWorkflow">
+                    <span class="material-icons">delete</span>
+                    <span class="texto">@Html.GetText("DEVTOOLS", "BORRAR")</span>
+                </a>
+            </div>
+        </div>
+    </td>
+</tr>

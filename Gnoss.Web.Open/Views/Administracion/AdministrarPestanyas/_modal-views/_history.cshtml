@@ -1,15 +1,9 @@
 ﻿@model List<AdministrarPaginaVersionViewModel>
 @{
     UserIdentityModel nombre = Html.GetIdentidadActual();
-    string urlModal = $"{Html.GetComunidad().Url}/{@Html.GetText("URLSEM", "ADMINISTRARPESTANYASCOM")}/ComparePage";
     bool puedeRestaurar = ViewBag.RestaurarVersionPaginaPermitido ?? false;
+    bool puedeEliminar = ViewBag.EliminarVersionPaginasPermitido ?? false;
     int versionCont = Model.Count;
-    bool allowSaveData = true;
-    string urlLoadStructHistory = Html.GetComunidad().Url + "/" + Html.GetText("URLSEM", "ADMINISTRARCMSPAGINAHISTORIAL") + "/load-history";
-    if (Html.GetComunidad().DeshabilitarGuardarAdministracionIC)
-    {
-        allowSaveData = false;
-    }
 }
 <div class="modal-header">
     <p class="modal-title">
@@ -52,19 +46,37 @@
                         <td>@fechaversionMinuto</td>
                         <td>@nombre.PersonName</td>
                         <td>@version.Comentario</td>
-                        @if (cont == 1)
-                        {
-                            <td data-version-id="@version.VersionID">@Html.GetText("HISTORIALVERSIONES", "VERSIONACTUAL")</td>
-                        }
-                        else if (puedeRestaurar)
-                        {
-                            <td>
-                                <a class="btn btn-outline-grey btnMostrarComparadorConfigPagina" data-version-id="@version.VersionID">
-                                    <span class="material-icons">restore</span>
-                                    @Html.GetText("HISTORIALVERSIONES", "RESTAURAR")
-                                </a>
-                            </td>
-                        }
+                        <td data-version-id="@version.VersionID">
+                            @if (cont == 1)
+                            {
+                                @Html.GetText("HISTORIALVERSIONES", "VERSIONACTUAL")
+                            }
+                            else
+                            {
+                                <div class="dropdown position-relative">
+                                    <a class="nav-link dropdown-toggle btn btn-outline-grey" data-toggle="dropdown">
+                                        <span class="material-icons">more_vert</span>
+                                        <span class="texto">@Html.GetText("ADMINISTRACIONBASICA", "ACCIONES")</span>
+                                    </a>
+                                    <div class="dropdown-menu dropdown-menu-right basic-dropdown">
+                                        @if (puedeRestaurar)
+                                        {
+                                            <a class="item-dropdown btnCompare" data-version-id="@version.VersionID">
+                                                <span class="material-icons">restore</span>
+                                                @Html.GetText("HISTORIALVERSIONES", "RESTAURAR")
+                                            </a>
+                                        }
+                                        @if (puedeEliminar)
+                                        {
+                                            <a class="item-dropdown btnEliminarVersionPagina" data-version-id="@version.VersionID" data-toggle="modal" data-target="#modal-borrar-version-pagina-configuracion">
+                                                <span class="material-icons">delete</span>
+                                                @Html.GetText("DEVTOOLS", "BORRAR")
+                                            </a>
+                                        }
+                                    </div>
+                                </div>
+                            }
+                        </td>
                     </tr>
                     cont++;
                     versionCont--;
@@ -73,22 +85,6 @@
         </tbody>
     </table>
     <div class="panelBotonera">
-        <a class="btn btn-primary uppercase btnCompare" data-dismiss="modal" data-target="#modal-comparar-versiones" data-toggle="modal">@Html.GetText("HISTORIALVERSIONES", "COMPARAR")</a>
+        <a class="btn btn-primary uppercase btnCompare">@Html.GetText("HISTORIALVERSIONES", "COMPARAR")</a>
     </div>
 </div>
-<script type="text/javascript">
-
-    (function ($) {
-        // Permitir o no guardar datos
-        const pParams =
-        {
-            allowSaveData: "@allowSaveData",
-            urlLoadStructHistory: "@urlLoadStructHistory"
-        }
-
-        // Operativa funcionamiento de Páginas
-        operativaGestionPaginas.init(pParams);
-        // Operativa funcionamiento de filtros
-        operativaAsistenteFiltros.init();
-    })();
-</script>

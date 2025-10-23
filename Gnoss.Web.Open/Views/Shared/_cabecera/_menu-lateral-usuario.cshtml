@@ -139,17 +139,12 @@
                                         <span style="display: none;" class="infNumSuscripcionesSinLeer badge badge-pill badge-primary" id="infNumSuscripcionesSinLeer"></span>
                                     </li>
                                 }
-                                @* Invitaciones -> Quitarlo según se indica en MYG-109
-                        <li class="liNotificaciones liInvitaciones d-flex justify-content-between align-items-center">
-                        <a title="@Html.GetText("MENU", "INVITACIONES")" href="@perfil.Url@Html.GetText("URLSEM", "INVITACIONES")">@Html.GetText("MENU", "INVITACIONES")</a>
-                        <span style="display: none;" class="infNumInvitacionesSinLeer badge badge-pill badge-primary" id="infNumInvitacionesSinLeer"></span>
-                        </li>
-                        *@
                                 @* Comentarios*@
                                 <li class="liComentarios d-flex justify-content-between align-items-center">
                                     <a title="@Html.GetText("MENU", "COMENTARIOS")" href="@perfil.Url@Html.GetText("URLSEM", "COMENTARIOS")">@Html.GetText("MENU", "COMENTARIOS")</a>
                                     <span style="display: none;" class="infNumComentariosSinLeer badge badge-pill badge-primary" id="infNumComentariosSinLeer"></span>
                                 </li>
+
                                 @* Contactos Quitarlo según se indica en MYG-109
                         @if (cabecera.ContactsAvailable)
                         {

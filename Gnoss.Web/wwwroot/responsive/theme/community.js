@@ -170,12 +170,12 @@ var categoriasEdition = {
                 },
                 sort: true,
                 fallbackOnBody: true,
-		        swapThreshold: 0.65,
+                swapThreshold: 0.65,
                 animation: 150,
                 handle: ".js-component-sortable-category",
-                onAdd: function (evt) {},
-                onChoose: function (evt) {},
-                onUnChoose: function (evt) {},
+                onAdd: function (evt) { },
+                onChoose: function (evt) { },
+                onUnChoose: function (evt) { },
             };
         },
         addCategoryModalEvent: function () {
@@ -190,7 +190,7 @@ var categoriasEdition = {
             var added_categories_list = $("#id-added-categories-list");
 
             // Hacer llamada ajax
-            this.addNewCategory();            
+            this.addNewCategory();
         },
         addNewCategory: function () {
             var list = $("#id-added-categories-list");
@@ -268,9 +268,9 @@ var accionesComponentesCategorias = {
             clearTimeout(that.timer);
             $filter = $(this);
             that.timer = setTimeout(function () {
-                const text = $filter.val().toLowerCase();            
+                const text = $filter.val().toLowerCase();
                 that.search(text);
-            }, that.timeWaitingForUserToType);                    
+            }, that.timeWaitingForUserToType);
         });
     },
     search: function (text, $componentsToSearchIn = $('.js-community-categories-list')) {
@@ -279,19 +279,19 @@ var accionesComponentesCategorias = {
         const that = this;
 
         // Eliminamos posibles tildes para búsqueda ampliada
-	    text = text.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+        text = text.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
 
         if (text.length == 0) {
-            $components.show();            
+            $components.show();
         } else {
             $components.each(function (index, element) {
                 var $component = $(this);
                 var name = $component
-                .find(
-                    "> .component > .component-header-wrap .component-name"
-                )
-                .text()
-                .toLowerCase();
+                    .find(
+                        "> .component > .component-header-wrap .component-name"
+                    )
+                    .text()
+                    .toLowerCase();
                 // Eliminamos posibles tildes para búsqueda ampliada
                 name = name.normalize('NFD').replace(/[\u0300-\u036f]/g, "");
                 if (name.includes(text)) {
@@ -301,21 +301,21 @@ var accionesComponentesCategorias = {
                     parents.show();
                     // Mostrar también los paneles hijos
                     const arr = Array.from(parents);
-                    parents.length > 0 && arr.forEach( item => {                        
+                    parents.length > 0 && arr.forEach(item => {
                         $(item).find(".categoryChildrenPanel").removeClass("d-none");
                         // Cambiar el icono a desplegado
                         $(item).find(".showHide-icon").first().removeClass("collapsed").addClass("expanded").html("remove_circle_outline");
                     });
                 } else {
-                    $component.hide();                    
+                    $component.hide();
                 }
                 const $componentRecursive = $component.find(".js-community-categories-list");
-                $componentRecursive.each( function(){
+                $componentRecursive.each(function () {
                     const parent = $(this).parent(".js-community-categories-list");
-                    if (parent.length != 0){
-                        that.search(text, $(this), parent);                
-                    }                    
-                });                
+                    if (parent.length != 0) {
+                        that.search(text, $(this), parent);
+                    }
+                });
             });
         }
     },
@@ -329,9 +329,9 @@ var certificadosEdition = {
         initCertifications: function () {
             var added_certifications = document.getElementById(
                 "id-added-certifications-list"
-            );            
+            );
             var added_certifications_options =
-            this.getAddedCertificationOptions();
+                this.getAddedCertificationOptions();
             Sortable.create(added_certifications, added_certifications_options);
         },
         getAddedCertificationOptions: function () {
@@ -342,9 +342,9 @@ var certificadosEdition = {
                 sort: true,
                 dragoverBubble: true,
                 handle: ".js-component-sortable-certification",
-                onAdd: function (evt) {},
-                onChoose: function (evt) {},
-                onUnChoose: function (evt) {},
+                onAdd: function (evt) { },
+                onChoose: function (evt) { },
+                onUnChoose: function (evt) { },
             };
         },
     },
@@ -430,7 +430,7 @@ var plegarFacetasCabecera = {
 
             if (target.hasClass('search-icon')) {
                 e.preventDefault();
-                e.stopPropagation();                
+                e.stopPropagation();
             } else {
                 that.mostrarOcultarFaceta(box);
             }
@@ -541,7 +541,7 @@ var alturizarBodyTamanoFacetas = {
  * Se harÃ¡ la llamada para la obtención de Facetas y se muestran en un panel modal.  
  * Extraido del Front
  * */
- const comportamientoFacetasPopUp = {
+const comportamientoFacetasPopUp = {
     init: function () {
         // Objetivo Observable
         const that = this;
@@ -1086,7 +1086,7 @@ var alturizarBodyTamanoFacetas = {
 const comportamientoPanelLateralMobile = {
 
     // Inicializar comportamiento
-    init: function(){
+    init: function () {
         this.config();
         this.configEvents();
         return;
@@ -1105,16 +1105,16 @@ const comportamientoPanelLateralMobile = {
     /**
      * Configurar eventos de elementos del Dom
      */
-    configEvents: function(){
+    configEvents: function () {
         const that = this;
 
         // Click en el botón para ocultar o mostrar el panel del usuario
-        that.btnTriggerPanelLateral.on("click", function(){
+        that.btnTriggerPanelLateral.on("click", function () {
             that.showHidePanelLateral();
         });
 
         // Click en la capa overlay para ocultar panel del usuario en modo móvil.
-        that.mobileOverlay.on("click", function(){
+        that.mobileOverlay.on("click", function () {
             that.showHidePanelLateral();
         })
     },
@@ -1122,7 +1122,7 @@ const comportamientoPanelLateralMobile = {
     /**
      * Método para mostrar u ocultar el panel lateral en dispositivos móviles/tablets
      */
-    showHidePanelLateral: function(){
+    showHidePanelLateral: function () {
         const that = this;
         // Mostrar/Ocultar el panel
         that.panelLateral.toggleClass('show');
@@ -1158,88 +1158,88 @@ const comportamientoOcultarPanelLateral = {
         // Título de la comunidad del panel lateral
         this.headerTitulo = $('#header-title');
         // Arrow down al lado del título
-        this.headerArrowdown = $('#header-title-arrow-down');        
+        this.headerArrowdown = $('#header-title-arrow-down');
         // Nombre de clase del botón para indicarle el estado
         this.panelLateralOpenClassName = 'hidePanel';
         // Enlaces de las categorías de Devtools para navegación
-        this.navigationSections = $('.parent-navigation');        
+        this.navigationSections = $('.parent-navigation');
     },
 
     /**
      * Configurar eventos de los elementos del DOM
      */
-    configEvents: function(){
+    configEvents: function () {
         const that = this;
 
         // Click en el botón para cerrar u ocultar el panel lateral del usuario
-        that.btnTogglePanelLateral.on("click", function(){
-            if ($(this).hasClass(that.panelLateralOpenClassName)){
+        that.btnTogglePanelLateral.on("click", function () {
+            if ($(this).hasClass(that.panelLateralOpenClassName)) {
                 // Ocultarlo
                 that.handleToggleOpenClosePanelLateral(false);
                 // Ocultar las subsecciones de navegación
                 that.handleCollapseSubsecciones();
-            }else{
+            } else {
                 // Mostrarlo
                 that.handleToggleOpenClosePanelLateral(true);
                 that.handleCollapseSubsecciones(true);
-            }            
+            }
         });
 
         // Cada uno de los links que abren el menú de navegación
-        this.navigationSections.on("click", function(){
+        this.navigationSections.on("click", function () {
             // Mostrar menú si no está cerrado
-            if (!that.btnTogglePanelLateral.hasClass(that.panelLateralOpenClassName)){
+            if (!that.btnTogglePanelLateral.hasClass(that.panelLateralOpenClassName)) {
                 that.handleToggleOpenClosePanelLateral(true);
-            }            
-        });        
+            }
+        });
     },
 
     /**
      * Configurar el estado inicial del panel lateral del usuario de las Devtools
      */
-    initialState: function(){
+    initialState: function () {
         this.btnTogglePanelLateral.addClass(this.panelLateralOpenClassName);
     },
 
     /**
      * Colapsar o cerrar las subsecciones de navegación si se pulsa sobre el botón de "Cerrar panelLateral"
      */
-    handleCollapseSubsecciones: function (show = false){
+    handleCollapseSubsecciones: function (show = false) {
         const that = this;
 
-        this.navigationSections.each(function(){
+        this.navigationSections.each(function () {
             const menuParent = $(this);
             // Comprobar si está o no expandido el panel
             const isExpanded = menuParent.attr("aria-expanded");
             // Panel correspondiente a la navegación
             const panelCollapsable = menuParent.siblings("div");
             // Ocultar el panel
-            if (isExpanded == "true"){
+            if (isExpanded == "true") {
                 panelCollapsable.removeClass("show");
             }
             // Mostrar el panel que estaba desplegado
-            if (show == true && menuParent.hasClass("activo")){
+            if (show == true && menuParent.hasClass("activo")) {
                 panelCollapsable.addClass("show");
             }
         });
-        
+
     },
 
     /**
      * Método para abrir/cerrar el menú lateral del usuario
      * @param {*} pShow: Indicará si se desea cerrar o no el panel lateral del usuario
      */
-    handleToggleOpenClosePanelLateral: function(pShow){        
+    handleToggleOpenClosePanelLateral: function (pShow) {
 
-        if (pShow == true){
+        if (pShow == true) {
             // Ensanchar el panelLateral
             this.panelLateral.removeClass(this.panelLateralOpenClassName);
             // No mostrar el header título ni su arrow
             this.headerTitulo.removeClass("d-none");
             this.headerArrowdown.removeClass("d-none");
             // Cambiar el icono del botón y añadirle clase de "open"
-            this.btnTogglePanelLateral.html("chevron_left");            
-        }else{
+            this.btnTogglePanelLateral.html("chevron_left");
+        } else {
             // Mostrar el header título
             this.headerTitulo.addClass("d-none");
             this.headerArrowdown.addClass("d-none");
@@ -1257,7 +1257,7 @@ const comportamientoOcultarPanelLateral = {
  * Operativa para buscar palabras claves cuando se utilice el buscador del navegador lateral del usuario de las Devtools
  * Dependiendo de las palabras clave a buscar, se mostrarán u ocultarán los menús donde estas opciones estén en el menú correspondiente
  */
- const comportamientoHeaderSearchable = {
+const comportamientoHeaderSearchable = {
 
     /**
      * Configurar lanzamiento del comportamiento
@@ -1292,7 +1292,7 @@ const comportamientoOcultarPanelLateral = {
         this.isSearching = false;
         // Configurar si el elemento se ha encontrado
         this.keywordFound = false;
-        this.foundInSubsection = false;                
+        this.foundInSubsection = false;
         // Indice de la sección que se está analizando para encontrar la keyword
         this.sectionIndex = undefined;
 
@@ -1301,84 +1301,84 @@ const comportamientoOcultarPanelLateral = {
     /**
      * Configurar eventos de los elementos del DOM
      */
-    configEvents: function(){
+    configEvents: function () {
         const that = this;
 
         // Input donde se realizará la búsqueda
         this.inputHeaderSearchable.on("keyup", function (event) {
             clearTimeout(that.timer);
-            that.timer = setTimeout(function () {                
+            that.timer = setTimeout(function () {
                 if (!that.isSearching) {
                     that.isSearching = true;
                     that.keywordFound = false;
                     // Activo el loading
-                    that.searcherLoading.removeClass("d-none");                    
-                    that.handleHeaderSearch(function(){
-                        that.isSearching = false                        
+                    that.searcherLoading.removeClass("d-none");
+                    that.handleHeaderSearch(function () {
+                        that.isSearching = false
                         setTimeout(function () {
                             that.searcherLoading.addClass("d-none");
-                        },300);
-                    });                    
-                }                     
+                        }, 300);
+                    });
+                }
             }, that.timeWaitingForUserToType);
-        });              
+        });
     },
 
     /**
      * Método para realizar la búsqueda a en el headersearcher
      */
-    handleHeaderSearch: function(completion){
+    handleHeaderSearch: function (completion) {
         const that = this;
         let cadena = this.inputHeaderSearchable.val();
         // Eliminamos posibles tildes para búsqueda ampliada
         cadena = cadena.normalize('NFD').replace(/[\u0300-\u036f]/g, "").toLowerCase();
-                
+
         // Buscar dentro de cada bloque        
-        $.each(this.navSubsections, function(index){
+        $.each(this.navSubsections, function (index) {
             const sectionLinks = $(this).find("a");
             comportamientoHeaderSearchable.sectionIndex = index;
-           
+
             // Recorrer los links de cada sección para realizar la búsqueda de palabras clave
-            $.each(sectionLinks, function(){
+            $.each(sectionLinks, function () {
                 // Keywords de la sección 
-                if ($(this).data("searchable") != undefined){
+                if ($(this).data("searchable") != undefined) {
                     // Sección padre donde se encontraría este enlace
                     let section = undefined;
                     const keyWords = $(this).data("searchable").normalize('NFD').replace(/[\u0300-\u036f]/g, "").toLowerCase();
                     // Array de los keywords de la sección                
-                    const arrayKeyWords = keyWords.split(',');                    
+                    const arrayKeyWords = keyWords.split(',');
                     // Buscar si el texto se encuentra en las keywords
                     arrayKeyWords.find(element => {
                         if (element.includes(cadena) && cadena != "") {
                             comportamientoHeaderSearchable.foundInSubsection = true;
                         }
                     });
-                    
+
                     // La búsqueda se encuentra en esta sección
-                    if (comportamientoHeaderSearchable.foundInSubsection == true){
+                    if (comportamientoHeaderSearchable.foundInSubsection == true) {
                         // Mostrar el item si estuviera oculto
                         $(this).parent().removeClass("d-none");
                         // Cambiar el color a primario para destacar del resto de coincidencias encontradas
                         $(this).css("color", "var(--c-primario)");
                         // Indicar que se ha encontrado la keyWord en la sección analizada.
-                        comportamientoHeaderSearchable.keywordFound = true                                            
-                    }else if (cadena == ""){
+                        comportamientoHeaderSearchable.keywordFound = true
+                    } else if (cadena == "") {
                         // Se ha eliminado la búsqueda -> Dejarlo por defecto
                         $(this).parent().removeClass("d-none");
                         $(this).css("color", "");
                         $(this).attr("href", refineURL($(this).attr("href")));
-                    }else{
+                    } else {
                         $(this).parent().addClass("d-none");
                         // Dejar el color por defecto
                         $(this).css("color", "");
-                    } 
+                    }
                     // Restablecemos la búsqueda por subSección
-                    comportamientoHeaderSearchable.foundInSubsection = false;           
-                }                
+                    comportamientoHeaderSearchable.foundInSubsection = false;
+                }
             });
             const section = $(comportamientoHeaderSearchable.navSubsections[comportamientoHeaderSearchable.sectionIndex]);
             // Mostrar u ocultar la sección padre en caso de encontrarse la keyword
-            comportamientoHeaderSearchable.handleShowHideSection(section, comportamientoHeaderSearchable.keywordFound );
+            comportamientoHeaderSearchable.handleShowHideSection(section, comportamientoHeaderSearchable.keywordFound);
             // Restablecemos la búsqueda para las demás secciones            
             comportamientoHeaderSearchable.keywordFound = false;
         });
@@ -1392,32 +1392,32 @@ const comportamientoOcultarPanelLateral = {
     /**
      * Mostrar u ocultar una sección de la navegación izquierda dependiendo de la búsqueda realizada
      */
-    handleShowHideSection: function(section, found){
+    handleShowHideSection: function (section, found) {
         // Link padre del menú de navegación del bloque
         const parentLink = section.siblings("a");
 
-        if (found == true){
+        if (found == true) {
             // Mostrar la sección                        
             section.addClass("show");
             // Establecer aria-expanded en el link
             parentLink.attr("aria-expanded", "true");
-        }else{
+        } else {
             // Ocultar la sección la sección                        
             section.removeClass("show");
             // Establecer aria-expanded en el link
             parentLink.attr("aria-expanded", "false");
-        }      
+        }
     },
 };
 
 /**
  * Operativa de mostrar el icono correspondiente según el estado de la sección (Collapse / No collapse)
  */
- const comportamientoSidebarDropdownSections = {
+const comportamientoSidebarDropdownSections = {
     /**
      * Configurar lanzamiento del comportamiento
      */
-     init: function () {
+    init: function () {
         this.config();
         this.configEvents();
     },
@@ -1425,7 +1425,7 @@ const comportamientoOcultarPanelLateral = {
     /**
      * Configurar elementos del DOM y variables de uso
      */
-     config: function () {
+    config: function () {
         // Elementos del Dom
         // Iconos de collapse la sección del panel lateral de navegación
         this.iconCollapse = $(".icon-collapse");
@@ -1435,27 +1435,27 @@ const comportamientoOcultarPanelLateral = {
         this.iconNoCollapseName = "keyboard_arrow_up";
         // Secciones de navegación del menú lateral 
         this.parentNavigation = $(".parent-navigation");
-    },   
-    
+    },
+
     /**
      * Configurar eventos de los elementos del DOM
      */
-     configEvents: function(){
+    configEvents: function () {
         const that = this;
 
         // Click en las secciones laterales de navegación   
-        this.parentNavigation.on("click", function(){
+        this.parentNavigation.on("click", function () {
             const collapseIconArrow = $(this).find("icon-collapse");
             // Indica si el panel está expandido o desplegado
             const isExpanded = ($(this).attr("aria-expanded"));
             // Cambiar icono según estado
-            if (stringToBoolean(isExpanded) == true){
+            if (stringToBoolean(isExpanded) == true) {
                 $(this).find(that.iconCollapse).html(that.iconCollapseName);
-            }else{
-                $(this).find(that.iconCollapse).html(that.iconNoCollapseName);                
-            }        
+            } else {
+                $(this).find(that.iconCollapse).html(that.iconNoCollapseName);
+            }
         });
-    },    
+    },
 };
 
 /**
@@ -1485,9 +1485,9 @@ var paginasEdition = {
             swapThreshold: 0.65,
             animation: 150,
             handle: '.js-component-sortable-page',
-            onAdd: function (evt) {},
-            onChoose: function (evt) {},
-            onUnChoose: function (evt) {},
+            onAdd: function (evt) { },
+            onChoose: function (evt) { },
+            onUnChoose: function (evt) { },
         };
     },
     addPageModalEvent: function () {
@@ -1727,13 +1727,13 @@ var PageBuilderEdition = {
             $item.html(this.getRowWrapTemplate());
             // Crear un Guid para la nueva row añadida
             const rowId = guidGenerator();
-            $item.attr("id",rowId);
+            $item.attr("id", rowId);
 
             this.buildPredefinedColumns($item);
 
             PageBuilderManagement.init();
             // Indicar que hay cambios en el CMS para posibilitar el guardado
-            operativaGestionCMSBuilderGuardadoSeguridad.setIsNecessarySaveCmsHtmlContentInPageBuider(true);            
+            operativaGestionCMSBuilderGuardadoSeguridad.setIsNecessarySaveCmsHtmlContentInPageBuider(true);
 
             accionesFilasPageBuilder.countRows();
         },
@@ -1808,13 +1808,13 @@ var PageBuilderEdition = {
                 handle: ".js-action-handle-row",
                 onAdd: function (evt) {
                     var item = $(evt.item);
-                    if (!item.hasClass("auto-column")){                        
-                        PageBuilderEdition.columnsEdition.onBasicColumnAdded(evt);                        
-                    }else{
+                    if (!item.hasClass("auto-column")) {
+                        PageBuilderEdition.columnsEdition.onBasicColumnAdded(evt);
+                    } else {
                         // Añadir columna auto que ocupe el ancho disponible
-                        PageBuilderEdition.columnsEdition.onAutoColumnAdded(evt);                        
+                        PageBuilderEdition.columnsEdition.onAutoColumnAdded(evt);
                     }
-                    
+
                 },
             };
         },
@@ -1838,18 +1838,18 @@ var PageBuilderEdition = {
                         lis.each(function () {
                             sum += parseInt($(this).data("percent"));
                         });
-                        
+
                         // Tener en cuenta las columnas "auto"
-                        if (!item.hasClass("auto-column")){
+                        if (!item.hasClass("auto-column")) {
                             if (sum + itemPercent > 100) {
                                 return false;
                             }
-                        }else{
+                        } else {
                             // Espacio mínimo
                             if (sum >= 83.33) {
-                                return false;                                
+                                return false;
                             }
-                        }                        
+                        }
                     }
                 },
             };
@@ -1858,8 +1858,8 @@ var PageBuilderEdition = {
             var item = $(event.item);
             item.removeClass("builder-item").addClass("cmscolumn");
             // Crear un Guid para la nueva columna añadida
-            const columnId = guidGenerator();   
-            item.attr("id",columnId);
+            const columnId = guidGenerator();
+            item.attr("id", columnId);
             // Añadir 'data-columnclass' para el guardado en BD a partir del 'data-spanclass' el item arrastrado
             const columnClassName = `${item.data("spanclass")} break`;
             item.data("columnclass", columnClassName);
@@ -1871,10 +1871,10 @@ var PageBuilderEdition = {
             var columnTemplate = this.getColumnWrapHtmlTemplate();
             item.empty().append(columnTemplate);
             // Indicar que hay cambios en el CMS para posibilitar el guardado
-            operativaGestionCMSBuilderGuardadoSeguridad.setIsNecessarySaveCmsHtmlContentInPageBuider(true);            
+            operativaGestionCMSBuilderGuardadoSeguridad.setIsNecessarySaveCmsHtmlContentInPageBuider(true);
             PageBuilderManagement.init();
         },
-        getColumnWrapHtmlTemplate: function () {                     
+        getColumnWrapHtmlTemplate: function () {
             return `<div class="cmscolumn-wrap">
                         <div class="cmscolumn-header">
                             <div class="cmscolumn-actions js-cmscolumn-actions">
@@ -1899,39 +1899,39 @@ var PageBuilderEdition = {
          */
         getColumnHtmlTemplate: function (percentage = undefined) {
             let spanColumnClass = "";
-            if (percentage != undefined){
+            if (percentage != undefined) {
                 switch (percentage) {
                     case "100":
                         spanColumnClass = "span11";
                         break;
                     case "50":
                         spanColumnClass = "span12";
-                        break;                        
+                        break;
                     case "33.33":
                         spanColumnClass = "span13";
                         break;
                     case "25":
                         spanColumnClass = "span14";
-                    break;
+                        break;
                     case "16.66":
                         spanColumnClass = "span16";
-                        break;                                                    
+                        break;
                     case "66.66":
                         spanColumnClass = "span23";
-                    break;
+                        break;
                     case "75":
                         spanColumnClass = "span34";
-                    break;
+                        break;
                     case "37.5":
                         spanColumnClass = "span38";
-                    break;   
+                        break;
                     case "62.5":
                         spanColumnClass = "span58";
-                    break;                                                                                                        
+                        break;
                 }
             }
             // Crear guid/id para cada columna
-            const columnId = guidGenerator(); 
+            const columnId = guidGenerator();
             // Añadir 'data-columnclass' para el guardado en BD
             const columnClassName = `${spanColumnClass} break`;
             return `<li id="${columnId}" 
@@ -1949,37 +1949,37 @@ var PageBuilderEdition = {
          * Método que se ejecuta al añadir una columna de tipo "Auto" para que se rellene el espacio sin usar de la fila
          * @param {*} event 
          */
-        onAutoColumnAdded: function(event){                            
+        onAutoColumnAdded: function (event) {
             var item = $(event.item);
             item.removeClass("builder-item").addClass("cmscolumn");
             // Crear un Guid para la nueva columna añadida
-            const columnId = guidGenerator();   
-            item.attr("id",columnId);
+            const columnId = guidGenerator();
+            item.attr("id", columnId);
 
             // Calcular espacio libre para el tamaño de la columna auto
-            const dataPercent = this.getFreeColumnsAvailableForAutoColumn(item);            
-            const classNameFromFreePercentage = this.getSpanClassFromFreePercentage(dataPercent).replace(/-/g, '');            
+            const dataPercent = this.getFreeColumnsAvailableForAutoColumn(item);
+            const classNameFromFreePercentage = this.getSpanClassFromFreePercentage(dataPercent).replace(/-/g, '');
             const columnClassName = `${classNameFromFreePercentage} break`;
             // Asignar a columnclass y dataPercent
             item.data("columnclass", columnClassName);
-            item.data("percent",dataPercent);
+            item.data("percent", dataPercent);
             item.data("spanclass", classNameFromFreePercentage);
 
             // Asignar el porcentaje para la vista preliminar del elemento en el editor           
             item.css("width", this.getColumnWidthByPercent(dataPercent));
-            
+
             var columnTemplate = this.getColumnWrapHtmlTemplate();
             item.empty().append(columnTemplate);
             // Indicar que hay cambios en el CMS para posibilitar el guardado
-            operativaGestionCMSBuilderGuardadoSeguridad.setIsNecessarySaveCmsHtmlContentInPageBuider(true);            
-            PageBuilderManagement.init();                        
+            operativaGestionCMSBuilderGuardadoSeguridad.setIsNecessarySaveCmsHtmlContentInPageBuider(true);
+            PageBuilderManagement.init();
         },
 
         /**
          * Devuelve el nº de columnas disponibles de la fila y en base al nº de columnas disponible, devolver la clase o spanClass necesario
          * @param {*} item Item que se ha arrastrado. En este caso, el de tipo "auto"
          */
-        getFreeColumnsAvailableForAutoColumn: function(item){
+        getFreeColumnsAvailableForAutoColumn: function (item) {
             // Obtener el contenedor donde se ha alojado la celda auto
             const columnsListSpace = item.closest(".columns-list");
             const siblingsColumns = columnsListSpace.children("li.cmscolumn").not(item);
@@ -1990,7 +1990,7 @@ var PageBuilderEdition = {
                 siblingsColumns.each(function () {
                     rowPercentageUsage += parseFloat($(this).attr("data-percent"));
                 });
-            }      
+            }
             const freePercentage = dataPercentageForAutoColumn - rowPercentageUsage;
             console.log(freePercentage);
             return freePercentage;
@@ -2004,7 +2004,7 @@ var PageBuilderEdition = {
         getSpanClassFromFreePercentage: function (freePercentage) {
             if (freePercentage >= 100) return 'span-1-1';
             if (freePercentage >= 83.00) return 'span-5-6';
-            if (freePercentage >= 75.00) return 'span-3-4';            
+            if (freePercentage >= 75.00) return 'span-3-4';
             if (freePercentage >= 66.66) return 'span-2-3';
             if (freePercentage >= 62.5) return 'span-5-8';
             if (freePercentage >= 50) return 'span-1-2';
@@ -2014,7 +2014,7 @@ var PageBuilderEdition = {
             if (freePercentage >= 16.66) return 'span-1-6';
             if (freePercentage >= 8.33) return 'span-1-12';
             return 'Sin Span válido'; // Devuelve una cadena vacía si no hay suficiente espacio para ninguna columna.
-        }        
+        }
     },
     componentsEdition: {
         initComponents: function () {
@@ -2098,24 +2098,24 @@ var PageBuilderEdition = {
             $name.append(idHtml);
 
             $item.removeClass("builder-item").addClass("cmscomponent");
-            $item.html(this.getComponentWrapHtmlTemplate($name.get(0).outerHTML,id));
+            $item.html(this.getComponentWrapHtmlTemplate($name.get(0).outerHTML, id));
             // Indicar que hay cambios en el CMS para posibilitar el guardado
             operativaGestionCMSBuilderGuardadoSeguridad.setIsNecessarySaveCmsHtmlContentInPageBuider(true);
             PageBuilderManagement.init();
 
             // Mostrar modal para crear el nuevo componente arrastrado (Sólo si el componente es nuevo)
-            if ($item.attr("id") == "" || $item.attr("id") == undefined){
+            if ($item.attr("id") == "" || $item.attr("id") == undefined) {
                 operativaGestionCMSBuilder.onComponentAddedLoadModal($item);
-            }            
+            }
         },
         getComponentWrapHtmlTemplate: function (name, id) {
 
             // Construir la ruta para editar el recurso a partir del item arrastrado            
-            let urlSaveComponent = ''; 
-            let urlEditComponent = ''; 
+            let urlSaveComponent = '';
+            let urlEditComponent = '';
 
             if (id != undefined) {
-                urlSaveComponent = operativaGestionCMSBuilder.pParams.urlSaveComponentTemplate.replace("COMPONENT_KEY", id); 
+                urlSaveComponent = operativaGestionCMSBuilder.pParams.urlSaveComponentTemplate.replace("COMPONENT_KEY", id);
                 urlEditComponent = operativaGestionCMSBuilder.pParams.urlEditComponentTemplate.replace("COMPONENT_KEY", id);
             }
 
@@ -2158,7 +2158,7 @@ var PageBuilderEdition = {
         },
     },
     plantillasPredeterminadas: {
-        init: function () {},
+        init: function () { },
     },
 };
 
@@ -2179,7 +2179,7 @@ var accionesFilasPageBuilder = {
         this.actionDelete();
         editRowModal.init();
     },
-    config: function () {},
+    config: function () { },
     countRows: function () {
         for (let i = 0; i < $(".js-cmsrow").length; i++) {
             var number = $(".js-cmsrow").find(".number");
@@ -2220,13 +2220,13 @@ var accionesFilasPageBuilder = {
             that.countRows();
         });
     },
-    
+
     /**
      * Método para actualizar los ids de la fila clonada. Será necesario actualizar las filas y columnas ya que
      * en el proceso de guardado, no puede haber items con IDS idénticos.     
      * @param {jqueryElement} currentRow 
      */
-    updateIdsForClonedItem: function(currentRow){
+    updateIdsForClonedItem: function (currentRow) {
         // Columnas existentes de la fila que se va a clonar
         const columnsFromClonedRow = currentRow.find(`.cmscolumn`);
 
@@ -2234,12 +2234,12 @@ var accionesFilasPageBuilder = {
             const column = $(this);
             const newColumnId = guidGenerator();
             // Cambiar el id de la columna
-            column.attr("id",newColumnId);
+            column.attr("id", newColumnId);
         });
 
         // Cambiar el id de la fila clonada
         const newRowId = guidGenerator();
-        currentRow.attr("id",newRowId);
+        currentRow.attr("id", newRowId);
     },
 };
 
@@ -2343,7 +2343,7 @@ var pagebuilderConfirmationModal = {
             .on("click", function () {
                 // Indicar que hay cambios en el CMS para posibilitar el guardado
                 operativaGestionCMSBuilderGuardadoSeguridad.setIsNecessarySaveCmsHtmlContentInPageBuider(true);
-                callbackFunction(element);                
+                callbackFunction(element);
             });
     },
 };
@@ -2474,7 +2474,7 @@ var editRowModal = {
         });
         this.editedRow.attr("data-row-attributes", attributes.join());
         // Guardar los atributos en el formato correcto para que sean guardados en backEnd
-        $.each(attributes, function(key,value){
+        $.each(attributes, function (key, value) {
             const attributeValueArray = value.split("|");
             // Obtener el atributo y value
             const attribute = attributeValueArray[0];
@@ -2483,7 +2483,7 @@ var editRowModal = {
             attributeValueStringToBackEnd += `${attribute}---${attributeValue}~~~`;
         });
         // Añadir los atributos y valores a la fila para ser guardada en BackEnd
-        this.editedRow.data("aux", attributeValueStringToBackEnd);        
+        this.editedRow.data("aux", attributeValueStringToBackEnd);
     },
     saveAttributeEvent: function () {
         const that = this;
@@ -2539,9 +2539,9 @@ var componentesEdition = {
             swapThreshold: 0.65,
             animation: 150,
             handle: ".js-component-sortable-component",
-            onAdd: function (evt) {},
-            onChoose: function (evt) {},
-            onUnChoose: function (evt) {},
+            onAdd: function (evt) { },
+            onChoose: function (evt) { },
+            onUnChoose: function (evt) { },
         };
     },
 };
@@ -2582,99 +2582,493 @@ const autocompletarWorkflows = {
     init: function () {
         this.config();
         this.exec();
+        this.bindFormEvents();
         this.addTagEvents();
     },
     config: function () {
-        this.autocompletar = $('.autocompletar');
+        this.modalWorkflow = $('#modal-editar-workflow, #modal-nuevo-workflow');
+        this.autocompletar = this.modalWorkflow.find('.form-group>.form-group.autocompletar');
     },
     exec: function () {
-        // boton más del input
-        this.autocompletar.find('.btn').on('click', (e) => {
-            e.preventDefault();
-            const input = $(e.currentTarget).siblings('input');
-            this.onAutocomplete(input);
+        // click en el input del modal abre el formulario oculto
+        this.autocompletar.find('>.input-wrap').on('click', (e) => {
+            this.toggleForm(e);
         });
 
-        // evento de dar al enter en input
-        this.autocompletar.find('input').on('keypress', (e) => {
-            if (e.which === 13) {
-                e.preventDefault();
-                const target = $(e.currentTarget);
-                this.onAutocomplete(target);
-            }
+        // boton más del input
+        this.autocompletar.find('>.input-wrap .btn').off('click').on('click', (e) => {
+            e.preventDefault();
+            // no hacer click si el input esta disabled
+            if ($(e.currentTarget).siblings('input').attr('disabled')) return;
+
+            // muestra el formulario oculto
+            this.toggleForm(e);
         });
 
         // select tipo recursos
-        this.autocompletar.find('select').on('change', (e) => {
+        this.autocompletar.off().find('.select-recursos').on('change', (e) => {
             e.preventDefault();
             const target = $(e.currentTarget);
-            this.onAutocomplete(target);
+            this.onSelectAutocomplete(target);
         });
     },
-    onAutocomplete: function (elem) {
-        const target = $(elem);
-        const parent = target.closest('.autocompletar');
-        const list = parent.find('.tag-list');
-        const inputHidden = parent.children('input[type="hidden"]');
+    bindFormEvents: function () {
+        // cancelamos el evento autocompletar del jquery.autocomplete.js
+        this.autocompletar.off('click');
 
-        const tagValue = target.val().trim();
-        if (!tagValue) return;
+        // click en aceptar del formulario
+        this.autocompletar.find('.formulario-oculto .btn-primary').off('click').on('click', (e) => {
+            e.preventDefault();
+            const parent = $(e.currentTarget).closest('.autocompletar');
 
-        if (parent.hasClass('autocompletar-estados')) {
-            this.addState(target, tagValue);
-        } else if (parent.hasClass('autocompletar-transiciones')) {
-            const origin = target.parents('.tab-content').find('.select-origin').val();
-            const end = target.parents('.tab-content').find('.select-end').val();
-            if (origin || (origin && end)) {
-                list.append(this.addTag(tagValue, origin, end));
+            // recoger datos del formulario
+            this.onFormCompleted(parent);
+
+            // oculta el formulario y borra los campos
+            this.resetForm(parent);
+        });
+
+        // click en cancelar del formulario
+        this.autocompletar.find('.formulario-oculto .btn-grey').off('click').on('click', (e) => {
+            e.preventDefault();
+            const parent = $(e.currentTarget).closest('.autocompletar');
+            if (parent.find('.formulario-oculto').hasClass("editando")) {
+                let id = $(e.currentTarget).parent().attr("data-id");
+                parent.find('.formulario-oculto').removeClass("editando");
+                parent.find(`.tag-list .tag[data-id="${id}"]`).removeClass("d-none");
             }
-        } else {
-            list.append(this.addTag(tagValue));
+            
+            this.resetForm(parent);
+        });
+    },
+    toggleForm: function (e) {
+        const parent = $(e.currentTarget).closest('.autocompletar');
+        const inputWrap = parent.find('>.input-wrap');
+        const formOculto = parent.find('.formulario-oculto');
+        const modalID = parent.parents('.modal-flujo').attr('id')
+        if (!parent.hasClass('active')) {
+            const lang = $('#panContenidoMultiIdioma .nav-tabs a[aria-selected="true"]').attr('id').split('_')[1];
+            const titleInputs = formOculto.find('.nombre-form-oculto');
+            titleInputs.hide();
+            const titleInputActive = formOculto.find(`.nombre-form-oculto-${lang}`);
+            titleInputs.val(inputWrap.find('input[type="text"]').val());
+            titleInputActive.show();
+
+            //const inputClone = inputWrap.clone(true);
+            //inputClone.prependTo(formOculto);
+            inputWrap.hide();
+            parent.addClass('active');
+            parent.find('#estado-inicial').attr('checked', true);
+            formOculto.attr('data-id', guidGenerator());
+            formOculto.removeClass('d-none').addClass('d-block');
+            //formOculto.find('>.input-wrap input[type="text"]').focus();
+            titleInputActive.focus();
+        }
+        if (parent.hasClass("autocompletar-transiciones") && $(e.currentTarget).hasClass("input-wrap")) {
+            let estados = parent.parents('.tab-content').first().find('.autocompletar-estados .tag-list').children();
+            let that = this;
+            estados.each(function () {
+                let estado = $(this);
+                let typeStateValue = estado.find('input[type="hidden"]').data("tipo-estado");
+                let id = estado.attr("data-id");
+                let tagValue = estado.find(".tag-label").clone().children().remove().end().text().trim();
+                let tagValues = estado.attr("title");
+                let isPublic = estado.attr("data-publico");
+                if (typeStateValue == '0' || typeStateValue == '1') {
+                    that.updateOption(modalID, '.select-origin', id, typeStateValue, isPublic, tagValue, null, tagValues);
+
+                    if (typeStateValue == '1') {
+                        that.updateOption(modalID, '.select-end', id, typeStateValue, isPublic, tagValue, null, tagValues);
+                    }
+                } else if (typeStateValue == '2') {
+                    that.updateOption(modalID, '.select-end', id, typeStateValue, isPublic, tagValue, null, tagValues);
+                }
+            });
+        }
+    },
+    resetForm: function (parent) {
+        parent.removeClass('active');
+        const formOculto = parent.find('.formulario-oculto');
+        //parent.find('>.input-wrap').find('input[type="text"]').val('');
+        formOculto.attr('data-id', '');
+        formOculto.find('.nombre-form-oculto').each(function () {
+            $(this).val('');
+        });
+        parent.find('>.input-wrap').show();
+        formOculto.removeClass('d-block').addClass('d-none');
+        formOculto.find('>.input-wrap').remove();
+        formOculto.find('.tag-list').html('');
+        formOculto.find('select').val('');
+    },
+    onFormCompleted: function (parent) {
+        const lang = $('#panContenidoMultiIdioma .nav-tabs a[aria-selected="true"]').attr('id').split('_')[1];
+        const formOculto = parent.find('.formulario-oculto');
+        formOculto.hasClass("editando") && formOculto.removeClass("editando");
+        const list = parent.find('>.tag-list');
+        const inputHidden = parent.children('input[type="hidden"]');
+        const id = formOculto.attr('data-id');
+        const modalID = parent.parents('.modal-flujo').attr('id')
+        // Si ha sido editado borrar el anterior tag
+        list.find(`.tag[data-id="${id}"]`).remove();
+        const tagValues = formOculto.find('.nombre-form-oculto');
+        let tagValue = formOculto.find(`.nombre-form-oculto-${lang}`).val().trim();
+        // Si el titulo en el idioma por defecto está vacio no guardamos la tag
+        const defaultLang = $("#idiomaDefecto").val();
+        if (!formOculto.find(`.nombre-form-oculto-${defaultLang}`).val().trim()) {
+            mostrarNotificacion("error", "No puedes dejar el titulo vacio en el idioma por defecto");
+            return;
         }
 
+        // añade estados o transiciones segun en el formulario que estes
+        if (parent.hasClass('autocompletar-estados')) {
+            //Todo: añadir validación
+            let typeState = parent.find('input[name="tipo-estado"]:checked');
+            let typeStateValue = typeState.val();
+            let typeStateText = (typeStateValue === '0') ? 'Estado Inicial' : (typeStateValue === '1') ? 'Estado Intermedio': 'Estado final';
+            let tagEditorsList = parent.find(".editores .tag-list").children();
+            let tagReadersList = parent.find(".lectores .tag-list").children();
+            let statePrivacy = formOculto.find('#estado-publico-si').prop('checked');
+            let stateColor = formOculto.find('input[type="color"]').val();
+            list.append(this.addTagState(id, this.formatMultiLangText(tagValues), tagValue, statePrivacy, stateColor, typeStateText, typeStateValue, tagEditorsList, tagReadersList));
+            $(`#${modalID} .select-origin option[value=${id}]`).remove();
+            $(`#${modalID} .select-end option[value=${id}]`).remove();
+            // añade los estados en las transiciones
+            if (typeStateValue == '0' || typeStateValue == '1') {
+                this.updateOption(modalID, '.select-origin', id, typeStateValue, statePrivacy, tagValue, tagValues);
+
+                if (typeStateValue == '1') {
+                    this.updateOption(modalID, '.select-end', id, typeStateValue, statePrivacy, tagValue, tagValues);
+                }
+            } else if (typeStateValue == '2') {
+                this.updateOption(modalID, '.select-end', id, typeStateValue, statePrivacy, tagValue, tagValues);
+            }
+
+        } else if (parent.hasClass('autocompletar-transiciones')) {
+            //Todo: añadir validación
+            const origin = formOculto.find('.select-origin option:selected');
+            const end = formOculto.find('.select-end option:selected');
+
+            let tagResponsiblesList = formOculto.find(".responsables .tag-list").children();
+            list.append(this.addTagState(id, this.formatMultiLangText(tagValues), tagValue,null, null, null, null, null, null, tagResponsiblesList, origin, end));
+        } else {
+            list.append(this.addSpanTag(tagValue));
+        }
+
+        this.sortTags(list.children(), parent);
+        this.onChecked();
+        this.addTagEvents();
+        this.updateHiddenInput(list, inputHidden);
+    },
+    onChecked: function () {
+        const list = $('.autocompletar.autocompletar-estados').find('>.tag-list');
+        // si hay 2 estados o mas toggle disabled en el formulario
+        if (list.find('.tag').length >= 2) {
+            list.closest('.tab-pane').find('.autocompletar-transiciones>.input-wrap input[type="text"]').attr('disabled', false);
+            list.closest('.tab-pane').find('.autocompletar-recursos>select').attr('disabled', false);
+        } else {
+            list.closest('.tab-pane').find('.autocompletar-transiciones>.input-wrap input[type="text"]').attr('disabled', true);
+            list.closest('.tab-pane').find('.autocompletar-recursos>select').attr('disabled', true);
+        }
+    },
+    onSelectAutocomplete: function (elem) {
+        const target = $(elem);
+        const parent = target.closest('.autocompletar');
+        const list = parent.find('>.tag-list');
+        const inputHidden = parent.parent().children('input[type="hidden"]');
+
+        const tagValue = target.val().trim();
+        const tagText = target.find(":selected").text()
+        const tagOntoID = target.find(":selected").data("onto-id");
+        const tagOntoName = target.find(":selected").data("onto-name");
+
+        if (!tagValue) return;
+
+        // si es el select de recursos, eliminar la opción seleccionada
+        if (tagValue != "5") {
+            target.find('option[value="' + tagValue + '"]').remove();
+        } else {
+            target.find('option[value="' + tagValue + '"][data-onto-id=' + tagOntoID + ']').remove();
+        }
+        list.append(this.addTagResourceType(tagValue, tagOntoName, tagOntoID, tagText));
         target.val('');
 
         this.addTagEvents();
         this.updateHiddenInput(list, inputHidden);
     },
-    addTag: function (tagValue, origin = null, end = null) {
+    addTagResourceType: function (tagValue, tagOntoName, tagOntoID, tagText) {
         return `
-            <div class="tag" title="${tagValue}">
+                <div class="tag" data-id="${tagOntoID}" data-onto-name="${tagOntoName}" title="${tagText}" >
+                    <div class="tag-wrap">
+                        <span class="tag-text">
+                            <span class="tag-label">${tagText}</span>
+                        </span>
+                        <span class="tag-remove material-icons">delete</span>
+                    </div>
+                    <input type="hidden" value="${tagValue}">
+                </div>
+            `
+    },
+
+    addTagState: function (stateID, stateNameMultiLang, stateName, statePrivacy, stateColor, stateText, stateType, stateEditorsList, stateReadersList, responsiblesList, origin, end) {
+        let editorsHtml = "";
+        if (stateEditorsList !== null && stateEditorsList !== undefined) {
+            stateEditorsList.each((i, element) => {
+                editorsHtml += this.addSpanTag($(element));
+            });
+        }
+
+        let readersHtml = "";
+        if (stateReadersList !== null && stateReadersList !== undefined) {
+            stateReadersList.each((i, element) => {
+                readersHtml += this.addSpanTag($(element));
+            });
+        }
+
+        let responsiblesHtml = "";
+        if (responsiblesList !== null && responsiblesList !== undefined) {
+            responsiblesList.each((i, element) => {
+                responsiblesHtml += this.addSpanTag($(element));
+            });
+        }
+
+        return `
+            <div class="tag" data-id="${stateID}" title="${stateNameMultiLang}">
                 <div class="tag-wrap">
                     <span class="tag-text">
-                        <span class="tag-label">${tagValue}</span>
+                    <span class="tag-label">${stateName} ${stateReadersList != null && stateReadersList != undefined ? `<span class="tag-state">-${stateText} </span>` : ''}</span>
                         ${origin || (origin && end) ? `
-                            <span class="transition">
-                                <span class="transition-label">${origin}</span>
-                                ${end !== "" ? `<span class="material-icons arrow-icon">arrow_right_alt</span>` : ''}
-                                <span class="transition-label">${end}</span>
+                            
+                            <span class="users responsibles">
+                                <span class="user-label">Responsable</span>
+                                ${responsiblesHtml}
                             </span>
-                        ` : ''}
+                            <span class="transition">
+                                <span class="transition-label" data-publico="${origin.attr('data-publico') }" data-tipo="${origin.attr('data-tipo')}" data-id="${origin.attr('data-id')}" title="${origin.attr('data-text')}">${origin.text()}</span>
+                                ${end !== "" ? `<span class="material-icons arrow-icon">arrow_right_alt</span>` : ''}
+                                <span class="transition-label" data-publico="${end.attr('data-publico') }" data-tipo="${end.attr('data-tipo')}" data-id="${end.attr('data-id')}" title="${end.attr('data-text')}">${end.text()}</span>
+                            </span>
+                        ` : `
+                                    <span class="users editors">
+                                        <span class="user-label">Editores</span>
+                                            ${editorsHtml}  
+                                    </span>
+                                    <span class="users readers">
+                                        <span class="user-label">Lectores</span>
+                                            ${readersHtml}
+                                    </span>
+                                </span>
+                        `
+            }
                     </span>
                     <span class="tag-edit material-icons">edit</span>
                     <span class="tag-remove material-icons">delete</span>
                 </div>
-                <input type="hidden" value="${tagValue}">
+                ${stateReadersList == null ?
+                `<input type="hidden" data-estado-origen-id="${origin.attr('data-id')}" data-estado-fin-id="${end.attr('data-id')}" value="${stateNameMultiLang}">` :
+                `<input type="hidden" data-tipo-estado="${stateType}" data-estado-color="${stateColor}" data-estado-publico="${statePrivacy}" value="${stateNameMultiLang}">`}
             </div>
-        `;
+        `
     },
+
+    addPersonTag: function (tag) {
+        let tagID = $(tag).attr("data-id");
+        let tagValue = $(tag).text();
+        let tagGrupo = $(tag).attr("data-grupo");
+        return `
+                <div class="tag" data-grupo="${tagGrupo}" data-id="${tagID}" title="${tagValue}" >
+                    <div class="tag-wrap">
+                        <span class="tag-text">
+                            <span class="tag-label">${tagValue}</span>
+                        </span>
+                        <span class="tag-remove custom material-icons">delete</span>
+                    </div>
+                </div>
+            `
+    },
+
+    addSpanTag: function (tag) {
+        let tagID = $(tag).attr("data-id");
+        let tagValue = $(tag).attr('title');
+        let grupo = $(tag).attr('data-grupo')
+        return `<span data-grupo="${grupo}" data-id="${tagID}">${tagValue}</span>`;
+    },
+
     addTagEvents: function () {
+        // editar tag
+        this.autocompletar.find('.tag-list .tag-edit').off('click').on('click', (e) => {
+            const tag = $(e.currentTarget).closest('.tag');
+            tag.parent().children().removeClass("d-none")
+            this.editTag(e, tag);
+        });
+
+        // eliminar tag
         this.autocompletar.find('.tag-list .tag-remove').off('click').on('click', (e) => {
             const tag = $(e.currentTarget).closest('.tag');
-            const parent = $(e.currentTarget).closest('.autocompletar');
-            const list = $(e.currentTarget).closest('.tag-list');
-            const inputHidden = parent.find('input[type="hidden"]');
+            const tagValue = tag.find('input[type="hidden"]').val();
+            const autocompletar = $(e.currentTarget).closest('.autocompletar');
+            const parent = autocompletar.closest('.tab-content');
+            const isNewWorkflow = parent.parents("#modal-nuevo-workflow").length == 1;
 
-            this.removeTag(tag);
-            this.updateHiddenInput(list, inputHidden);
+            // si es el select de recursos, volver a añadir la opción eliminada
+            if (autocompletar.hasClass('autocompletar-recursos')) {
+                const select = parent.find('.autocompletar-recursos').find('select');
+                const tagText = tag.attr("title");
+                let option = '<option value="' + tagValue + '">' + tagText + '</option>';
+                if (tagValue == '5') {
+                    let tagOntoID = tag.data('id');
+                    let tagOntoName = tag.data('onto-name');
+                    option = `<option data-onto-id="${tagOntoID} data-onto-name="${tagOntoName}" value="${tagValue}>${tagText}</option>"`;
+                }
+                select.append(option);
+                tag.remove();
+            } else if (autocompletar.hasClass('autocompletar-transiciones')) {
+                if (!isNewWorkflow) {
+                    this.handleDeleteTransition(tag.attr('data-id'), tag, autocompletar);
+                } else {
+                    tag.remove();
+                }
+            } else {
+                // no eliminamos un estado si ya existe en una transicion
+                const transitionTags = parent.find('.autocompletar-transiciones .tag').not('.d-none');;
+                if (transitionTags.length < 1) this.removeTag(tag);
+                let labelsList = [];
+                transitionTags.each((i, transitionTag) => {
+                    const transition = $(transitionTag).find('.transition');
+                    const labels = transition.find('.transition-label');
+                    if (labels.length === 0) this.removeTag(tag);
+                    labels.each((j, label) => {
+                        labelsList.push(label);
+                    });
+                });
+                const matchFound = labelsList.some(label => {
+                    return $(label).attr("title").trim().toLowerCase() === tagValue.trim().toLowerCase();
+                });
+                if (!matchFound && !isNewWorkflow) {
+                    // Comprobamos si afecta alguna recurso
+                    this.handleDeleteState(tag.attr('data-id'), tag, parent.find('.autocompletar-transiciones'));
+                } else if (!matchFound) {
+                    parent.find(`.autocompletar-transiciones select.select-origin option[value="${tag.attr('data-id') }"]`).remove();
+                    parent.find(`.autocompletar-transiciones select.select-end option[value="${tag.attr('data-id')}"]`).remove();
+                    tag.remove();
+                }
+                else {
+                    mostrarNotificacion("error", "No se puede borrar un estado que pertenece a una transicion");
+                }
+            }
+
+            //const list = $(e.currentTarget).closest('.tag-list');
+            //const inputHidden = autocompletar.children('input[type="hidden"]');
+            this.onChecked(autocompletar);
+            //this.updateHiddenInput(list, inputHidden);
         });
     },
-    removeTag: function (tag) {
-        const tagValue = tag.find('input[type="hidden"]').val();
+    editTag: function (e, tag) {
+        this.toggleForm(e);
 
+        // rellenar el input con el valor de la tag
+        const parent = tag.closest('.autocompletar');
+        const list = parent.find('>.tag-list');
+        const modalID = parent.parents('.modal-flujo').attr('id');
+        // recorremos los usuarios de la tag y los añadimos al formulario
+        const formOculto = parent.find('.formulario-oculto');
+        !formOculto.hasClass("editando") && formOculto.addClass("editando");
+        formOculto.attr('data-id', tag.attr('data-id'));
+
+        // Idioma actual
+        const lang = $('#panContenidoMultiIdioma .nav-tabs a[aria-selected="true"]').attr('id').split('_')[1];
+        // Obtenemos los inputs multi idioma
+        const titleInputs = formOculto.find('.nombre-form-oculto');
+        titleInputs.hide();
+        // Elegimos el input del idioma actual y le asignamos su valor actual
+        const titleInputActive = formOculto.find(`.nombre-form-oculto-${lang}`);
+        titleInputActive.val(tag.find('.tag-label').clone().children().remove().end().text().trim());
+        // Obtenemos el resto de idiomas y asignamos los valores de la tag su input correspondiente
+        const langs = [];
+        let context = this;
+        $('#panContenidoMultiIdioma .nav-tabs a[aria-selected="false"]').each(function () {
+            let otherLang = $(this).attr('id').split('_')[1];
+            let input = formOculto.find(`.nombre-form-oculto-${otherLang}`);
+            input.val(context.getLanguageValue(tag, otherLang));
+        });
+        // Mostramos el input con el idioma actual
+        titleInputActive.show();
+
+        if (parent.hasClass('autocompletar-estados')) {
+            let $datosEstado = tag.find('input[type="hidden"]');
+            let color = $datosEstado.data("estado-color");
+            // Tipo de estado 
+            if ($datosEstado.data("tipo-estado") == 0) {
+                formOculto.find('input#estado-inicial').prop('checked', true);
+                color = color == "" ? "#80C8F7" : color;
+            } else if ($datosEstado.data("tipo-estado") == 1) {
+                formOculto.find('input#estado-intermedio').prop('checked', true);
+                color = color == "" ? "#FFB74D" : color;
+            } else if ($datosEstado.data("tipo-estado") == 2) {
+                formOculto.find('input#estado-final').prop('checked', true);
+                color = color == "" ? "#94c748" : color;
+            }
+            // Privacidad de estado
+            if ($datosEstado.data("estado-publico")) {
+                formOculto.find('input#estado-publico-si').trigger('click');
+            } else {
+                formOculto.find('input#estado-publico-no').trigger('click');
+            }
+            // Input Color
+            formOculto.find('input[type="color"]').val(color);
+        } else if (parent.hasClass('autocompletar-transiciones')) {
+            // Hay que cargar las opciones disponibles
+            let estados = parent.parents('.tab-content').first().find('.autocompletar-estados .tag-list').children();
+            let that = this;
+            estados.each(function () {
+                let estado = $(this);
+                let typeStateValue = estado.find('input[type="hidden"]').attr("data-tipo-estado");
+                let id = estado.attr("data-id");
+                let tagValue = estado.find(".tag-label").clone().children().remove().end().text().trim();
+                let tagValues = estado.attr("title");
+                let isPublic = estado.find('input[type="hidden"]').attr("data-estado-publico");
+                if (typeStateValue == '0' || typeStateValue == '1') {
+                    that.updateOption(modalID, '.select-origin', id, typeStateValue, isPublic, tagValue, null, tagValues);
+
+                    if (typeStateValue == '1') {
+                        that.updateOption(modalID, '.select-end', id, typeStateValue, isPublic, tagValue, null, tagValues);
+                    }
+                } else if (typeStateValue == '2') {
+                    that.updateOption(modalID, '.select-end', id, typeStateValue, isPublic, tagValue, null, tagValues);
+                }
+            });
+        }
+
+        tag.find('.users span:not(.user-label)').each((i, elem) => {
+            const editors = $(elem).parent().hasClass('editors');
+            const editorsList = formOculto.find('.editores .tag-list');
+            const readers = $(elem).parent().hasClass('readers');
+            const readersList = formOculto.find('.lectores .tag-list');
+            const responsibles = $(elem).parent().hasClass('responsibles');
+            const responsiblesList = formOculto.find('.responsables .tag-list');
+
+            const tagValue = $(elem).text();
+            const tagID = $(elem).attr("id");
+
+            if (editors) editorsList.append(this.addPersonTag(elem));
+            if (readers) readersList.append(this.addPersonTag(elem));
+            if (responsibles) responsiblesList.append(this.addPersonTag(elem));
+        });
+
+        // rellenar selects de estados en transiciones
+        const transition = tag.find('.transition');
+        const origin = transition.find('.transition-label').first();
+        const end = transition.find('.transition-label').last();
+        formOculto.find('.select-origin').val(origin.attr('data-id'));
+        formOculto.find('.select-end').val(end.attr('data-id'));
+
+        // eliminar la tag
+        const inputHidden = parent.parent().children('input[type="hidden"]');
+        /*this.removeTag(tag);*/
+        tag.addClass("d-none");
+        this.updateHiddenInput(list, inputHidden);
+    },
+    removeTag: function (tag) {
         tag.remove();
-        $('.select-origin option[value="' + tagValue + '"]').remove();
-        $('.select-end option[value="' + tagValue + '"]').remove();
     },
     updateHiddenInput: function (list, inputHidden) {
         const tagValues = list.find('.tag').map(function () {
@@ -2682,18 +3076,115 @@ const autocompletarWorkflows = {
         }).get();
         inputHidden.val(tagValues.join(','));
     },
-    addState: function (target, value) {
-        const selectOrigin = target.parents('.tab-content').find('.select-origin');
-        const selectEnd = target.parents('.tab-content').find('.select-end');
+    formatMultiLangText: function (elements) {
+        let text = '';
+        elements.each(function () {
+            let value = $(this).val();
+            let language = $(this).attr('lang')
+            if (value) {
+                text += `${value}@${language}|||`;
+            }
+        });
 
-        selectOrigin.append(`
-            <option value="${value}">${value}</option>
-        `);
-        selectEnd.append(`
-            <option value="${value}">${value}</option>
-        `);
+        return text;
     },
+    getLanguageValue: function(element, lang) {
+        let value = '';
+        let $tag = $(element);
+        let multiLangValues = $tag.attr('title').split("|||");
+        multiLangValues.forEach(element => {
+            if (element.includes(`@${lang}`)) {
+                value = element.split("@")[0];
+            }
+        });
+        return value;
+    },
+    updateOption: function (formID, selectClass, id, type, isPublic, tagValue, tagValues, formattedValues) {
+        let option = $(`#${formID} ${selectClass} option[value="${id}"]`);
+        let dataText = tagValues == undefined ? formattedValues : this.formatMultiLangText(tagValues);
+        if (option.length === 0) {
+            $(selectClass).append(`<option data-publico="${isPublic}" data-tipo="${type}" data-id="${id}" value="${id}" data-text="${dataText}">${tagValue}</option>`);
+        } else {
+            option.text(tagValue);
+            option.attr("data-text", dataText);
+            option.attr("data-tipo", type);
+        }
+    },
+    handleDeleteTransition: function (id, tag, autocompletar) {
+        const that = this;
+        let dataPost = {
+            pTransicionID: id,
+            pFlujoID: operativaGestionFlujos.workflowID
+        }
+        loadingMostrar();
+        GnossPeticionAjax(
+            operativaGestionFlujos.urlDeleteTransition,
+            dataPost,
+            true
+        ).done(function (data) {
+            loadingOcultar();
+            tag.addClass("d-none");
+            mostrarNotificacion("success", "Transicion marcado como eliminado correctamente, guarda los cambios para aplicar el cambio");
+            that.onChecked(autocompletar);
+        }).fail(function (data) {
+            loadingOcultar();
+            mostrarNotificacion("error", data);
+        });
+    },
+    handleDeleteState: function (id, tag, autocompletar) {
+        const that = this;
+        let dataPost = {
+            pEstadoID: id,
+            pFlujoID: operativaGestionFlujos.workflowID
+        }
+        loadingMostrar();
+        GnossPeticionAjax(
+            operativaGestionFlujos.urlDeleteState,
+            dataPost,
+            true
+        ).done(function (data) {
+            loadingOcultar();
+            tag.addClass("d-none");
+            let deletedTransitions = autocompletar.find('.tag-list .tag.d-none');
+            deletedTransitions.each(function () {
+                let deletedTransition = $(this);
+                deletedTransition.find(`.transition-label[data-id="${id}"]`).attr("data-eliminado", true);
+            });
+            mostrarNotificacion("success", "Estado marcado eliminado correctamente, guarda los cambios para aplicar el cambio");
+            // Hay que eliminar los option del estado marcado como eliminado
+            autocompletar.find(`select.select-origin option[value="${id}"]`).remove();
+            autocompletar.find(`select.select-end option[value="${id}"]`).remove();
+        }).fail(function (data) {
+            loadingOcultar();
+            mostrarNotificacion("error", data);
+        })
+    },
+    sortTags: function (tags, autocompletar) {
+        tags.sort(function (a, b) {
+            let titleA = $(a).find('.tag-label').text().toLowerCase();
+            let titleB = $(b).find('.tag-label').text().toLowerCase();
+
+            if (autocompletar.hasClass("autocompletar-transiciones")) {
+                return titleA.localeCompare(titleB);
+            }
+
+            var stateTypeA = parseInt($(a).find('input').data('tipo-estado'));
+            var stateTypeB = parseInt($(b).find('input').data('tipo-estado'));
+
+            if (stateTypeA != stateTypeB) {
+                return stateTypeA - stateTypeB;
+            }
+
+            return titleA.localeCompare(titleB);
+        });
+
+        let tagList = autocompletar.find('.tag-list').html('');
+        tags.each(function (i, element) {
+            tagList.append(element);
+        });
+    }
 };
+
 
 
 const calcHeightModalComparar = {
@@ -2711,7 +3202,7 @@ const calcHeightModalComparar = {
             this.matchElementHeights(this.compararComponentes, ".comparar-version", ".form-group.contenedorListaIds, .form-group.contenedorPrincipalMailList, .form-group.contenedorPrincipalMenuList");
         }
         if (this.compararVersiones.hasClass("show")) {
-            this.matchElementHeights(this.compararVersiones, ".comparar-version", ".form-group.editarFiltroOrden, .form-group.editarExportaciones,.form-group.editarFacetas");
+            this.matchElementHeights(this.compararVersiones, ".comparar-version", ".form-group.editarFiltroOrden, .form-group.editarExportaciones, .form-group.editarFacetas");
         }
         if (this.compararEstructura.hasClass("show")) {
             this.matchElementHeights(this.compararEstructura, ".comparar-version", ".cmsrow, .cmsrow-content");

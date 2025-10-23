@@ -1,0 +1,75 @@
+﻿@model EstadoViewModel
+@{
+    EstadoViewModel estado = Model;
+    string collapseId = $"panel_collapse_{Model.EstadoID.ToString().Substring(0, 5)}";
+    string editores = Html.GetText("DEVTOOLS", "EDITORES");
+    string tipoEstado = $"{Html.GetText("DEVTOOLS", "ESTADO")} ";
+    switch (estado.TipoEstado)
+    {
+        case TipoEstado.Inicial:
+            tipoEstado += Html.GetText("DEVTOOLS", "ESTADOINICIAL");
+            break;
+        case TipoEstado.Intermedio:
+            tipoEstado += Html.GetText("DEVTOOLS", "ESTADOINTERMEDIO");
+            break;
+        case TipoEstado.Final:
+            tipoEstado += Html.GetText("DEVTOOLS", "ESTADOFINAL");
+            break;
+    }
+
+    List<string> titulosPrivacidad = new List<string> { Html.GetText("DEVTOOLS", "LECTORES"), $"{char.ToUpper(editores[0])}{editores.Substring(1)}" };
+
+    string htmlNombreLectores = "";
+    string htmlNombreEditores = "";
+    foreach (EstadoIdentidadViewModel estadoIdentidad in estado.ListaEstadoIdentidad)
+    {
+        if (estadoIdentidad.Editor)
+        {
+            htmlNombreEditores += PintarTags(estadoIdentidad.Nombre, estadoIdentidad.PerfilID, false);
+        }
+        else
+        {
+            htmlNombreLectores += PintarTags(estadoIdentidad.Nombre, estadoIdentidad.PerfilID, false);
+        }
+    }
+
+    foreach (EstadoGrupoViewModel estadoGrupo in estado.ListaEstadoGrupo)
+    {
+        if (estadoGrupo.Editor)
+        {
+            htmlNombreEditores += PintarTags(estadoGrupo.Nombre, estadoGrupo.GrupoID, true);
+        }
+        else
+        {
+            htmlNombreLectores += PintarTags(estadoGrupo.Nombre, estadoGrupo.GrupoID, true);
+        }
+    }
+
+}
+<div class="tag" data-id="@estado.EstadoID" title="@estado.Nombre">
+    <div class="tag-wrap">
+        <span class="tag-text">
+            <span class="tag-label">@Html.ObtenerTextoIdiomaUsuario(estado.Nombre)<span class="tag-state">-@tipoEstado</span></span>
+            <span class="users editors">
+                <span class="user-label">@Html.GetText("DEVTOOLS", "EDITORES")</span>
+                @Html.Raw(htmlNombreEditores)
+            </span>
+            <span class="users readers">
+                <span class="user-label">@Html.GetText("DEVTOOLS", "LECTORES")</span>
+                @Html.Raw(htmlNombreLectores)
+            </span>
+        </span>
+        <span class="tag-edit material-icons">edit</span>
+        <span class="tag-remove material-icons">delete</span>
+    </div>
+    <input type="hidden" data-tipo-estado="@((short)estado.TipoEstado)" data-estado-color="@estado.Color" data-estado-publico="@estado.Publico" value="@estado.Nombre">
+</div>
+ 
+@functions{
+    public string PintarTags(string pNombre, Guid pIdentidadID, bool pGrupo)
+    {
+        string resultado = "";
+        resultado += $"<span data-grupo='{pGrupo}' data-id='{pIdentidadID}'>{pNombre}</span>";
+        return resultado;
+    }
+}

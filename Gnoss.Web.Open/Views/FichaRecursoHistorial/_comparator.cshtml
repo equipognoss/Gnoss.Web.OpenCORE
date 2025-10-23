@@ -1,0 +1,64 @@
+﻿@model List<ResourceModel>
+@{
+    ResourceModel modelo1 = Model.FirstOrDefault();
+    ResourceModel modelo2 = Model.LastOrDefault();
+    string urlRestoreDocumentVersion = Html.GetComunidad().Url + "/" + Html.GetText("URLSEM", "ADMINISTRARCOMUNIDADCMSEDITARPAGINA") + "/add-comment";
+}
+
+<div class="modal-header">
+    <p class="modal-title">
+        <span class="material-icons">compare</span>
+        @Html.GetText("HISTORIALVERSIONES", "COMPARARVERSIONES")
+    </p>
+    <span class="material-icons cerrar" data-dismiss="modal" aria-label="Close">close</span>
+</div>
+<div class="modal-body p-0">
+    <div class="formulario-edicion no-min-height">
+        <div class="comparar-versiones__wrap">
+            <div class="comparar-versiones__column">
+                <div class="comparar-versiones__header">
+                    <p class="version">
+                        @Html.GetText("HISTORIALVERSIONES", "VERSION") @modelo1.Version
+                        @if (modelo1.LastVersion.Equals(modelo1.Key))
+                        {
+                            <span class="chip">@Html.GetText("HISTORIALVERSIONES", "VERSIONACTUAL")</span>
+                        }
+                    </p>
+                    <p class="date">
+                        @modelo1.ModificationDate.ToString("dd/MM/yyyy HH:mm tt")
+                    </p>
+                </div>
+                <div class="comparar-versiones__body">
+                    <div class="comparar-version">
+                        @{
+                            ViewBag.Side = "left";
+                        }
+                        @Html.PartialView("_comparator-item", modelo1)
+                    </div>
+                </div>
+            </div>
+            <div class="comparar-versiones__column">
+                <div class="comparar-versiones__header">
+                    <p class="version">
+                        @Html.GetText("HISTORIALVERSIONES", "VERSION") @modelo2.Version
+                        @if (modelo2.LastVersion.Equals(modelo2.Key))
+                        {
+                            <span class="chip">@Html.GetText("HISTORIALVERSIONES", "VERSIONACTUAL")</span>
+                        }
+                    </p>
+                    <p class="date">
+                        @modelo2.ModificationDate.ToString("dd/MM/yyyy HH:mm tt")
+                    </p>
+                </div>
+                <div class="comparar-versiones__body">
+                    <div class="comparar-version">
+                        @{
+                            ViewBag.Side = "right";
+                        }
+                        @Html.PartialView("_comparator-item", modelo2)
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

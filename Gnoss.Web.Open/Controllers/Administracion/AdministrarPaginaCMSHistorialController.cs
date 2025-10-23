@@ -53,17 +53,18 @@ namespace Gnoss.Web.Open.Controllers.Administracion
         #region Metodos Web
 
         [HttpPost]
-		[TypeFilter(typeof(PermisosContenidos), Arguments = new object[] { new ulong[] { (ulong)PermisoContenidos.RestaurarVersionPagina, (ulong)PermisoContenidos.EliminarVersionPagina } })]
+		[TypeFilter(typeof(PermisosContenidos), Arguments = new object[] { new ulong[] { (ulong)PermisoContenidos.VerPagina } })]
 		public ActionResult LoadHistory(Guid pPestanyaID)
         {
             UtilPermisos utilPermisos = new UtilPermisos(mEntityContext, mLoggingService, mConfigService, mLoggerFactory.CreateLogger<UtilPermisos>(), mLoggerFactory);
-            ViewBag.RestaurarVersionComponenteCMSPermitido = utilPermisos.IdentidadTienePermiso((ulong)PermisoContenidos.RestaurarVersionPagina, mControladorBase.IdentidadActual.Clave, mControladorBase.IdentidadActual.IdentidadMyGNOSS.Clave, TipoDePermiso.Contenidos);
+            ViewBag.RestaurarVersionPaginaPermitido = utilPermisos.IdentidadTienePermiso((ulong)PermisoContenidos.RestaurarVersionPagina, mControladorBase.IdentidadActual.Clave, mControladorBase.IdentidadActual.IdentidadMyGNOSS.Clave, TipoDePermiso.Contenidos);
+            ViewBag.EliminarVersionPaginaPermitido = utilPermisos.IdentidadTienePermiso((ulong)PermisoContenidos.EliminarVersionPagina, mControladorBase.IdentidadActual.Clave, mControladorBase.IdentidadActual.IdentidadMyGNOSS.Clave, TipoDePermiso.Contenidos);
             AdministrarPaginaCMSHistorialViewModel modelo = CargarPaginaCMSHistorial(pPestanyaID);
 
             return PartialView("_history", modelo);
         }
 
-		[TypeFilter(typeof(PermisosContenidos), Arguments = new object[] { new ulong[] { (ulong)PermisoContenidos.RestaurarVersionPagina, (ulong)PermisoContenidos.EliminarVersionPagina } })]
+		[TypeFilter(typeof(PermisosContenidos), Arguments = new object[] { new ulong[] { (ulong)PermisoContenidos.RestaurarVersionPagina, (ulong)PermisoContenidos.VerPagina } })]
 		public ActionResult Compare(string documentosComparar, Guid pPestanyaID, bool pRestaurar = false)
         {
             string[] guids = documentosComparar.Split(new char[] { '&' }, StringSplitOptions.RemoveEmptyEntries);

@@ -1,4 +1,5 @@
 ﻿@using Es.Riam.Gnoss.AD.CMS
+@using Es.Riam.Gnoss.Web.MVC.Models.Flujos
 
 @model CMSAdminComponenteEditarViewModel
 
@@ -31,6 +32,12 @@ Variables
 	string modalTitle = "";
 	bool isShortNameAGuid = Guid.TryParse(Model.ShortName, out _);
 	bool isEmptyShortName = string.IsNullOrEmpty(Model.ShortName);
+	string urlModalCambiarEstado = $"{Comunidad.Url}/{Html.GetText("URLSEM", "ADMINISTRARCOMUNIDADCMSEDITARCOMPONENTE")}/change-state-modal";
+	string urlHistorialTransiciones = $"{Comunidad.Url}/{Html.GetText("URLSEM", "ADMINISTRARCOMUNIDADCMSEDITARCOMPONENTE")}/transition-history?pComponenteID={Model.ComponenteID}";
+	List<TransicionModel> transiciones = new List<TransicionModel>();
+	if (Model.Estado != null){
+		transiciones = Model.Estado.Transiciones;
+	}	
 }
 
 @{
@@ -188,6 +195,59 @@ Variables
 @* Cuerpo del modal *@
 <div class="modal-body">
 	<div class="formulario-edicion">
+		@if (Model.Estado != null && transiciones.Count > 0)
+		{
+			<div class="acciones-componente" style="display: flex; justify-content: right; margin: 20px; margin-bottom: -40px;">
+				<div class="dropdown">
+					<a id="op_MoreTransitions" href="#" class="dropdown-toggle btn btn-outline-grey btn-transicion" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+						<span class="material-icons">move_down</span>
+						<span class="texto">@Model.Estado.Nombre</span>
+					</a>
+					<div class="dropdown-menu basic-dropdown dropdown-icons dropdown-menu-right" aria-labelledby="dropdownMasTransiciones">
+						<p class="dropdown-title">@Html.GetText("CONTROLESDOCUMENTACION", "TRANSICION")</p>
+						<ul class="no-list-style">
+							@{
+								int cont = 0;
+								foreach (TransicionModel transicion in transiciones)
+								{
+									string urlTransicion = $"{urlModalCambiarEstado}?pTransicionID={transicion.TransicionID}&pComponenteID={Model.ComponenteID}";
+
+									<li>
+										<a class="item-dropdown" onclick="CargarModalTransiciones('@urlTransicion', 'true');" data-toggle="modal" data-target="#modal-container">
+											<span class="transition">
+												<span class="transition-label">@transicion.Nombre</span>
+											</span>
+										</a>
+									</li>
+									cont++;
+								}
+								@if (Model.HistorialTransiciones != null && Model.HistorialTransiciones.Count > 0)
+								{
+									if (cont > 0)
+									{
+										<hr />
+									}
+									<li>
+										<a class="item-dropdown" onclick="CargarModalTransiciones('@urlHistorialTransiciones', 'true');" data-toggle="modal" data-target="#modal-container">
+											<span class="material-icons">history</span>
+											<span class="texto">@Html.GetText("FLUJOS", "VERHISTORIAL")</span>
+										</a>
+									</li>
+								}
+							}
+						</ul>
+					</div>
+				</div>
+			</div>
+		}
+		else if (Model.Estado != null && transiciones.Count == 0)
+		{
+			<button class="btn btn-outline-grey" style="margin: 20px;">
+				<span class="material-icons">move_down</span>
+				<span class="texto">@Model.Estado.Nombre</span>
+			</button>
+		}
+
 		@* Panel de idiomas (Si hay más de un idioma disponible) *@	
 		@if (Model.ListaIdiomas.Count > 1)
 		{

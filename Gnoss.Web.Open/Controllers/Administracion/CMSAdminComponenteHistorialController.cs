@@ -1,19 +1,21 @@
-﻿using AspNetCoreGeneratedDocument;
-using Es.Riam.AbstractsOpen;
+﻿using Es.Riam.AbstractsOpen;
 using Es.Riam.Gnoss.AD.EntityModel;
 using Es.Riam.Gnoss.AD.EntityModel.Models.CMS;
 using Es.Riam.Gnoss.AD.EntityModelBASE;
+using Es.Riam.Gnoss.AD.ServiciosGenerales;
 using Es.Riam.Gnoss.AD.Virtuoso;
 using Es.Riam.Gnoss.CL;
 using Es.Riam.Gnoss.Logica.CMS;
 using Es.Riam.Gnoss.Logica.Identidad;
 using Es.Riam.Gnoss.Util.Configuracion;
 using Es.Riam.Gnoss.Util.General;
+using Es.Riam.Gnoss.UtilServiciosWeb;
 using Es.Riam.Gnoss.Web.MVC.Controllers.Administracion;
 using Es.Riam.Gnoss.Web.MVC.Models.Administracion;
 using Es.Riam.Interfaces.InterfacesOpen;
 using Es.Riam.InterfacesOpen;
 using Es.Riam.Util;
+using Gnoss.Web.Open.Filters;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Infrastructure;
@@ -46,13 +48,19 @@ namespace Gnoss.Web.Open.Controllers.Administracion
         #endregion
 
         [HttpPost]
+        [TypeFilter(typeof(PermisosContenidos), Arguments = new object[] { new ulong[] { (ulong)PermisoContenidos.RestaurarVersionCMS, (ulong)PermisoContenidos.EliminarVersionCMS } })]
         public ActionResult LoadHistory(string idComponente)
         {
+            UtilPermisos utilPermisos = new UtilPermisos(mEntityContext, mLoggingService, mConfigService, mLoggerFactory.CreateLogger<UtilPermisos>(), mLoggerFactory);
+            ViewBag.RestaurarVersionComponenteCMS = utilPermisos.IdentidadTienePermiso((ulong)PermisoContenidos.RestaurarVersionCMS, mControladorBase.IdentidadActual.Clave, mControladorBase.IdentidadActual.IdentidadMyGNOSS.Clave, TipoDePermiso.Contenidos);
+            ViewBag.EliminarVerisonComponenteCMS = utilPermisos.IdentidadTienePermiso((ulong)PermisoContenidos.EliminarVersionCMS, mControladorBase.IdentidadActual.Clave, mControladorBase.IdentidadActual.IdentidadMyGNOSS.Clave, TipoDePermiso.Contenidos);
             CMSAdminComponenteHistorialViewModel modelo = CargarComponentesHistorial(Guid.Parse(idComponente));
 
             return PartialView("_modal-views/_history", modelo);
         }
 
+        [HttpPost]
+        [TypeFilter(typeof(PermisosContenidos), Arguments = new object[] { new ulong[] { (ulong)PermisoContenidos.RestaurarVersionCMS, (ulong)PermisoContenidos.EliminarVersionCMS } })]
         public ActionResult Compare(string documentosComparar)
         {
             string[] param = documentosComparar.Split(new char[] { '&' }, StringSplitOptions.RemoveEmptyEntries);

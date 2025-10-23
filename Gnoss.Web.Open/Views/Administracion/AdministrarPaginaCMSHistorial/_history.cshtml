@@ -1,8 +1,8 @@
 ﻿@model AdministrarPaginaCMSHistorialViewModel
 @{
     AdministrarPaginaCMSVersionViewModel paginaActual = Model.PaginasVersiones.OrderByDescending(item => item.FechaModificacion).First();
-    string urlCompareStructVersion = Html.GetComunidad().Url + "/" + Html.GetText("URLSEM", "ADMINISTRARCMSPAGINAHISTORIAL") + "/compare";
-    bool puedeRestaurar = ViewBag.RestaurarVersionComponenteCMSPermitido ?? false;
+    bool puedeRestaurar = ViewBag.RestaurarVersionPaginaPermitido ?? false;
+    bool puedeEliminar = ViewBag.EliminarVersionPaginaPermitido ?? false;
     int version = Model.PaginasVersiones.Count;
 }
 
@@ -41,7 +41,7 @@
                     <td>
                         <div class="check-wrapper">
                             <div class="custom-control custom-checkbox">
-                                <input type="checkbox" class="custom-control-input" id="@pagina.VersionID">
+                                <input type="checkbox" class="custom-control-input version-check" data-version-id="@pagina.VersionID" id="@pagina.VersionID">
                                 <label class="custom-control-label" for="@pagina.VersionID"></label>
                             </div>
                         </div>
@@ -53,20 +53,40 @@
                     <td>@pagina.Autor</td>
                     <td>@pagina.Comentario</td>
                     @* RESTAURAR *@
-                    @if (pagina.VersionID == paginaActual.VersionID)
-                    {
-                        <td>@Html.GetText("HISTORIALVERSIONES", "VERSIONACTUAL")</td>
-                    }
-                    else if(puedeRestaurar)
-                    {
-                        <td>
-                            <a class="btn btn-outline-grey btnRestoreVersionPaginaCMS" data-target="#modal-comparar-estructura"
-                               data-toggle="modal" data-version-id="@pagina.VersionID" data-version-actual-id="@paginaActual.VersionID" data-pestanya-id="@pagina.PestanyaID">
-                                <span class="material-icons">restore</span>
-                                @Html.GetText("HISTORIALVERSIONES", "RESTAURAR")
-                            </a>
-                        </td>
-                    }
+                    <td>
+                        @if (pagina.VersionID == paginaActual.VersionID)
+                        {
+                            @Html.GetText("HISTORIALVERSIONES", "VERSIONACTUAL")
+                        }
+                        else
+                        {
+                            <div class="dropdown position-relative">
+                                <a class="nav-link dropdown-toggle btn btn-outline-grey" data-toggle="dropdown">
+                                    <span class="material-icons">more_vert</span>
+                                    <span class="texto">@Html.GetText("ADMINISTRACIONBASICA", "ACCIONES")</span>
+                                </a>
+                                <div class="dropdown-menu dropdown-menu-right basic-dropdown">
+                                    @if (puedeRestaurar)
+                                    {
+                                        <a class="item-dropdown btnCompare" data-target="#modal-comparar-estructura"
+                                           data-toggle="modal" data-version-id="@pagina.VersionID" data-version-actual-id="@paginaActual.VersionID" data-pestanya-id="@pagina.PestanyaID">
+                                            <span class="material-icons">restore</span>
+                                            @Html.GetText("HISTORIALVERSIONES", "RESTAURAR")
+                                        </a>
+                                    }
+                                    @if (puedeEliminar)
+                                    {
+                                        <a class="item-dropdown btnEliminarVersionPagina" data-version-id="@pagina.VersionID" data-toggle="modal" data-target="#modal-borrar-version-pagina-estructura">
+                                            <span class="material-icons">delete</span>
+                                            @Html.GetText("DEVTOOLS", "BORRAR")
+                                        </a>
+                                    }
+                                </div>
+                            </div>
+                            
+
+                        }
+                    </td>
                 </tr>
                 version--;
             }
@@ -74,25 +94,8 @@
     </table>
 
     <div class="panelBotonera">
-        <a id="btnCompararVersionesPaginaCMS"
-           class="btn btn-primary uppercase"
-           data-target="#modal-comparar-estructura"
+        <a class="btn btn-primary uppercase btnCompare"
            data-pestanya-id="@paginaActual.PestanyaID"
-           data-toggle="modal"
            disabled>@Html.GetText("HISTORIALVERSIONES", "COMPARAR")</a>
     </div>
 </div>
-
-@* Input oculto para guardar los ids de los checks chequeados *@
-<input type="hidden" id="txtHackCheckSeleccionadosEstructura" />
-<input type="hidden" id="txtComponenteActualID" data-componente-id="@paginaActual.PestanyaID" />
-
-<script type="text/javascript">
-    (function ($) {
-         const pParams =
-            {
-                urlCompareStructVersion: "@urlCompareStructVersion"
-            }
-        operativaGestionHistorialPaginaCMS.init(pParams);
-    })();
-</script>

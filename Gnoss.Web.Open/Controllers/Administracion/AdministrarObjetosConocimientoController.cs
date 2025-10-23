@@ -50,6 +50,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Infrastructure;
 using Microsoft.AspNetCore.Mvc.ViewEngines;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
@@ -588,6 +589,8 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
                 }
 
                 EditOntologyViewModel ontologyBorrar = contrObjetosConocim.EliminarObjetoConocimientoOntologia(DocumentoId, Id, esPrincipal);
+
+                EliminarFacetasDeObjetoConocimiento(Id, ProyectoSeleccionado.Clave);
 
                 if (iniciado)
                 {
@@ -1748,7 +1751,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
                             if (archivoInfo2 != null)
                             {
                                 CallFileService fileService = new CallFileService(mConfigService, mLoggingService);
-                                fileService.GuardarCSSOntologia(buffer2, DocumentoID, $"{Path.DirectorySeparatorChar}Archivos{Path.DirectorySeparatorChar}{DocumentoID.ToString().Substring(0, 3)}{Path.DirectorySeparatorChar}", extensionArchivo2);
+                                fileService.GuardarCSSOntologia(buffer2, DocumentoID, $"{DocumentoID.ToString().Substring(0, 3)}{Path.DirectorySeparatorChar}", extensionArchivo2);
                             }
 
                             if (buffer3 != null)
@@ -1762,13 +1765,13 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
                                 ServicioImagenes servicioImagenes = new ServicioImagenes(mLoggingService, mConfigService, mLoggerFactory.CreateLogger<ServicioImagenes>(), mLoggerFactory);
                                 servicioImagenes.Url = UrlIntragnossServicios.Replace("https://", "http://");
 
-                                servicioImagenes.AgregarImagenADirectorioOntologia(buffer4, $"Archivos{Path.DirectorySeparatorChar}{DocumentoID.ToString().Substring(0, 3)}", $"{DocumentoID}_240", extensionArchivo4);
+                                servicioImagenes.AgregarImagenADirectorioOntologia(buffer4, $"{DocumentoID.ToString().Substring(0, 3)}", $"{DocumentoID}_240", extensionArchivo4);
                             }
 
                             if (archivoInfo5 != null)
                             {
                                 CallFileService fileService = new CallFileService(mConfigService, mLoggingService);
-                                fileService.GuardarCSSOntologia(buffer5, DocumentoID, $"{Path.DirectorySeparatorChar}Archivos{Path.DirectorySeparatorChar}{DocumentoID.ToString().Substring(0, 3)}{Path.DirectorySeparatorChar}", extensionArchivo5);
+                                fileService.GuardarCSSOntologia(buffer5, DocumentoID, $"{DocumentoID.ToString().Substring(0, 3)}{Path.DirectorySeparatorChar}", extensionArchivo5);
 
                             }
 
@@ -2360,6 +2363,18 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
             identidadCN.Dispose();
 
             return TipoAccesoObjetosConocimiento.SinAcceso;
+        }
+
+        private void EliminarFacetasDeObjetoConocimiento(string pObjetoConocimiento, Guid pProyectoID)
+        {
+            using (FacetaCN facetaCN = new FacetaCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<FacetaCN>(), mLoggerFactory))
+            {
+                List<FacetaObjetoConocimientoProyecto> facetasEliminar = facetaCN.ObtenerFacetasObjetoConocimientoProyectoDeOntologia(pObjetoConocimiento, pProyectoID);
+                
+                facetaCN.EliminarFacetas(facetasEliminar);
+
+                facetaCN.GuardarCambios();
+            }
         }
 
         #endregion

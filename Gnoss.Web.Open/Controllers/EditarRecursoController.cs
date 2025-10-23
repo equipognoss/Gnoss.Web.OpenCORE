@@ -26,6 +26,7 @@ using Es.Riam.Gnoss.Elementos.ServiciosGenerales;
 using Es.Riam.Gnoss.Elementos.Tesauro;
 using Es.Riam.Gnoss.Logica.Documentacion;
 using Es.Riam.Gnoss.Logica.Facetado;
+using Es.Riam.Gnoss.Logica.Flujos;
 using Es.Riam.Gnoss.Logica.Identidad;
 using Es.Riam.Gnoss.Logica.ParametroAplicacion;
 using Es.Riam.Gnoss.Logica.ParametrosProyecto;
@@ -49,6 +50,7 @@ using Es.Riam.Gnoss.Web.MVC.Controles.Controladores;
 using Es.Riam.Gnoss.Web.MVC.Controllers.Administracion;
 using Es.Riam.Gnoss.Web.MVC.Filters;
 using Es.Riam.Gnoss.Web.MVC.Models;
+using Es.Riam.Gnoss.Web.MVC.Models.Administracion;
 using Es.Riam.Gnoss.Web.MVC.Models.FicherosRecursos;
 using Es.Riam.Interfaces.InterfacesOpen;
 using Es.Riam.InterfacesOpen;
@@ -78,6 +80,7 @@ using System.Collections.Generic;
 using System.Data;
 using System.Diagnostics;
 using System.IO;
+using System.IO.Pipelines;
 using System.Linq;
 using System.Net.Http;
 using System.Reflection;
@@ -1970,9 +1973,9 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                 ReemplazarArchivos_ModificarRecurso();
             }
 
-            CrearDocumentoEnModeloLive(doc);
+            CrearDocumentoEnModeloLive(doc);		
 
-            if (doc.TipoDocumentacion == TiposDocumentacion.Hipervinculo || doc.TipoDocumentacion == TiposDocumentacion.Nota || doc.TipoDocumentacion == TiposDocumentacion.VideoBrightcove || doc.TipoDocumentacion == TiposDocumentacion.VideoTOP || doc.EsVideoIncrustado || doc.EsPresentacionIncrustada)
+			if (doc.TipoDocumentacion == TiposDocumentacion.Hipervinculo || doc.TipoDocumentacion == TiposDocumentacion.Nota || doc.TipoDocumentacion == TiposDocumentacion.VideoBrightcove || doc.TipoDocumentacion == TiposDocumentacion.VideoTOP || doc.EsVideoIncrustado || doc.EsPresentacionIncrustada)
             {
                 ControladorDocumentacion.CapturarImagenWeb(doc.Clave, true, PrioridadColaDocumento.Alta, mAvailableServices);
             }
@@ -2096,10 +2099,10 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                     rutaFichero = "";
                 }
             }
-            doc = GestorDocumental.AgregarDocumento(rutaFichero, titulo, descripcion, tags, mTipoDocumento, TipoEntidadVinculadaDocumento.Web, elementoVinculadoID, mModelSaveRec.ShareAllowed, mModelSaveRec.Draft, mModelSaveRec.CreatorIsAuthor, null, false, UsuarioActual.OrganizacionID, UsuarioActual.IdentidadID);
+            doc = GestorDocumental.AgregarDocumento(rutaFichero, titulo, descripcion, tags, mTipoDocumento, TipoEntidadVinculadaDocumento.Web, elementoVinculadoID, mModelSaveRec.ShareAllowed, mModelSaveRec.Draft, mModelSaveRec.CreatorIsAuthor, null, false, UsuarioActual.OrganizacionID, UsuarioActual.IdentidadID);			
 
-            //Cambiar identificador del documento
-            if (GestorDocumental.ListaDocumentos.ContainsKey(doc.Clave))
+			//Cambiar identificador del documento
+			if (GestorDocumental.ListaDocumentos.ContainsKey(doc.Clave))
             {
                 GestorDocumental.ListaDocumentos.Remove(doc.Clave);
                 GestorDocumental.ListaDocumentos.Add(pDocumentoID, doc);
@@ -2130,7 +2133,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                 {
                     doc.FilaDocumento.CreadorID = IdentidadActual.IdentidadMyGNOSS.Clave;
                 }
-            }
+            }            
 
             List<CategoriaTesauro> listaCategorias = new List<CategoriaTesauro>();
 
@@ -2232,7 +2235,9 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                 }
             }
 
-            GuardarEnBD_SubirRecursoPart2(listaProyectosAcuNumRec);
+			AgregarEstadoDocumento(doc.FilaDocumento);
+
+			GuardarEnBD_SubirRecursoPart2(listaProyectosAcuNumRec);
 
             ControladorDocumentacion.EstablecePrivacidadRecursoEnMetaBuscador(doc, IdentidadActual, true);
 
@@ -3941,9 +3946,11 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
             GuardarDatosRespuestasEncuesta(Documento);
             GuardarImagenPrincipalRecSemantico(Documento, mOntologia);
 
-            #region Licencia propiedad intelectual
+			AgregarEstadoDocumento(Documento.FilaDocumento);
 
-            if (Documento.PermiteLicencia && Documento.CreadorID.Equals(IdentidadActual.Clave))
+			#region Licencia propiedad intelectual
+
+			if (Documento.PermiteLicencia && Documento.CreadorID.Equals(IdentidadActual.Clave))
             {
                 if (mModelSaveRec.CreatorIsAuthor && (mModelSaveRec.ShareAllowed || Documento.BaseRecursos.Count > 1 || (EsComunidad && (ProyectoSeleccionado.TipoAcceso == TipoAcceso.Publico || ProyectoSeleccionado.TipoAcceso == TipoAcceso.Restringido))))
                 {
@@ -4034,15 +4041,60 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
             pPrivacidadCambiada = privacidadCambiada;
         }
 
-        /// <summary>
-        /// Guarda el recruso actual en el modelo Live.
-        /// </summary>
-        /// <param name="pPrivacidadCambiada">Indica si la privacidad del recurso ha cambiado en esta edición</param>
-        /// <param name="pCreandoVersion">Indica si se está creando versión</param>
-        /// <param name="pCambioDeBorradoAPublicado">Indica si el recurso a cambiado de borrador a publicado</param>
-        /// <param name="pDocAntiguoID">ID del documento antiguo, si se ha creado versión</param>
-        /// <param name="pDocumento">Documento que se está guardando</param>
-        private void GuardarRecursoModeloLive(bool pPrivacidadCambiada, bool pCreandoVersion, bool pCambioDeBorradoAPublicado, Guid pDocAntiguoID, Documento pDocumento, List<Guid> pListaEditoresEliminados, List<Guid> pListaGruposEditoresEliminados)
+		private void AgregarEstadoDocumento(AD.EntityModel.Models.Documentacion.Documento pDocumento)
+		{
+            if (!pDocumento.EstadoID.HasValue)
+            {
+				FlujosCN flujosCN = new FlujosCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<FlujosCN>(), mLoggerFactory);
+				Guid? estadoID = null;
+				switch (pDocumento.Tipo)
+				{
+					case (short)TiposDocumentacion.Hipervinculo:
+						estadoID = flujosCN.ObtenerEstadoInicialDeTipoContenido(ProyectoSeleccionado.Clave, TiposContenidos.Link);
+						break;
+					case (short)TiposDocumentacion.Nota:
+						estadoID = flujosCN.ObtenerEstadoInicialDeTipoContenido(ProyectoSeleccionado.Clave, TiposContenidos.Nota);
+						break;
+					case (short)TiposDocumentacion.FicheroServidor:
+						estadoID = flujosCN.ObtenerEstadoInicialDeTipoContenido(ProyectoSeleccionado.Clave, TiposContenidos.Adjunto);
+						break;
+					case (short)TiposDocumentacion.Video:
+						estadoID = flujosCN.ObtenerEstadoInicialDeTipoContenido(ProyectoSeleccionado.Clave, TiposContenidos.Video);
+						break;
+					case (short)TiposDocumentacion.Encuesta:
+						estadoID = flujosCN.ObtenerEstadoInicialDeTipoContenido(ProyectoSeleccionado.Clave, TiposContenidos.Encuesta);
+						break;
+					case (short)TiposDocumentacion.Debate:
+						estadoID = flujosCN.ObtenerEstadoInicialDeTipoContenido(ProyectoSeleccionado.Clave, TiposContenidos.Debate);
+						break;
+					case (short)TiposDocumentacion.Semantico:
+						ProyectoCN proyectoCN = new ProyectoCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<ProyectoCN>(), mLoggerFactory);
+						string nombreOntologia = proyectoCN.ObtenerNombreOntologiaProyectoPorOntologiaID(pDocumento.ElementoVinculadoID.Value);
+						Guid flujoID = flujosCN.ObtenerFlujoIDDeOntologia(ProyectoSeleccionado.Clave, nombreOntologia);
+						estadoID = flujosCN.ObtenerEstadoInicialDeTipoContenido(ProyectoSeleccionado.Clave, TiposContenidos.RecursoSemantico, flujoID);
+						break;
+				}
+
+				if (estadoID.HasValue)
+				{
+					pDocumento.EstadoID = estadoID.Value;
+                    if (Documento != null && Documento.FilaDocumento != null)
+                    {
+                        Documento.FilaDocumento.EstadoID = estadoID.Value;
+                    }
+				}
+			}			
+		}
+
+		/// <summary>
+		/// Guarda el recruso actual en el modelo Live.
+		/// </summary>
+		/// <param name="pPrivacidadCambiada">Indica si la privacidad del recurso ha cambiado en esta edición</param>
+		/// <param name="pCreandoVersion">Indica si se está creando versión</param>
+		/// <param name="pCambioDeBorradoAPublicado">Indica si el recurso a cambiado de borrador a publicado</param>
+		/// <param name="pDocAntiguoID">ID del documento antiguo, si se ha creado versión</param>
+		/// <param name="pDocumento">Documento que se está guardando</param>
+		private void GuardarRecursoModeloLive(bool pPrivacidadCambiada, bool pCreandoVersion, bool pCambioDeBorradoAPublicado, Guid pDocAntiguoID, Documento pDocumento, List<Guid> pListaEditoresEliminados, List<Guid> pListaGruposEditoresEliminados)
         {
             if (!mModelSaveRec.Draft && pDocumento.TipoDocumentacion != TiposDocumentacion.Encuesta)
             {
@@ -7322,7 +7374,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                 CrearDocumentoEnModeloLive(doc);
                 CrearDocumentoAccionesExtra(doc);
 
-                mOtrosArgumentosBase = ",##enlaces####enlaces##";
+				mOtrosArgumentosBase = ",##enlaces####enlaces##";
 
                 if (mDocumentosExtraGuardar != null)
                 {
@@ -7364,7 +7416,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                 GuardarRecursoModeloLive(privacidadCambiada, CreandoVersionFormSem, mCambioDeBorradoAPublicado, docAntiguoID, Documento, listaEditoresEliminados, listaGruposEditoresEliminados);
                 GuardarRecursoModeloBase(CreandoVersionFormSem, mCambioDeBorradoAPublicado, docAntiguoID, Documento);
 
-                ControladorDocumentacion.BorrarCacheControlFichaRecursos(docAntiguoID);
+				ControladorDocumentacion.BorrarCacheControlFichaRecursos(docAntiguoID);
 
                 if (mDocumentosExtraGuardar != null)
                 {

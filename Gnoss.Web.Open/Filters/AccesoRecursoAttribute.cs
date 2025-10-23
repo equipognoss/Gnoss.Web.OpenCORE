@@ -4,6 +4,7 @@ using Es.Riam.Gnoss.AD.Virtuoso;
 using Es.Riam.Gnoss.CL;
 using Es.Riam.Gnoss.Elementos.Tesauro;
 using Es.Riam.Gnoss.Logica.Documentacion;
+using Es.Riam.Gnoss.Logica.Flujos;
 using Es.Riam.Gnoss.Logica.ServiciosGenerales;
 using Es.Riam.Gnoss.Util.Configuracion;
 using Es.Riam.Gnoss.Util.General;
@@ -75,6 +76,9 @@ namespace Es.Riam.Gnoss.Web.MVC.Filters
             {
                 DocumentacionCN documentacionCN = new DocumentacionCN(mEntityContext, mLoggingService, mConfigService, null, mLoggerFactory.CreateLogger<DocumentacionCN>(), mLoggerFactory);
 
+                // Si no viene la version en la peticion es que estamos en la ficha de la ultima version
+                documentoVersionID = documentoVersionID == Guid.Empty ? documentacionCN.ObtenerVersionesDocumentoIDPorID(documentoID).Keys.LastOrDefault() : documentoVersionID;
+
                 documentoID = documentoVersionID != Guid.Empty ? documentoVersionID : documentoID;
                 //TODO JUAN. Hay que meter aquí la comprobación de MyGNOSS o se hace en la ficha?
 
@@ -102,17 +106,44 @@ namespace Es.Riam.Gnoss.Web.MVC.Filters
                     }
                 }
 
-                documentacionCN.Dispose();
-
-                if (Rol.Equals(RolesAccesoRecurso.Editor))
+                Guid? estadoID = documentacionCN.ObtenerEstadoIDDeDocumento(documentoID);
+                if (estadoID.HasValue && !estadoID.Value.Equals(Guid.Empty))
                 {
-                    urlRedirect = ComprobarPermisosEdicionRecurso(documentoID);
-                }
+                    FlujosCN flujosCN = new FlujosCN(mEntityContext, mLoggingService, mConfigService, null, mLoggerFactory.CreateLogger<FlujosCN>(), mLoggerFactory);
+                    bool publico = flujosCN.ComprobarEstadoEsPublico(estadoID.Value);
+                    if (!publico)
+                    {
+                        // TODO Fran: Comprobar si es el creador
+						if (Rol.Equals(RolesAccesoRecurso.Editor))
+						{
+							if (!flujosCN.ComprobarIdentidadTienePermisoEdicionEnEstado(estadoID.Value, mControladorBase.IdentidadActual.Clave))
+							{
+								pFilterContext.Result = Controlador(pFilterContext).RedireccionarAPaginaNoEncontrada();
+								return;
+							}
+						}
+						else
+						{
+							if (!flujosCN.ComprobarIdentidadTienePermisoLecturaEnEstado(estadoID.Value, mControladorBase.IdentidadActual.Clave))
+							{
+								pFilterContext.Result = Controlador(pFilterContext).RedireccionarAPaginaNoEncontrada();
+								return;
+							}
+						}
+					}									
+				}
                 else
                 {
-                    urlRedirect = ComprobarPermisosLecturaRecurso(documentoID, pFilterContext);
-                }
-            }
+					if (Rol.Equals(RolesAccesoRecurso.Editor))
+					{
+						urlRedirect = ComprobarPermisosEdicionRecurso(documentoID);
+					}
+					else
+					{
+						urlRedirect = ComprobarPermisosLecturaRecurso(documentoID, pFilterContext);
+					}
+				}
+			}
             else
             {
                 //El ID está mal formado, redirijo a la página 404

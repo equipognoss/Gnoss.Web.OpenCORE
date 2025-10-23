@@ -99,6 +99,10 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
             modelo.URLActionCrearEntradas = $"{baseUrl}crearentradas";
             modelo.URLActionEliminarEntradas = $"{baseUrl}eliminarentradas";
 
+            VistaVirtualCN vistaVirtualCN = new VistaVirtualCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<VistaVirtualCN>(), mLoggerFactory);
+
+            modelo.traduccionesActivas = vistaVirtualCN.VistasPersonalizadasActivadoPorProyectoID(ProyectoSeleccionado.Clave);
+
             ParametroGeneralCN paramGeneralCN = new ParametroGeneralCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<ParametroGeneralCN>(), mLoggerFactory);
             ParametroAplicacionCL paramCL = new ParametroAplicacionCL(mEntityContext, mLoggingService, mRedisCacheWrapper, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<ParametroAplicacionCL>(), mLoggerFactory);
             Dictionary<string, string> idiomas = paramCL.ObtenerListaIdiomasDictionary();

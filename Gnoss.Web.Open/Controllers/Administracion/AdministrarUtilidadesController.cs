@@ -49,7 +49,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
 
         // GET: AdministrarUtilidades
         [HttpGet]        
-		[TypeFilter(typeof(PermisosAdministracion), Arguments = new object[] { new ulong[] { (ulong)PermisoComunidad.GestionarTiposDeContenidosYPermisos } })]
+		//[TypeFilter(typeof(PermisosAdministracion), Arguments = new object[] { new ulong[] { (ulong)PermisoComunidad.GestionarTiposDeContenidosYPermisos } })]
 		public ActionResult Index()
         {
             EliminarPersonalizacionVistas();
@@ -76,7 +76,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
         /// </summary>
         /// <returns></returns>
         [HttpGet]
-		[TypeFilter(typeof(PermisosAdministracion), Arguments = new object[] { new ulong[] { (ulong)PermisoComunidad.GestionarNivelesDeCertificacion } })]
+		//[TypeFilter(typeof(PermisosAdministracion), Arguments = new object[] { new ulong[] { (ulong)PermisoComunidad.GestionarNivelesDeCertificacion } })]
 		public ActionResult IndexGestionCertificados()
         {
             EliminarPersonalizacionVistas();
@@ -135,7 +135,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
 
         // POST: Guardar AdministrarUtilidades
         [HttpPost]		
-		[TypeFilter(typeof(PermisosAdministracion), Arguments = new object[] { new ulong[] { (ulong)PermisoComunidad.GestionarTiposDeContenidosYPermisos, (ulong)PermisoComunidad.GestionarNivelesDeCertificacion } })]
+		//[TypeFilter(typeof(PermisosAdministracion), Arguments = new object[] { new ulong[] { (ulong)PermisoComunidad.GestionarTiposDeContenidosYPermisos, (ulong)PermisoComunidad.GestionarNivelesDeCertificacion } })]
 		[TypeFilter(typeof(AccesoIntegracionAttribute))]
 		public ActionResult Guardar(AdministrarComunidadUtilidades DatosGuardado)
         {

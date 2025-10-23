@@ -1,0 +1,28 @@
+﻿@using Es.Riam.Gnoss.AD.CMS
+@using Es.Riam.Gnoss.Web.MVC.Models.Flujos
+
+@model CMSAdminCambiarEstadoViewModel
+
+@{
+	CommunityModel Comunidad = Html.GetComunidad();
+	HeaderModel cabecera = Html.GetCabecera();
+    string urlCambiarEstado = $"{Comunidad.Url}/{Html.GetText("URLSEM", "ADMINISTRARCOMUNIDADCMSEDITARCOMPONENTE")}/change-state";
+    string funcionCambiarEstado = $"CambiarEstadoDeTipoDeContenido('{urlCambiarEstado}', '{Model.ComponenteID}', '{Model.TransicionID}')";
+}
+
+<div class="modal-header">
+    <p class="modal-title">
+        <span class="material-icons">move_down</span>@Model.Nombre - @Html.GetText("CONTROLESDOCUMENTACION", "TRANSICION")
+    </p>
+    <span class="material-icons cerrar" data-dismiss="modal" aria-label="Close">close</span>
+</div>
+<div class="modal-body">
+    <div class="form-group">
+        <label class="control-label d-block" for="inptComentario_@Model.ComponenteID">@Html.GetText("FLUJOS", "COMENTARIO")</label>
+        <textarea id="inptComentario_@Model.ComponenteID" class="form-control inptComentarioDocumento" cols="20"></textarea>
+    </div>
+    <div class="form-actions">
+        <button data-dismiss="modal" class="btn btn-outline-primary uppercase btnCerrarModalTransicionDocumento_@Model.ComponenteID">@Html.GetText("COMMON", "CANCELAR")</button>
+        <a class="btn btn-primary uppercase btnConfirmarTransicionDocumento" onclick="@funcionCambiarEstado" id="confirmarTransicionDocumento_@Model.ComponenteID">@Html.GetText("CONTROLESDOCUMENTACION", "TRANSICION")</a>
+    </div>
+</div>

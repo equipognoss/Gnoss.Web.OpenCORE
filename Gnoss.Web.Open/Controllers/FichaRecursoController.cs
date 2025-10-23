@@ -101,6 +101,11 @@ using System.Text;
 using System.Web;
 using System.Xml;
 using static Es.Riam.Gnoss.Web.MVC.Models.ResourceModel;
+using Es.Riam.Gnoss.Web.MVC.Models.Flujos;
+using Es.Riam.Gnoss.AD.EntityModel.Models.Flujos;
+using Universal.Common.Extensions;
+using Es.Riam.Gnoss.Logica.Flujos;
+using Es.Riam.Gnoss.AD.Flujos;
 
 namespace Es.Riam.Gnoss.Web.MVC.Controllers
 {
@@ -3896,15 +3901,43 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
             }
 
             return GnossResultERROR();
-        }        
+        }
 
+        [HttpPost, TypeFilter(typeof(AccesoRecursoAttribute))]
+        public ActionResult DeleteVersion()
+        {
+            try
+            {
+                //Seguridad :
+                /*
+                 * Si no es la ultima version
+                 * Si tiene permisos para editar el recurso
+                 * Si no es una wiki o (Si es una wiki tiene que ser supervisor y que no este protegido)
+                 */
+                bool tienePermiso = TienePermisoEliminarVersion();
+                ControladorDocumentoMVC.CargarIdentidadesLectoresEditores(Documento, GestorDocumental, ProyectoSeleccionado.Clave);
+                if ((Documento.TipoDocumentacion != TiposDocumentacion.Wiki || (!Documento.FilaDocumento.Protegido && EsIdentidadActualSupervisorProyecto)) && !Documento.FilaDocumento.UltimaVersion && (Documento.TienePermisosEdicionIdentidad(IdentidadActual, IdentidadOrganizacionBROrg, ProyectoSeleccionado, UsuarioActual.UsuarioID, EsIdentidadActualAdministradorOrganizacion) || ControladorDocumentacion.EsEditorPerfilDeDocumento(IdentidadActual.PerfilID, Documento, true, UsuarioActual.UsuarioID)) && (GenPlantillasOWL == null || !GenPlantillasOWL.Ontologia.ConfiguracionPlantilla.OcultarBotonRestaurarVersionDoc) || tienePermiso)
+                {
+                    return AccionRecurso_Eliminar_Aceptar();
+                }
+            }
+            catch (Exception ex)
+            {
+                GuardarLogError(ex);
+            }
+
+            return GnossResultERROR();
+        }
         private bool TienePermisoRestaurarVersion()
         {
 			bool tienePermiso = false;
 			UtilPermisos utilPermisos = new UtilPermisos(mEntityContext, mLoggingService, mConfigService, mLoggerFactory.CreateLogger<UtilPermisos>(), mLoggerFactory);
 			switch (Documento.TipoDocumentacion)
 			{
-				case TiposDocumentacion.Hipervinculo:
+                case TiposDocumentacion.Nota:
+                    tienePermiso = utilPermisos.IdentidadTienePermiso((ulong)PermisoRecursos.EliminarVersionNota, IdentidadActual.Clave, IdentidadActual.IdentidadMyGNOSS.Clave, TipoDePermiso.Recursos);
+                    break;
+                case TiposDocumentacion.Hipervinculo:
                     tienePermiso = utilPermisos.IdentidadTienePermiso((ulong)PermisoRecursos.RestaurarVersionEnlace, IdentidadActual.Clave, IdentidadActual.IdentidadMyGNOSS.Clave, TipoDePermiso.Recursos);
 			        break;
 				case TiposDocumentacion.ReferenciaADoc:
@@ -3932,6 +3965,44 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
 
 			return tienePermiso;
 		}
+
+        private bool TienePermisoEliminarVersion()
+        {
+            bool tienePermiso = false;
+            UtilPermisos utilPermisos = new UtilPermisos(mEntityContext, mLoggingService, mConfigService, mLoggerFactory.CreateLogger<UtilPermisos>(), mLoggerFactory);
+            switch (Documento.TipoDocumentacion)
+            {
+                case TiposDocumentacion.Nota:
+                    tienePermiso = utilPermisos.IdentidadTienePermiso((ulong)PermisoRecursos.EliminarVersionNota, IdentidadActual.Clave, IdentidadActual.IdentidadMyGNOSS.Clave, TipoDePermiso.Recursos);
+                    break;
+                case TiposDocumentacion.Hipervinculo:
+                    tienePermiso = utilPermisos.IdentidadTienePermiso((ulong)PermisoRecursos.EliminarVersionEncuesta, IdentidadActual.Clave, IdentidadActual.IdentidadMyGNOSS.Clave, TipoDePermiso.Recursos);
+                    break;
+                case TiposDocumentacion.ReferenciaADoc:
+                    tienePermiso = utilPermisos.IdentidadTienePermiso((ulong)PermisoRecursos.EliminarVersionReferencia, IdentidadActual.Clave, IdentidadActual.IdentidadMyGNOSS.Clave, TipoDePermiso.Recursos);
+                    break;
+                case TiposDocumentacion.Video:
+                    tienePermiso = utilPermisos.IdentidadTienePermiso((ulong)PermisoRecursos.EliminarVersionEnlace, IdentidadActual.Clave, IdentidadActual.IdentidadMyGNOSS.Clave, TipoDePermiso.Recursos) || utilPermisos.IdentidadTienePermiso((ulong)PermisoRecursos.RestaurarVersionAdjunto, IdentidadActual.Clave, IdentidadActual.IdentidadMyGNOSS.Clave, TipoDePermiso.Recursos);
+                    break;
+                case TiposDocumentacion.FicheroServidor:
+                    tienePermiso = utilPermisos.IdentidadTienePermiso((ulong)PermisoRecursos.EliminarVersionAdjunto, IdentidadActual.Clave, IdentidadActual.IdentidadMyGNOSS.Clave, TipoDePermiso.Recursos);
+                    break;
+                case TiposDocumentacion.Encuesta:
+                    tienePermiso = utilPermisos.IdentidadTienePermiso((ulong)PermisoRecursos.EliminarVersionEncuesta, IdentidadActual.Clave, IdentidadActual.IdentidadMyGNOSS.Clave, TipoDePermiso.Recursos);
+                    break;
+                case TiposDocumentacion.Debate:
+                    tienePermiso = utilPermisos.IdentidadTienePermiso((ulong)PermisoRecursos.EliminarVersionDebate, IdentidadActual.Clave, IdentidadActual.IdentidadMyGNOSS.Clave, TipoDePermiso.Recursos);
+                    break;
+                case TiposDocumentacion.Pregunta:
+                    tienePermiso = utilPermisos.IdentidadTienePermiso((ulong)PermisoRecursos.EliminarVersionPregunta, IdentidadActual.Clave, IdentidadActual.IdentidadMyGNOSS.Clave, TipoDePermiso.Recursos);
+                    break;
+                case TiposDocumentacion.Semantico:
+                    tienePermiso = utilPermisos.IdentidadTienePermisoRecursoSemantico(IdentidadActual.Clave, IdentidadActual.IdentidadMyGNOSS.Clave, TipoPermisoRecursosSemanticos.EliminarVersion, Documento.ElementoVinculadoID);
+                    break;
+            }
+
+            return tienePermiso;
+        }
 
         private ActionResult AccionRecurso_Restaurar_Aceptar()
         {
@@ -4043,15 +4114,34 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                 }
                 else
                 {
-                    return GnossResultERROR(UtilIdiomas.GetText("HISTORIALVERSIONES", "ERRORRESTAURARVERSION") + "')");
+                    return GnossResultERROR(UtilIdiomas.GetText("HISTORIALVERSIONES", "ERRORRESTAURARVERSION"));
                 }
             }
-            catch (Exception)
+            catch (Exception ex)
             {
+                mlogger.LogError($"ERROR: ${ex.Message}\r\nStackTrace: {ex.StackTrace}");
                 return GnossResultERROR();
             }
         }
+        private ActionResult AccionRecurso_Eliminar_Aceptar()
+        {
+            try
+            {
+                Documento.GestorDocumental.EliminarVersionDocumento(Documento);
 
+                // Si es un recurso semántico hay que borrar los rdf
+                if(Documento.TipoDocumentacion == TiposDocumentacion.Semantico)
+                {
+                    ControladorDocumentacion.EliminarVersionDocumentoRDF(Documento.Clave);
+                }
+            }
+            catch (Exception ex)
+            {
+                mlogger.LogError($"ERROR: ${ex.Message}\r\nStackTrace: {ex.StackTrace}");
+                return GnossResultERROR();
+            }
+            return GnossResultOK();
+        }
         #endregion
 
         #region Eliminar
@@ -5372,6 +5462,21 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                         }
                     }
                 }
+                else if (accion == "transition")
+                {
+					Guid transicionID = new Guid(RequestParams("pTransicionID"));
+                    paginaModel.Transition = transicionID;
+				}
+                else if (accion == "transition-history")
+                {                    
+                    paginaModel.Resource.Estado = ObtenerEstadoDocumento();
+					if (paginaModel.Resource.Estado != null)
+					{
+                        UtilFlujos utilFlujos = new UtilFlujos(mEntityContext, mLoggingService, mConfigService, mLoggerFactory.CreateLogger<UtilFlujos>(), mLoggerFactory);
+                        paginaModel.Resource.HistorialTransiciones = utilFlujos.ObtenerHistorialDeTransiciones(Documento.Clave, TipoContenidoFlujo.Recurso, UtilIdiomas.LanguageCode, ParametrosGeneralesRow.IdiomaDefecto);
+					}
+				}
+
                 paginaModel.Action = accion;
                 ParametroAplicacionCN parametroCN = new ParametroAplicacionCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<ParametroAplicacionCN>(), mLoggerFactory);
                 string oneDrive = parametroCN.ObtenerParametroAplicacion(ParametroAD.PermitirEnlazarDocumentosOneDrive);
@@ -5732,6 +5837,8 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
             bool permisoEliminar = true;
             bool permisoRestaurarVersion = true;
             bool permisoEliminarVersion = true;
+			bool permisoCertificar = utilPermisos.IdentidadTienePermiso((ulong)PermisoRecursos.CertificarRecurso, IdentidadActual.Clave, IdentidadActual.IdentidadMyGNOSS.Clave, TipoDePermiso.Recursos);
+
             switch (Documento.TipoDocumentacion)
             {
 				case TiposDocumentacion.Hipervinculo:
@@ -5797,7 +5904,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
             fichaAcciones.SendNewsletter = true;
             fichaAcciones.SendNewsletterGroups = true;
             fichaAcciones.LinkUp = true;
-            fichaAcciones.Certify = true;
+            fichaAcciones.Certify = permisoCertificar;
             fichaAcciones.Delete = true;
 
             #region Compartir a BR Personal o a otra comunidad
@@ -5839,7 +5946,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
 
             if (mControladorBase.UsuarioActual.EsIdentidadInvitada || mControladorBase.EstaUsuarioBloqueadoProyecto)
             {
-                //fichaAcciones.AddToMyPersonalSpace = false;
+                fichaAcciones.AddToMyPersonalSpace = false;
                 fichaAcciones.AddCategories = false;
                 fichaAcciones.AddTags = false;
                 fichaAcciones.Duplicate = false;
@@ -5853,6 +5960,8 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                 fichaAcciones.LinkUp = false;
                 fichaAcciones.Certify = false;
                 fichaAcciones.Delete = false;
+                fichaAcciones.SendLink = false;
+                fichaAcciones.Transition = false;
             }
             else
             {
@@ -5933,6 +6042,8 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
 
                 paginaModel.UrlEdit = urlEditar;
 
+                paginaModel.UrlTransition = $"{mControladorBase.UrlsSemanticas.GetURLBaseRecursosFicha(BaseURLIdioma, UtilIdiomas, ProyectoSeleccionado.NombreCorto, UrlPerfil, Documento, false)}/transition";
+
                 #endregion
 
                 #region CrearVersion
@@ -6012,11 +6123,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
 
                 #region Certificar
 
-                if (Documento.FilaDocumento.UltimaVersion && EsIdentidadActualSupervisorProyecto && ParametrosGeneralesRow.PermitirCertificacionRec && ProyectoSeleccionado.Clave != ProyectoAD.MetaProyecto)
-                {
-                    fichaAcciones.Certify = true;
-                }
-                else
+                if (!Documento.FilaDocumento.UltimaVersion)
                 {
                     fichaAcciones.Certify = false;
                 }
@@ -6098,6 +6205,27 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
             {
                 pFichaRecurso.AllowComments = (Documento.FilaDocumentoWebVinBR.PermiteComentarios && ParametrosGeneralesRow.ComentariosDisponibles);
             }
+
+            #region Flujos
+
+            if (pFichaRecurso.Estado != null) 
+            {
+                UtilFlujos utilFlujos = new UtilFlujos(mEntityContext, mLoggingService, mConfigService, mLoggerFactory.CreateLogger<UtilFlujos>(), mLoggerFactory);
+                bool tienePermisoEdicionEstado = utilFlujos.ComprobarPermisoEdicionEstado(pFichaRecurso.Estado, IdentidadActual.Clave);
+
+				if (tienePermisoEdicionEstado)
+				{
+					fichaAcciones.Edit = true;
+				}
+				else
+				{
+					fichaAcciones.Edit = false;
+				}                
+
+			    fichaAcciones.Transition = true;				
+			}
+
+			#endregion
 
             pFichaRecurso.Actions = fichaAcciones;
         }
@@ -6673,6 +6801,13 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                 MarcarPestanyaActiva(Comunidad.Tabs, ViewBag.NombreUrlPestanya);
 
                 CambiarIndexacionDelRecurso();
+
+				paginaModel.Resource.Estado = ObtenerEstadoDocumento();
+                if (paginaModel.Resource.Estado != null)
+                {
+					UtilFlujos utilFlujos = new UtilFlujos(mEntityContext, mLoggingService, mConfigService, mLoggerFactory.CreateLogger<UtilFlujos>(), mLoggerFactory);
+					paginaModel.Resource.HistorialTransiciones = utilFlujos.ObtenerHistorialDeTransiciones(Documento.Clave, TipoContenidoFlujo.Recurso, UtilIdiomas.LanguageCode, ParametrosGeneralesRow.IdiomaDefecto);
+				}
 
                 if (GenPlantillasOWL == null || !GenPlantillasOWL.Ontologia.ConfiguracionPlantilla.OcultarAccionesDoc)
                 {
@@ -8741,6 +8876,67 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
 
             return listaRedesSociales;
         }
+
+		#region Flujos
+
+        private EstadoModel ObtenerEstadoDocumento()
+        {            
+            if (Documento.Estado.HasValue)
+            {
+                UtilFlujos utilFlujos = new UtilFlujos(mEntityContext, mLoggingService, mConfigService, mLoggerFactory.CreateLogger<UtilFlujos>(), mLoggerFactory);
+                return utilFlujos.ObtenerEstadoDeContenido(Documento.Estado.Value, IdentidadActual.Clave, UtilIdiomas.LanguageCode, ParametrosGeneralesRow.IdiomaDefecto);
+			}			
+
+            return null;
+        }        
+
+		public ActionResult RealizarTransicionEstado(Guid pTransicionID, string pComentario)
+        {            
+            try
+            {
+                EstadoModel estadoDocumento = ObtenerEstadoDocumento();
+                bool tienePermiso = estadoDocumento.Transiciones.Any(t => t.TransicionID.Equals(pTransicionID));
+                // TODO FRAN: ¿Permisos creador?
+                if (tienePermiso || Documento.CreadorID.Equals(IdentidadActual.Clave))
+                {
+					DocumentacionCN docCN = new DocumentacionCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<DocumentacionCN>(), mLoggerFactory);
+					FlujosCN flujosCN = new FlujosCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<FlujosCN>(), mLoggerFactory);
+					FacetadoCN facetadoCN = new FacetadoCN(UrlIntragnoss, Documento.ProyectoID.ToString(), mEntityContext, mLoggingService, mConfigService, mVirtuosoAD, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<FacetadoCN>(), mLoggerFactory);
+					NotificacionCN notificacionCN = new NotificacionCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<NotificacionCN>(), mLoggerFactory);
+					DataWrapperNotificacion notificacionDW = new DataWrapperNotificacion();
+					GestionNotificaciones gestorNotificaciones = new GestionNotificaciones(notificacionDW, mLoggingService, mEntityContext, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<GestionNotificaciones>(), mLoggerFactory);
+
+                    pComentario = pComentario ?? "";
+					// Cambiar estado en base de datos y añadir al historial
+					Guid estadoDestino = flujosCN.ObtenerEstadoDestinoTransicion(pTransicionID);
+					docCN.CambiarEstadoDocumento(Documento.Clave, estadoDestino);
+                    flujosCN.GuardarHistorialTransicionDocumento(Documento.Clave, pTransicionID, pComentario, IdentidadActual.Clave);
+
+                    // Cambiar estado en Virtuoso                    
+                    facetadoCN.ModificarEstadoDeContenido(Documento.ProyectoID, estadoDocumento.EstadoID, estadoDestino, Documento.Clave);
+
+					// Enviar correo de aviso a lectores y editores de los estados de origen y destino
+					// TODO FRAN: ¿Enviar correo al creador?					
+					string urlDocumento = mControladorBase.UrlsSemanticas.GetURLBaseRecursosFicha(BaseURLIdioma, UtilIdiomas, ProyectoSeleccionado.NombreCorto, UrlPerfil, Documento, false);
+                    gestorNotificaciones.EnviarCorreoAvisoCambioDeEstado(pTransicionID, Documento.ProyectoID, pComentario, urlDocumento, Documento.Titulo, IdentidadActual.Nombre());
+					notificacionCN.ActualizarNotificacion(mAvailableServices);
+					
+                    notificacionCN.Dispose();
+                    facetadoCN.Dispose();
+                    flujosCN.Dispose();
+                    docCN.Dispose();
+				}
+
+				return GnossResultOK(UtilIdiomas.GetText("FLUJOS", "TRANSICIONREALIZADA"));
+            }
+            catch (Exception ex)
+            {
+                mLoggingService.GuardarLogError(ex, mlogger);				
+				return GnossResultERROR(UtilIdiomas.GetText("FLUJOS", "TRANSICIONERROR"));
+            }
+        }
+
+		#endregion
 
         #region Cargas
 

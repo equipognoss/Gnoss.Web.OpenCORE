@@ -11634,6 +11634,25 @@ function DescargarFicheroSharepoint() {
     window.open(peticion, '_blank');
 }
 
+function RealizarTransicion(urlRealizarTransicion, transicionID) {
+    MostrarUpdateProgress();
+
+    var dataPost = {
+        pTransicionID: transicionID
+    }
+
+    GnossPeticionAjax(urlRealizarTransicion, dataPost, true).done(function (data) {
+        mostrarNotificacion("success", data);
+        setTimeout(function () {
+            location.reload();
+        }, 1000);
+    }).fail(function (data) {
+        mostrarNotificacion("error", data);
+    }).always(function () {        
+        OcultarUpdateProgress();
+    });
+}
+
 /**
  * Función para crear una versión rápida de un recurso en SharePoint.
  * 
@@ -12889,6 +12908,27 @@ function AccionRecurso_Encuesta_Votar(urlPagina, documentoID) {
     }
 }
 
+
+function CambiarEstadoDocumento(urlCambiarEstado, documentoID, transicionID) {
+    MostrarUpdateProgress();
+
+    var comentario = encodeURIComponent($('#inptComentario_' + documentoID).val());
+    var datosPost = {
+        pComentario: comentario,
+        pTransicionID: transicionID
+    };
+    GnossPeticionAjax(urlCambiarEstado, datosPost, true).done(function (data) {
+        mostrarNotificacion("success", data);
+        setTimeout(function () {
+            window.location.reload();
+        }, 1500); 
+        OcultarUpdateProgress();
+    }).fail(function (data) {
+        mostrarNotificacion("error", data);
+    }).always(function () {
+        OcultarUpdateProgress();
+    });
+}
 
 /** 
  * Maneja la creación de un nuevo comentario en un documento específico.

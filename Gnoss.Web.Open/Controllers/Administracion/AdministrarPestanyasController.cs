@@ -664,17 +664,17 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
             UtilPermisos utilPermisos = new UtilPermisos(mEntityContext, mLoggingService, mConfigService, mLoggerFactory.CreateLogger<UtilPermisos>(), mLoggerFactory);
             bool tienePermiso = utilPermisos.IdentidadTienePermiso((ulong)PermisoContenidos.EditarPagina, IdentidadActual.Clave, IdentidadActual.IdentidadMyGNOSS.Clave, TipoDePermiso.Contenidos);
 
-			if (tienePermiso)
+            if (tienePermiso)
             {
-				PartialView("_modal-views/_CloseModal", model);
-			}
-            
+                PartialView("_modal-views/_CloseModal", model);
+            }
+
             return GnossResultOK();
         }
 
         [HttpPost]
-		[TypeFilter(typeof(PermisosContenidos), Arguments = new object[] { new ulong[] { (ulong)PermisoContenidos.RestaurarVersionPagina } })]
-		public ActionResult CompararVersionConfigPestanya(string documentosComparar, bool pRestaurar = false)
+        [TypeFilter(typeof(PermisosContenidos), Arguments = new object[] { new ulong[] { (ulong)PermisoContenidos.RestaurarVersionPagina, (ulong)PermisoContenidos.VerPagina } })]
+        public ActionResult CompararVersionConfigPestanya(string documentosComparar, bool pRestaurar = false)
         {
             ParametroAplicacionCL paramCL = new ParametroAplicacionCL(mEntityContext, mLoggingService, mRedisCacheWrapper, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<ParametroAplicacionCL>(), mLoggerFactory);
 
@@ -702,8 +702,8 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
         }
 
         [HttpPost]
-		[TypeFilter(typeof(PermisosContenidos), Arguments = new object[] { new ulong[] { (ulong)PermisoContenidos.RestaurarVersionPagina } })]
-		public ActionResult RestaurarVersion(Guid versionId, string pComentario = null)
+        [TypeFilter(typeof(PermisosContenidos), Arguments = new object[] { new ulong[] { (ulong)PermisoContenidos.RestaurarVersionPagina } })]
+        public ActionResult RestaurarVersion(Guid pVersionID, string pComentario = null)
         {
             bool iniciado = false;
 
@@ -713,7 +713,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
 
                 ControladorPestanyas contrPest = new ControladorPestanyas(GestionProyectos.ListaProyectos[ProyectoSeleccionado.Clave], ParametroProyecto, mLoggingService, mEntityContext, mConfigService, mRedisCacheWrapper, mGnossCache, mVirtuosoAD, mHttpContextAccessor, mServicesUtilVirtuosoAndReplication, mEntityContextBASE, mAvailableServices, mLoggerFactory.CreateLogger<ControladorPestanyas>(), mLoggerFactory, iniciado);
 
-                TabModel pestanyaRestaurada = contrPest.RestaurarPagina(versionId, pComentario ?? "");
+                TabModel pestanyaRestaurada = contrPest.RestaurarPagina(pVersionID, pComentario ?? "");
                 if (iniciado)
                 {
                     HttpResponseMessage resultado = InformarCambioAdministracion("Pestanyas", JsonConvert.SerializeObject(pestanyaRestaurada, Formatting.Indented));
@@ -723,31 +723,60 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
                     }
                 }
 
-                return GnossResultOK();
+                return GnossResultOK(UtilIdiomas.GetText("DEVTOOLS", "RESTAURARVERSIONCONFIGPAGINA"));
             }
             catch (Exception ex)
             {
-                GuardarLogError(ex);
-                return GnossResultERROR(ex.Message);
+                mlogger.LogError($"ERROR: ${ex.Message}\r\nStackTrace: {ex.StackTrace}");
+                return GnossResultERROR(UtilIdiomas.GetText("DEVTOOLS", "ERRORRESTAURARVERSIONCONFIGPAGINA"));
             }
-
         }
 
         [HttpPost]
+        [TypeFilter(typeof(PermisosContenidos), Arguments = new object[] { new ulong[] { (ulong)PermisoContenidos.EliminarVersionPagina } })]
+        public ActionResult EliminarVersion(Guid pPestanyaID, Guid pVersionID)
+        {
+            try
+            {
+                ControladorPestanyas contrPest = new ControladorPestanyas(GestionProyectos.ListaProyectos[ProyectoSeleccionado.Clave], ParametroProyecto, mLoggingService, mEntityContext, mConfigService, mRedisCacheWrapper, mGnossCache, mVirtuosoAD, mHttpContextAccessor, mServicesUtilVirtuosoAndReplication, mEntityContextBASE, mAvailableServices, mLoggerFactory.CreateLogger<ControladorPestanyas>(), mLoggerFactory, HayIntegracionContinua);
+
+                contrPest.EliminarVersionPagina(pPestanyaID, pVersionID);
+
+                return GnossResultOK(UtilIdiomas.GetText("DEVTOOLS", "VERSIONCONFIGPAGINAELIMINADO"));
+            }
+            catch (Exception ex)
+            {
+                mlogger.LogError($"ERROR: ${ex.Message}\r\nStackTrace: {ex.StackTrace}");
+                return GnossResultERROR(UtilIdiomas.GetText("DEVTOOLS", "ERRORELIMINARVERSIONCONFIGPAGINA"));
+            }
+        }
+
+        [HttpPost]
+        [TypeFilter(typeof(PermisosContenidos), Arguments = new object[] { new ulong[] { (ulong)PermisoContenidos.VerPagina } })]
         public ActionResult CargarHistorial(Guid pPestanyaID)
         {
             UtilPermisos utilPermisos = new UtilPermisos(mEntityContext, mLoggingService, mConfigService, mLoggerFactory.CreateLogger<UtilPermisos>(), mLoggerFactory);
             ViewBag.RestaurarVersionPaginaPermitido = utilPermisos.IdentidadTienePermiso((ulong)PermisoContenidos.RestaurarVersionPagina, mControladorBase.IdentidadActual.Clave, mControladorBase.IdentidadActual.IdentidadMyGNOSS.Clave, TipoDePermiso.Contenidos);
+            ViewBag.EliminarVersionPaginasPermitido = utilPermisos.IdentidadTienePermiso((ulong)PermisoContenidos.EliminarVersionPagina, mControladorBase.IdentidadActual.Clave, mControladorBase.IdentidadActual.IdentidadMyGNOSS.Clave, TipoDePermiso.Contenidos);
+
             List<AdministrarPaginaVersionViewModel> modelo = CargarVersionesPestanya(pPestanyaID);
 
             return PartialView("_modal-views/_history", modelo);
         }
 
         [HttpPost]
-		[TypeFilter(typeof(PermisosContenidos), Arguments = new object[] { new ulong[] { (ulong)PermisoContenidos.RestaurarVersionPagina, (ulong)PermisoContenidos.EditarPagina } })]
-		public ActionResult AddCommentVersion(Guid pVersionID)
+        [TypeFilter(typeof(PermisosContenidos), Arguments = new object[] { new ulong[] { (ulong)PermisoContenidos.RestaurarVersionPagina, (ulong)PermisoContenidos.EditarPagina } })]
+        public ActionResult AddCommentVersion(Guid pVersionID)
         {
-            return PartialView("_partial-views/_add-comment-restore", pVersionID);
+            try
+            {
+                return PartialView("_partial-views/_add-comment-restore", pVersionID);
+            }
+            catch (Exception ex)
+            {
+                mlogger.LogError($"ERROR: ${ex.Message}\r\nStackTrace: {ex.StackTrace}");
+                return GnossResultERROR(UtilIdiomas.GetText("DEVTOOLS", "ERRORCARGAFORMULARIO"));
+            }
         }
 
         private List<TabModel> ModificarOrdenPestanyas(List<TabModel> pPaginaModelPestanyas, List<TabModel> pListaPestanyas)

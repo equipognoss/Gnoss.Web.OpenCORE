@@ -1,0 +1,58 @@
+﻿@using Es.Riam.Gnoss.Web.MVC.Models.Flujos
+@model ResourceViewModel
+@{
+    ResourceModel fichaRecurso = Model.Resource;
+    List<HistorialTransicionModel> listaHistorial = fichaRecurso.HistorialTransiciones;
+    CommunityModel Comunidad = Html.GetComunidad();
+}
+
+<div class="modal-header">
+    <p class="modal-title">
+        <span class="material-icons">history</span>@fichaRecurso.Title - @Html.GetText("FLUJOS", "VERHISTORIAL")
+    </p>
+    <span class="material-icons cerrar" data-dismiss="modal" aria-label="Close">close</span>
+</div>
+<div class="modal-body">
+    <div class="formulario-edicion">
+        <div class="header-resource">
+            <div class="title-wrap">
+                <p class="title">@fichaRecurso.Title</p>
+            </div>
+            <div class="upper-wrap">
+                <div class="user-miniatura">
+                    <div class="nombre-usuario-wrap">
+                        <p class="nombre-completo">@fichaRecurso.Publisher.NamePerson</p>
+                    </div>
+                </div>
+                <p class="fecha">@fichaRecurso.PublishDate</p>
+            </div>
+        </div>
+
+        @* Tabla con las versiones de los documentos  *@
+        <table class="display table table-sm tabla-versiones" id="panHistorial_table">
+            <thead>
+                <tr>
+                    <th scope="col">@Html.GetText("FLUJOS", "CAMBIO")</th>
+                    <th scope="col">@Html.GetText("HISTORIALVERSIONES", "FECHA")</th>
+                    <th scope="col">@Html.GetText("FLUJOS", "REVISOR")</th>
+                    <th scope="col">@Html.GetText("FLUJOS", "COMENTARIOREVISOR")</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (HistorialTransicionModel historial in listaHistorial.OrderByDescending(x => x.Fecha))
+                {
+                    <tr>
+                        @* ACCION *@
+                        <td>@historial.NombreTransicion</td>
+                        @* FECHA *@
+                        <td>@historial.Fecha.ToString("dd/MM/yyyy HH:mm:ss")</td>
+                        @* REVISOR *@
+                        <td>@historial.Revisor</td>
+                        @* COMENTARIO *@
+                        <td>@historial.Comentario</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>

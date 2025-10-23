@@ -139,8 +139,8 @@
             }
 
             GnossPeticionAjax('@Html.GetUrlPagina()/compare', dataPost, true).done(function (data) {
-                $('#despleCompVer').show();
-                $('#despleCompVer .activeForm #panDiffDoc').html(data);
+                $('#modal-dinamic-content').html(data);
+                // $('#despleCompVer .activeForm #panDiffDoc').html(data);
                 
                 OcultarUpdateProgress();
             });

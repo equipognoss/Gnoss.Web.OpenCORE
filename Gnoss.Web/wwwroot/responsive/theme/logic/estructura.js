@@ -51,15 +51,18 @@ const operativaGestionPaginas = {
         this.urlRestorePage = `${this.urlPagina}/RestorePage`;
         this.urlComparePage = `${this.urlPagina}/ComparePage`;
         this.urlAddCommentRestore = `${this.urlPagina}/add-comment`;
-        this.urlLoadPageHistory = `${this.urlPagina}/load-history`
-        this.urlLoadStructHistory = "";
-        if (pParams != undefined && pParams.urlLoadStructHistory != undefined) {
-            this.urlLoadStructHistory = pParams.urlLoadStructHistory;
-        }
+        this.urlLoadPageHistory = `${this.urlPagina}/load-history`;
+        this.urlDeleteConfigVersionPage = `${this.urlPagina}/DeleteConfigVersion`;
+        this.urlBasePageCMS = pParams.urlBasePageCMS;
+        this.urlBasePageCMSHistory = pParams.urlBasePageCMSHistory;
+        this.urlLoadStructHistory = `${this.urlBasePageCMSHistory}/load-history`;
+        this.urlCompareStruct = `${this.urlBasePageCMSHistory}/compare`;
+        this.urlAddCommentStruct= `${this.urlBasePageCMS}/add-comment`;
+        this.urlRestoreStruct = `${this.urlBasePageCMS}/restore`;
+        this.urlDeleteStrcutVersionPage = `${this.urlBasePageCMS}/delete`;
 
         // Variable que contendrá la fila o página activa. Por defecto "undefined"
         this.filaPagina = this.filaPagina != undefined ? this.filaPagina : undefined;
-        this.filaPaginaRestaurar = this.filaPaginaRestaurar != undefined ? this.filaPaginaRestaurar : undefined;
 
         this.urlLoadPrevisualizar = `${this.urlPagina}/cargar-previsualizacion`;
     },
@@ -68,7 +71,7 @@ const operativaGestionPaginas = {
     /*
      * Inicializar elementos de la vista
      * */
-    config: function (pParams) {
+    config: function () {
 
         /* Idiomas Tabs */
         // Tab de idioma de la página para cambiar la visualización en el idioma deseado de las páginas
@@ -341,11 +344,12 @@ const operativaGestionPaginas = {
         this.pageRowClassName = "page-row";
         // Contador de páginas
         this.numPaginas = $("#numPaginas");
-
-        this.containerModal = $("#modal-comparar-versiones-content");
+        this.modalComparator = $("#modal-comparar-versiones");
+        this.modalComparatorContainer = $("#modal-comparar-versiones-content");
+        this.modalComparatorStruct = $("#modal-comparar-estructura");
+        this.modalComparatorStructContainer = $("#modal-comparar-versiones-estructura-content");
         this.btnMovePaginaClassName = "btnMovePagina";
-        this.btnMostrarComparadorConfigPagina = $(".btnMostrarComparadorConfigPagina");
-        this.btnComparePagina = $(".btnCompare");
+        this.btnComparePaginaClassName = "btnCompare";
         // Backup de los items ordenados en caso de que no se proceda al guardado correcto
         this.backupArraySortableListItems = undefined;
         // Select de la página a elegir para mover
@@ -371,14 +375,19 @@ const operativaGestionPaginas = {
         this.btnCopyQueryResultsToClipboardClassName = "btnCopyQueryResults";
         this.cont = 0;
 
-        // Checkbox del modal historial de configuracion
-        this.chkHistorialCMS = $('.tabla-versiones .version-check');
         this.txtHackCheckSeleccionados = $('#txtHackCheckSeleccionados');
         this.numChecksActivos = 0;
 
         // Boton historial pestaña
         this.btnHistorialPestanya = $(".btnHistorialPestanya");
+        // Botón borrar version historial pagina
+        this.btnEliminarVersionPaginaClassName = 'btnEliminarVersionPagina';
+        this.btnConfirmDeleteVersionPageClassName = 'btnConfirmDeleteVersionPage';
+        this.configPageVersionID = '';
 
+        // Seccion comparador version configuracion pagina
+        this.btnAddcommentClassName = "btnAgregarComentarioRestauracion";
+        this.btnRestorePaginaVersionClassName = "btnRestorePaginaVersion";
         // Boton historial estructura CMS
         this.btnHistorialEstructura = $(".btnHistorialEstructura");
 
@@ -459,6 +468,7 @@ const operativaGestionPaginas = {
         })
             .on('hide.bs.modal', (e) => {
                 // Acción de ocultar el modal
+                that.txtHackCheckSeleccionados.val("");
             })
             .on('hidden.bs.modal', (e) => {
                 // Vaciar el modal
@@ -947,58 +957,43 @@ const operativaGestionPaginas = {
             that.handleSavePage();
         });
 
-        this.btnComparePagina.off().on("click", function (element) {
-            // Gestionar el guardado de versiones al restaurar
-            that.handleCompareVersion(element);
-        });
+        configEventByClassName(that.btnComparePaginaClassName, function (element) {
+            const $jqueryElement = $(element);
+            $jqueryElement.off().on("click", function (e) {
+                let input = $(this);
+                let latestVersion = input.parents("tbody").find("tr").first().find("input");
+                let items = `&${latestVersion.data("version-id")}&${input.data("version-id")}`;
+                let restore = true;
 
-        this.btnMostrarComparadorConfigPagina.off().on("click", function () {
-            loadingMostrar();
-            that.filaPaginaRestaurar = $(this);
-            let latestVersion = that.filaPaginaRestaurar.parents('tbody').find('tr').first().find('input');
-
-            dataPost = {
-                documentosComparar: `&${latestVersion.data("version-id")}&${that.filaPaginaRestaurar.data("version-id")}`,
-                pRestaurar: true
-            }
-            GnossPeticionAjax(
-                that.urlComparePage,
-                dataPost,
-                true
-            ).done(function (data) {
-                that.containerModal.html(data);
-                calcHeightModalComparar.init();
-                dismissVistaModal($('.modal-historial-configuracion'));
-                $("#modal-comparar-versiones").modal("show");
-            }).fail(function (data) {
-                // KO - Mostrar el error del guardado de páginas realizado
-                let error = data.split('|||');
-                if (data != "Contacte con el administrador del Proyecto, no es posible atender la petición.") {
-                    that.mostrarErrorGuardado(data);
-                    if (error[0] == "RUTA REPETIDA") {
-                        that.mostrarErrorUrlRepetida($('#' + error[1]));
-                    }
-                    else if (error[0] == "NOMBRE VACIO") {
-                        that.mostrarErrorNombreVacio($('#' + error[1]));
-                    }
-                    else if (error[0] == "PROYECTO_ORIGEN_BUSQUEDA_PRIVADO") {
-                        that.mostrarErrorPoyectoOrigenBusquedaPrivado($('#' + error[1]));
-                    } else if (error[0] == "invitado") {
-                        mostrarNotificacion("error", "La sesión de usuario ha caducado. Accede con tu usuario y credenciales para poder continuar.")
-
-                    } else if (error[0] == "ERROR CONCURRENCIA") {
-                        mostrarNotificacion("error", error[1])
-                    }
+                if (input.parent().hasClass("panelBotonera")) {
+                    items = that.txtHackCheckSeleccionados.val();
+                    restore = false;
                 }
-                else {
-                    that.mostrarErrorGuardadoFallo(data);
+                // Comparando configracion de la pagina
+                let dataPost = {
+                    documentosComparar: items,
+                    pRestaurar: restore
                 }
 
-            }).always(function () {
-                // Ocultar el loading
-                loadingOcultar();
+                let url = that.urlComparePage;
+                let modal = that.modalComparator;
+                let modalContainer = that.modalComparatorContainer;
+
+                if (input.parents('.modal-body').find("table.tabla-versiones-estructura-pagina").length == 1) {
+                    url = that.urlCompareStruct;
+                    modal = that.modalComparatorStruct;
+                    modalContainer = that.modalComparatorStructContainer;
+                    // Comparando estructura pagina CMS
+                    dataPost = {
+                        documentosComparar: items,
+                        pRestaurar: restore,
+                        pPestanyaID: that.filaPagina.data("pagekey")
+                    }
+                    dismissVistaModal();
+                }
+
+                that.handleCompareVersion(e, dataPost, url, modal, modalContainer);
             });
-
         });
 
         // Botón para guardar la información de una página
@@ -1116,41 +1111,10 @@ const operativaGestionPaginas = {
             });
         });
 
-        this.chkHistorialCMS.on("click", function () {
-            that.numChecksActivos = 0;
-            let $currentChecks = $(this).parents('tbody').find('.version-check');
-            for (var i = 0; i < $currentChecks.length; i++) {
-                if ($currentChecks[i].checked == true) {
-                    that.numChecksActivos++;
-                }
-            }
-
-            if ($(this).is(':checked')) {
-                that.txtHackCheckSeleccionados.val(that.txtHackCheckSeleccionados.val() + '&' + $(this).data('version-id'));
-                if (that.numChecksActivos > 2) {
-                    $(this).prop('checked', false);
-                    that.txtHackCheckSeleccionados.val(that.txtHackCheckSeleccionados.val().replace('&' + $(this).data('version-id'), ''));
-                    that.numChecksActivos = that.numChecksActivos - 1;
-                }
-            }
-            else {
-                that.txtHackCheckSeleccionados.val(that.txtHackCheckSeleccionados.val().replace('&' + $(this).data('version-id'), ''));
-            }
-        });
-
-        // Evento para resetear los checks cuando se cierra el modal de historial
-        $('.modal-historial-configuracion').on('hidden.bs.modal', function (element) {
-            that.txtHackCheckSeleccionados.val('');
-            that.numChecksActivos = 0;
-            let $currentChecks = $(this).find('.version-check');
-            for (var i = 0; i < $currentChecks.length; i++) {
-                $($currentChecks[i]).prop('checked', false);
-            }
-        });
-
         this.btnHistorialPestanya.on("click", function () {
+            that.filaPagina = $(this).closest('.page-row');
             dataPost = {
-                pPestanyaID: $(this).parents('li.component-wrap').data("pagekey")
+                pPestanyaID: that.filaPagina.data("pagekey")
             }
             GnossPeticionAjax(
                 that.urlLoadPageHistory,
@@ -1158,12 +1122,17 @@ const operativaGestionPaginas = {
                 true
             ).done(function (data) {
                 $("#modal-dinamic-content").html(data);
+                // Asignamos la comprobacion de los checks en el modal de historial
+                $('.tabla-versiones .version-check').on("click", function () {
+                    that.handleCheckInputCheckboxHistory(this);
+                });
             }).fail(function (data) {
                 mostrarNotificacion("error", "No se ha podido cargar el historial de esta pagina");
             });
         });
 
         this.btnHistorialEstructura.on("click", function () {
+            that.filaPagina = $(this).closest('.page-row');
             dataPost = {
                 pPestanyaID: $(this).parents('li.component-wrap').data("pagekey")
             }
@@ -1173,6 +1142,9 @@ const operativaGestionPaginas = {
                 true
             ).done(function (data) {
                 $("#modal-dinamic-content").html(data);
+                $('.tabla-versiones-estructura-pagina input').on("click", function () {
+                    that.handleCheckInputCheckboxHistory(this);
+                });
             }).fail(function (data) {
                 mostrarNotificacion("error", "No se ha podido cargar el historial de estructura de esta pagina");
             });
@@ -1183,6 +1155,77 @@ const operativaGestionPaginas = {
             that.ListaPestanyas["ListaPestanyas[0].Modified"] = true;
             that.PaginaModel = that.ListaPestanyas;
         })
+
+        that.modalComparator.on("hidden.bs.modal", function () {
+            that.modalComparatorContainer.html('')
+        }).on("shown.bs.modal", function () {
+            calcHeightModalComparar.init();
+        });
+
+        // Evento al eliminar una version del historial de configuracion de una página
+        configEventByClassName(that.btnEliminarVersionPaginaClassName, function (element) {
+            const $jqueryElement = $(element);
+            $jqueryElement.off().on("click", function () {
+                that.configPageVersionID = $(this).data("version-id");
+                dismissVistaModal();
+            });
+        });
+
+        // Evento al confirmar el borrado de una version de configuracion/estructura de una pagina
+        configEventByClassName(that.btnConfirmDeleteVersionPageClassName, function (element) {
+            const $jqueryElement = $(element);
+            $jqueryElement.off().on("click", function () {
+                $button = $(this);
+                let url = that.urlDeleteConfigVersionPage;
+                let currentModal = $button.parents(".modal");
+                if (currentModal.attr('id') == 'modal-borrar-version-pagina-estructura')
+                {
+                    url = that.urlDeleteStrcutVersionPage;
+                }
+                
+                that.handleDeletePageVersion(url, currentModal);
+            });
+        });
+
+        // Evento para agregar el comentario al restaurar una version
+        configEventByClassName(that.btnAddcommentClassName, function (element) {
+            const $jqueryElement = $(element);
+            $jqueryElement.off().on("click", function () {
+                let $input = $(this);
+
+                let dataPost = {
+                    pVersionID: $input.data("version-id")
+                }
+                let url = that.urlAddCommentRestore;
+                let currentModal = that.modalComparator;
+
+                if (!$input.hasClass("config")) {
+                    url = that.urlAddCommentStruct;
+                    currentModal = that.modalComparatorStruct;
+                }
+
+                that.handleAddCommentRestorePageVersion(dataPost, url, currentModal);
+            });
+        });
+
+        // Evento al hacer clikc en guardar en el modal de agregar comentario en la restauracion
+        configEventByClassName(that.btnRestorePaginaVersionClassName, function (element) {
+            const $jqueryElement = $(element);
+            $jqueryElement.off().on("click", function () {
+                let $button = $(this);
+                let dataPost = {
+                    pVersionID: $button.data("version-id"),
+                    pComentario: $('#txt_ComentarioPaginaVersion').val()
+                }
+                let url = that.urlRestorePage;
+
+                if (!$button.hasClass("config")) {
+                    url = that.urlRestoreStruct;
+                }
+
+                that.handleRestoreVersionPage(dataPost, url);
+            });
+        });
     },
 
 
@@ -1324,7 +1367,7 @@ const operativaGestionPaginas = {
         that.handleReorderPages($(`#${pageSelectedId}`), false);
 
         // Reiniciar la operativa de gestión Páginas para los nuevos items
-        operativaGestionPaginas.init();
+        operativaGestionPaginas.init(that.pParams);
 
         that.handleSavePages(function (isError) {
             if (isError == false) {
@@ -1751,7 +1794,7 @@ const operativaGestionPaginas = {
                 editionNewPagePanel.find('[name="TabOrden"]').val(parseInt(orden) + 1);
 
                 // Reiniciar la operativa de gestión Páginas para los nuevos items
-                operativaGestionPaginas.init();
+                operativaGestionPaginas.init(that.pParams);
 
                 // Abrir el modal para poder editar/gestionar la nueva página añadida                     
                 newPage.find(that.btnEditPage).trigger("click");
@@ -2114,7 +2157,7 @@ const operativaGestionPaginas = {
             // Obtener el último filtro añadido
             const newFilterAdded = currentListCustomFilters.children().last();
             // Reiniciar la operativa de gestión Páginas para los nuevos items
-            operativaGestionPaginas.init();
+            operativaGestionPaginas.init(that.pParams);
             // Mostrar los detalles del nuevo filtro creado
             newFilterAdded.find(that.btnEditFilter).trigger("click");
         }).fail(function (data) {
@@ -2316,7 +2359,7 @@ const operativaGestionPaginas = {
             // Obtener el último filtro añadido
             const newExportationAdded = currentListCustomExportations.children().last();
             // Reiniciar la operativa de gestión Páginas para los nuevos items
-            operativaGestionPaginas.init();
+            operativaGestionPaginas.init(that.pParams);
             // Mostrar los detalles de la nueva exportación
             newExportationAdded.find(that.btnEditExportation).trigger("click");
         }).fail(function (data) {
@@ -2377,7 +2420,7 @@ const operativaGestionPaginas = {
             // Obtener la última propiedad añadida
             const newPropertyAdded = currentListPropertyExportations.children().last();
             // Reiniciar la operativa de gestión Páginas para los nuevos items
-            operativaGestionPaginas.init();
+            operativaGestionPaginas.init(that.pParams);
             // Mostrar los detalles de la nueva exportación
             newPropertyAdded.find(that.btnEditProperty).trigger("click");
         }).fail(function (data) {
@@ -2463,7 +2506,7 @@ const operativaGestionPaginas = {
             `;
             panelPreviewAll.append(newGraphicDetail);
             // Cargar operativa para los nuevos items            
-            operativaGestionPaginas.init();
+            operativaGestionPaginas.init(that.pParams);
         }).fail(function (data) {
             console.log("ERROR =>" + data);
         }).always(function () {
@@ -2517,7 +2560,7 @@ const operativaGestionPaginas = {
             // Mostrar el nuevo gráfico recién creado            
             dataSetNuevo.find(`.${that.btnEditDataSetGraphAssistantClassName}`).trigger('click');
             // Cargar operativa para los nuevos items            
-            operativaGestionPaginas.init();
+            operativaGestionPaginas.init(that.pParams);
         }).fail(function (data) {
             console.log("ERROR =>" + data);
         }).always(function () {
@@ -2554,7 +2597,7 @@ const operativaGestionPaginas = {
             // Mostrar el dataset recién creado                    
             dataSetNuevo.find(`.${that.btnEditDataSetNoAgrupacionGraphAssistantClassName}`).trigger('click');
             // Cargar operativa para los nuevos items            
-            operativaGestionPaginas.init();
+            operativaGestionPaginas.init(that.pParams);
         }).fail(function (data) {
             mostrarNotificacion("error", data);
         }).always(function () {
@@ -3315,7 +3358,7 @@ const operativaGestionPaginas = {
             // Obtener la última faceta añadida
             const newFacetAdded = currentListFacet.children().last();
             // Reiniciar la operativa de gestión Páginas para los nuevos items
-            operativaGestionPaginas.init();
+            operativaGestionPaginas.init(that.pParams);
             // Lanzar el comportamiento de selección de faceta para cargar correctamente los OC
             newFacetAdded.find(that.selectListaFacetas).trigger("change");
             // Mostrar los detalles de la nueva faceta creada
@@ -3460,7 +3503,7 @@ const operativaGestionPaginas = {
             // Eliminar el click de "Ver facetas" ya que las facetas ya se han cargado
             button.off();
             // Reiniciar la operativa de gestión Páginas para los nuevos items
-            operativaGestionPaginas.init();
+            operativaGestionPaginas.init(that.pParams);
         }).fail(function (data) {
             // KO en carga de facetas existentes           
             mostrarNotificacion("error", data);
@@ -3772,13 +3815,12 @@ const operativaGestionPaginas = {
 
     },
 
-    handleCompareVersion: function (element, completion) {
+    handleCompareVersion: function (element, dataPost, url, modal, modalContainer, completion) {
         // Mostrar loading
         var that = this;
-        loadingMostrar();
 
         if (!that.errorDuranteObtenerDatosPestaya) {
-            that.CompareVersion(element, function (savePagesError) {
+            that.CompareVersion(element, dataPost, url, modal, modalContainer, function (savePagesError) {
                 error = savePagesError;
                 // Resetear flag de confirmar eliminación de página
                 if (error == true) { that.confirmDeletePage = false; }
@@ -5285,24 +5327,46 @@ const operativaGestionPaginas = {
         });
     },
 
-    CompareVersion: function (element, completion) {
+    /**
+     * Método para comparar 2 versiones de configuracion de una página
+     * @param {any} element evento
+     * @param {any} items cadena con los ids a comparar
+     * @param {any} restore indica si se está restaurando una version o no
+     * @param {any} completion
+     */
+    CompareVersion: function (element, dataPost, url, modal, modalContainer, completion) {
         const that = this;
-        if (that.numChecksActivos == 2) {
+        if (!dataPost.pRestaurar && that.numChecksActivos != 2) {
+            element.preventDefault();
+            element.stopPropagation();
+            completion != undefined && completion(true);
+            mostrarNotificacion("error", "¡Necesitas seleccionar 2 versiones para poder comparar!");
+        } else {
             loadingMostrar();
-            var dataPost = {
-                documentosComparar: that.txtHackCheckSeleccionados.val()
-            }
             GnossPeticionAjax(
-                that.urlComparePage,
+                url,
                 dataPost,
                 true
             ).done(function (data) {
-                that.containerModal.html(data);
-                calcHeightModalComparar.init();
-                $("#modal-comparar-versiones").modal("show");
+                modalContainer.html(data);
+                modal.modal("show");
                 // Actualizar posibles nuevas páginas en el Select para moverlas desde el Modal
                 that.handleUpdatePageListInModal();
                 completion != undefined && completion(false);
+                // Asignar los evenetos a las tabs multiidioma
+                modalContainer.find('#tabIdiomasPaginas a[data-toggle="tab"]').on('shown.bs.tab', function (e) {
+                    let $right_tab = $('.tab-content[data-panel="right"]');
+                    // Eliminamos el tab que se muestra en el panel derecho
+                    $right_tab.find('.tab-pane').removeClass('show active');
+
+                    let currentLang = $(e.target).attr('href').split('_')[1];
+                    let $targetRightTab = $right_tab.find(`.tab-pane#versiones_${currentLang}_right`)
+                    $targetRightTab.addClass('active');
+
+                    setTimeout(function () {
+                        $targetRightTab.addClass('show');
+                    }, 5);
+                });
             }).fail(function (data) {
                 // KO - Mostrar el error del guardado de páginas realizado
                 mostrarNotificacion("error", "No puedes elegir solo 1 o mas de 2 versiones para comparar");
@@ -5337,13 +5401,9 @@ const operativaGestionPaginas = {
                 // Ocultar el loading
                 loadingOcultar();
             });
-        } else {
-            element.preventDefault();
-            element.stopPropagation();
-            completion != undefined && completion(true);
-            mostrarNotificacion("error", "¡Necesitas seleccionar 2 versiones para poder comparar!");
         }
     },
+
     /**
      * Método para mostrar posibles errores durante el proceso del guardado de páginas. Estos errores son devueltos por el servidor
      * una vez el método "savePages" ha sido ejecutado
@@ -5372,358 +5432,91 @@ const operativaGestionPaginas = {
     mostrarErrorPoyectoOrigenBusquedaPrivado: function (fila) {
         mostrarNotificacion("error", "El proyecto no puede ser privado");
     },
-}
 
-const operativaComparadorPestanyas = {
-    init: function () {
-        this.config();
-        this.configRutas();
-        this.configEvents();
-        this.triggerEvents();
-    },
-
-    config: function () {
-        this.tabsModalLanguage = $('#tabIdiomasPaginas a[data-toggle="tab"]');
-        this.btnAddComment = $('.btnAgregarComentarioRestauracion');
-        this.modalComparator = $("#modal-comparar-versiones");
-    },
-
-    configRutas: function () {
-        this.urlPagina = refineURL();
-        this.urlAddCommentRestore = `${this.urlPagina}/add-comment`;
-    },
-
-    configEvents: function () {
+    handleDeletePageVersion: function (url, modal) {
         const that = this;
-
-        this.tabsModalLanguage.on('shown.bs.tab', function (e) {
-            let $right_tab = $('.tab-content[data-panel="right"]');
-            // Eliminamos el tab que se muestra en el panel derecho
-            $right_tab.find('.tab-pane').removeClass('show active');
-
-            let currentLang = $(e.target).attr('href').split('_')[1];
-            let $targetRightTab = $right_tab.find(`.tab-pane#versiones_${currentLang}_right`)
-            $targetRightTab.addClass('active');
-            
-            setTimeout(function () {
-                $targetRightTab.addClass('show');
-            }, 5);
-        });
-
-        this.btnAddComment.on("click", function () {
-            dismissVistaModal(that.modalComparator);
-            loadingMostrar();
-            var dataPost = {
-                pVersionID: $(this).data("version-id")
-            }
-            GnossPeticionAjax(
-                that.urlAddCommentRestore,
-                dataPost,
-                true
-            ).done(function (data) {
-                $('#modal-dinamic-content').html(data);
-                loadingOcultar();
-            }).fail(function () {
-                mostrarNotificacion("error", "Ha surgido un error durante la carga del formulario");
-            })
-        });
-
-        $("#modal-comparar-versiones").on("hidden.bs.modal", function () {
-            $("#modal-comparar-versiones-content").html('')
+        loadingMostrar();
+        let dataPost = {
+            pPestanyaID: that.filaPagina.attr('id'),
+            pVersionID: that.configPageVersionID
+        }
+        GnossPeticionAjax(
+            url,
+            dataPost,
+            true
+        ).done(function (data) {
+            modal.modal("hide");
+            mostrarNotificacion("success", data);
+        }).fail(function (data) {
+            mostrarNotificacion("error", data);
+        }).always(function () {
+            loadingOcultar();
         });
     },
 
-    triggerEvents: function () {
-
-        // Operativa multiIdiomas
-        // Parámetros para la operativa multiIdioma (helpers.js)
-        this.operativaMultiIdiomaParams = {
-            // Nº máximo de pestañas con idiomas a mostrar. Los demás quedarán ocultos
-            numIdiomasVisibles: 3,
-            // Establecer 1 tab por cada input (true, false) - False es la forma vieja
-            useOnlyOneTab: true,
-            panContenidoMultiIdiomaClassName: "panContenidoMultiIdioma",
-            // No permitir padding bottom y si padding top
-            allowPaddingBottom: false,
-        };
-
-        // Inicializar operativa multiIdioma
-        operativaMultiIdioma.init(this.operativaMultiIdiomaParams);
-
-        $("#modal-comparar-versiones .filter-order-info input, \
-           #modal-comparar-versiones .exportation-info input, \
-           #modal-comparar-versiones .facet-info input, \
-           #modal-comparar-versiones .facet-info select, \
-           #modal-comparar-versiones .asistentesLista input, \
-           #modal-comparar-versiones .asistentesLista select, \
-           #modal-comparar-versiones :input, \
-           #modal-comparar-versiones select, \
-           #modal-comparar-versiones textarea"
-        ).attr('disabled', 'disabled');
-    }
-}
-
-const operativaGestionRestaurarPagina = {
-
-    init: function () {
-        this.config();
-        this.configRutas();
-        this.configEvents();
-    },
-
-    config: function () {
-        this.btnRestaurarPagina = $('.btnRestorePaginaVersion')
-        this.txt_ComentarioVersion = $('#txt_ComentarioPaginaVersion')
-    },
-
-    configRutas: function () {
-        this.urlPagina = refineURL();
-        this.urlRestorePage = `${this.urlPagina}/RestorePage`;
-    },
-
-    configEvents: function () {
-        const that = this;
-
-        this.btnRestaurarPagina.on("click", function () {
-            loadingMostrar();
-            dataPost = {
-                versionId: $(this).data("version-id"),
-                pComentario: that.txt_ComentarioVersion.val()
-            }
-            GnossPeticionAjax(
-                that.urlRestorePage,
-                dataPost,
-                true
-            ).done(function (data) {
-                loadingOcultar();
-                dismissVistaModal();
-                mostrarNotificacion("success", "Se ha restaurado correctamente la version del componente");
-                location.reload();
-            }).fail(function (data) {
-                // KO - Mostrar el error del guardado de páginas realizado
-                let error = data.split('|||');
-                if (data != "Contacte con el administrador del Proyecto, no es posible atender la petición.") {
-                    that.mostrarErrorGuardado(data);
-                    if (error[0] == "RUTA REPETIDA") {
-                        that.mostrarErrorUrlRepetida($('#' + error[1]));
-                    }
-                    else if (error[0] == "NOMBRE VACIO") {
-                        that.mostrarErrorNombreVacio($('#' + error[1]));
-                    }
-                    else if (error[0] == "PROYECTO_ORIGEN_BUSQUEDA_PRIVADO") {
-                        that.mostrarErrorPoyectoOrigenBusquedaPrivado($('#' + error[1]));
-                    } else if (error[0] == "invitado") {
-                        mostrarNotificacion("error", "La sesión de usuario ha caducado. Accede con tu usuario y credenciales para poder continuar.")
-                        completion != undefined && completion(true);
-                    } else if (error[0] == "ERROR CONCURRENCIA") {
-                        mostrarNotificacion("error", error[1])
-                    }
-                }
-                else {
-                    mostrarNotificacion("error", "Ha surgido un error durante la restauracion de la version");
-                }
-                loadingOcultar();
-                dismissVistaModal();
-            });
-        });
-    },
-}
-
-const operativaGestionHistorialPaginaCMS = {
-    init: function (pParams) {
-        this.config();
-        this.configRutas(pParams);
-        this.configEvents();
-        this.VaciarChecks();
-    },
-
-    config: function () {
-        this.btnRestoreVersionPaginaCMS = $('.btnRestoreVersionPaginaCMS');
-        this.btnCompararVersionesPaginaCMS = $('#btnCompararVersionesPaginaCMS');
-        // Checkbox del modal historial de configuracion
-        this.chkHistorialPaginaCMS = $('.tabla-versiones-estructura-pagina input');
-        this.txtHackCheckSeleccionados = $('#txtHackCheckSeleccionadosEstructura');
-        this.numChecksActivos = 0;
-        this.modalComparatorContent = $("#modal-comparar-versiones-estructura-content");
-    },
-
-    configRutas: function (pParams) {
-        this.urlCompareStructVersion = pParams.urlCompareStructVersion;
-    },
-
-    configEvents: function () {
-        const that = this;
-
-        this.chkHistorialPaginaCMS.on("click", function () {
-            that.ComprobarChecks(this);
-        });
-
-        this.btnCompararVersionesPaginaCMS.on("click", function (element) {
-            if (that.numChecksActivos == 2) {
-                dismissVistaModal();
-                loadingMostrar();
-                var dataPost = {
-                    documentosComparar: that.txtHackCheckSeleccionados.val(),
-                    pPestanyaID: $(this).data("pestanya-id")
-                }
-                GnossPeticionAjax(
-                    that.urlCompareStructVersion,
-                    dataPost,
-                    true
-                ).done(function (data) {
-                    that.modalComparatorContent.html(data);
-                    calcHeightModalComparar.init();
-                    loadingOcultar();
-                }).fail(function () {
-                    loadingOcultar();
-                    mostrarNotificacion("error", "Ha surgido un error durante la comparacion de las versiones");
-                });
-            } else {
-                element.preventDefault();
-                element.stopPropagation();
-                mostrarNotificacion("error", "¡Necesitas seleccionar 2 versiones para poder comparar!");
-            }
-        });
-
-        this.btnRestoreVersionPaginaCMS.on("click", function () {
-            dismissVistaModal();
-            loadingMostrar();
-            let dataPost = {
-                pRestaurar: true,
-                documentosComparar: `&${$(this).data("version-actual-id")}&${$(this).data("version-id")}`,
-                pPestanyaID: $(this).data("pestanya-id")
-            }
-            GnossPeticionAjax(
-                that.urlCompareStructVersion,
-                dataPost,
-                true
-            ).done(function (data) {
-                that.modalComparatorContent.html(data);
-                calcHeightModalComparar.init();
-                loadingOcultar();
-            }).fail(function () {
-                loadingOcultar();
-                mostrarNotificacion("error", "Ha surgido un error durante la comparacion de las versiones");
-            });
-        });
-    },
-
-    ComprobarChecks: function (element) {
+    handleCheckInputCheckboxHistory: function (input) {
         const that = this;
         that.numChecksActivos = 0;
-        for (var i = 0; i < that.chkHistorialPaginaCMS.length; i++) {
-            if (that.chkHistorialPaginaCMS[i].checked == true) {
+        let $currentChecks = $(input).parents('tbody').find('.version-check');
+        for (var i = 0; i < $currentChecks.length; i++) {
+            if ($currentChecks[i].checked == true) {
                 that.numChecksActivos++;
             }
         }
 
-        if ($(element).is(':checked')) {
-            that.txtHackCheckSeleccionados.val(that.txtHackCheckSeleccionados.val() + '&' + $(element).attr('id'));
+        if ($(input).is(':checked')) {
+            that.txtHackCheckSeleccionados.val(that.txtHackCheckSeleccionados.val() + '&' + $(input).data('version-id'));
             if (that.numChecksActivos > 2) {
-                $(element).prop('checked', false);
-                that.txtHackCheckSeleccionados.val(that.txtHackCheckSeleccionados.val().replace('&' + $(element).attr('id'), ''));
+                $(input).prop('checked', false);
+                that.txtHackCheckSeleccionados.val(that.txtHackCheckSeleccionados.val().replace('&' + $(input).data('version-id'), ''));
+                that.numChecksActivos = that.numChecksActivos - 1;
                 return false;
             }
         }
         else {
-            that.txtHackCheckSeleccionados.val(that.txtHackCheckSeleccionados.val().replace('&' + $(element).attr('id'), ''));
+            that.txtHackCheckSeleccionados.val(that.txtHackCheckSeleccionados.val().replace('&' + $(input).data('version-id'), ''));
         }
+
         return false;
     },
 
-    VaciarChecks: function () {
+    handleAddCommentRestorePageVersion: function (dataPost, url, currentModal) {
         const that = this;
-        that.txtHackCheckSeleccionados.val('');
-
-        for (var i = 0; i < that.chkHistorialPaginaCMS.length; i++) {
-            $(that.chkHistorialPaginaCMS[i]).prop('checked', false);
-        }
-    },
-
-}
-
-const operativaComparadorPestanyasCMS = {
-    init: function (pParams) {
-        this.config();
-        this.configRutas(pParams);
-        this.configEvents();
-    },
-
-    config: function () {
-        this.btnAddCommentRestorePageCMS = $(".btnAddCommentRestorePageCMS");
-    },
-
-    configRutas: function (pParams) {
-        this.urlAddCommentRestorePageCMS = pParams.urlAddCommentRestorePageCMS;
-    },
-
-    configEvents: function () {
-        const that = this;
-        this.btnAddCommentRestorePageCMS.on("click", function () {
-            dismissVistaModal($("#modal-comparar-estructura"))
-            loadingMostrar();
-            dataPost = {
-                pVersionID: $(this).data("version-id")
-            }
-            GnossPeticionAjax(
-                that.urlAddCommentRestorePageCMS,
-                dataPost,
-                true
-            ).done(function (data) {
-                $('#modal-dinamic-content').html(data);
-                loadingOcultar();
-            }).fail(function () {
-                mostrarNotificacion("error", "Ha surgido un error durante la carga del formulario");
-            })
+        dismissVistaModal(currentModal);
+        dismissVistaModal();
+        loadingMostrar();
+        GnossPeticionAjax(
+            url,
+            dataPost,
+            true
+        ).done(function (data) {
+            $('#modal-dinamic-content').html(data);
+            $('#modal-container').modal("show");
+        }).fail(function (data) {
+            mostrarNotificacion("error", data);
+        }).always(function () {
+            loadingOcultar();
         });
-
-        $("#modal-comparar-estructura").on("hidden.bs.modal", function () {
-            $('#modal-comparar-versiones-estructura-content').html('');
-        })
-    }
-
-}
-
-const operativaGestionRestaurarPaginaCMS = {
-    init: function (pParams) {
-        this.config();
-        this.configRutas(pParams);
-        this.configEvents();
     },
 
-    config: function () {
-        this.btnRestorePaginaCMS = $(".btnRestorePaginaCMS");
-        this.txt_ComentarioVersionPaginaCMS = $('#txt_ComentarioVersionPaginaCMS')
-    },
-
-    configRutas: function (pParams) {
-        this.urlRestorePaginaCMS = pParams.urlRestorePaginaCMS;
-    },
-
-    configEvents: function () {
-        const that = this;
-        this.btnRestorePaginaCMS.on("click", function () {
-            dismissVistaModal()
-            loadingMostrar();
-            dataPost = {
-                pVersionID: $(this).data("version-id"),
-                pComentario: that.txt_ComentarioVersionPaginaCMS.val()
-            }
-            GnossPeticionAjax(
-                that.urlRestorePaginaCMS,
-                dataPost,
-                true
-            ).done(function (data) {
-                loadingOcultar();
-                dismissVistaModal();
-                mostrarNotificacion("success", "Se ha restaurado correctamente la version del componente");
-                location.reload();
-            }).fail(function () {
-                mostrarNotificacion("error", "Ha surgido un error durante la restauracion de la pagina CMS");
-            })
-        })
+    handleRestoreVersionPage: function (dataPost, url) {
+        loadingMostrar();
+        GnossPeticionAjax(
+            url,
+            dataPost,
+            true
+        ).done(function (data) {
+            mostrarNotificacion("success", data);
+            location.reload();
+        }).fail(function (data) {
+            mostrarNotificacion("error", data);
+        }).always(function () {
+            loadingOcultar();
+            dismissVistaModal();
+        });
     }
 }
+
 /**
  * 
  */
@@ -7479,7 +7272,10 @@ const operativaGestionComponentsCMS = {
         // Botón para visualizar un recurso dentro del contenedor de componentes/recursos
         this.btnViewResourceFromContainerListClassName = "btnViewResourceFromContainerList";
         this.btnViewResourceFromContainerList = $(`.${this.btnViewResourceFromContainerListClassName}`);
-
+        // Botón para eliminar una version de un componente cms
+        this.btnDeleteComponentVersionClassName = 'btnDeleteComponentVersion';
+        this.btnConfirmDeleteComponentVersionClassName = 'btnConfirmDeleteComponentCMSVersion';
+        this.componentVersionID = '';
 
         // Input para buscar componentes y asignarlos al "Contenedor de componentes"
         this.txtSearchIdComponentIdName = 'txtSearchIdComponent';
@@ -7577,6 +7373,24 @@ const operativaGestionComponentsCMS = {
         this.isNewCreatedFromCSMBuilder = false;
         // Array de componentesCMS para almacenar la navegación para la edición de estos a través de vía modal cuando se edite un "Grupo de componentes desde modal" y se necesite realizar la navegación
         this.listComponentArray = [];
+
+        // Seccion historial componente cms
+        this.numChecksActivos = 0;
+        // Clase que puede asiganarse tanto al boton de restaurar como al de 
+        // comparar en el modal del historial
+        this.btnCompareVersionCMSClassName = 'btnCompareVersionCMS';
+        this.modalHistorialComponente = $('#modal-historial-componente')
+        this.txtComponenteActual = $('#txtComponenteActualID');
+        this.txtUrlHistorialComponente = "";
+        this.txtUrlDeleteVersionComponent = "";
+
+        // Seccion comparador componente cms
+        this.btnAgregarComentarioRestauracionClassName = 'btnAgregarComentarioRestauracion';
+        this.modalComparator = $('#modal-comparar-componentes');
+        this.modalComparatorContainer = $('#modal-comparar-cms-content');
+
+        // Seccion agregar comentario restauracion componente cms
+        this.btnRestoreVersionComponentCMSClassName = 'btnRestoreCMSVersion';
     },
 
     /**
@@ -7668,9 +7482,16 @@ const operativaGestionComponentsCMS = {
                 true
             ).done(function (html) {
                 $('#modal-history-content').html(html);
-                loadingOcultar();
+                $('#panHistorial_table input').on("click", function () {
+                    that.ComprobarChecks(this);
+                });
+                that.VaciarChecks();
+                that.txtUrlHistorialComponente = $('input#txtUrlHistorialComponente').data('url');
+
             }).fail(function () {
                 mostrarNotificacion("error", "Ha surgido un problema al cargar el historial del componente");
+            }).always(function () {
+                loadingOcultar();
             });
 
         });
@@ -7945,6 +7766,117 @@ const operativaGestionComponentsCMS = {
             if ($input.length > 0) {
                 that.getAndSetIdiomasComunidad($input);
             }
+        });
+
+        // Botón para mostrar el modal de comparacion de versiones al intentar restaurar
+        configEventByClassName(that.btnCompareVersionCMSClassName, function (element) {
+            $jqueryElement = $(element);
+            $jqueryElement.on("click", function (e) {
+                let $button = $(e.currentTarget);
+                let url = `${that.txtUrlHistorialComponente}/compare`;
+
+                let items = `&${$(element).data("version-actual-id")}&${$(element).data("version-id")}`
+                let restore = true;
+                if ($button.attr('id') == 'btnComparar') {
+                    items = $('#txtHackCheckSeleccionados').val();
+                    restore = false;
+                }
+
+                that.handleCompareVersionCMS(e, items, url, restore);
+            })
+        });
+
+        // Botón para mostrar el modal de confirmacion al borrar una version
+        configEventByClassName(that.btnDeleteComponentVersionClassName, function (element) {
+            const $jqueryElement = $(element);
+            $jqueryElement.off().on("click", function () {
+                const input = $(this);
+                $('#modal-historial-componente').modal("hide");
+                that.componentVersionID = input.data('version-id');
+                that.txtUrlDeleteVersionComponent = $('input#txtUrlDeleteVersionComponent').data('url');
+            });
+        });
+
+        // Botón para eliminar la version seleccionada en el historial del componente CMS
+        configEventByClassName(that.btnConfirmDeleteComponentVersionClassName, function (element) {
+            const $jqueryElement = $(element);
+            $jqueryElement.off().on("click", function () {
+                loadingMostrar();
+                const input = $(this);
+                let urlDeleteVersion = `${that.txtUrlDeleteVersionComponent}/${that.componentVersionID}/delete-version`;
+                GnossPeticionAjax(
+                    urlDeleteVersion,
+                    null,
+                    true
+                ).done(function (data) {
+                    $('#modal-borrar-version-componente-cms').modal("hide");
+                    mostrarNotificacion("success", data);
+                }).fail(function (data) {
+                    mostrarNotificacion("error", data);
+                }).always(function () {
+                    loadingOcultar();
+                });
+            });
+        });
+
+        // Eliminar el contenido del modal cuando se cierra
+        this.modalComparator.on('hidden.bs.modal', function () {
+            that.modalComparatorContainer.html('');
+        }).on("show.bs.modal", function () {
+            that.modalComparatorContainer.html("")
+        });
+
+        // Eliminar el contenido del modal cuando se cierra
+        this.modalHistorialComponente.on('hidden.bs.modal', function () {
+            $('#modal-history-content').html('');
+        });
+
+        // Botón para añadir un comentario al restaurar una version
+        configEventByClassName(that.btnAgregarComentarioRestauracionClassName, function (element) {
+            const $jqueryElement = $(element);
+            $jqueryElement.off().on("click", function () {
+                dismissVistaModal(that.modalComparator);
+                loadingMostrar()
+                var dataPost = {
+                    pComponenteID: $("#componentVersionRestoreData").data('component-id'),
+                    pVersionID: $("#componentVersionRestoreData").data('version-id')
+                }
+                GnossPeticionAjax(
+                    $('input#txtUrlAddCommentComponentItem').val(),
+                    dataPost,
+                    true
+                ).done(function (data) {
+                    $('#modal-dinamic-content').html(data);
+                }).fail(function (data) {
+                    mostrarNotificacion("error", data);
+                }).always(function () {
+                    loadingOcultar();
+                });
+            });
+        });
+
+        configEventByClassName(that.btnRestoreVersionComponentCMSClassName, function (element) {
+            const $jqueryElement = $(element);
+            $jqueryElement.off().on("click", function () {
+                loadingMostrar();
+                dataPost = {
+                    comentario: $('#txt_ComentarioVersion').val()
+                }
+                GnossPeticionAjax(
+                    $('#urlRestoreCMSComponentVersion').data('url'),
+                    dataPost,
+                    true
+                ).done(function (data) {
+                    dismissVistaModal();
+                    mostrarNotificacion("success", "Se ha restaurado correctamente la version del componente");
+                    location.reload();
+                }).fail(function () {
+                    dismissVistaModal();
+                    mostrarNotificacion("error", "Ha surgido un error durante la restauracion de la version");
+                }).always(function () {
+                    loadingOcultar();
+                });
+            });
         });
     },
 
@@ -9547,219 +9479,1011 @@ const operativaGestionComponentsCMS = {
         const that = this;
         comprobarInputNoVacio(input, true, false, "Esta propiedad no puede estar vacía.", 0);
     },
-}
 
-const operativaGestionHistorialCMS = {
-
-    init: function () {
-        this.config();
-        this.configRutas();
-        this.configEvents();
-        this.VaciarChecks();
-    },
-
-    config: function () {
-        this.numChecksActivos = 0;
-        this.btnRestoreVersionCMS = $('.btnRestoreVersionCMS');
-        this.txtHackCheckSeleccionados = $('#txtHackCheckSeleccionados');
-        this.chBoxTableHistory = $('#panHistorial_table input');
-        this.btnComparar = $("#btnComparar");
-        this.modalComparatorContainer = $('#modal-comparar-cms-content');
-        this.modalComparator = $('#modal-comparar-componentes');
-        this.txtComponenteActual = $('#txtComponenteActualID');
-        this.txtUrlControladorHistorial = $('#txtUrlHistorialComponente').data('url');
-    },
-
-    configRutas: function () {
-        this.urlBase = refineURL();
-        this.urlCompareVersion = `${this.txtUrlControladorHistorial}/compare`;
-    },
-
-    configEvents: function () {
+    /**
+     * Metodo que muestra el modal de comparacion de versiones que cambia 
+     * si se está solo comparando o restaurando
+     * @param {any} element
+     * @param {any} items
+     * @param {any} url
+     * @param {any} restore
+     */
+    handleCompareVersionCMS: function (element, items, url, restore) {
         const that = this;
-
-        this.chBoxTableHistory.on("click", function () {
-            that.ComprobarChecks(this);
-        });
-
-        this.btnComparar.on("click", function (element) {
-            if (that.numChecksActivos == 2) {
-                dismissVistaModal($('#modal-historial-componente'));
-                loadingMostrar();
-                var dataPost = {
-                    documentosComparar: that.txtHackCheckSeleccionados.val()
-                }
-                GnossPeticionAjax(
-                    that.urlCompareVersion,
-                    dataPost,
-                    true
-                ).done(function (data) {
-                    that.modalComparatorContainer.html(data);
-                    calcHeightModalComparar.init();
-                    loadingOcultar();
-                }).fail(function () {
-                    loadingOcultar();
-                    mostrarNotificacion("error", "Ha surgido un error durante la comparacion de las versiones");
-                });
-            } else {
-                element.preventDefault();
-                element.stopPropagation();
-                mostrarNotificacion("error", "¡Necesitas seleccionar 2 versiones para poder comparar!");
-            }
-        });
-
-        this.btnRestoreVersionCMS.on("click", function () {
+        if (!restore && that.numChecksActivos != 2) {
+            element.preventDefault();
+            element.stopPropagation();
+            mostrarNotificacion("error", "¡Necesitas seleccionar 2 versiones para poder comparar!");
+        } else {
             dismissVistaModal($('#modal-historial-componente'));
             loadingMostrar();
-            let dataPost = {
-                estaRestaurando: true,
-                documentosComparar: `&${$(this).data("version-actual-id")}&${$(this).data("version-id")}`
+            var dataPost = {
+                estaRestaurando: restore,
+                documentosComparar: items
             }
             GnossPeticionAjax(
-                that.urlCompareVersion,
+                url,
                 dataPost,
                 true
             ).done(function (data) {
                 that.modalComparatorContainer.html(data);
                 calcHeightModalComparar.init();
-                loadingOcultar();
+                $('#tabIdiomasComponentes a[data-toggle="tab"]').on('shown.bs.tab', function (e) {
+                    var $right_tab = $('.tab-content[data-panel="right"]');
+                    // Eliminamos el tab que se muestra en el panel derecho
+                    $right_tab.find('.tab-pane').removeClass('show active');
+
+                    var currentLang = $(e.target).attr('href').split('_')[1];
+                    let $targetRightTab = $right_tab.find(`.tab-pane#versiones_${currentLang}_right`)
+                    $targetRightTab.addClass('active');
+                    setTimeout(function () {
+                        $targetRightTab.addClass('show');
+                    }, 5);
+                });
             }).fail(function () {
-                loadingOcultar();
+                //loadingOcultar();
                 mostrarNotificacion("error", "Ha surgido un error durante la comparacion de las versiones");
+            }).always(function () {
+                loadingOcultar();
             });
-        });
-
-        $('#modal-historial-componente').on('hidden.bs.modal', function () {
-            $('#modal-history-content').html('');
-        });
-
-        $('#modal-comparar-componentes').on('hidden.bs.modal', function () {
-            $('#modal-comparar-cms-content').html('');
-        });
+        }
     },
 
     VaciarChecks: function () {
         const that = this;
-        that.txtHackCheckSeleccionados.val('');
+        $('#txtHackCheckSeleccionados').val('');
 
-        for (var i = 0; i < that.chBoxTableHistory.length; i++) {
-            $(that.chBoxTableHistory[i]).prop('checked', false);
+        for (var i = 0; i < $('#panHistorial_table input').length; i++) {
+            $($('#panHistorial_table input')[i]).prop('checked', false);
         }
     },
 
     ComprobarChecks: function (element) {
         const that = this;
         that.numChecksActivos = 0;
-        for (var i = 0; i < that.chBoxTableHistory.length; i++) {
-            if (that.chBoxTableHistory[i].checked == true) {
+        for (var i = 0; i < $('#panHistorial_table input').length; i++) {
+            if ($('#panHistorial_table input')[i].checked == true) {
                 that.numChecksActivos++;
             }
         }
 
         if ($(element).is(':checked')) {
-            that.txtHackCheckSeleccionados.val(that.txtHackCheckSeleccionados.val() + '&' + $(element).attr('id'));
+            $('#txtHackCheckSeleccionados').val($('#txtHackCheckSeleccionados').val() + '&' + $(element).attr('id'));
             if (that.numChecksActivos > 2) {
                 $(element).prop('checked', false);
-                that.txtHackCheckSeleccionados.val(that.txtHackCheckSeleccionados.val().replace('&' + $(element).attr('id'), ''));
+                $('#txtHackCheckSeleccionados').val($('#txtHackCheckSeleccionados').val().replace('&' + $(element).attr('id'), ''));
                 return false;
             }
         }
         else {
-            that.txtHackCheckSeleccionados.val(that.txtHackCheckSeleccionados.val().replace('&' + $(element).attr('id'), ''));
+            $('#txtHackCheckSeleccionados').val($('#txtHackCheckSeleccionados').val().replace('&' + $(element).attr('id'), ''));
         }
         return false;
     }
 }
 
-const operativaGestionComparadorCMS = {
+const operativaGestionFlujos = {
+
     init: function (pParams) {
         this.config(pParams);
+        this.configRutas(pParams);
         this.configEvents();
+        this.triggerEvents();
     },
 
     config: function (pParams) {
-        this.btnAgregarComentarioRestauracion = $(".btnAgregarComentarioRestauracion");
-        this.tabsModalLanguage = $('#tabIdiomasComponentes a[data-toggle="tab"]');
-        this.urlAddCommentComponentItem = pParams.urlAddCommentComponentItem;
-        this.txtComponentID = $("#componentVersionRestoreData").data('component-id');
-        this.txtVersionID = $("#componentVersionRestoreData").data('version-id');
-        this.modalComparator = $('#modal-comparar-componentes');
+        this.pParams = pParams;
+        this.newModalWorkflow = $("#modal-nuevo-workflow");
+        this.modalWorkflow = $('#modal-editar-workflow');
+        this.modalWorkflowContent = $('#modal-editar-workflow .modal-content');
+        this.workflowDiagram = $('#modal-diagrama-workflow');
+        this.workflowDiagramContainer = '.mermaid-container';
+        this.btnAddWorkflow = $('.btnAddWorkflow');
+        this.btnDeleteWorkflow = $('.btnDeleteWorkflow');
+        this.btnConfirmDeleteWorkflowClassName = 'btnConfirmDeleteWorkflow';
+        this.btnEditWorkflow = $('.btnEditWorkflow');
+        this.btnShowWorkflowDiagram = $('.btnShowWorkflowDiagram');
+        this.tabIdiomaItem = $(".tabIdiomaItem");
+        this.labelLanguageComponent = $(".language-component");
+        this.txtEstados_Hack = $("#txtEstados_Hack");
+        this.btnSaveWorkFlow = $('.btnGuardarFlujo');
+        this.btnSaveWorkFlowClassName = 'btnGuardarFlujo';
+        this.modalWorkflowClass = 'modal-flujo';
+        this.radioButtonPublicState = $('.estadoVisibleSinAcceso');
+        this.radioButtonPublicStateClassName = 'estadoVisibleSinAcceso';
+        this.inputLectores = $("input#txtLectores");
+        this.inputEditores = $("input#txtUsuario");
+        this.inputResponsables = $("input#txtResponsables");
+        this.btnRemoveTagClassName = 'tag-remove.custom';
+        this.inputTxtBuscarFlujo = $('#txtBuscarFlujo');
+        this.newModalWorkflowNavs = $('#modal-nuevo-workflow .nav-link');
+        this.editModalWorkflowNavs = $('#modal-editar-workflow .nav-link');
+        this.radioButtonStateTypeClassName = 'tipo-estado';
+        this.currentRow = "";
+        this.workflowItem = {};
+        this.workflowID = "";
+        this.workflowStates = [];
+        this.workflowStatesPrivacy = [];
+        this.workflowStatesPrivacyGroup = [];
+        this.workflowTransitions = [];
+        this.workflowTransitionsPrivacy = [];
+        this.workflowTransitionsPrivacyGroup = [];
+        this.currentModal = undefined;
+        this.affectedContent = { "0": false, "2": false, "3": false, "5": false, "8": false, "16": false, "18": false, "19": false, "20": false };
+        this.workflowOntologyContents = [];
+        this.emptyNameError = false;
+        this.boolCloseModal = false;
+        this.transitionsResponsiblesHTML = '';
     },
 
-    configEvents: function () {
-        const that = this;
+    configRutas: function (pParams) {
+        this.urlShowWorkflow = pParams.urlShowWorkflow;
+        this.urlSaveWorkflow = pParams.urlSaveWorkflow;
+        this.urlDeleteWorkflow = pParams.urlDeleteWorkflow;
+        this.urlDeleteState = pParams.urlDeleteState;
+        this.urlDeleteTransition = pParams.urlDeleteTransition;
+        this.urlEditWorkflow = pParams.urlEditWorkflow;
+    },
 
-        this.tabsModalLanguage.on('shown.bs.tab', function (e) {
-            var $right_tab = $('.tab-content[data-panel="right"]');
-            // Eliminamos el tab que se muestra en el panel derecho
-            $right_tab.find('.tab-pane').removeClass('show active');
+    triggerEvents: function () {
+        // Operativa multiIdiomas
+        // Parámetros para la operativa multiIdioma (helpers.js)
+        this.operativaMultiIdiomaParams = {
+            // Nº máximo de pestañas con idiomas a mostrar. Los demás quedarán ocultos
+            numIdiomasVisibles: 3,
+            // Establecer 1 tab por cada input (true, false) - False es la forma vieja
+            useOnlyOneTab: true,
+            panContenidoMultiIdiomaClassName: "panContenidoMultiIdioma",
+            // No permitir padding bottom y si padding top
+            allowPaddingBottom: false,
+        };
 
-            var currentLang = $(e.target).attr('href').split('_')[1];
-            let $targetRightTab = $right_tab.find(`.tab-pane#versiones_${currentLang}_right`)
-            $targetRightTab.addClass('active');
-            setTimeout(function () {
-                $targetRightTab.addClass('show');
-            }, 5);
-        });
-
-        this.btnAgregarComentarioRestauracion.on('click', function (e) {
-            dismissVistaModal(that.modalComparator);
-            loadingMostrar()
-            var dataPost = {
-                pComponenteID: that.txtComponentID,
-                pVersionID: that.txtVersionID
+        // Inicializar operativa multiIdioma
+        operativaMultiIdioma.init(this.operativaMultiIdiomaParams);
+        let config = {
+            startOnLoad: true,
+            securityLevel: 'loose',
+            theme: 'neutral',
+            flowchart: {
+                useMaxWidth: true,
+                curve: 'stepBefore'
             }
-            GnossPeticionAjax(
-                that.urlAddCommentComponentItem,
-                dataPost,
-                true
-            ).done(function (data) {
-                $('#modal-dinamic-content').html(data);
-                loadingOcultar();
-            }).fail(function () {
-                mostrarNotificacion("error", "Ha surgido un error durante la carga del formulario");
-            })
-        });
+        }
+        mermaid.initialize(config);
+        autocompletarWorkflows.init();
 
-        this.modalComparator.on("show.bs.modal", function () {
-            $("#modal-comparar-cms-content").html("")
-        })
-    }
-}
+        $('#modal-editar-workflow .nav-link, #modal-nuevo-workflow .nav-link').off("click").on("click", function () {
+            let currentModal = $(this).parents('div.modal-edicion');
+            let lang = $(this).attr('id').split("_")[1];
 
-const operativaGestionRestaurarCMSComentario = {
-    init: function () {
-        this.config();
-        this.configEvents();
-    },
-
-    config: function () {
-        this.urlRestoreCMSComponentVersion = $('#urlRestoreCMSComponentVersion').data('url');
-        this.btnRestoreVersion = $('.btnRestoreCMSVersion')
-        this.txtComment = $('#txt_ComentarioVersion')
-    },
-
-    configEvents: function () {
-        const that = this;
-        this.btnRestoreVersion.on("click", function () {
-            loadingMostrar();
-            dataPost = {
-                comentario: that.txtComment.val()
-            }
-            GnossPeticionAjax(
-                that.urlRestoreCMSComponentVersion,
-                dataPost,
-                true
-            ).done(function (data) {
-                loadingOcultar();
-                dismissVistaModal();
-                mostrarNotificacion("success", "Se ha restaurado correctamente la version del componente");
-                location.reload();
-            }).fail(function () {
-                loadingOcultar();
-                dismissVistaModal();
-                mostrarNotificacion("error", "Ha surgido un error durante la restauracion de la version");
+            // Mostrar el input del idioma seleccionado estados
+            const stateTitleInputs = currentModal.find('.autocompletar-estados .nombre-form-oculto');
+            stateTitleInputs.hide();
+            const stateTitleInputActive = currentModal.find(`.autocompletar-estados .nombre-form-oculto-${lang}`);
+            stateTitleInputActive.show();
+            // Cambiar el nombre de los estados al idioma seleccionado
+            let states = currentModal.find('.autocompletar-estados>.tag-list').children();
+            states.each(function () {
+                let state = $(this);
+                let stateValues = state.attr("title").split("|||");
+                let stateSelectedValue = "";
+                stateValues.forEach(element => {
+                    if (element.includes(`@${lang}`)) {
+                        stateSelectedValue = element.split("@")[0];
+                    }
+                });
+                state.find('.tag-label').text(stateSelectedValue);
             });
+
+            // Mostrar el input del idioma seleccionado transicion
+            const transitionTitleInputs = currentModal.find('.autocompletar-transiciones .nombre-form-oculto');
+            transitionTitleInputs.hide();
+            const transitionTitleInputActive = currentModal.find(`.autocompletar-transiciones .nombre-form-oculto-${lang}`);
+            transitionTitleInputActive.show();
+            // Cambiar el nombre de los estados al idioma seleccionado
+            let transitions = currentModal.find('.autocompletar-transiciones>.tag-list').children();
+            transitions.each(function () {
+                let transition = $(this);
+                let transitionsValues = transition.attr("title").split("|||");
+                let transitionSelectedValue = "";
+                transitionsValues.forEach(element => {
+                    if (element.includes(`@${lang}`)) {
+                        transitionSelectedValue = element.split("@")[0];
+                    }
+                });
+                // Seccion de estado origen -> estado destino
+                let transitionTags = transition.find('.transition .transition-label');
+                transitionTags.each(function () {
+                    let transitionStateTag = $(this);
+                    let transitionStateTagValues = transitionStateTag.attr("title").split("|||");
+                    let transitionStateTagValue = '';
+                    transitionStateTagValues.forEach(element => {
+                        if (element.includes(`@${lang}`)) {
+                            transitionStateTagValue = element.split("@")[0];
+                        }
+                    });
+                    transitionStateTag.text(transitionStateTagValue);
+                });
+                transition.find('.tag-label').text(transitionSelectedValue);
+            });
+        });
+    },
+
+    configEvents: function () {
+        const that = this;
+
+        this.btnShowWorkflowDiagram.off().on("click", function () {
+            that.handleShowWorkflowDiagram($(this));
+        });
+
+        this.btnAddWorkflow.off("click").on("click", function (event) {
+            that.newModalWorkflow.modal("show");
+            let id = guidGenerator();
+            that.newModalWorkflow.attr("data-flujo-id", id);
+            that.workflowID = id;
+        });
+
+        this.btnDeleteWorkflow.off().on("click", function () {
+            that.currentRow = $(this).parents('tr');
+            that.workflowID = that.currentRow.attr("id");
+            $("#modal-delete-workflow").modal("show");
+        });
+
+        configEventByClassName(that.btnConfirmDeleteWorkflowClassName, function (element) {
+            const $jqueyryElement = $(element);
+            $jqueyryElement.on("click", function () {
+                that.handleDeleteWorkflow();
+            });
+        })
+
+        this.tabIdiomaItem.off().on("click", function () {
+            that.handleViewWorkflowLanguageInfo();
+        });
+
+        configEventByClassName(that.btnSaveWorkFlowClassName, function (element) {
+            const $jqueyryElement = $(element);
+            $jqueyryElement.on("click", (e) => {
+                that.handleSaveWorkflow($(e.currentTarget));
+            });
+        });
+
+        configEventByClassName(`${that.modalWorkflowClass}`, function (element) {
+            const $jqueyryElement = $(element);
+            $jqueyryElement.off("hide.bs.modal").on("hide.bs.modal", (e) => {
+                that.currentModal = $(e.currentTarget);
+                that.handleCloseWorkflowModal(e);
+            });
+        });
+
+        this.btnEditWorkflow.off().on("click", function () {
+            $btn = $(this);
+            that.handleEditWorkflow($btn);
+        });
+
+        configEventByClassName(that.radioButtonPublicStateClassName, function (element) {
+            const $jqueryElement = $(element);
+            $jqueryElement.on("click", function () {
+                let $input = $(this)
+                let $parent = $input.parents("div.formulario-oculto");
+                let $privacySection = $parent.find(".estado-lectores");
+                if ($input.data("value") == "no") {
+                    $privacySection.removeClass("d-none");
+                } else {
+                    !$privacySection.hasClass("d-none") && $privacySection.addClass("d-none");
+                    $privacySection.find('.autocompletar .tag-list').html('');
+                }
+            });
+        });
+
+        configEventByClassName(`${that.radioButtonStateTypeClassName}`, function (element) {
+            const $jqueryElement = $(element);
+            $jqueryElement.off().on("click", function () {
+                let rdButton = $(this);
+                let inputColor = rdButton.parents('.formulario-oculto').find('input[type="color"]');
+                if (rdButton.attr('id') == "estado-inicial") {
+                    inputColor.val("#80C8F7");
+                } else if (rdButton.attr('id') == "estado-intermedio") {
+                    inputColor.val("#FFB74D");
+                } else {
+                    inputColor.val("#94c748");
+                }
+            });
+        });
+
+        configEventByClassName(`${that.btnRemoveTagClassName}`, function (element) {
+            const $jqueryElement = $(element);
+            $jqueryElement.off().on("click", function () {
+                const $itemRemoved = $jqueryElement.parent().parent();
+                that.handleClickDeleteTagItem($itemRemoved);
+            });
+        });
+
+        configEventByJqueryObject(that.inputLectores, function (element) {
+            $(element).autocomplete(
+                null,
+                {
+                    url: $('#inpt_urlServicioAutocompletar').val() + "/AutoCompletarLectoresEditores",
+                    delay: 0,
+                    scroll: false,
+                    max: 30,
+                    selectFirst: false,
+                    minChars: 1,
+                    width: 300,
+                    cacheLength: 0,
+                    NoPintarSeleccionado: true,
+                    multiple: true,
+
+                    extraParams: {
+                        grupo: '',
+                        identidad: $('#inpt_identidadID').val(),
+                        organizacion: $('#inpt_organizacionID').val() == "00000000-0000-0000-0000-000000000000" ? "" : $('#inpt_organizacionID').val(),
+                        proyecto: $('#inpt_proyID').val(),
+                        bool_edicion: 'true',
+                        bool_traergrupos: 'true',
+                        bool_traerperfiles: 'true'
+                    }
+                }
+            )
+            $(element).result(function (event, data, formatted) {
+                const dataName = data[0];
+                const dataId = data[1];
+                const input = $(event.currentTarget);
+                that.handleSelectAutocompleteItem(input, dataName, dataId);
+            });
+        });
+
+        configEventByJqueryObject(that.inputEditores, function (element) {
+            $(element).autocomplete(
+                null,
+                {
+                    url: $('#inpt_urlServicioAutocompletar').val() + "/AutoCompletarLectoresEditores",
+                    delay: 0,
+                    scroll: false,
+                    max: 30,
+                    selectFirst: false,
+                    minChars: 1,
+                    width: 300,
+                    cacheLength: 0,
+                    NoPintarSeleccionado: true,
+                    multiple: true,
+
+                    extraParams: {
+                        grupo: '',
+                        identidad: $('#inpt_identidadID').val(),
+                        organizacion: $('#inpt_organizacionID').val() == "00000000-0000-0000-0000-000000000000" ? "" : $('#inpt_organizacionID').val(),
+                        proyecto: $('#inpt_proyID').val(),
+                        bool_edicion: 'true',
+                        bool_traergrupos: 'true',
+                        bool_traerperfiles: 'true'
+                    }
+                }
+            )
+            $(element).result(function (event, data, formatted) {
+                const dataName = data[0];
+                const dataId = data[1];
+                const input = $(event.currentTarget);
+                that.handleSelectAutocompleteItem(input, dataName, dataId);
+            });
+        });
+
+        configEventByJqueryObject(that.inputResponsables, function (element) {
+            $(element).autocomplete(
+                null,
+                {
+                    url: $('#inpt_urlServicioAutocompletar').val() + "/AutoCompletarLectoresEditores",
+                    delay: 0,
+                    scroll: false,
+                    max: 30,
+                    selectFirst: false,
+                    minChars: 1,
+                    width: 300,
+                    cacheLength: 0,
+                    NoPintarSeleccionado: true,
+                    multiple: true,
+
+                    extraParams: {
+                        grupo: '',
+                        identidad: $('#inpt_identidadID').val(),
+                        organizacion: $('#inpt_organizacionID').val() == "00000000-0000-0000-0000-000000000000" ? "" : $('#inpt_organizacionID').val(),
+                        proyecto: $('#inpt_proyID').val(),
+                        bool_edicion: 'true',
+                        bool_traergrupos: 'true',
+                        bool_traerperfiles: 'true'
+                    }
+                }
+            )
+            $(element).result(function (event, data, formatted) {
+                const dataName = data[0];
+                const dataId = data[1];
+                const input = $(event.currentTarget);
+                that.handleSelectAutocompleteItem(input, dataName, dataId);
+            });
+        });
+
+
+        this.inputTxtBuscarFlujo.off().on("keyup", function (event) {
+            clearTimeout(that.timer);
+            that.timer = setTimeout(function () {
+                that.handleSearchPageByTitle();
+            }, 500);
+        });
+
+        this.workflowDiagram.on("shown.bs.modal", function (e) {
+            $currentModal = $(e.currentTarget)
+            $container = $currentModal.find(that.workflowDiagramContainer);
+            if ($container.hasClass("mermaid")) return;
+            !$container.hasClass("mermaid") && $container.addClass("mermaid")
+            mermaid.contentLoaded();
+            setTimeout(function () {
+                //Seccion de los estados
+                $nodeList = $(`.mermaid-container g.nodes g.node`);
+                $nodeList.each(function () {
+                    let node = $(this);
+                    if (node.data("content")) return;
+                    node.attr("data-content", '');
+                    node.attr("data-toggle", "popover");
+                    node.attr("data-container", "#modal-diagrama-workflow");
+                    node.attr("data-placement", "bottom");
+                    node.attr("data-html", "true");
+                    node.attr("data-boundary", "window");
+                    $('[data-toggle="popover"]').popover();
+                });
+                // Seccion de las transiciones
+                $data = $(that.transitionsResponsiblesHTML);
+                $edgeList = $(`.mermaid-container g.edgeLabels g.edgeLabel`);
+                $edgeList.each(function () {
+                    let edge = $(this);
+                    let id = edge.find('.label').data("id");
+                    edge.attr("data-content", $data.filter(`div#${id}`).html());
+                    edge.attr("data-toggle", "popover");
+                    edge.attr("data-container", "#modal-diagrama-workflow");
+                    edge.attr("data-placement", "bottom");
+                    edge.attr("data-html", "true");
+                    edge.attr("data-boundary", "window");
+                    edge.css("cursor", "pointer");
+                    $('[data-toggle="popover"]').popover();
+                });
+            }, 1000);
+            $container.hasClass("d-none") && $container.removeClass("d-none");
+        });
+
+        this.workflowDiagram.on("hidden.bs.modal", function (e) {
+            $currentModal = $(e.currentTarget)
+            $currentModal.find('.modal-content').html('');
+        });
+    },
+
+    handleShowWorkflowDiagram: function (btn) {
+        const that = this;
+        loadingMostrar();
+        let dataPost = {
+            pFlujoID: btn.parents("tr").first().attr("id")
+        }
+        GnossPeticionAjax(
+            that.urlShowWorkflow,
+            dataPost,
+            true
+        ).done(function (data) {
+            loadingOcultar();
+            that.workflowDiagram.find(".modal-content").append(data);
+            that.workflowDiagram.modal("show");
+        }).fail(function (data) {
+            loadingOcultar();
+            mostrarNotificacion("error", "Ha surgido un problema al cargar el formulario")
+        })
+    },
+
+    handleViewWorkflowLanguageInfo: function () {
+        const that = this;
+        setTimeout(function () {
+            // Detectar el tab item activo para conocer el idioma en el que se desean mostrar las páginas
+            const tabLanguageActive = that.tabIdiomaItem.filter(".active");
+            // Obtener el idioma del tabLanguageActivo
+            const languageActive = tabLanguageActive.data("language");
+            // Ocultar todas las labels y mostrar únicamente las del idioma seleccionado
+            that.labelLanguageComponent.addClass("d-none");
+            // Mostrar sólo las labelsLanguageComponent del idioma seleccionado
+            that.labelLanguageComponent.filter(function () {
+                return $(this).data("languageitem") == languageActive;
+            }).removeClass("d-none");
+        }, 250);
+    },
+
+    handleEditWorkflow: function (btn) {
+        const that = this;
+        loadingMostrar();
+        let workflowID = btn.parents("tr").first().attr("id");
+        let dataPost = {
+            pFlujoID: workflowID
+        }
+        GnossPeticionAjax(
+            that.urlEditWorkflow,
+            dataPost,
+            true
+        ).done(function (data) {
+            loadingOcultar();
+            that.modalWorkflowContent.append(data);
+            that.triggerEvents();
+            that.workflowID = workflowID;
+        }).fail(function (data) {
+            loadingOcultar();
+            mostrarNotificacion("error", "Ha surgido un problema al cargar el formulario")
+        });
+    },
+
+    handleDeleteWorkflow: function () {
+        const that = this;
+        
+        let dataPost = {
+            pFlujoID: that.workflowID
+        }
+        loadingMostrar();
+        GnossPeticionAjax(
+            that.urlDeleteWorkflow,
+            dataPost,
+            true
+        ).done(function () {
+            loadingOcultar();
+            mostrarNotificacion("success", "Flujo eliminado correctamete");
+            that.currentRow.remove();
+            let oldValue = parseInt($("#numFlujos").text());
+            $("#numFlujos").text(oldValue - 1);
+            $("#modal-delete-workflow").modal("show");
+        }).fail(function () {
+            loadingOcultar();
+            mostrarNotificacion("error", "Ha surgido un problema al borrar el flujo");
+            $("#modal-delete-workflow").modal("show");
+        });
+    },
+
+    handleSaveWorkflow: function (btn) {
+        const that = this;
+        that.workflowItem = {};
+        that.workflowStates = [];
+        that.workflowTransitions = [];
+        that.affectedContent = { "0": false, "2": false, "3": false, "5": false, "8": false, "16": false, "18": false, "19": false, "20": false };
+        that.workflowOntologyContents = [];
+        that.currentModal = btn.parents("div.modal-edicion");
+        that.currentModal.hasClass("newWorkflow") && that.currentModal.removeClass("newWorkflow");
+        if (that.currentModal.find('.formulario-oculto.d-none').length != 2) {
+            mostrarNotificacion("error", "No se puede guardar el flujo sin confirmar todos los formularios");
+            return;
+        }
+        if (!that.checkErrorForm()) {
+            that.loadWorkflowData();
+            that.saveWorkflow();
+        }
+    },
+
+    handleCloseWorkflowModal: function (e) {
+        const that = this;
+        if (that.currentModal.attr("id") !== "modal-nuevo-workflow") {
+            that.currentModal.find('.modal-content').html('');
+        } else {
+            that.currentModal.find(".tab-content").first().find(".tab-pane input, textarea").each(function () {
+                $(this).val("")
+            });
+            that.currentModal.find(".autocompletar-estados .tag-list").html('');
+            that.currentModal.find(".autocompletar-transiciones .tag-list").html('');
+            that.currentModal.find(".formulario-oculto").addClass("d-none");
+            that.currentModal.find(".autocompletar-transiciones select.select-origin option").not(':first').remove();
+            that.currentModal.find(".autocompletar-transiciones select.select-end option").not(':first').remove();
+            autocompletarWorkflows.resetForm(that.currentModal.find(".autocompletar-estados"));
+            autocompletarWorkflows.resetForm(that.currentModal.find(".autocompletar-transiciones"));
+            let $tagsTiposRecurso = that.currentModal.find(".autocompletar-recursos .tag-list").children();
+            $tagsTiposRecurso.each(function () {
+                $item = $(this);
+                $item.find(".tag-remove").trigger("click");
+            });
+        }
+    },
+
+    loadWorkflowData: function () {
+        const that = this;
+        that.workflowItem["FlujoID"] = that.workflowID;
+        that.workflowItem["Nombre"] = that.currentModal.find('input[name="workflowName"]').val();
+        that.workflowItem["Descripcion"] = that.currentModal.find('input[name="workflowName"]').val();
+        that.workflowItem["TiposRecursos"] = that.affectedContent;
+        that.workflowItem["OntologiasProyecto"] = that.workflowOntologyContents;
+        that.workflowItem["Estados"] = that.workflowStates;
+        that.workflowItem["Transiciones"] = that.workflowTransitions;
+    },
+
+    saveWorkflow: function () {
+        loadingMostrar();
+        const that = this;
+        dataPost = {
+            pModelo: that.workflowItem
+        }
+        GnossPeticionAjax(
+            that.urlSaveWorkflow,
+            dataPost,
+            true
+        ).done(function (data) {
+            loadingOcultar();
+            that.currentModal.modal("hide");
+            eliminarErroresEnInputs();
+            mostrarNotificacion("success", "Guardado correctamente");
+            location.reload();
+        }).fail(function (data) {
+            loadingOcultar();
+            mostrarNotificacion("error", data);
+        });
+    },
+
+    checkErrorForm: function () {
+        const that = this;
+
+        if (that.checkWorkflowFields()) {
+            return true;
+        }
+
+        if (that.checkStatesFields()) {
+            return true;
+        }
+
+        if (that.checkTransitionsFields()) {
+            return true;
+        }
+
+        return false;
+    },
+
+    checkWorkflowFields: function () {
+        const that = this
+
+        let inputNombre = that.currentModal.find('input[name="workflowName"]');
+        if (that.checkEmptyName(inputNombre)) {
+            return true;
+        }
+
+        let inputDescripcion = that.currentModal.find('textarea[name="workflowDescription"]');
+        if (that.checkEmptyName(inputDescripcion, false)) {
+            return true;
+        }
+
+        let inputsContenidosAfectados = that.currentModal.find('div.autocompletar-recursos .tag-list').children();
+        if (inputsContenidosAfectados.length < 1) {
+            mostrarNotificacion("error", "Es necesario especificar por lo menos 1 tipo de contenido");
+            return true;
+        }
+
+        inputsContenidosAfectados.each(function () {
+            that.checkContentsType($(this));
+        });
+
+        return false;
+    },
+
+    checkStatesFields: function () {
+        const that = this;
+        let error = false;
+
+        let listStates = that.currentModal.find(".autocompletar-estados>.tag-list ").children();
+
+        if (listStates.length < 2) {
+            mostrarNotificacion("error", "Es necesario especificar por lo menos 2 estados");
+            return true;
+        }
+
+        listStates.each(function () {
+            if (that.checkState($(this))) {
+                error = true;
+                return false;
+            }
+        });
+
+        return error;
+    },
+
+    checkTransitionsFields: function () {
+        const that = this;
+        let error = false;
+        let listTransitions = that.currentModal.find(".autocompletar-transiciones>.tag-list ").children();
+        if (listTransitions.length == 0) {
+            mostrarNotificacion("error", "Es necesario especificar por lo menos una transicion");
+            return true;
+        }
+
+        listTransitions.each(function () {
+            if (that.checkTransition($(this))) {
+                error = true;
+                return false;
+            };
+        });
+
+        return error;
+    },
+
+    checkEmptyName: function (input, required = true) {
+        const that = this;
+        // Contenedor donde se encuentran datos básicos de la página (Nombre, Url/Ruta, MetaDescripción )
+        const panMultiIdioma = that.currentModal.find(".panContenidoMultiIdioma.basicInfo");
+        const inputId = input.attr("id");
+        const listaTextos = [];
+
+        if (operativaMultiIdioma.listaIdiomas.length > 1 && panMultiIdioma.length > 0) {
+            let textoMultiIdioma = "";
+            // Comprobar que hay al menos un texto por defecto para el nombre
+            let textoIdiomaDefecto = panMultiIdioma.find(`#input_${inputId}_${operativaMultiIdioma.idiomaPorDefecto}`).val();
+
+            if ((textoIdiomaDefecto == null || textoIdiomaDefecto == "") && required) {
+                that.mostrarErrorCampoVacio(panMultiIdioma.find(`#input_${inputId}_${operativaMultiIdioma.idiomaPorDefecto}`));
+                that.emptyNameError = true;
+                return true;
+            }
+            // Recorrer todos los idiomas para detectar posibles problemas con el nombre                
+            $.each(operativaMultiIdioma.listaIdiomas, function () {
+                // Obtención del Key del idioma
+                const idioma = this.key;
+                // Asignar el valor por defecto de la ruta al idioma si este no dispone de valor para Nombre
+                let textoIdioma = $(`#input_${inputId}_${idioma}`).val();
+                if (textoIdioma == null || textoIdioma == "") {
+                    textoIdioma = textoIdiomaDefecto;
+                    $(`#input_${inputId}_${idioma}`).val(textoIdioma);
+                }
+                // Escribir el nombre del multiIdioma en el campo Hidden
+                textoMultiIdioma += textoIdioma + "@" + idioma + "|||";
+
+                listaTextos.push({ "key": idioma, "value": textoIdioma });
+            });
+            input.val(textoMultiIdioma);
+        } else {
+            // Sin multiIdioma.
+            let textoIdiomaDefecto = panMultiIdioma.find(`#input_${inputId}_${operativaMultiIdioma.idiomaPorDefecto}`).val();
+            // Establecer el nombre en el input correspondiente
+            input.val(textoIdiomaDefecto);
+        }
+        return false;
+    },
+
+    checkContentsType: function (option) {
+        const that = this;
+        let value = option.find('input[type="hidden"]').val();
+        that.affectedContent[`${value}`] = true;
+        if (value == 5) {
+            that.workflowOntologyContents.push({
+                key: option.data("id"),
+                value: option.data('onto-name')
+            });
+        }
+    },
+
+    checkState: function (input) {
+        const that = this;
+        let multiLangName = input.attr('title');
+
+        let state = {};
+        state["EstadoID"] = input.attr("data-id");
+        state["FlujoID"] = that.workflowID;
+        state["Nombre"] = multiLangName;
+        state["Publico"] = input.find(`input[type="hidden"]`).data("estado-publico");
+        state["Color"] = input.find(`input[type="hidden"]`).data("estado-color");
+        state["TipoEstado"] = input.find(`input[type="hidden"]`).data("tipo-estado");
+        if (input.hasClass("d-none")) {
+            state["Eliminado"] = true;
+        }
+        // Si es privado ver a quien se le ha asignado los permisos
+        if (!state["Publico"]) {
+
+            if (that.checkPrivacyStates(input.find('.readers'), input.attr("data-id"))) {
+                return true;
+            }
+            
+        }
+        if (that.checkPrivacyStates(input.find('.editors'), input.attr("data-id"))) {
+            return true;
+        }
+
+        state["ListaEstadoIdentidad"] = that.workflowStatesPrivacy;
+        state["ListaEstadoGrupo"] = that.workflowStatesPrivacyGroup;
+
+        that.workflowStatesPrivacy = [];
+        that.workflowStatesPrivacyGroup = [];
+        that.workflowStates.push(state);
+        return false;
+    },
+
+    checkPrivacyStates: function (input, estadoID) {
+        const that = this;
+        let editor = input.hasClass('editors');
+        let $lista = input.children().not(':first');
+
+        if ($lista.length == 0 && editor) {
+            mostrarNotificacion("error", "¡Tienes que elegir por lo menos un perfil/grupo de la seccion de editores!")
+            return true;
+        }
+
+        $lista.each(function () {
+            $tagPersona = $(this);
+            let statePrivacy = {};
+            statePrivacy["EstadoID"] = estadoID;
+            statePrivacy["Editor"] = editor;
+            if ($tagPersona.attr("data-grupo").toLowerCase() == 'true') {
+                statePrivacy["GrupoID"] = $tagPersona.attr("data-id");
+                that.workflowStatesPrivacyGroup.push(statePrivacy);
+            } else {
+                statePrivacy["PerfilID"] = $tagPersona.attr("data-id");
+                that.workflowStatesPrivacy.push(statePrivacy)
+            }
+        });
+
+        return false;
+    },
+
+    checkTransition: function (input) {
+        const that = this;
+
+        let multiLangName = input.attr('title');
+
+        let transition = {};
+        transition["Nombre"] = multiLangName;
+        transition["TransicionID"] = input.attr("data-id");
+        let inputEstadoOrigen = input.find('.transition-label').first();
+        transition["EstadoOrigen"] = {
+            "EstadoID": inputEstadoOrigen.attr("data-id"),
+            "TipoEstado": inputEstadoOrigen.attr('data-tipo'),
+            "Eliminado": inputEstadoOrigen.attr('data-eliminado'),
+            "Publico": inputEstadoOrigen.attr('data-publico')
+        }
+        let inputEstadoDestino = input.find('.transition-label').last();
+        transition["EstadoDestino"] = {
+            "EstadoID": inputEstadoDestino.attr("data-id"),
+            "TipoEstado": inputEstadoDestino.attr('data-tipo'),
+            "Eliminado": inputEstadoDestino.attr('data-eliminado'),
+            "Publico": inputEstadoDestino.attr('data-publico')
+        }
+        if (input.hasClass("d-none")) {
+            transition["Eliminado"] = true;
+        }
+        let $privacidadSection = input.find('.responsibles');
+        if (that.checkPrivacyTransition($privacidadSection, input.data("transition-id"))) {
+            return true;
+        }
+        transition["ListaTransicionIdentidadPerfiles"] = that.workflowTransitionsPrivacy;
+        transition["ListaTransicionGrupo"] = that.workflowTransitionsPrivacyGroup;
+
+        that.workflowTransitionsPrivacy = [];
+        that.workflowTransitionsPrivacyGroup = [];
+
+        that.workflowTransitions.push(transition);
+        return false;
+    },
+
+    checkPrivacyTransition: function (input, transicionID) {
+        const that = this;
+        let $listaPrivacidadPersonas = input.children().not(':first');
+
+        if ($listaPrivacidadPersonas.length == 0 ) {
+            mostrarNotificacion("error", "¡Tienes que elegir por lo menos un perfil/grupo!")
+            return true;
+        }
+        $listaPrivacidadPersonas.each(function () {
+            if ($(this).attr("data-grupo").toLowerCase() == 'true') {
+                that.workflowTransitionsPrivacyGroup.push($(this).attr("data-id"));
+            } else {
+                that.workflowTransitionsPrivacy.push($(this).attr("data-id"));
+            }
+        });
+
+        return false;
+    },
+
+    handleOnInputNameChanged: function (event, className) {
+        const that = this;
+        // Input que ha sido actualizado
+        const input = $(event.currentTarget);
+        // Idioma del input que ha sido actualizado
+        const language = input.data("language");
+        // Valor actual del input
+        const value = input.val().trim();
+
+        // Flujo a actualizar
+        let id = input.parents('div.modal-flujo').attr("id").replace("modal-editar-workflow-", "");
+        const workflowRow = $(`tr#${id}`);
+        // Nombre a actualizar en el listado de páginas
+        let componentPageName = undefined;
+
+        if (language != undefined) {
+            componentPageName = workflowRow.find(`.${className}`).filter(`[data-languageitem='${language}']`);
+        } else {
+            componentPageName = pageRow.find(`.${className}`);
+        }
+
+        // Actualizar el contenido de la faceta
+        componentPageName.html(value);
+    },
+
+    handleSelectAutocompleteItem: function (input, dataName, dataId) {
+        // Panel/Sección donde se ha realizado toda la operativa
+        const tagsSection = $(input).parent().parent();
+
+        // Contenedor de items donde se añadirá el nuevo seleccionado para su visualización
+        const tagContainer = tagsSection.find(".tag-list");
+        // Input oculto donde se añadirá el nuevo item seleccionado
+        const inputHack = tagsSection.find("input[type=hidden]").first();
+        // Añadido el id del item seleccionado al inputHack                
+        inputHack.val(inputHack.val() + dataId + ',');
+
+        // Etiqueta del item seleccionado
+        let editorSeleccionadoHtml = '';
+        editorSeleccionadoHtml += '<div class="tag" data-grupo="' + dataId.includes('g_') + '" data-id="' + dataId.replace("g_", "") + '" title="'+ dataName+'">';
+        editorSeleccionadoHtml += '<div class="tag-wrap">';
+        editorSeleccionadoHtml += '<span class="tag-text">' + dataName + '</span>';
+        editorSeleccionadoHtml += "<span class=\"tag-edit material-icons\">edit</span>";
+        editorSeleccionadoHtml += "<span class=\"tag-remove custom material-icons\">delete</span>";
+        editorSeleccionadoHtml += '<input type="hidden" value="' + dataId + '" />';
+        editorSeleccionadoHtml += '</div>';
+        editorSeleccionadoHtml += '</div>';
+
+        // Añadir el item en el contenedor de items para su visualización
+        if (tagContainer.find(`.tag[data-id="${dataId}"]`).length == 0) {
+            tagContainer.append(editorSeleccionadoHtml);
+        }
+
+        // Vaciar el input donde se ha escrito 
+        $(input).val('');
+    },
+
+    mostrarErrorCampoVacio: function (input) {
+        comprobarInputNoVacio(input, true, false, "El campo nombre no puede estar vacio", 0);
+        setTimeout(function () {
+            mostrarNotificacion("error", "El nombre no puede estar vacío.");
+        }, 1000);
+    },
+
+    handleClickDeleteTagItem: function (itemDeleted) {
+        const that = this;
+
+        // Panel o sección donde se encuentra el panel de Tags a Eliminar (input_hack)
+        const panelTagItem = itemDeleted.parent().parent();
+
+        // Buscar el input oculto y seleccionar la propiedad del id que corresponde con el grupo a eliminar
+        const idItemDeleted = itemDeleted.prop("id");
+        // Items id dependiendo del tipo a borrar (Perfil, Grupo)
+        let itemsId = "";
+        // Input del que habrá que eliminar el item seleccionado (Perfil, Grupo)
+        let $inputHack = undefined;
+
+        if (idItemDeleted.includes("g_")) {
+            // Borrar un grupo en la sección de Grupos correspondiente            
+            $inputHack = panelTagItem.find(that.inputValoresPrivacidadGrupos);
+        } else {
+            // Borrar un perfil en la sección de perfil correspondiente                       
+            $inputHack = panelTagItem.find(that.inputValoresPrivacidadPerfiles);
+        }
+
+        //itemsId = that.filaPagina.find($inputHack).val().split(",");
+        //itemsId.splice($.inArray(idItemDeleted, itemsId), 1);
+        // Pasarle los datos de los grupos actuales al input hidden
+        //that.filaPagina.find($inputHack).val(itemsId.join(","));
+        // Eliminar el grupo del contenedor visual
+        itemDeleted.remove();
+    },
+
+    handleSearchPageByTitle: function () {
+        const that = this;
+        let cadena = this.inputTxtBuscarFlujo.val();
+        // Eliminamos posibles tildes para búsqueda ampliada
+        cadena = cadena.normalize('NFD').replace(/[\u0300-\u036f]/g, "").toLowerCase();
+
+        // Cada una de las filas que muestran la página
+        const rowWorkflows = $("tbody").find("tr");
+
+        // Buscar dentro de cada fila       
+        $.each(rowWorkflows, function (index) {
+            const rowWorkflow = $(this);
+            // Seleccionamos el nombre de la página y quitamos caracteres extraños, tiles para poder hacer bien la búsqueda
+            const workflowName = rowWorkflow.find(".component-name").not('.d-none').html().trim().normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
+            //const urlPage = $(this).find(".component-url").not('.d-none').html().trim().normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
+            if (workflowName.includes(cadena)) {
+                // Mostrar fila resultado y sus respectivos padres
+                rowWorkflow.removeClass("d-none");
+                rowWorkflow.parents("li.component-wrap").removeClass("d-none");
+            } else {
+                // Ocultar fila resultado
+                rowWorkflow.addClass("d-none");
+            }
         });
     }
 }

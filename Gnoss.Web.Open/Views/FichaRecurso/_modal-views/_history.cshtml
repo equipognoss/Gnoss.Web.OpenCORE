@@ -54,7 +54,7 @@
                     <th scope="col">@Html.GetText("HISTORIALVERSIONES", "HORA")</th>
                     <th scope="col">@Html.GetText("HISTORIALVERSIONES", "FECHA")</th>
                     <th scope="col">@Html.GetText("HISTORIALVERSIONES", "EDITOR")</th>
-                    <th scope="col">@Html.GetText("HISTORIALVERSIONES", "RESTAURAR")</th>
+                    <th scope="col">@Html.GetText("ADMINISTRACIONBASICA", "ACCIONES")</th>
                     @if (DocActual.TypeDocument == ResourceModel.DocumentType.FicheroServidor)
                     {
                         <th scope="col">@Html.GetText("HISTORIALVERSIONES", "DESCARGAR")</th>
@@ -67,7 +67,7 @@
                     <tr>
                         @* Columnas de DataTables*@
                         @* INPUT CHECKBOX *@
-                        <td>
+                        <td class="align-middle">
                             <div class="check-wrapper">
                                 <div class="custom-control custom-checkbox">
                                     <input style="z-index:9999" type="checkbox" class="custom-control-input" onclick="ComprobarChecks(this);" id="@doc.Key">
@@ -76,29 +76,45 @@
                             </div>
                         </td>
                         @* VERSION *@
-                        <td><a href="@doc.VersionCardLink">@doc.Version</a></td>
+                        <td class="align-middle"><a href="@doc.VersionCardLink">@doc.Version</a></td>
                         @* HORA *@
-                        <td>@doc.PublishDate.ToString("HH:mm")</td>
+                        <td class="align-middle">@doc.PublishDate.ToString("HH:mm")</td>
                         @* FECHA *@
-                        <td>@doc.PublishDate.ToString("dd/MM/yyyy")</td>
+                        <td class="align-middle">@doc.PublishDate.ToString("dd/MM/yyyy")</td>
                         @* AUTOR *@
-                        <td>@doc.Publisher.NamePerson</td>
-                        @* RESTAURAR *@
-                        @if (doc.Key == DocActual.Key)
-                        {
-                            <td>@Html.GetText("HISTORIALVERSIONES", "VERSIONACTUAL")</td>
-                        }
-                        else
-                        {
-                            <td>
-                                <div class="restaurar btn btn-sm">
-                                    <a class="d-flex align-items-center" style="text-decoration:none; color:inherit" onclick="DesplegarRestaurar(this, '@doc.ListActions.UrlLoadActionRestoreVersion', '@doc.Key.ToString()')">
-                                        <span class="material-icons">replay</span>
-                                        <span class="texto">@Html.GetText("HISTORIALVERSIONES", "RESTAURAR")</span>
+                        <td class="align-middle">@doc.Publisher.NamePerson</td>
+                        @* ACCIONES*@
+                        <td class="align-middle">
+                            @if (doc.Key == DocActual.Key)
+                            {
+                                @Html.GetText("HISTORIALVERSIONES", "VERSIONACTUAL")
+                            }
+                            else
+                            {
+                                <div class="dropdown">
+                                    <a class="btn btn-outline-grey"
+                                       data-toggle="dropdown"
+                                       href="#"
+                                       role="button"
+                                       aria-haspopup="true"
+                                       aria-expanded="false">
+                                        <span class="material-icons">more_vert</span>
+                                        <span class="texto">@Html.GetText("ADMINISTRACIONBASICA", "ACCIONES")</span>
                                     </a>
+                                    <div class="dropdown-menu basic-dropdown dropdown-icons dropdown-menu-right"
+                                         style="will-change: transform">
+                                        <a class="item-dropdown" style="text-decoration:none; color:inherit" onclick="DesplegarRestaurar(this, '@doc.ListActions.UrlLoadActionRestoreVersion', '@doc.Key.ToString()')">
+                                            <span class="material-icons">replay</span>
+                                            <span class="texto">@Html.GetText("HISTORIALVERSIONES", "RESTAURAR")</span>
+                                        </a>
+                                        <a class="item-dropdown" style="text-decoration:none; color:inherit" onclick="DesplegarEliminar(this, '@doc.ListActions.UrlLoadActionDeleteVersion', '@doc.Key.ToString()')">
+                                            <span class="material-icons">delete</span>
+                                            <span class="texto">@Html.GetText("DEVTOOLS", "BORRAR")</span>
+                                        </a>
+                                    </div>
                                 </div>
-                            </td>
-                        }
+                            }
+                        </td>
                         @* DESCARGAR *@
                         @if (DocActual.TypeDocument == ResourceModel.DocumentType.FicheroServidor)
                         {
@@ -124,10 +140,10 @@
         </div>
 
         @* Acciones a realizar *@
-        @if(DocActual.TypeDocument != ResourceModel.DocumentType.Semantico)
+        @if (DocActual.TypeDocument != ResourceModel.DocumentType.Semantico)
         {
             <div class="form-actions">
-                <a onclick="DesplegarComparar()" class="btn btn-primary uppercase">@Html.GetText("HISTORIALVERSIONES", "COMPARAR")</a>
+                <a onclick="DesplegarComparar(event)" class="btn btn-primary uppercase" data-target="#modal-comparar-versiones" data-toggle="modal">@Html.GetText("HISTORIALVERSIONES", "COMPARAR")</a>
             </div>
         }
 
@@ -154,7 +170,6 @@
 
 @* Panel donde se mostrará el Despliegue *@
 <div id='despAccionRec_history' style="display:none">
-
 </div>
 
 @* Input oculto para guardar los ids de los checks chequeados *@
@@ -162,68 +177,86 @@
 
 
 <script>
-        function DesplegarRestaurar(boton, url, id)
-        {
-            var panelID = 'despAccionRec_history';
+    function DesplegarRestaurar(boton, url, id)
+    {
+        var panelID = 'despAccionRec_history';
 
-            $('.confirmRestaurar').attr('id', panelID);
-            $('#cerrarConfirmRestaurar').attr('onclick', 'CerrarPanelAccion(\'' + panelID + '\')');
+        $('.confirmRestaurar').attr('id', panelID);
+        $('#cerrarConfirmRestaurar').attr('onclick', 'CerrarPanelAccion(\'' + panelID + '\')');
 
-            DesplegarAccionMVC(url, boton, panelID, '');
+        DesplegarAccionMVC(url, boton, panelID, '');
+    }
+
+    function DesplegarEliminar(boton, url, id)
+    {
+        var panelID = 'despAccionRec_history';
+
+        $('.confirmRestaurar').attr('id', panelID);
+        $('#cerrarConfirmRestaurar').attr('onclick', 'CerrarPanelAccion(\'' + panelID + '\')');
+
+        DesplegarAccionMVC(url, boton, panelID, '');
+    }
+
+    function DesplegarComparar(event)
+    {
+        if(numChecksActivos != 2) {
+            event.preventDefault();
+            event.stopPropagation();
+            mostrarNotificacion("error","¡Debes elegir 2 versiones para comparar!");
+            $("#modal-comparar-versiones").modal("hide");
+            return;
+        }
+        MostrarUpdateProgress();
+        var dataPost = {
+            documentosComparar: $('#txtHackCheckSeleccionados').val()
         }
 
-        function DesplegarComparar()
-        {
-            MostrarUpdateProgress()
-            $('#despleCompVer').hide();
-            $('#despleCompVer .activeForm #panDiffDoc').html('');
+        GnossPeticionAjax('@Html.GetUrlPagina()/compare', dataPost, true)
+        .done(function (data) {
+            $("#modal-container").modal("hide");
+            $('#modal-comparar-versiones-content').html(data);
+            // calcHeightModalComparar.init();
+        }).fail(function(data){
+            mostrarNotificacion("error", data);
+        }).always(function(){
+            OcultarUpdateProgress();
+        });
+    }
 
-            var dataPost = {
-                documentosComparar: $('#txtHackCheckSeleccionados').val()
+    var numChecksActivos = 0;
+    VaciarChecks();
+
+    function ComprobarChecks(check) {
+        var textBoxHack = $('#txtHackCheckSeleccionados');
+        var input = $('#panHistorial_table input');
+        numChecksActivos = 0;
+        for (var i = 0; i < input.length; i++) {
+            if (input[i].checked == true) {
+                numChecksActivos++;
             }
-
-            GnossPeticionAjax('@Html.GetUrlPagina()/compare', dataPost, true).done(function (data) {
-                $('#despleCompVer').show();
-                $('#despleCompVer .activeForm #panDiffDoc').html(data);
-
-                OcultarUpdateProgress();
-            });
         }
-
-        var numChecksActivos = 0;
-        VaciarChecks();
-
-        function ComprobarChecks(check) {
-            var textBoxHack = $('#txtHackCheckSeleccionados');
-            var input = $('#panHistorial_table input');
-            numChecksActivos = 0;
-            for (var i = 0; i < input.length; i++) {
-                if (input[i].checked == true) {
-                    numChecksActivos++;
-                }
-            }
-            if ($(check).is(':checked')) {
-                textBoxHack.val(textBoxHack.val() + '&' + $(check).attr('id'));
-                if (numChecksActivos > 2) {
-                    $(check).prop('checked', false);
-                    textBoxHack.val(textBoxHack.val().replace('&' + $(check).attr('id'), ''));
-                    return false;
-                }
-            }
-            else {
+        if ($(check).is(':checked')) {
+            textBoxHack.val(textBoxHack.val() + '&' + $(check).attr('id'));
+            if (numChecksActivos > 2) {
+                $(check).prop('checked', false);
                 textBoxHack.val(textBoxHack.val().replace('&' + $(check).attr('id'), ''));
+                return false;
             }
-            return false;
         }
-        function VaciarChecks()
-        {
-            $('#txtHackCheckSeleccionados').val('');
-            var input = $('#panHistorial_table input');
+        else {
+            textBoxHack.val(textBoxHack.val().replace('&' + $(check).attr('id'), ''));
+        }
+        return false;
+    }
+    function VaciarChecks()
+    {
+        $('#txtHackCheckSeleccionados').val('');
+        var input = $('#panHistorial_table input');
 
-            for (var i = 0; i < input.length; i++) {
-                $(input[i]).prop('checked', false);
-            }
+        for (var i = 0; i < input.length; i++) {
+            $(input[i]).prop('checked', false);
         }
+    }
 </script>
 
 
