@@ -4636,8 +4636,9 @@ function RepintarContadoresNuevosElementos(datosRecibidos) {
     //Cambiamos el numero de Notificaciones
     DarValorALabel('infoNumNotificaciones', parseInt(numInvitacionesNuevos) + parseInt(numInvitacionesNuevosOrg) + parseInt(numComentariosNuevos));
     DarValorALabel('infoNumNotificacionesMobile', parseInt(numInvitacionesNuevos) + parseInt(numInvitacionesNuevosOrg) + parseInt(numComentariosNuevos));
-
-    DarValorALabel('infoNumNotificacionesPersonalizadas', parseInt(numNotificacionesNuevos) + parseInt(numNotificacionesSinLeer));
+    if (document.getElementById('notificacionesPersonalizadas') !== null) {
+        DarValorALabel('infoNumNotificacionesPersonalizadas', parseInt(numNotificacionesNuevos) + parseInt(numNotificacionesSinLeer));
+    }
     DarValorALabel('infoNumNotificacionesMobilePersonalizadas', parseInt(numNotificacionesNuevos) + parseInt(numNotificacionesSinLeer));
     //Cambiamos el numero de Suscripciones
     DarValorALabel('infoNumSuscriopciones', numSuscripcionesNuevos);
@@ -4674,10 +4675,12 @@ function RepintarContadoresNuevosElementos(datosRecibidos) {
     DarValorALabel('infNumNotificacionesSinLeer',  parseInt(numNotificacionesSinLeer));
     DarValorALabel('infNumNotificacionesSinLeerMobile', parseInt(numNotificacionesSinLeer));
 
-    if (numNotificacionesSinLeer > 0) {
-        document.getElementById('notificacionesPersonalizadas').hidden = false
-    } else {
-        document.getElementById('notificacionesPersonalizadas').hidden = true
+    if (document.getElementById('notificacionesPersonalizadas') !== null) {
+        if (numNotificacionesSinLeer > 0) {
+            document.getElementById('notificacionesPersonalizadas').hidden = false
+        } else {
+            document.getElementById('notificacionesPersonalizadas').hidden = true
+        }
     }
     // Añadir punto rojo de 'nuevas' Notificaciones
     if (parseInt(numNotificacionesNuevos)) {
