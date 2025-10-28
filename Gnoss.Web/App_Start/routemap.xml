@@ -3869,5 +3869,9 @@
 			<key>{nombreRecurso}/{docID}/save-augmented-reading</key>
 			<value>FichaRecurso/SaveAugmentedReading</value>
 		</pagina>
+		<pagina>
+			<key>{nombreRecurso}/{docID}/{versionDocID}</key>
+			<value>FichaRecurso</value>
+		</pagina>
 	</seccion>
 </routeMap>
