@@ -999,8 +999,24 @@
 			<value>CMSAdminComponenteEditar/Restore</value>
 		</pagina>
 		<pagina>
+			<key>@#@@URLSEM,|,ADMINISTRARCOMUNIDADCMSEDITARCOMPONENTE@@#@/{idComponente}/{versionIdComponente}/delete-version</key>
+			<value>CMSAdminComponenteEditar/DeleteVersion</value>
+		</pagina>
+		<pagina>
 			<key>@#@@URLSEM,|,ADMINISTRARCOMUNIDADCMSEDITARCOMPONENTE@@#@/{idComponente}/addCommentRestore</key>
 			<value>CMSAdminComponenteEditar/AddCommentVersion</value>
+		</pagina>
+		<pagina>
+			<key>@#@@URLSEM,|,ADMINISTRARCOMUNIDADCMSEDITARCOMPONENTE@@#@/transition-history</key>
+			<value>CMSAdminComponenteEditar/ObtenerHistorialTransiciones</value>
+		</pagina>
+		<pagina>
+			<key>@#@@URLSEM,|,ADMINISTRARCOMUNIDADCMSEDITARCOMPONENTE@@#@/change-state</key>
+			<value>CMSAdminComponenteEditar/RealizarTransicion</value>
+		</pagina>
+		<pagina>
+			<key>@#@@URLSEM,|,ADMINISTRARCOMUNIDADCMSEDITARCOMPONENTE@@#@/change-state-modal</key>
+			<value>CMSAdminComponenteEditar/CargarModalRealizarTransicion</value>
 		</pagina>
 		<pagina>
 			<key>@#@@URLSEM,|,ADMINISTRARCOMUNIDADCMSHISTORIALCOMPONENTE@@#@/{idComponente}/load-history</key>
@@ -1061,6 +1077,22 @@
 		<pagina>
 			<key>@#@@URLSEM,|,ADMINISTRARCOMUNIDADCMSEDITARPAGINA@@#@/restore</key>
 			<value>AdministrarPaginasCMS/RestaurarVersion</value>
+		</pagina>
+		<pagina>
+			<key>@#@@URLSEM,|,ADMINISTRARCOMUNIDADCMSEDITARPAGINA@@#@/delete</key>
+			<value>AdministrarPaginasCMS/EliminarVersion</value>
+		</pagina>
+		<pagina>
+			<key>@#@@URLSEM,|,ADMINISTRARCOMUNIDADCMSEDITARPAGINA@@#@/change-state-modal</key>
+			<value>AdministrarPaginasCMS/CargarModalRealizarTransicion</value>
+		</pagina>
+		<pagina>
+			<key>@#@@URLSEM,|,ADMINISTRARCOMUNIDADCMSEDITARPAGINA@@#@/transition-history</key>
+			<value>AdministrarPaginasCMS/ObtenerHistorialDeTransiciones</value>
+		</pagina>
+		<pagina>
+			<key>@#@@URLSEM,|,ADMINISTRARCOMUNIDADCMSEDITARPAGINA@@#@/change-state</key>
+			<value>AdministrarPaginasCMS/RealizarTransicion</value>
 		</pagina>
 		<pagina>
 			<key>@#@@URLSEM,|,ONTOLOGIA@@#@/{ontologia}</key>
@@ -2815,6 +2847,10 @@
 			<value>AdministrarPestanyas/RestaurarVersion</value>
 		</pagina>
 		<pagina>
+			<key>@#@@URLSEM,|,ADMINISTRARPESTANYASCOM@@#@/DeleteConfigVersion</key>
+			<value>AdministrarPestanyas/EliminarVersion</value>
+		</pagina>
+		<pagina>
 			<key>@#@@URLSEM,|,ADMINISTRARPESTANYASCOM@@#@/add-comment</key>
 			<value>AdministrarPestanyas/AddCommentVersion</value>
 		</pagina>
@@ -3599,6 +3635,35 @@
 			<key>@#@@URLSEM,|,ADMINISTRARTRAZAS@@#@</key>
 			<value>UpgradeVersion/IndexTrazas</value>
 		</pagina>
+        <pagina>
+			<key>@#@@URLSEM,|,ADMINISTRARFLUJOS@@#@</key>
+			<value>AdministrarFlujos</value>
+		</pagina>
+		<pagina>
+			<key>@#@@URLSEM,|,ADMINISTRARFLUJOS@@#@/save-workflow</key>
+			<value>AdministrarFlujos/GuardarFlujo</value>
+		</pagina>
+		<pagina>
+			<key>@#@@URLSEM,|,ADMINISTRARFLUJOS@@#@/delete-workflow</key>
+			<value>AdministrarFlujos/EliminarFlujo</value>
+		</pagina>
+		<pagina>
+			<key>@#@@URLSEM,|,ADMINISTRARFLUJOS@@#@/delete-state</key>
+			<value>AdministrarFlujos/EliminarEstado</value>
+		</pagina>
+		<pagina>
+			<key>@#@@URLSEM,|,ADMINISTRARFLUJOS@@#@/delete-transition</key>
+			<value>AdministrarFlujos/EliminarTransicion</value>
+		</pagina>
+
+		<pagina>
+			<key>@#@@URLSEM,|,ADMINISTRARFLUJOS@@#@/edit-workflow</key>
+			<value>AdministrarFlujos/EditarFlujo</value>
+		</pagina>
+		<pagina>
+			<key>@#@@URLSEM,|,ADMINISTRARFLUJOS@@#@/show-workflow</key>
+			<value>AdministrarFlujos/VerFlujo</value>
+		</pagina>
 	</seccion>
 	<seccion name="fichaRecurso">
 		<pagina>
@@ -3654,6 +3719,10 @@
 			<value>FichaRecurso/VincularDocumentoSharepoint</value>
 		</pagina>
 		<pagina>
+			<key>{nombreRecurso}/{docID}/transition-state</key>
+			<value>FichaRecurso/RealizarTransicionEstado</value>
+		</pagina>
+		<pagina>
 			<key>{nombreRecurso}/{docID}/unlink-resource</key>
 			<value>FichaRecurso/UnLinkResource</value>
 		</pagina>>
@@ -3701,6 +3770,10 @@
 		<pagina>
 			<key>{nombreRecurso}/{docID}/{versionDocID}/restore-version</key>
 			<value>FichaRecurso/RestoreVersion</value>
+		</pagina>
+		<pagina>
+			<key>{nombreRecurso}/{docID}/{versionDocID}/delete-version</key>
+			<value>FichaRecurso/DeleteVersion</value>
 		</pagina>
 		<pagina>
 			<key>{nombreRecurso}/{docID}/share</key>
