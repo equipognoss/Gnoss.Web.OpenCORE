@@ -190,6 +190,12 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
             {
                 ComprobarRedirecciones(filterContext);
             }
+
+            if(filterContext.Result != null)
+            {
+                return;
+            }
+
             // Cargamos el gestor documental y el documento actual
             if (mGestorDocumental == null)
             {
@@ -219,13 +225,22 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                 {
                     ComprobarPeticion(pFilterContext);
                 }
+                if (pFilterContext.Result == null)
+                {
+                    ComprobarSesion(pFilterContext);
+                }
             }
             catch (Exception ex)
             {
-                mLoggingService.GuardarLogError(ex);
+                mLoggingService.GuardarLogError(ex, $"ERROR: ${ex.Message}\r\nStackTrace: {ex.StackTrace}", mlogger);
             }
         }
 
+        /// <summary>
+        /// Asigna valores a las propiedades del controlador para determinar si el documento de la peticion está versionado,
+        /// cual es el documentoID de la ultima version y cual es el documentoID de la version original en el caso de que el 
+        /// documento esté versionado.
+        /// </summary>
         private void ComprobarDocumentoVersionado()
         {
             using (DocumentacionCN docCN = new DocumentacionCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<DocumentacionCN>(), mLoggerFactory))
@@ -248,7 +263,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                 }
                 catch (Exception ex)
                 {
-                    mLoggingService.GuardarLogError("Fallo al determinar la existencia de una ficha de recurso", ex.Message);
+                    mLoggingService.GuardarLogError(ex, $"ERROR: ${ex.Message}\r\nStackTrace: {ex.StackTrace}", mlogger);
                 }
             }
         }
@@ -265,10 +280,20 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                 // Si esta versionado mDocumentoUltimaVersionID deberia tener valor por lo que comprobamos si no está eliminado.
                 // Si no tiene valor es que es un documento sin versionar previo al cambio de versionado o un recurso creado
                 // por la api.
-                Guid ultimaVersionDocuemtoID = mDocumentoUltimaVersionID != Guid.Empty ? mDocumentoUltimaVersionID : DocumentoID;
+                Guid ultimaVersionDocumentoID = mDocumentoUltimaVersionID != Guid.Empty ? mDocumentoUltimaVersionID : DocumentoID;
 
                 DocumentacionCN docCN = new DocumentacionCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<DocumentacionCN>(), mLoggerFactory);
-                if (!docCN.ExisteDocumentoEnProyecto(ProyectoSeleccionado.Clave, ultimaVersionDocuemtoID))
+
+                Guid pProyectoID = ProyectoSeleccionado.Clave;
+
+                // Comprobamos si el documento está compartido. Si ese es el caso la comprobacion de su
+                // existencia será con el proyecto id original.
+                if (docCN.EstaDocumentoCompartidoEnProyecto(ultimaVersionDocumentoID, pProyectoID))
+                {
+                    pProyectoID = docCN.ObtenerProyectoIDPorDocumentoID(ultimaVersionDocumentoID);
+                }
+
+                if (!docCN.ExisteDocumentoEnProyecto(pProyectoID, ultimaVersionDocumentoID))
                 {
                     pFilterContext.Result = RedireccionarAPaginaNoEncontrada();
                 }
@@ -277,7 +302,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
             }
             catch (Exception ex)
             {
-                mLoggingService.GuardarLogError("Fallo al determinar la existencia de una ficha de recurso", ex.Message);
+                mLoggingService.GuardarLogError(ex, $"ERROR: ${ex.Message}\r\nStackTrace: {ex.StackTrace}", mlogger);
             }
         }
 
@@ -299,10 +324,22 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
             }
             catch (Exception ex)
             {
-                mLoggingService.GuardarLogError($"Fallo al comprobar la validez de la petiicion del recurso {DocumentoID}", ex.Message);
+                mLoggingService.GuardarLogError(ex, $"ERROR: ${ex.Message}\r\nStackTrace: {ex.StackTrace}", mlogger);
             }
         }
 
+        /// <summary>
+        /// Comprobamos que no se ha perdido la sesion, en caso de haberlo hecho, se le redirige al servicio de login para
+        /// verificar si el usuario estaba logueado.
+        /// </summary>
+        /// <param name="pFilterContext"></param>
+        private void ComprobarSesion(ActionExecutingContext pFilterContext)
+        {
+            if (Session.Get<GnossIdentity>("Usuario") == null || (Session.Get<GnossIdentity>("Usuario")).EsUsuarioInvitado)
+            {
+                pFilterContext.Result = mControladorBase.SolicitarCookieLoginUsuario(UsuarioActual, TokenLoginUsuario);
+            }
+        }
         #endregion
 
         #region Comentarios
@@ -395,7 +432,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
             }
             catch (Exception ex)
             {
-                GuardarLogError(ex, $" ComentarioID: {comentarioID}");
+                mLoggingService.GuardarLogError(ex, $"ERROR: ${ex.Message}\r\nStackTrace: {ex.StackTrace}\r\nComentarioID: {comentarioID}", mlogger);
                 throw;
             }
         }
@@ -475,7 +512,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
             }
             catch (Exception ex)
             {
-                GuardarLogError(ex, $" ComentarioID: {comentarioID} Description: {Description}");
+                mLoggingService.GuardarLogError(ex, $"ERROR: ${ex.Message}\r\nStackTrace: {ex.StackTrace}\r\nComentarioID: {comentarioID} Description: {Description}", mlogger);
                 throw;
             }
         }
@@ -523,7 +560,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
             }
             catch (Exception ex)
             {
-                GuardarLogError(ex, " ObtenerComentarios: ");
+                mLoggingService.GuardarLogError(ex, $"ERROR: ${ex.Message}\r\nStackTrace: {ex.StackTrace}", mlogger);
                 throw;
             }
         }
@@ -2644,7 +2681,18 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                     DataWrapperDocumentacion docDW = new DataWrapperDocumentacion();
                     docCN.ObtenerDocumentoPorIDCargarTotal(documentoVincID, docDW, true, false, null);
                     // Hay que vincularlo con el documentoid de la ultima version si es posible
-                    Guid documentoUlimaVersionID = docDW.ListaVersionDocumento.OrderByDescending(item => item.Version).FirstOrDefault().DocumentoID;
+                    Guid documentoUlimaVersionID;
+                    if (docDW.ListaVersionDocumento.Count > 0)
+                    {
+                        documentoUlimaVersionID = docDW.ListaVersionDocumento.OrderByDescending(item => item.Version).FirstOrDefault().DocumentoID;
+                    }
+                    else
+                    {
+                        //En caso de que el documento no tenga versiones
+                        documentoUlimaVersionID = docDW.ListaDocumento.FirstOrDefault().DocumentoID;
+                    }
+                        
+
                     DataWrapperDocumentacion docUltimaVersionDW = new DataWrapperDocumentacion();
                     docCN.ObtenerDocumentoPorIDCargarTotal(documentoUlimaVersionID, docUltimaVersionDW, true, false, null);
                     documentoVincID = documentoUlimaVersionID != Guid.Empty ? documentoUlimaVersionID : documentoVincID;
@@ -4119,7 +4167,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
             }
             catch (Exception ex)
             {
-                mlogger.LogError($"ERROR: ${ex.Message}\r\nStackTrace: {ex.StackTrace}");
+                mLoggingService.GuardarLogError(ex, $"ERROR: ${ex.Message}\r\nStackTrace: {ex.StackTrace}", mlogger);
                 return GnossResultERROR();
             }
         }
@@ -4137,7 +4185,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
             }
             catch (Exception ex)
             {
-                mlogger.LogError($"ERROR: ${ex.Message}\r\nStackTrace: {ex.StackTrace}");
+                mLoggingService.GuardarLogError(ex, $"ERROR: ${ex.Message}\r\nStackTrace: {ex.StackTrace}", mlogger);
                 return GnossResultERROR();
             }
             return GnossResultOK();

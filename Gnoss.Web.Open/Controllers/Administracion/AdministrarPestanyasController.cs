@@ -597,7 +597,10 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
                 return GnossResultERROR("Contacte con el administrador del Proyecto, no es posible atender la petición.");
             }
             ControladorPestanyas contrPest = new ControladorPestanyas(GestionProyectos.ListaProyectos[ProyectoSeleccionado.Clave], ParametroProyecto, mLoggingService, mEntityContext, mConfigService, mRedisCacheWrapper, mGnossCache, mVirtuosoAD, mHttpContextAccessor, mServicesUtilVirtuosoAndReplication, mEntityContextBASE, mAvailableServices, mLoggerFactory.CreateLogger<ControladorPestanyas>(), mLoggerFactory, iniciado);
-            ProyectoAD proyAD = new ProyectoAD(mLoggingService, mEntityContext, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<ProyectoAD>(), mLoggerFactory);
+            string errores = contrPest.ComprobarErrores(ListaPestanyas);
+            if (string.IsNullOrEmpty(errores))
+            { 
+                ProyectoAD proyAD = new ProyectoAD(mLoggingService, mEntityContext, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<ProyectoAD>(), mLoggerFactory);
             bool transaccionIniciada = false;
             try
             {
@@ -656,6 +659,11 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
             contrPest.InvalidarCaches(UrlIntragnoss);
             //RouteValueTransformer.RecalcularRutasProyecto(ProyectoSeleccionado.FilaProyecto.NombreCorto, mConfigService, mScopedFactory);
             return GnossResultOK();
+            }
+            else
+            {
+                return GnossResultERROR(errores);
+            }
         }
 
         [HttpPost]
@@ -727,7 +735,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
             }
             catch (Exception ex)
             {
-                mlogger.LogError($"ERROR: ${ex.Message}\r\nStackTrace: {ex.StackTrace}");
+                mLoggingService.GuardarLogError(ex, $"ERROR: ${ex.Message}\r\nStackTrace: {ex.StackTrace}", mlogger);
                 return GnossResultERROR(UtilIdiomas.GetText("DEVTOOLS", "ERRORRESTAURARVERSIONCONFIGPAGINA"));
             }
         }
@@ -746,7 +754,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
             }
             catch (Exception ex)
             {
-                mlogger.LogError($"ERROR: ${ex.Message}\r\nStackTrace: {ex.StackTrace}");
+                mLoggingService.GuardarLogError(ex, $"ERROR: ${ex.Message}\r\nStackTrace: {ex.StackTrace}", mlogger);
                 return GnossResultERROR(UtilIdiomas.GetText("DEVTOOLS", "ERRORELIMINARVERSIONCONFIGPAGINA"));
             }
         }
@@ -774,7 +782,8 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
             }
             catch (Exception ex)
             {
-                mlogger.LogError($"ERROR: ${ex.Message}\r\nStackTrace: {ex.StackTrace}");
+                mLoggingService.GuardarLogError(ex, $"ERROR: ${ex.Message}\r\nStackTrace: {ex.StackTrace}", mlogger);
+                mLoggingService.GuardarLogError("", mlogger);
                 return GnossResultERROR(UtilIdiomas.GetText("DEVTOOLS", "ERRORCARGAFORMULARIO"));
             }
         }

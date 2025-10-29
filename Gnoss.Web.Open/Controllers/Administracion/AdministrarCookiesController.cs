@@ -250,7 +250,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
         {
             CookieCN cookieCN = new CookieCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<CookieCN>(), mLoggerFactory);
             List<ProyectoCookie> listaCookiesProyecto = cookieCN.ObtenerCookiesDeProyecto(new Guid("11111111-1111-1111-1111-111111111111"));
-            List<CategoriaProyectoCookie> listaCategoriaCookiesMetaproyecto = cookieCN.ObtenerCategoriasProyectoCookie(new Guid("11111111-1111-1111-1111-111111111111"));
+            List<CategoriaProyectoCookie> listaCategoriaCookiesMetaproyecto = cookieCN.ObtenerCategoriasProyectoCookie(new Guid("11111111-1111-1111-1111-111111111111"), false);
 
             List<CookieModel> listaCookieModel = new List<CookieModel>();
             foreach (ProyectoCookie proyectoCookie in listaCookiesProyecto)
@@ -270,7 +270,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
 		public ActionResult PintarCategoriasCookiesMetaproyecto()
         {
             CookieCN cookieCN = new CookieCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<CookieCN>(), mLoggerFactory);
-            List<CategoriaProyectoCookie> listaCategoriaCookiesMetaproyecto = cookieCN.ObtenerCategoriasProyectoCookie(new Guid("11111111-1111-1111-1111-111111111111"));
+            List<CategoriaProyectoCookie> listaCategoriaCookiesMetaproyecto = cookieCN.ObtenerCategoriasProyectoCookie(new Guid("11111111-1111-1111-1111-111111111111"), false);
 
             List<CategoriaCookieModel> listaCategoriaCookieModel = new List<CategoriaCookieModel>();
 
@@ -516,7 +516,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
                     }   
                 }
 
-                List<CategoriaProyectoCookie> listaCategoriaProyectoCookie = cookieCN.ObtenerCategoriasProyectoCookie(ProyectoSeleccionado.Clave);
+                List<CategoriaProyectoCookie> listaCategoriaProyectoCookie = cookieCN.ObtenerCategoriasProyectoCookie(ProyectoSeleccionado.Clave, false);
                 foreach (CategoriaProyectoCookie cat in listaCategoriaProyectoCookie)
                 {
                     CategoriaProyectoCookieModel categoria = new CategoriaProyectoCookieModel();
@@ -725,7 +725,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
             ProyectoCN proyectoCN = new ProyectoCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<ProyectoCN>(), mLoggerFactory);
             CookieCN cookieCN = new CookieCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<CookieCN>(), mLoggerFactory);
             Guid organizacionID = proyectoCN.ObtenerOrganizacionIDAPartirDeProyectoID(ProyectoSeleccionado.Clave);
-            List<CategoriaProyectoCookie> listaCategoriasCookie = cookieCN.ObtenerCategoriasProyectoCookie(ProyectoSeleccionado.Clave);
+            List<CategoriaProyectoCookie> listaCategoriasCookie = cookieCN.ObtenerCategoriasProyectoCookie(ProyectoSeleccionado.Clave, false);
 
             List<CookieModel> listaCookiesAnaliticas = new List<CookieModel>();
 
@@ -771,7 +771,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
             ProyectoCN proyectoCN = new ProyectoCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<ProyectoCN>(), mLoggerFactory);
             CookieCN cookieCN = new CookieCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<CookieCN>(), mLoggerFactory);
             Guid organizacionID = proyectoCN.ObtenerOrganizacionIDAPartirDeProyectoID(ProyectoSeleccionado.Clave);
-            List<CategoriaProyectoCookie> listaCategoriasCookie = cookieCN.ObtenerCategoriasProyectoCookie(ProyectoSeleccionado.Clave);
+            List<CategoriaProyectoCookie> listaCategoriasCookie = cookieCN.ObtenerCategoriasProyectoCookie(ProyectoSeleccionado.Clave, false);
 
             List<CookieModel> listaCookiesYoutube = new List<CookieModel>();
 
@@ -899,7 +899,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
 
                     CookieCN cookieCN = new CookieCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<CookieCN>(), mLoggerFactory);
                     List<CategoriaProyectoCookieViewModel> listaCategoriaProyectoCookieViewModel = new List<CategoriaProyectoCookieViewModel>();
-                    List<CategoriaProyectoCookie> listaCategoriaProyectoCookie = cookieCN.ObtenerCategoriasProyectoCookie(ProyectoSeleccionado.Clave);
+                    List<CategoriaProyectoCookie> listaCategoriaProyectoCookie = cookieCN.ObtenerCategoriasProyectoCookie(ProyectoSeleccionado.Clave, false);
                     List<ProyectoCookie> listaProyectoCookie = cookieCN.ObtenerCookiesDeProyecto(ProyectoSeleccionado.Clave);
                     foreach (ProyectoCookie proyectoCookie in listaProyectoCookie)
                     {

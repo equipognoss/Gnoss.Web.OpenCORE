@@ -67,7 +67,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
             string urlRedirect = "";
             try
             {
-                if (Session.Get("Usuario") != null)
+                if (Session.Get<GnossIdentity>("Usuario") != null)
                 {
                     Guid UsuarioID = Session.Get<GnossIdentity>("Usuario").UsuarioID;
 
@@ -169,33 +169,37 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                 //Cargamos todos los contadores de todos los perfiles a la vez
                 LiveCN liveCN = new LiveCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<LiveCN>(), mLoggerFactory);
                 List<AD.EntityModel.Models.IdentidadDS.ContadorPerfil> listaContadorPerfil = liveCN.ObtenerContadoresPerfiles(identidades);
-                List<NotificacionesModel> notificaciones = ControladorNotificaciones.ObtenerNotificaciones(IdentidadActual.PerfilID);
-                List<NotificacionesModel> notificacionesSinLeer = ControladorNotificaciones.ObtenerNotificacionesSinLeer(IdentidadActual.PerfilID);
-                AD.EntityModel.Models.IdentidadDS.ContadorPerfil contadorPerfilBuscar = listaContadorPerfil.FirstOrDefault(item => item.PerfilID.Equals(perfilBuscarID));
-                if (contadorPerfilBuscar != null)
+
+                if(IdentidadActual != null)
                 {
-                    numMensajes = contadorPerfilBuscar.NumNuevosMensajes;
-                    numComentarios = contadorPerfilBuscar.NuevosComentarios;
-                    numInvitaciones = contadorPerfilBuscar.NuevasInvitaciones;
-                    numSuscripciones = contadorPerfilBuscar.NuevasSuscripciones;
-                    numNotificaciones = notificaciones.Count();
-
-                    numComentariosSinLeer = contadorPerfilBuscar.NumComentariosSinLeer;
-                    numMensajesSinLeer = contadorPerfilBuscar.NumMensajesSinLeer;
-                    numInvitacionesSinLeer = contadorPerfilBuscar.NumInvitacionesSinLeer;
-                    numSuscripcionesSinLeer = contadorPerfilBuscar.NumSuscripcionesSinLeer;
-                    numNotificacionesSinLeer = notificacionesSinLeer.Count();
-
-                    if (pPerfilOrganizacionID.HasValue) 
+                    List<NotificacionesModel> notificaciones = ControladorNotificaciones.ObtenerNotificaciones(IdentidadActual.PerfilID);
+                    List<NotificacionesModel> notificacionesSinLeer = ControladorNotificaciones.ObtenerNotificacionesSinLeer(IdentidadActual.PerfilID);
+                    AD.EntityModel.Models.IdentidadDS.ContadorPerfil contadorPerfilBuscar = listaContadorPerfil.FirstOrDefault(item => item.PerfilID.Equals(perfilBuscarID));
+                    if (contadorPerfilBuscar != null)
                     {
-                        AD.EntityModel.Models.IdentidadDS.ContadorPerfil contadorPerfilBuscarOrganizacion = listaContadorPerfil.FirstOrDefault(item => item.PerfilID.Equals(pPerfilOrganizacionID.Value));
-                        if (bandejaOrg && contadorPerfilBuscarOrganizacion != null)
-                        {
-                            numMensajesOrg = contadorPerfilBuscarOrganizacion.NumNuevosMensajes;
-                            numInvitacionesOrg = contadorPerfilBuscarOrganizacion.NuevasInvitaciones;
+                        numMensajes = contadorPerfilBuscar.NumNuevosMensajes;
+                        numComentarios = contadorPerfilBuscar.NuevosComentarios;
+                        numInvitaciones = contadorPerfilBuscar.NuevasInvitaciones;
+                        numSuscripciones = contadorPerfilBuscar.NuevasSuscripciones;
+                        numNotificaciones = notificaciones.Count();
 
-                            numMensajesSinLeerOrg = contadorPerfilBuscarOrganizacion.NumMensajesSinLeer;
-                            numInvitacionesSinLeerOrg = contadorPerfilBuscarOrganizacion.NumInvitacionesSinLeer;
+                        numComentariosSinLeer = contadorPerfilBuscar.NumComentariosSinLeer;
+                        numMensajesSinLeer = contadorPerfilBuscar.NumMensajesSinLeer;
+                        numInvitacionesSinLeer = contadorPerfilBuscar.NumInvitacionesSinLeer;
+                        numSuscripcionesSinLeer = contadorPerfilBuscar.NumSuscripcionesSinLeer;
+                        numNotificacionesSinLeer = notificacionesSinLeer.Count();
+
+                        if (pPerfilOrganizacionID.HasValue)
+                        {
+                            AD.EntityModel.Models.IdentidadDS.ContadorPerfil contadorPerfilBuscarOrganizacion = listaContadorPerfil.FirstOrDefault(item => item.PerfilID.Equals(pPerfilOrganizacionID.Value));
+                            if (bandejaOrg && contadorPerfilBuscarOrganizacion != null)
+                            {
+                                numMensajesOrg = contadorPerfilBuscarOrganizacion.NumNuevosMensajes;
+                                numInvitacionesOrg = contadorPerfilBuscarOrganizacion.NuevasInvitaciones;
+
+                                numMensajesSinLeerOrg = contadorPerfilBuscarOrganizacion.NumMensajesSinLeer;
+                                numInvitacionesSinLeerOrg = contadorPerfilBuscarOrganizacion.NumInvitacionesSinLeer;
+                            }
                         }
                     }
                 }

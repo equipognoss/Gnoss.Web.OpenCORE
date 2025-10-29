@@ -49,7 +49,10 @@
         <table class="display nowrap table table-sm tabla-versiones" id="panHistorial_table">
             <thead>
                 <tr>
-                    <th></th>
+                    @if (DocActual.TypeDocument != ResourceModel.DocumentType.Semantico)
+                    {
+                        <th></th>
+                    }
                     <th scope="col">@Html.GetText("HISTORIALVERSIONES", "VERSION")</th>
                     <th scope="col">@Html.GetText("HISTORIALVERSIONES", "HORA")</th>
                     <th scope="col">@Html.GetText("HISTORIALVERSIONES", "FECHA")</th>
@@ -67,14 +70,17 @@
                     <tr>
                         @* Columnas de DataTables*@
                         @* INPUT CHECKBOX *@
-                        <td class="align-middle">
-                            <div class="check-wrapper">
-                                <div class="custom-control custom-checkbox">
-                                    <input style="z-index:9999" type="checkbox" class="custom-control-input" onclick="ComprobarChecks(this);" id="@doc.Key">
-                                    <label class="custom-control-label" for="version3"></label>
+                        @if (DocActual.TypeDocument != ResourceModel.DocumentType.Semantico)
+                        {
+                            <td class="align-middle">
+                                <div class="check-wrapper">
+                                    <div class="custom-control custom-checkbox">
+                                        <input style="z-index:9999" type="checkbox" class="custom-control-input" onclick="ComprobarChecks(this);" id="@doc.Key">
+                                        <label class="custom-control-label" for="version3"></label>
+                                    </div>
                                 </div>
-                            </div>
-                        </td>
+                            </td>
+                        }
                         @* VERSION *@
                         <td class="align-middle"><a href="@doc.VersionCardLink">@doc.Version</a></td>
                         @* HORA *@

@@ -1,18 +1,22 @@
-﻿using Es.Riam.Gnoss.AD.EntityModel;
+﻿using DocumentFormat.OpenXml.Office2010.Word;
+using Es.Riam.Gnoss.AD.EntityModel;
 using Es.Riam.Gnoss.AD.ServiciosGenerales;
 using Es.Riam.Gnoss.AD.Virtuoso;
 using Es.Riam.Gnoss.CL;
 using Es.Riam.Gnoss.Elementos.Tesauro;
 using Es.Riam.Gnoss.Logica.Documentacion;
 using Es.Riam.Gnoss.Logica.Flujos;
+using Es.Riam.Gnoss.Logica.MVC;
 using Es.Riam.Gnoss.Logica.ServiciosGenerales;
 using Es.Riam.Gnoss.Util.Configuracion;
 using Es.Riam.Gnoss.Util.General;
 using Es.Riam.Gnoss.Util.Seguridad;
+using Es.Riam.Gnoss.UtilServiciosWeb;
 using Es.Riam.Gnoss.Web.Controles;
 using Es.Riam.Gnoss.Web.MVC.Controllers;
 using Es.Riam.Gnoss.Web.MVC.Controllers.Administracion;
 using Es.Riam.Gnoss.Web.MVC.Models;
+using Gnoss.Web.Open.Filters;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Filters;
@@ -41,6 +45,11 @@ namespace Es.Riam.Gnoss.Web.MVC.Filters
         private VirtuosoAD mVirtuosoAD;
         private ILogger mlogger;
         private ILoggerFactory mLoggerFactory;
+
+        private static PermisoRecursos[] mPermisosRecurso = { PermisoRecursos.EditarDebate, PermisoRecursos.EditarEncuesta,PermisoRecursos.EditarNota, PermisoRecursos.EditarPregunta, PermisoRecursos.EditarRecursoTipoAdjunto, PermisoRecursos.EditarRecursoTipoEnlace, PermisoRecursos.EditarRecursoTipoReferenciaADocumentoFisico, PermisoRecursos.EliminarDebate, PermisoRecursos.EliminarEncuesta,PermisoRecursos.EliminarNota, PermisoRecursos.EliminarPregunta, PermisoRecursos.EliminarRecursoTipoAdjunto, PermisoRecursos.EliminarRecursoTipoEnlace, PermisoRecursos.EliminarRecursoTipoReferenciaADocumentoFisico, PermisoRecursos.EliminarVersionDebate, PermisoRecursos.EliminarVersionEncuesta,PermisoRecursos.EliminarVersionNota, PermisoRecursos.EliminarVersionPregunta, PermisoRecursos.EliminarVersionAdjunto, PermisoRecursos.EliminarVersionEnlace, PermisoRecursos.EliminarVersionReferencia, PermisoRecursos.RestaurarVersionDebate, PermisoRecursos.RestaurarVersionEncuesta,PermisoRecursos.RestaurarVersionNota, PermisoRecursos.RestaurarVersionPregunta, PermisoRecursos.RestaurarVersionAdjunto, PermisoRecursos.RestaurarVersionEnlace, PermisoRecursos.RestaurarVersionReferencia, PermisoRecursos.CertificarRecurso};
+        private static TipoPermisoRecursosSemanticos[] mPermisosRecursoSemantico = { TipoPermisoRecursosSemanticos.Modificar, TipoPermisoRecursosSemanticos.Eliminar, TipoPermisoRecursosSemanticos.EliminarVersion, TipoPermisoRecursosSemanticos.RestaurarVersion };
+
+
         public AccesoRecursoAttribute(LoggingService loggingService, ConfigService configService, EntityContext entityContext, RedisCacheWrapper redisCacheWrapper, GnossCache gnossCache, VirtuosoAD virtuosoAD, IHttpContextAccessor httpContextAccessor, ILogger<AccesoRecursoAttribute> logger, ILoggerFactory loggerFactory)
         {
             mLoggingService = loggingService;
@@ -72,6 +81,8 @@ namespace Es.Riam.Gnoss.Web.MVC.Filters
 
             string urlRedirect = null;
 
+            
+
             if (!string.IsNullOrEmpty(parametroDocumentoID) && (Guid.TryParse(parametroDocumentoID, out documentoID)))
             {
                 DocumentacionCN documentacionCN = new DocumentacionCN(mEntityContext, mLoggingService, mConfigService, null, mLoggerFactory.CreateLogger<DocumentacionCN>(), mLoggerFactory);
@@ -81,6 +92,12 @@ namespace Es.Riam.Gnoss.Web.MVC.Filters
 
                 documentoID = documentoVersionID != Guid.Empty ? documentoVersionID : documentoID;
                 //TODO JUAN. Hay que meter aquí la comprobación de MyGNOSS o se hace en la ficha?
+
+                //Verificar si el usuario tiene permisos por algun rol
+                if (TienePermisosGlobales(documentoID))
+                {
+                    return;
+                }
 
                 //Verifico si el recurso está compartido en la comunidad y no está eliminado
                 if (mControladorBase.ProyectoSeleccionado.Clave != ProyectoAD.MetaProyecto && !documentacionCN.EstaDocumentoCompartidoEnProyecto(documentoID, mControladorBase.ProyectoSeleccionado.Clave) && (Controlador(pFilterContext).ProyectoOrigenBusquedaID.Equals(Guid.Empty) || !documentacionCN.EstaDocumentoCompartidoEnProyecto(documentoID, Controlador(pFilterContext).ProyectoOrigenBusquedaID)))
@@ -114,36 +131,36 @@ namespace Es.Riam.Gnoss.Web.MVC.Filters
                     if (!publico)
                     {
                         // TODO Fran: Comprobar si es el creador
-						if (Rol.Equals(RolesAccesoRecurso.Editor))
-						{
-							if (!flujosCN.ComprobarIdentidadTienePermisoEdicionEnEstado(estadoID.Value, mControladorBase.IdentidadActual.Clave))
-							{
-								pFilterContext.Result = Controlador(pFilterContext).RedireccionarAPaginaNoEncontrada();
-								return;
-							}
-						}
-						else
-						{
-							if (!flujosCN.ComprobarIdentidadTienePermisoLecturaEnEstado(estadoID.Value, mControladorBase.IdentidadActual.Clave))
-							{
-								pFilterContext.Result = Controlador(pFilterContext).RedireccionarAPaginaNoEncontrada();
-								return;
-							}
-						}
-					}									
-				}
+                        if (Rol.Equals(RolesAccesoRecurso.Editor))
+                        {
+                            if (!flujosCN.ComprobarIdentidadTienePermisoEdicionEnEstado(estadoID.Value, mControladorBase.IdentidadActual.Clave))
+                            {
+                                pFilterContext.Result = Controlador(pFilterContext).RedireccionarAPaginaNoEncontrada();
+                                return;
+                            }
+                        }
+                        else
+                        {
+                            if (!flujosCN.ComprobarIdentidadTienePermisoLecturaEnEstado(estadoID.Value, mControladorBase.IdentidadActual.Clave))
+                            {
+                                pFilterContext.Result = Controlador(pFilterContext).RedireccionarAPaginaNoEncontrada();
+                                return;
+                            }
+                        }
+                    }
+                }
                 else
                 {
-					if (Rol.Equals(RolesAccesoRecurso.Editor))
-					{
-						urlRedirect = ComprobarPermisosEdicionRecurso(documentoID);
-					}
-					else
-					{
-						urlRedirect = ComprobarPermisosLecturaRecurso(documentoID, pFilterContext);
-					}
-				}
-			}
+                    if (Rol.Equals(RolesAccesoRecurso.Editor))
+                    {
+                        urlRedirect = ComprobarPermisosEdicionRecurso(documentoID);
+                    }
+                    else
+                    {
+                        urlRedirect = ComprobarPermisosLecturaRecurso(documentoID, pFilterContext);
+                    }
+                }
+            }
             else
             {
                 //El ID está mal formado, redirijo a la página 404
@@ -157,6 +174,69 @@ namespace Es.Riam.Gnoss.Web.MVC.Filters
             }
         }
 
+        private bool TienePermisosGlobales(Guid pDocumentoId)
+        {
+            DocumentacionCN docCN = new DocumentacionCN(mEntityContext, mLoggingService, mConfigService, null, mLoggerFactory.CreateLogger<DocumentacionCN>(), mLoggerFactory);
+            TiposDocumentacion tipoDocumento = docCN.ObtenerTipoDocumentoPorDocumentoID(pDocumentoId);
+
+            switch (tipoDocumento)
+            {
+                case TiposDocumentacion.Hipervinculo:
+                case TiposDocumentacion.ReferenciaADoc:
+                case TiposDocumentacion.FicheroServidor:
+                case TiposDocumentacion.Nota:
+                case TiposDocumentacion.Pregunta:
+                case TiposDocumentacion.Debate:
+                case TiposDocumentacion.Encuesta:
+                    return TienePermisosGlobalesRecursoSemanticaDebil();
+                case TiposDocumentacion.Semantico:
+                    return TienePermisosGlobalesRecursoSemantico(docCN, pDocumentoId);
+                default:
+                    return false;
+            }
+        }
+        private bool TienePermisosGlobalesRecursoSemanticaDebil()
+        {
+            if (mPermisosRecurso?.Length > 0)
+            {
+                UtilPermisos utilPermisos = new UtilPermisos(mEntityContext, mLoggingService, mConfigService, mLoggerFactory.CreateLogger<UtilPermisos>(), mLoggerFactory);
+                
+                Guid identidadId = mControladorBase.IdentidadActual.Clave;
+                Guid identidadMyGnoss = mControladorBase.IdentidadActual.IdentidadMyGNOSS.Clave;
+
+                foreach (ulong permisoRequerido in mPermisosRecurso)
+                {
+                    bool tienePermisoPagina = utilPermisos.IdentidadTienePermiso(permisoRequerido, identidadId, identidadMyGnoss, TipoDePermiso.Recursos);
+                    if (tienePermisoPagina)
+                    {
+                        return true;
+                    }
+                }
+            }
+            return false;
+        }
+
+        private bool TienePermisosGlobalesRecursoSemantico(DocumentacionCN pDocCN, Guid pDocumentoId)
+        {
+            if (mPermisosRecursoSemantico?.Length > 0)
+            {
+                UtilPermisos utilPermisos = new UtilPermisos(mEntityContext, mLoggingService, mConfigService, mLoggerFactory.CreateLogger<UtilPermisos>(), mLoggerFactory);
+
+                Guid identidadId = mControladorBase.IdentidadActual.Clave;
+                Guid identidadMyGnoss = mControladorBase.IdentidadActual.IdentidadMyGNOSS.Clave;
+
+                foreach (TipoPermisoRecursosSemanticos permisoRequerido in mPermisosRecursoSemantico)
+                {
+                    Dictionary<Guid, Guid> ontologiaId = pDocCN.ObtenerElementoVinculadoIDPorDocumentoID([pDocumentoId]);
+                    bool tienePermisoPagina = utilPermisos.IdentidadTienePermisoRecursoSemantico(identidadId, identidadId, permisoRequerido, ontologiaId[pDocumentoId]);
+                    if (tienePermisoPagina)
+                    {
+                        return true;
+                    }
+                }
+            }
+            return false;
+        }
 
         private string ComprobarPermisosLecturaRecurso(Guid pDocumentoID, ActionExecutingContext pFilterContext)
         {
@@ -185,7 +265,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Filters
                     listaProyectos.Add(Controlador(pFilterContext).ProyectoOrigenBusquedaID);
                 }
 
-               
+
                 if (!documentacionCN.TieneUsuarioAccesoADocumentoEnProyecto(listaProyectos, pDocumentoID, mControladorBase.IdentidadActual.PerfilID, mControladorBase.IdentidadActual.Clave, mControladorBase.IdentidadActual.IdentidadMyGNOSS.Clave, false, !mControladorBase.UsuarioActual.EsIdentidadInvitada))
                 {
                     if (mControladorBase.UsuarioActual.EsIdentidadInvitada)
@@ -203,7 +283,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Filters
                         //Saco la página 403
                         pFilterContext.Result = Controlador(pFilterContext).RedireccionarAPaginaNoEncontrada("403");
                     }
-                    
+
                 }
 
                 documentacionCN.Dispose();
@@ -292,7 +372,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Filters
             string titulo;
             Guid? elementoVinculadoID;
             short tipo;
-            
+
 
             DocumentacionCN docCN = new DocumentacionCN(mEntityContext, mLoggingService, mConfigService, null, mLoggerFactory.CreateLogger<DocumentacionCN>(), mLoggerFactory);
             docCN.ObtenerTituloElementoVinculadoIDTipoDeRecurso(pDocumentoID, out titulo, out elementoVinculadoID, out tipo);

@@ -204,7 +204,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
             }
             catch (Exception ex)
             {
-                mlogger.LogError($"ERROR: ${ex.Message}\r\nStackTrace: {ex.StackTrace}");
+                mLoggingService.GuardarLogError(ex, $"ERROR: ${ex.Message}\r\nStackTrace: {ex.StackTrace}", mlogger);
                 return GnossResultERROR(UtilIdiomas.GetText("DEVTOOLS", "ERRORCARGAFORMULARIO"));
             }
         }
@@ -242,7 +242,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
             }
 			catch (Exception ex)
 			{
-                mlogger.LogError($"ERROR: ${ex.Message}\r\nStackTrace: {ex.StackTrace}");
+                mLoggingService.GuardarLogError(ex, $"ERROR: ${ex.Message}\r\nStackTrace: {ex.StackTrace}", mlogger);
                 return GnossResultERROR(UtilIdiomas.GetText("DEVTOOLS", "ERRORRESTAURARVERSIONESTRUCTURAPAGINA"));
 			}
         }
@@ -260,7 +260,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
                 return GnossResultOK(UtilIdiomas.GetText("DEVTOOLS", "VERSIONESTRUCTURAPAGINAELIMINADO"));
             }
             catch (Exception ex) {
-                mlogger.LogError($"ERROR: ${ex.Message}\r\nStackTrace: {ex.StackTrace}");
+                mLoggingService.GuardarLogError(ex, $"ERROR: ${ex.Message}\r\nStackTrace: {ex.StackTrace}", mlogger);
                 return GnossResultERROR(UtilIdiomas.GetText("DEVTOOLS", "ERRORELIMINARVERSIONESTRUCTURAPAGINA"));
             }
         }

@@ -104,21 +104,21 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
 
         public const string COLA_MINIATURA = "ColaMiniatura";
         public const string EXCHANGE = "";
-		private IPublishEvents mIPublishEvents;
+        private IPublishEvents mIPublishEvents;
         private ILogger mlogger;
         private ILoggerFactory mLoggerFactory;
         #endregion
 
         public EditarRecursoController(LoggingService loggingService, ConfigService configService, EntityContext entityContext, RedisCacheWrapper redisCacheWrapper, GnossCache gnossCache, VirtuosoAD virtuosoAD, IHttpContextAccessor httpContextAccessor, ICompositeViewEngine viewEngine, EntityContextBASE entityContextBASE, Microsoft.AspNetCore.Hosting.IHostingEnvironment env, IActionContextAccessor actionContextAccessor, IUtilServicioIntegracionContinua utilServicioIntegracionContinua, IServicesUtilVirtuosoAndReplication servicesUtilVirtuosoAndReplication, IOAuth oAuth, IHostApplicationLifetime appLifetime, IPublishEvents publishEvents, IAvailableServices availableServices, ILogger<EditarRecursoController> logger, ILoggerFactory loggerFactory)
-            : base(loggingService, configService, entityContext, redisCacheWrapper, gnossCache, virtuosoAD, httpContextAccessor, viewEngine, entityContextBASE, env, actionContextAccessor, utilServicioIntegracionContinua, servicesUtilVirtuosoAndReplication, oAuth, appLifetime, availableServices, logger,loggerFactory)
+            : base(loggingService, configService, entityContext, redisCacheWrapper, gnossCache, virtuosoAD, httpContextAccessor, viewEngine, entityContextBASE, env, actionContextAccessor, utilServicioIntegracionContinua, servicesUtilVirtuosoAndReplication, oAuth, appLifetime, availableServices, logger, loggerFactory)
         {
-			mIPublishEvents = publishEvents;
+            mIPublishEvents = publishEvents;
             mlogger = logger;
             mLoggerFactory = loggerFactory;
         }
 
         #region Miembros
-        
+
         /// <summary>
         /// Separador de cadena del GoogleDrive documentoID
         /// </summary>
@@ -743,46 +743,48 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
             }
         }
 
-        private ActionResult ComprobarPermisosAccionRecursoSemantico(TipoPermisoRecursosSemanticos pTipoPermiso)
+        private ActionResult ComprobarTienePermisosAccionRecursoSemantico(TipoPermisoRecursosSemanticos pTipoPermiso)
         {
-			UtilPermisos utilPermisos = new UtilPermisos(mEntityContext, mLoggingService, mConfigService, mLoggerFactory.CreateLogger<UtilPermisos>(), mLoggerFactory);
-			bool tienePermiso = utilPermisos.IdentidadTienePermisoRecursoSemantico(mControladorBase.IdentidadActual.Clave, mControladorBase.IdentidadActual.IdentidadMyGNOSS.Clave, pTipoPermiso, mOntologiaID);
-			if (!tienePermiso)
-			{
-				return Redirect(mControladorBase.UrlsSemanticas.GetURLBaseRecursosInicio(BaseURLIdioma, UtilIdiomas, "", UrlPerfil, IdentidadOrganizacion != null));
-			}
+            if (!ComprobarPermisosAccionRecursoSemantico(pTipoPermiso))
+            {
+                return Redirect(mControladorBase.UrlsSemanticas.GetURLBaseRecursosInicio(BaseURLIdioma, UtilIdiomas, "", UrlPerfil, IdentidadOrganizacion != null));
+            }
 
-			return null;
-		}
+            return null;
+        }
+
+        private bool ComprobarPermisosAccionRecursoSemantico(TipoPermisoRecursosSemanticos pTipoPermiso)
+        {
+            UtilPermisos utilPermisos = new UtilPermisos(mEntityContext, mLoggingService, mConfigService, mLoggerFactory.CreateLogger<UtilPermisos>(), mLoggerFactory);
+            return utilPermisos.IdentidadTienePermisoRecursoSemantico(mControladorBase.IdentidadActual.Clave, mControladorBase.IdentidadActual.IdentidadMyGNOSS.Clave, pTipoPermiso, mOntologiaID);
+        }
 
         private ActionResult ComprobarTienePermisosAccionRecurso(PermisoRecursos pTipoPermiso)
         {
-			UtilPermisos utilPermisos = new UtilPermisos(mEntityContext, mLoggingService, mConfigService, mLoggerFactory.CreateLogger<UtilPermisos>(), mLoggerFactory);
-            bool tienePermiso = utilPermisos.IdentidadTienePermiso((ulong)pTipoPermiso, mControladorBase.IdentidadActual.Clave, mControladorBase.IdentidadActual.IdentidadMyGNOSS.Clave, TipoDePermiso.Recursos);
-			if (!tienePermiso)
-			{
-				return Redirect(mControladorBase.UrlsSemanticas.GetURLBaseRecursosInicio(BaseURLIdioma, UtilIdiomas, "", UrlPerfil, IdentidadOrganizacion != null));
-			}
+            if (!ComprobarPermisosAccionRecurso(pTipoPermiso))
+            {
+                return Redirect(mControladorBase.UrlsSemanticas.GetURLBaseRecursosInicio(BaseURLIdioma, UtilIdiomas, "", UrlPerfil, IdentidadOrganizacion != null));
+            }
 
             return null;
-		}
+        }
 
-		private bool ComprobarPermisosAccionRecurso(PermisoRecursos pTipoPermiso)
-		{
-			UtilPermisos utilPermisos = new UtilPermisos(mEntityContext, mLoggingService, mConfigService, mLoggerFactory.CreateLogger<UtilPermisos>(), mLoggerFactory);
-			bool tienePermiso = utilPermisos.IdentidadTienePermiso((ulong)pTipoPermiso, mControladorBase.IdentidadActual.Clave, mControladorBase.IdentidadActual.IdentidadMyGNOSS.Clave, TipoDePermiso.Recursos);
+        private bool ComprobarPermisosAccionRecurso(PermisoRecursos pTipoPermiso)
+        {
+            UtilPermisos utilPermisos = new UtilPermisos(mEntityContext, mLoggingService, mConfigService, mLoggerFactory.CreateLogger<UtilPermisos>(), mLoggerFactory);
+            bool tienePermiso = utilPermisos.IdentidadTienePermiso((ulong)pTipoPermiso, mControladorBase.IdentidadActual.Clave, mControladorBase.IdentidadActual.IdentidadMyGNOSS.Clave, TipoDePermiso.Recursos);
 
             return tienePermiso;
-		}
+        }
 
-		#region Nota
+        #region Nota
 
-		/// <summary>
-		/// Click en nota.
-		/// </summary>
-		/// <param name="pModel">Modelo de selección de recurso</param>
-		/// <returns>Acción resultado</returns>
-		private ActionResult lbSiguienteNota_Click_SubirRecurso()
+        /// <summary>
+        /// Click en nota.
+        /// </summary>
+        /// <param name="pModel">Modelo de selección de recurso</param>
+        /// <returns>Acción resultado</returns>
+        private ActionResult lbSiguienteNota_Click_SubirRecurso()
         {
             if (!mEditRecCont.CreateResourceModel.NoteAvailable)
             {
@@ -790,7 +792,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
             }
 
             ActionResult result = ComprobarTienePermisosAccionRecurso(PermisoRecursos.CrearNota);
-			if (result != null)
+            if (result != null)
             {
                 return result;
             }
@@ -812,12 +814,12 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
         /// <returns>Acción resultado</returns>
         private ActionResult lbSiguienteURL_Click_SubirRecurso(SelectResourceModel pModel)
         {
-			ActionResult result = ComprobarTienePermisosAccionRecurso(PermisoRecursos.CrearRecursoTipoEnlace);
-			if (result != null)
-			{
-				return result;
-			}
-			ParametroAplicacionCN parametroAplicacionCN = new ParametroAplicacionCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<ParametroAplicacionCN>(), mLoggerFactory);
+            ActionResult result = ComprobarTienePermisosAccionRecurso(PermisoRecursos.CrearRecursoTipoEnlace);
+            if (result != null)
+            {
+                return result;
+            }
+            ParametroAplicacionCN parametroAplicacionCN = new ParametroAplicacionCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<ParametroAplicacionCN>(), mLoggerFactory);
             string oneDrivePermitido = parametroAplicacionCN.ObtenerParametroAplicacion(ParametroAD.PermitirEnlazarDocumentosOneDrive);
             if (!UtilCadenas.EsEnlaceSharepoint(pModel.Link, oneDrivePermitido) && !mEditRecCont.CreateResourceModel.LinkAvailable)
             {
@@ -861,13 +863,13 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
         /// <returns>Acción resultado</returns>
         protected ActionResult lbSiguienteReferencia_Click_SubirRecurso(SelectResourceModel pModel)
         {
-			ActionResult result = ComprobarTienePermisosAccionRecurso(PermisoRecursos.CrearRecursoTipoReferenciaADocumentoFisico);
-			if (result != null)
-			{
-				return result;
-			}
+            ActionResult result = ComprobarTienePermisosAccionRecurso(PermisoRecursos.CrearRecursoTipoReferenciaADocumentoFisico);
+            if (result != null)
+            {
+                return result;
+            }
 
-			if (!mEditRecCont.CreateResourceModel.DocumentReferenceAvailable)
+            if (!mEditRecCont.CreateResourceModel.DocumentReferenceAvailable)
             {
                 return new EmptyResult();
             }
@@ -960,13 +962,13 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                 return new EmptyResult();
             }
 
-			ActionResult result = ComprobarTienePermisosAccionRecurso(PermisoRecursos.CrearRecursoTipoAdjunto);
-			if (result != null)
-			{
-				return result;
-			}
+            ActionResult result = ComprobarTienePermisosAccionRecurso(PermisoRecursos.CrearRecursoTipoAdjunto);
+            if (result != null)
+            {
+                return result;
+            }
 
-			if (pModel.SkipRepeat)
+            if (pModel.SkipRepeat)
             {
                 string[] extraArchivo = pModel.ExtraFile.Split('|');
 
@@ -1777,42 +1779,42 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
         private ActionResult ComprobarRedirecciones_SubirRecursoPart2()
         {
             ActionResult result = null;
-			switch (mTipoDocumento)
-			{
-				case TiposDocumentacion.Hipervinculo:
-					result = ComprobarTienePermisosAccionRecurso(PermisoRecursos.CrearRecursoTipoEnlace);
-					break;
-				case TiposDocumentacion.Nota:
-					result = ComprobarTienePermisosAccionRecurso(PermisoRecursos.CrearNota);
-					break;
-				case TiposDocumentacion.FicheroServidor:
-					result = ComprobarTienePermisosAccionRecurso(PermisoRecursos.CrearRecursoTipoAdjunto);
+            switch (mTipoDocumento)
+            {
+                case TiposDocumentacion.Hipervinculo:
+                    result = ComprobarTienePermisosAccionRecurso(PermisoRecursos.CrearRecursoTipoEnlace);
                     break;
-				case TiposDocumentacion.ReferenciaADoc:
+                case TiposDocumentacion.Nota:
+                    result = ComprobarTienePermisosAccionRecurso(PermisoRecursos.CrearNota);
+                    break;
+                case TiposDocumentacion.FicheroServidor:
+                    result = ComprobarTienePermisosAccionRecurso(PermisoRecursos.CrearRecursoTipoAdjunto);
+                    break;
+                case TiposDocumentacion.ReferenciaADoc:
                     result = ComprobarTienePermisosAccionRecurso(PermisoRecursos.CrearRecursoTipoReferenciaADocumentoFisico);
-					break;
-				case TiposDocumentacion.Pregunta:
-                    result = ComprobarTienePermisosAccionRecurso(PermisoRecursos.CrearPregunta);
-					break;
-				case TiposDocumentacion.Encuesta:
-					result = ComprobarTienePermisosAccionRecurso(PermisoRecursos.CrearEncuesta);
-					break;
-				case TiposDocumentacion.Debate:
-					result = ComprobarTienePermisosAccionRecurso(PermisoRecursos.CrearDebate);
-					break;
-                case TiposDocumentacion.Semantico:
-                    result = ComprobarPermisosAccionRecursoSemantico(TipoPermisoRecursosSemanticos.Crear);
                     break;
-			}
-			bool tienePermiso = result == null;
+                case TiposDocumentacion.Pregunta:
+                    result = ComprobarTienePermisosAccionRecurso(PermisoRecursos.CrearPregunta);
+                    break;
+                case TiposDocumentacion.Encuesta:
+                    result = ComprobarTienePermisosAccionRecurso(PermisoRecursos.CrearEncuesta);
+                    break;
+                case TiposDocumentacion.Debate:
+                    result = ComprobarTienePermisosAccionRecurso(PermisoRecursos.CrearDebate);
+                    break;
+                case TiposDocumentacion.Semantico:
+                    result = ComprobarTienePermisosAccionRecursoSemantico(TipoPermisoRecursosSemanticos.Crear);
+                    break;
+            }
+            bool tienePermiso = result == null;
 
-			if (result != null)
+            if (result != null)
             {
                 return result;
-			}
-            
+            }
 
-			if (!string.IsNullOrEmpty(RequestParams("organizacion")) && IdentidadActual.IdentidadOrganizacion != null)
+
+            if (!string.IsNullOrEmpty(RequestParams("organizacion")) && IdentidadActual.IdentidadOrganizacion != null)
             {
                 if (!mControladorBase.UsuarioActual.EstaAutorizadoEnOrganizacion((ulong)Capacidad.Organizacion.CapacidadesPropiedades.EditarOrganizacion, IdentidadActual.OrganizacionID.Value) && !mControladorBase.UsuarioActual.EstaAutorizadoEnOrganizacion((ulong)Capacidad.Organizacion.CapacidadesAdministrador.AdministrarOrganizacion, IdentidadActual.OrganizacionID.Value))
                 {
@@ -1824,16 +1826,16 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
             {
                 if (!tienePermiso)
                 {
-					return Redirect(mControladorBase.UrlsSemanticas.GetURLBaseRecursosInicio(BaseURLIdioma, UtilIdiomas, NombreProy, UrlPerfil, IdentidadActual.OrganizacionID != null));
-				}                
+                    return Redirect(mControladorBase.UrlsSemanticas.GetURLBaseRecursosInicio(BaseURLIdioma, UtilIdiomas, NombreProy, UrlPerfil, IdentidadActual.OrganizacionID != null));
+                }
             }
 
             if (!mControladorBase.UsuarioActual.EsIdentidadInvitada && mTipoDocumento == TiposDocumentacion.Semantico && !ComprobarPermisoEnOntologiaDeProyectoEIdentidad(mOntologiaID))
             {
                 if (!tienePermiso)
                 {
-					return Redirect(BaseURLIdioma);
-				}                
+                    return Redirect(BaseURLIdioma);
+                }
             }
 
             if (mControladorBase.UsuarioActual.EsIdentidadInvitada && (!FormSemVirtual || !PropiedadesTextoOntologia.ContainsKey(PropiedadesOntologia.permitirUsuNoLogueado.ToString())))
@@ -1973,9 +1975,9 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                 ReemplazarArchivos_ModificarRecurso();
             }
 
-            CrearDocumentoEnModeloLive(doc);		
+            CrearDocumentoEnModeloLive(doc);
 
-			if (doc.TipoDocumentacion == TiposDocumentacion.Hipervinculo || doc.TipoDocumentacion == TiposDocumentacion.Nota || doc.TipoDocumentacion == TiposDocumentacion.VideoBrightcove || doc.TipoDocumentacion == TiposDocumentacion.VideoTOP || doc.EsVideoIncrustado || doc.EsPresentacionIncrustada)
+            if (doc.TipoDocumentacion == TiposDocumentacion.Hipervinculo || doc.TipoDocumentacion == TiposDocumentacion.Nota || doc.TipoDocumentacion == TiposDocumentacion.VideoBrightcove || doc.TipoDocumentacion == TiposDocumentacion.VideoTOP || doc.EsVideoIncrustado || doc.EsPresentacionIncrustada)
             {
                 ControladorDocumentacion.CapturarImagenWeb(doc.Clave, true, PrioridadColaDocumento.Alta, mAvailableServices);
             }
@@ -2099,10 +2101,10 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                     rutaFichero = "";
                 }
             }
-            doc = GestorDocumental.AgregarDocumento(rutaFichero, titulo, descripcion, tags, mTipoDocumento, TipoEntidadVinculadaDocumento.Web, elementoVinculadoID, mModelSaveRec.ShareAllowed, mModelSaveRec.Draft, mModelSaveRec.CreatorIsAuthor, null, false, UsuarioActual.OrganizacionID, UsuarioActual.IdentidadID);			
+            doc = GestorDocumental.AgregarDocumento(rutaFichero, titulo, descripcion, tags, mTipoDocumento, TipoEntidadVinculadaDocumento.Web, elementoVinculadoID, mModelSaveRec.ShareAllowed, mModelSaveRec.Draft, mModelSaveRec.CreatorIsAuthor, null, false, UsuarioActual.OrganizacionID, UsuarioActual.IdentidadID);
 
-			//Cambiar identificador del documento
-			if (GestorDocumental.ListaDocumentos.ContainsKey(doc.Clave))
+            //Cambiar identificador del documento
+            if (GestorDocumental.ListaDocumentos.ContainsKey(doc.Clave))
             {
                 GestorDocumental.ListaDocumentos.Remove(doc.Clave);
                 GestorDocumental.ListaDocumentos.Add(pDocumentoID, doc);
@@ -2133,7 +2135,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                 {
                     doc.FilaDocumento.CreadorID = IdentidadActual.IdentidadMyGNOSS.Clave;
                 }
-            }            
+            }
 
             List<CategoriaTesauro> listaCategorias = new List<CategoriaTesauro>();
 
@@ -2235,9 +2237,9 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                 }
             }
 
-			AgregarEstadoDocumento(doc.FilaDocumento);
+            AgregarEstadoDocumento(doc.FilaDocumento);
 
-			GuardarEnBD_SubirRecursoPart2(listaProyectosAcuNumRec);
+            GuardarEnBD_SubirRecursoPart2(listaProyectosAcuNumRec);
 
             ControladorDocumentacion.EstablecePrivacidadRecursoEnMetaBuscador(doc, IdentidadActual, true);
 
@@ -3181,44 +3183,38 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
             }
         }
 
+        public bool ComprobarPermisoGeneralEditarRecurso(TiposDocumentacion pTipoDocumento)
+        {
+            switch (Documento.TipoDocumentacion)
+            {
+                case TiposDocumentacion.Hipervinculo:
+                    return ComprobarPermisosAccionRecurso(PermisoRecursos.EditarRecursoTipoEnlace);
+                case TiposDocumentacion.Nota:
+                    return ComprobarPermisosAccionRecurso(PermisoRecursos.EditarNota);
+                case TiposDocumentacion.FicheroServidor:
+                    return ComprobarPermisosAccionRecurso(PermisoRecursos.EditarRecursoTipoAdjunto);
+                case TiposDocumentacion.ReferenciaADoc:
+                    return ComprobarPermisosAccionRecurso(PermisoRecursos.EditarRecursoTipoReferenciaADocumentoFisico);
+                case TiposDocumentacion.Pregunta:
+                    return ComprobarPermisosAccionRecurso(PermisoRecursos.EditarPregunta);
+                case TiposDocumentacion.Encuesta:
+                    return ComprobarPermisosAccionRecurso(PermisoRecursos.EditarEncuesta);
+                case TiposDocumentacion.Debate:
+                    return ComprobarPermisosAccionRecurso(PermisoRecursos.EditarDebate);
+                case TiposDocumentacion.Semantico:
+                    return ComprobarPermisosAccionRecursoSemantico(TipoPermisoRecursosSemanticos.Modificar);
+                default:
+                    return false;
+            }
+        }
+
         /// <summary>
         /// Comprueba si hay que hacer alguna redirección a otra página.
         /// </summary>
         /// <returns>Resultado de la acción</returns>
         private ActionResult ComprobarRedirecciones_ModificarRecurso()
         {
-            bool permisoEditar = false;
-            switch (Documento.TipoDocumentacion)
-            {
-                case TiposDocumentacion.Hipervinculo:
-					permisoEditar = ComprobarPermisosAccionRecurso(PermisoRecursos.EditarRecursoTipoEnlace);
-					break;
-                case TiposDocumentacion.Nota:
-					permisoEditar = ComprobarPermisosAccionRecurso(PermisoRecursos.EditarNota);
-					break;              
-                case TiposDocumentacion.FicheroServidor:
-					permisoEditar = ComprobarPermisosAccionRecurso(PermisoRecursos.EditarRecursoTipoAdjunto);
-					break;				
-				case TiposDocumentacion.ReferenciaADoc:
-					permisoEditar = ComprobarPermisosAccionRecurso(PermisoRecursos.EditarRecursoTipoReferenciaADocumentoFisico);
-					break;
-				case TiposDocumentacion.Pregunta:
-					permisoEditar = ComprobarPermisosAccionRecurso(PermisoRecursos.EditarPregunta);
-					break;
-                case TiposDocumentacion.Encuesta:
-					permisoEditar = ComprobarPermisosAccionRecurso(PermisoRecursos.EditarEncuesta);
-					break;
-                case TiposDocumentacion.Debate:
-					permisoEditar = ComprobarPermisosAccionRecurso(PermisoRecursos.EditarDebate);
-					break;
-                case TiposDocumentacion.Semantico:
-                    ActionResult result = ComprobarPermisosAccionRecursoSemantico(TipoPermisoRecursosSemanticos.Modificar);
-                    if (result == null)
-                    {
-                        permisoEditar = true;
-                    }
-                    break;
-			}
+            bool permisoEditar = ComprobarPermisoGeneralEditarRecurso(Documento.TipoDocumentacion);
 
             if (!string.IsNullOrEmpty(RequestParams("organizacion")) && (IdentidadActual.OrganizacionID == null || IdentidadActual.OrganizacionID != IdentidadOrganizacion.OrganizacionID.Value))
             {
@@ -3946,11 +3942,11 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
             GuardarDatosRespuestasEncuesta(Documento);
             GuardarImagenPrincipalRecSemantico(Documento, mOntologia);
 
-			AgregarEstadoDocumento(Documento.FilaDocumento);
+            AgregarEstadoDocumento(Documento.FilaDocumento);
 
-			#region Licencia propiedad intelectual
+            #region Licencia propiedad intelectual
 
-			if (Documento.PermiteLicencia && Documento.CreadorID.Equals(IdentidadActual.Clave))
+            if (Documento.PermiteLicencia && Documento.CreadorID.Equals(IdentidadActual.Clave))
             {
                 if (mModelSaveRec.CreatorIsAuthor && (mModelSaveRec.ShareAllowed || Documento.BaseRecursos.Count > 1 || (EsComunidad && (ProyectoSeleccionado.TipoAcceso == TipoAcceso.Publico || ProyectoSeleccionado.TipoAcceso == TipoAcceso.Restringido))))
                 {
@@ -4041,60 +4037,60 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
             pPrivacidadCambiada = privacidadCambiada;
         }
 
-		private void AgregarEstadoDocumento(AD.EntityModel.Models.Documentacion.Documento pDocumento)
-		{
+        private void AgregarEstadoDocumento(AD.EntityModel.Models.Documentacion.Documento pDocumento)
+        {
             if (!pDocumento.EstadoID.HasValue)
             {
-				FlujosCN flujosCN = new FlujosCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<FlujosCN>(), mLoggerFactory);
-				Guid? estadoID = null;
-				switch (pDocumento.Tipo)
-				{
-					case (short)TiposDocumentacion.Hipervinculo:
-						estadoID = flujosCN.ObtenerEstadoInicialDeTipoContenido(ProyectoSeleccionado.Clave, TiposContenidos.Link);
-						break;
-					case (short)TiposDocumentacion.Nota:
-						estadoID = flujosCN.ObtenerEstadoInicialDeTipoContenido(ProyectoSeleccionado.Clave, TiposContenidos.Nota);
-						break;
-					case (short)TiposDocumentacion.FicheroServidor:
-						estadoID = flujosCN.ObtenerEstadoInicialDeTipoContenido(ProyectoSeleccionado.Clave, TiposContenidos.Adjunto);
-						break;
-					case (short)TiposDocumentacion.Video:
-						estadoID = flujosCN.ObtenerEstadoInicialDeTipoContenido(ProyectoSeleccionado.Clave, TiposContenidos.Video);
-						break;
-					case (short)TiposDocumentacion.Encuesta:
-						estadoID = flujosCN.ObtenerEstadoInicialDeTipoContenido(ProyectoSeleccionado.Clave, TiposContenidos.Encuesta);
-						break;
-					case (short)TiposDocumentacion.Debate:
-						estadoID = flujosCN.ObtenerEstadoInicialDeTipoContenido(ProyectoSeleccionado.Clave, TiposContenidos.Debate);
-						break;
-					case (short)TiposDocumentacion.Semantico:
-						ProyectoCN proyectoCN = new ProyectoCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<ProyectoCN>(), mLoggerFactory);
-						string nombreOntologia = proyectoCN.ObtenerNombreOntologiaProyectoPorOntologiaID(pDocumento.ElementoVinculadoID.Value);
-						Guid flujoID = flujosCN.ObtenerFlujoIDDeOntologia(ProyectoSeleccionado.Clave, nombreOntologia);
-						estadoID = flujosCN.ObtenerEstadoInicialDeTipoContenido(ProyectoSeleccionado.Clave, TiposContenidos.RecursoSemantico, flujoID);
-						break;
-				}
+                FlujosCN flujosCN = new FlujosCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<FlujosCN>(), mLoggerFactory);
+                Guid? estadoID = null;
+                switch (pDocumento.Tipo)
+                {
+                    case (short)TiposDocumentacion.Hipervinculo:
+                        estadoID = flujosCN.ObtenerEstadoInicialDeTipoContenido(ProyectoSeleccionado.Clave, TiposContenidos.Link);
+                        break;
+                    case (short)TiposDocumentacion.Nota:
+                        estadoID = flujosCN.ObtenerEstadoInicialDeTipoContenido(ProyectoSeleccionado.Clave, TiposContenidos.Nota);
+                        break;
+                    case (short)TiposDocumentacion.FicheroServidor:
+                        estadoID = flujosCN.ObtenerEstadoInicialDeTipoContenido(ProyectoSeleccionado.Clave, TiposContenidos.Adjunto);
+                        break;
+                    case (short)TiposDocumentacion.Video:
+                        estadoID = flujosCN.ObtenerEstadoInicialDeTipoContenido(ProyectoSeleccionado.Clave, TiposContenidos.Video);
+                        break;
+                    case (short)TiposDocumentacion.Encuesta:
+                        estadoID = flujosCN.ObtenerEstadoInicialDeTipoContenido(ProyectoSeleccionado.Clave, TiposContenidos.Encuesta);
+                        break;
+                    case (short)TiposDocumentacion.Debate:
+                        estadoID = flujosCN.ObtenerEstadoInicialDeTipoContenido(ProyectoSeleccionado.Clave, TiposContenidos.Debate);
+                        break;
+                    case (short)TiposDocumentacion.Semantico:
+                        ProyectoCN proyectoCN = new ProyectoCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<ProyectoCN>(), mLoggerFactory);
+                        string nombreOntologia = proyectoCN.ObtenerNombreOntologiaProyectoPorOntologiaID(pDocumento.ElementoVinculadoID.Value);
+                        Guid flujoID = flujosCN.ObtenerFlujoIDDeOntologia(ProyectoSeleccionado.Clave, nombreOntologia);
+                        estadoID = flujosCN.ObtenerEstadoInicialDeTipoContenido(ProyectoSeleccionado.Clave, TiposContenidos.RecursoSemantico, flujoID);
+                        break;
+                }
 
-				if (estadoID.HasValue)
-				{
-					pDocumento.EstadoID = estadoID.Value;
+                if (estadoID.HasValue)
+                {
+                    pDocumento.EstadoID = estadoID.Value;
                     if (Documento != null && Documento.FilaDocumento != null)
                     {
                         Documento.FilaDocumento.EstadoID = estadoID.Value;
                     }
-				}
-			}			
-		}
+                }
+            }
+        }
 
-		/// <summary>
-		/// Guarda el recruso actual en el modelo Live.
-		/// </summary>
-		/// <param name="pPrivacidadCambiada">Indica si la privacidad del recurso ha cambiado en esta edición</param>
-		/// <param name="pCreandoVersion">Indica si se está creando versión</param>
-		/// <param name="pCambioDeBorradoAPublicado">Indica si el recurso a cambiado de borrador a publicado</param>
-		/// <param name="pDocAntiguoID">ID del documento antiguo, si se ha creado versión</param>
-		/// <param name="pDocumento">Documento que se está guardando</param>
-		private void GuardarRecursoModeloLive(bool pPrivacidadCambiada, bool pCreandoVersion, bool pCambioDeBorradoAPublicado, Guid pDocAntiguoID, Documento pDocumento, List<Guid> pListaEditoresEliminados, List<Guid> pListaGruposEditoresEliminados)
+        /// <summary>
+        /// Guarda el recruso actual en el modelo Live.
+        /// </summary>
+        /// <param name="pPrivacidadCambiada">Indica si la privacidad del recurso ha cambiado en esta edición</param>
+        /// <param name="pCreandoVersion">Indica si se está creando versión</param>
+        /// <param name="pCambioDeBorradoAPublicado">Indica si el recurso a cambiado de borrador a publicado</param>
+        /// <param name="pDocAntiguoID">ID del documento antiguo, si se ha creado versión</param>
+        /// <param name="pDocumento">Documento que se está guardando</param>
+        private void GuardarRecursoModeloLive(bool pPrivacidadCambiada, bool pCreandoVersion, bool pCambioDeBorradoAPublicado, Guid pDocAntiguoID, Documento pDocumento, List<Guid> pListaEditoresEliminados, List<Guid> pListaGruposEditoresEliminados)
         {
             if (!mModelSaveRec.Draft && pDocumento.TipoDocumentacion != TiposDocumentacion.Encuesta)
             {
@@ -7374,7 +7370,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                 CrearDocumentoEnModeloLive(doc);
                 CrearDocumentoAccionesExtra(doc);
 
-				mOtrosArgumentosBase = ",##enlaces####enlaces##";
+                mOtrosArgumentosBase = ",##enlaces####enlaces##";
 
                 if (mDocumentosExtraGuardar != null)
                 {
@@ -7416,7 +7412,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                 GuardarRecursoModeloLive(privacidadCambiada, CreandoVersionFormSem, mCambioDeBorradoAPublicado, docAntiguoID, Documento, listaEditoresEliminados, listaGruposEditoresEliminados);
                 GuardarRecursoModeloBase(CreandoVersionFormSem, mCambioDeBorradoAPublicado, docAntiguoID, Documento);
 
-				ControladorDocumentacion.BorrarCacheControlFichaRecursos(docAntiguoID);
+                ControladorDocumentacion.BorrarCacheControlFichaRecursos(docAntiguoID);
 
                 if (mDocumentosExtraGuardar != null)
                 {
@@ -7805,7 +7801,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
         {
             if (mConfigService.ExistRabbitConnection(RabbitMQClient.BD_SERVICIOS_WIN) && mAvailableServices.CheckIfServiceIsAvailable(mAvailableServices.GetBackServiceCode(Interfaces.InterfacesOpen.BackgroundService.Thumbnail), ServiceType.Background))
             {
-                using (RabbitMQClient rabbitMQ = new RabbitMQClient(RabbitMQClient.BD_SERVICIOS_WIN, COLA_MINIATURA, mLoggingService, mConfigService, mLoggerFactory.CreateLogger<RabbitMQClient>(), mLoggerFactory ,EXCHANGE, COLA_MINIATURA))
+                using (RabbitMQClient rabbitMQ = new RabbitMQClient(RabbitMQClient.BD_SERVICIOS_WIN, COLA_MINIATURA, mLoggingService, mConfigService, mLoggerFactory.CreateLogger<RabbitMQClient>(), mLoggerFactory, EXCHANGE, COLA_MINIATURA))
                 {
                     rabbitMQ.AgregarElementoACola(JsonConvert.SerializeObject(pColaDocumento));
                 }
@@ -8774,7 +8770,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                     }
                     catch (Exception ex)
                     {
-                        mLoggingService.GuardarLog("No es posible borrar el fichero temporal" + ex.Message,mlogger);
+                        mLoggingService.GuardarLog("No es posible borrar el fichero temporal" + ex.Message, mlogger);
                     }
 
                     return GnossResultOK("OK|" + UtilIdiomas.GetText("CONTROLESCVSEM", "GUARDADOOK") + "|" + recursosCorrectos);
@@ -10941,7 +10937,10 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
 
             List<Guid> listaIdsEditores = new List<Guid>();
             List<Guid> listaIdsGruposEditores = new List<Guid>();
-            if (((!EditandoRecurso && !EditandoFormSem) || pDocumento.TienePermisosEdicionIdentidad(IdentidadActual, IdentidadOrganizacion, ProyectoSeleccionado, UsuarioActual.UsuarioID, EsAdministrador(IdentidadActual)) || ControladorDocumentacion.EsEditorPerfilDeDocumento(IdentidadActual.PerfilID, pDocumento, true, UsuarioActual.UsuarioID)) && (mOntologia == null || !EditandoFormSem || (mEditRecCont.ModifyResourceModel.SetPermissionsEditionAvailable)))
+           
+
+
+            if (((!EditandoRecurso && !EditandoFormSem) || pDocumento.TienePermisosEdicionIdentidad(IdentidadActual, IdentidadOrganizacion, ProyectoSeleccionado, UsuarioActual.UsuarioID, EsAdministrador(IdentidadActual)) || ControladorDocumentacion.EsEditorPerfilDeDocumento(IdentidadActual.PerfilID, pDocumento, true, UsuarioActual.UsuarioID) || ComprobarPermisoGeneralEditarRecurso(pDocumento.TipoDocumentacion)) && (mOntologia == null || !EditandoFormSem || (mEditRecCont.ModifyResourceModel.SetPermissionsEditionAvailable)))
             {
                 List<Guid> listaEditoresOriginal = new List<Guid>(pDocumento.ListaPerfilesEditores.Keys);
                 List<Guid> listaGruposEditoresOriginal = null;
@@ -11715,8 +11714,8 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
         }
 
         [HttpGet, HttpPost]
-		[TypeFilter(typeof(PermisosRecursos), Arguments = new object[] { new ulong[] { (ulong)PermisoRecursos.EditarRecursoTipoEnlace} })]
-		public ActionResult GenerarVersionRapida(string pDocumentoID)
+        [TypeFilter(typeof(PermisosRecursos), Arguments = new object[] { new ulong[] { (ulong)PermisoRecursos.EditarRecursoTipoEnlace } })]
+        public ActionResult GenerarVersionRapida(string pDocumentoID)
         {
             try
             {
@@ -11833,12 +11832,12 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
             try
             {
                 ObtenerTipoDocumentoPeticion();
-                traza.Append("Antes de LimpiarInyeccionCodigo");                
-                pPaginaModel.Description = HttpUtility.UrlEncode(LimpiarInyeccionCodigoSegunTipoRecurso(HttpUtility.UrlDecode(pPaginaModel.Description)));                   
+                traza.Append("Antes de LimpiarInyeccionCodigo");
+                pPaginaModel.Description = HttpUtility.UrlEncode(LimpiarInyeccionCodigoSegunTipoRecurso(HttpUtility.UrlDecode(pPaginaModel.Description)));
                 traza.Append("Antes de TratarImagenesDescripcion");
                 TratarImagenesDescripcion(pPaginaModel);
                 ActionResult respuesta;
-                
+
 
                 if (EditandoRecurso && !Duplicando)
                 {
@@ -11922,7 +11921,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                     //Comprobamos que el documento no existe ya:
                     CargarInicial_SubirRecursoPart2();
                     ActionResult redireccionExiste = ComprobarExisteRecursoEnCreacion(mDocumentoID);
-                    
+
                     if (redireccionExiste != null)
                     {
                         return redireccionExiste;
@@ -12008,7 +12007,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
             }
             else
             {
-                return UtilCadenas.LimpiarInyeccionCodigo(pTexto);                
+                return UtilCadenas.LimpiarInyeccionCodigo(pTexto);
             }
         }
 

@@ -85,9 +85,16 @@ const operativaTinyMceConfig = {
 
         // Cargar hoja de estilos personalizada
         this.getBasicCssForTinyMceEditorPreview();
+        try {
+        // Intentar cargar los estilos personalizados
         // Realizar petición para cargar los customizados. Realizar una única comprobación para las inistancias de los TinyMCE        
         await this.getCustomCssForTinyMceEditorPreview();
-
+        } catch (error) {
+            console.warn("No se pudieron cargar los estilos personalizados para TinyMCE:", error);
+            // Se puede continuar sin ellos, cargando solo los básicos
+            that.customCssListFiles = [];
+        }
+        // Continuar normalmente con el setup del TinyMCE
         // Observador para editores
         setTimeout(() => {
             setupObserverForTinyMCE(['cke', 'tcme'], function(element) {

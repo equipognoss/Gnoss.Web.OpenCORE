@@ -1551,7 +1551,11 @@ const getVistaFromUrl = function (pUrlAccion, pPanelID, pArg, completion = '', s
 		.fail(function (data) {
 			// KO al obtener la vista del controlador
 			if (data == "invitado") {
-				operativaLoginEmergente.init();
+				$(".modal").modal("hide");
+				mostrarNotificacion("error", "La sesión ha caducado, vuelve a loguearte en la plataforma");
+				setTimeout(() => {
+					window.location.reload();
+				}, 3000);
 			} else {
 				// Mostrar el mensaje del error
 				mostrarNotificacion("error", data);

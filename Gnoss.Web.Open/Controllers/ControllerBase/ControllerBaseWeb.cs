@@ -1536,7 +1536,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
             }
             else
             {
-                url = $"{BaseURL}/{RouteConfig.ConvertirUrlAIdioma(UrlMultiIdiomaPaginaActual, IdiomaPorDefecto).Replace("{nombreProy}", ProyectoSeleccionado.NombreCorto)}";
+                url = $"{BaseURL}/{RouteConfig.ConvertirUrlAIdioma(UrlMultiIdiomaPaginaActual, IdiomaPorDefecto).Replace("{nombreProy}", ProyectoSeleccionado.NombreCorto).Replace("{nombreRecurso}", RequestParams("nombreRecurso")).Replace("{docID}", RequestParams("docID"))}";
             }
             return url;
         }

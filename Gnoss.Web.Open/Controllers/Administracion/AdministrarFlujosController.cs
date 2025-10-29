@@ -78,7 +78,7 @@ namespace Gnoss.Web.Open.Controllers.Administracion
                 return PartialView("_modal-views/_edit-flujo", modelo);
             }         
             catch(Exception ex){
-                mlogger.LogError(ex, ex.Message);
+                mLoggingService.GuardarLogError(ex, $"ERROR: ${ex.Message}\r\nStackTrace: {ex.StackTrace}", mlogger);
                 return GnossResultERROR(UtilIdiomas.GetText("DEVTOOLS", "ERRORCARGARFORMULARIO"));
             }
         }
@@ -122,7 +122,7 @@ namespace Gnoss.Web.Open.Controllers.Administracion
             }
             catch (Exception ex)
             {
-                mlogger.LogError(ex, ex.Message);
+                mLoggingService.GuardarLogError(ex, $"ERROR: ${ex.Message}\r\nStackTrace: {ex.StackTrace}", mlogger);
                 return GnossResultERROR("Ha surgido un error durante el guardado de flujo");
             }
 
@@ -140,7 +140,7 @@ namespace Gnoss.Web.Open.Controllers.Administracion
             }
             catch (Exception ex)
             {
-                mlogger.LogError(ex, ex.Message);
+                mLoggingService.GuardarLogError(ex, $"ERROR: ${ex.Message}\r\nStackTrace: {ex.StackTrace}", mlogger);
                 return GnossResultERROR("");
             }
             return GnossResultOK();
@@ -177,7 +177,7 @@ namespace Gnoss.Web.Open.Controllers.Administracion
             }
             catch (Exception ex)
             {
-                mlogger.LogError(ex, ex.Message);
+                mLoggingService.GuardarLogError(ex, $"ERROR: ${ex.Message}\r\nStackTrace: {ex.StackTrace}", mlogger);
                 return GnossResultERROR("");
             }
             return GnossResultOK("");
@@ -205,7 +205,7 @@ namespace Gnoss.Web.Open.Controllers.Administracion
             }
             catch (Exception ex)
             {
-                mlogger.LogError(ex.Message);
+                mLoggingService.GuardarLogError(ex, $"ERROR: ${ex.Message}\r\nStackTrace: {ex.StackTrace}", mlogger);
                 return GnossResultERROR();
             }
             return GnossResultOK();

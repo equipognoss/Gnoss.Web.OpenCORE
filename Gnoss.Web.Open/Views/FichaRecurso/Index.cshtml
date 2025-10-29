@@ -94,6 +94,17 @@ Variables
             {
                 @Html.PartialView("_partial-views/_header", Model)
             }
+            else
+            {
+                @* Mostrar información de versión. Si la versión del documento no es reciente *@
+                @if (!FichaDocumento.LastVersion.Equals(FichaDocumento.Key))
+                {
+                    <div role="alert" class="alert alert-warning mt-2 d-flex" id="noUltVer-info">
+                        <span class="material-icons mr-3">content_paste_off</span>
+                        <span>@Html.Raw(Html.GetText("PERFILBASERECURSOSFICHA", "NOULTIMAVERSION", Html.GetUrlPagina().Substring(0, Html.GetUrlPagina().LastIndexOf('/') + 1) + FichaDocumento.LastVersion.ToString()))</span>
+                    </div>
+                }
+            }
 
             @* Mostrar útiles del recurso *@
             @if (!Model.HideUtilsResource)

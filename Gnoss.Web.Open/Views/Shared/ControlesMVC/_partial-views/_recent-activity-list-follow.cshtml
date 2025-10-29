@@ -67,12 +67,12 @@ string titulo_seguir = "";
         if (publicador.Actions.FollowingProfile) {
             funcion_seguir = "AccionPerfil_NoSeguir(this, '" + publicador.ListActions.UrlUnfollow + "')";
             icono_seguir = "person_remove_alt_1";
-            titulo_seguir = "Dejar de seguir a ";
+        titulo_seguir = @Html.GetText("COMMON", "NOSEGUIR");
         }
         else {
             funcion_seguir = "AccionPerfil_Seguir(this, '" + publicador.ListActions.UrlFollow + "')";
             icono_seguir = "person_add_alt_1";
-            titulo_seguir = "Seguir a ";
+        titulo_seguir = @Html.GetText("COMMON", "SEGUIR");
         }
     }else {
         permitirFollow = false;

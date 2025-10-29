@@ -1325,14 +1325,40 @@ const operativaGestionPaginas = {
 
     checkModalChanges: function (baseModal, currentModal) {
         const keys = new Set([...Object.keys(baseModal), ...Object.keys(currentModal)]);
+
         for (const key of keys) {
-            if (baseModal[key] !== currentModal[key]) {
+            let baseValue = baseModal[key];
+            let currentValue = currentModal[key];
+
+            if (baseValue == null || baseValue == undefined) {
+                baseValue = '';
+            }
+            if (currentValue == null || currentValue == undefined) {
+                currentValue = '';
+            }
+
+            if (typeof baseValue === 'string') {
+                baseValue = this.cleanMultiLangString(baseValue);
+            }
+            if (typeof currentValue === 'string') {
+                currentValue = this.cleanMultiLangString(currentValue);
+            }
+
+            if (baseValue !== currentValue) {
                 return true; // hay diferencia
             }
         }
+
         return false;
     },
-
+    cleanMultiLangString: function (str) {
+        return str
+            // eliminar marcadores de idioma vacíos como "@es|||@en|||@fr"
+            .replace(/(@[a-z]{2}\|{3})+/gi, '')
+            // eliminar barras finales "|||"
+            .replace(/\|{3,}$/, '')
+            .trim();
+    },
     /**
      * Método para comprobar y ejecutar la ordenación o movimiento de una página debajo de la seleccionada. Si ha habido un error, revertirá el movimiento realizado
      * @returns 
