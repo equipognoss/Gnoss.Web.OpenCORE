@@ -458,41 +458,12 @@ namespace Es.Riam.Gnoss.Web.MVC
             /*RouteBuilder.MapControllerRoute(
                     name: "default",
                     pattern: "{controller=Home}/{action=Index}/{id?}");*/
-            RegisterSitemap(routes);
 
             RegisterRoutesIdioma(RouteBuilder, paramCL.ObtenerListaIdiomas());
 
             mLoggingService.AgregarEntrada("Fin mapeo rutas");
         }
 
-        private void RegisterSitemap(IRouteBuilder routes)
-        {
-            string dominio = "";
-            string dominioConfig = mConfigService.ObtenerUrlBase();
-            if (!string.IsNullOrEmpty(dominioConfig))
-            {
-                dominio = dominioConfig;
-            }
-
-            var sitemap = mEntityContext.SitemapsIndex.FirstOrDefault(item => item.Dominio.Equals(dominio));
-            if (sitemap != null)
-            {
-
-                routes.MapRoute(
-                           name: "Sitemap",
-                           template: "sitemap.xml",
-                           defaults: new { controller = "Sitemap", action = "Index" });
-
-                List<Sitemaps> sitemaps = mEntityContext.Sitemaps.Where(item => item.Dominio.Equals(dominio)).ToList();
-                foreach (var name in sitemaps)
-                {
-                    routes.MapRoute(
-                        name: name.SitemapIndexName,
-                        template: name.SitemapIndexName,
-                        defaults: new { controller = "Sitemap", action = "Index" });
-                }
-            }
-        }
 
         private static bool RecalculandoRutas = false;
 
