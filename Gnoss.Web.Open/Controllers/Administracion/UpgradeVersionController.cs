@@ -34,6 +34,7 @@ namespace Gnoss.Web.Open.Controllers.Administracion
 		[TypeFilter(typeof(PermisosAdministracion), Arguments = new object[] { new ulong[] { (ulong)PermisoComunidad.GestionarPesosAutocompletado } })]
         public IActionResult IndexAdministrarPesos()
         {
+            EliminarPersonalizacionVistas();
             string textoServicio = UtilIdiomas.GetText("DEVTOOLS", "SERVICIOADMINISTRARPESOS");
             string textoMostrar = ObtenerTextoEnterprise(textoServicio);
             ViewBag.ActiveSubSection = AdministracionSeccionesDevTools.SubSeccionesDevTools.Estructura_PesosBusqueda;
@@ -49,6 +50,7 @@ namespace Gnoss.Web.Open.Controllers.Administracion
         [TypeFilter(typeof(PermisosAdministracion), Arguments = new object[] { new ulong[] { (ulong)PermisoComunidad.AccederAlEstadoDeLosServicios } })]
         public IActionResult IndexAdministrarEstadoSistemas()
         {
+            EliminarPersonalizacionVistas();
             string textoServicio = UtilIdiomas.GetText("DEVTOOLS", "SERVICIOESTADOSISTEMAS");
             string textoMostrar = ObtenerTextoEnterprise(textoServicio);
             ViewBag.ActiveSubSection = AdministracionSeccionesDevTools.SubSeccionesDevTools.Configuracion_EstadoSistemas;
@@ -64,6 +66,7 @@ namespace Gnoss.Web.Open.Controllers.Administracion
         [TypeFilter(typeof(PermisosAdministracion), Arguments = new object[] { new ulong[] { (ulong)PermisoComunidad.GestionarEventosExternos } })]
         public IActionResult IndexAdministrarEventosExternos()
         {
+            EliminarPersonalizacionVistas();
             string textoServicio = UtilIdiomas.GetText("DEVTOOLS", "SERVICIOEVENTOSEXTERNOS");
             string textoMostrar = ObtenerTextoEnterprise(textoServicio);
             ViewBag.ActiveSubSection = AdministracionSeccionesDevTools.SubSeccionesDevTools.Configuracion_EventosExternos;
@@ -79,6 +82,7 @@ namespace Gnoss.Web.Open.Controllers.Administracion
         [TypeFilter(typeof(PermisosAdministracion), Arguments = new object[] { new ulong[] { (ulong)PermisoComunidad.AccederAEstadisticasDeLaComunidad } })]
         public IActionResult IndexAdministrarEstadisticasComunidad()
         {
+            EliminarPersonalizacionVistas();
             string textoServicio = UtilIdiomas.GetText("DEVTOOLS", "SERVICIOESTADISITICASCOMUNIDAD");
             string textoMostrar = ObtenerTextoEnterprise(textoServicio);
             ViewBag.ActiveSubSection = AdministracionSeccionesDevTools.SubSeccionesDevTools.Configuracion_Matomo;
@@ -94,6 +98,7 @@ namespace Gnoss.Web.Open.Controllers.Administracion
         [TypeFilter(typeof(PermisosAdministracion), Arguments = new object[] { new ulong[] { (ulong)PermisoComunidad.ConsultarCargasMasivas } })]
         public IActionResult IndexConsultaCargaMasiva()
         {
+            EliminarPersonalizacionVistas();
             string textoServicio = UtilIdiomas.GetText("DEVTOOLS", "SERVICIOCARGAMASIVA");
             string textoMostrar = ObtenerTextoEnterprise(textoServicio);
             ViewBag.ActiveSubSection = AdministracionSeccionesDevTools.SubSeccionesDevTools.GrafoConocimiento_CargaMasiva;
@@ -109,6 +114,7 @@ namespace Gnoss.Web.Open.Controllers.Administracion
         [TypeFilter(typeof(PermisosAdministracion), Arguments = new object[] { new ulong[] { (ulong)PermisoComunidad.GestionarIntegracionContinua } })]
         public IActionResult IndexAdministrarIntegracionContinua()
         {
+            EliminarPersonalizacionVistas();
             string textoServicio = UtilIdiomas.GetText("DEVTOOLS", "SERVICIOINEGRACIONCONTINUA");
             string textoMostrar = ObtenerTextoEnterprise(textoServicio);
             ViewBag.ActiveSubSection = AdministracionSeccionesDevTools.SubSeccionesDevTools.IntegracionContinua_AdministrarIntegracionContinua;
@@ -124,6 +130,7 @@ namespace Gnoss.Web.Open.Controllers.Administracion
         [TypeFilter(typeof(PermisosAdministracion), Arguments = new object[] { new ulong[] { (ulong)PermisoContenidos.CrearFaceta} })]
         public IActionResult IndexDiagnosticoProblemas()
         {
+            EliminarPersonalizacionVistas();
             string textoServicio = UtilIdiomas.GetText("DEVTOOLS", "SERVICIODIAGNOSTICODEPROBLEMAS");
             string textoMostrar = ObtenerTextoEnterprise(textoServicio);
             ViewBag.ActiveSubSection = AdministracionSeccionesDevTools.SubSeccionesDevTools.Diagnostico_Problemas;
@@ -139,6 +146,7 @@ namespace Gnoss.Web.Open.Controllers.Administracion
         [TypeFilter(typeof(PermisosAdministracion), Arguments = new object[] { new ulong[] { (ulong)PermisoComunidad.EjecutarReprocesadosDeRecursos } })]
         public IActionResult IndexReprocesadoRecursos()
         {
+            EliminarPersonalizacionVistas();
             string textoServicio = UtilIdiomas.GetText("DEVTOOLS", "SERVICIOREPROCESADORECURSOS");
             string textoMostrar = ObtenerTextoEnterprise(textoServicio);
             ViewBag.ActiveSubSection = AdministracionSeccionesDevTools.SubSeccionesDevTools.Mantenimiento_ReprocesadoRecursos;
@@ -154,6 +162,7 @@ namespace Gnoss.Web.Open.Controllers.Administracion
         [TypeFilter(typeof(PermisosAdministracion), Arguments = new object[] { new ulong[] { (ulong)PermisoComunidad.EjecutarReprocesadosDeRecursos } })]
         public IActionResult IndexMonitorizarTareas()
         {
+            EliminarPersonalizacionVistas();
             string textoServicio = UtilIdiomas.GetText("DEVTOOLS", "SERVICIOMONITORIZACIONDETAREAS");
             string textoMostrar = ObtenerTextoEnterprise(textoServicio);
             ViewBag.ActiveSubSection = AdministracionSeccionesDevTools.SubSeccionesDevTools.Mantenimiento_TareasFondo;
@@ -169,6 +178,7 @@ namespace Gnoss.Web.Open.Controllers.Administracion
         [TypeFilter(typeof(PermisosAdministracion), Arguments = new object[] { new ulong[] { (ulong)PermisoEcosistema.AdministrarIntegracionContinua } })]
         public IActionResult IndexAdministrarApliacionesEspecificas()
         {
+            EliminarPersonalizacionVistas();
             string textoServicio = UtilIdiomas.GetText("DEVTOOLS", "SERVICIOAPLICACIONESESPECIFICAS");
             string textoMostrar = ObtenerTextoEnterprise(textoServicio);
             ViewBag.ActiveSubSection = AdministracionSeccionesDevTools.SubSeccionesDevTools.IntegracionContinua_DesplegarWeb;
@@ -184,6 +194,7 @@ namespace Gnoss.Web.Open.Controllers.Administracion
         [TypeFilter(typeof(PermisosAdministracion), Arguments = new object[] { new ulong[] { (ulong)PermisoComunidad.AccesoSparqlEndpoint } })]
         public IActionResult IndexAccesoSparql()
         {
+            EliminarPersonalizacionVistas();
             string textoServicio = UtilIdiomas.GetText("DEVTOOLS", "SERVICIOCONSULTASSPARQL");
             string textoMostrar = ObtenerTextoEnterprise(textoServicio);
             ViewBag.ActiveSubSection = AdministracionSeccionesDevTools.SubSeccionesDevTools.GrafoConocimiento_SparQL;
@@ -199,6 +210,7 @@ namespace Gnoss.Web.Open.Controllers.Administracion
         [TypeFilter(typeof(PermisosAdministracion), Arguments = new object[] { new ulong[] { (ulong)PermisoComunidad.AccederAlFTP } })]
         public IActionResult IndexFTP()
         {
+            EliminarPersonalizacionVistas();
             string textoServicio = UtilIdiomas.GetText("DEVTOOLS", "SERVICIOFTP");
             string textoMostrar = ObtenerTextoEnterprise(textoServicio);
             ViewBag.ActiveSubSection = AdministracionSeccionesDevTools.SubSeccionesDevTools.Configuracion_AccesoFTP;
@@ -214,6 +226,7 @@ namespace Gnoss.Web.Open.Controllers.Administracion
         [TypeFilter(typeof(PermisosAdministracion), Arguments = new object[] { new ulong[] { (ulong)PermisoComunidad.GestionarCache } })]
         public IActionResult IndexAdministracionCache()
         {
+            EliminarPersonalizacionVistas();
             string textoServicio = UtilIdiomas.GetText("DEVTOOLS", "SERVICIOCACHE");
             string textoMostrar = ObtenerTextoEnterprise(textoServicio);
             ViewBag.ActiveSubSection = AdministracionSeccionesDevTools.SubSeccionesDevTools.Configuracion_Cache;
@@ -229,6 +242,7 @@ namespace Gnoss.Web.Open.Controllers.Administracion
         [TypeFilter(typeof(PermisosAdministracion), Arguments = new object[] { new ulong[] { (ulong)PermisoComunidad.DescargarConfiguracionOAuth } })]
         public IActionResult IndexDescargaConfiguraciones()
         {
+            EliminarPersonalizacionVistas();
             string textoServicio = UtilIdiomas.GetText("DEVTOOLS", "SERVICIODESCARGACONFIGURACIONES");
             string textoMostrar = ObtenerTextoEnterprise(textoServicio);
             ViewBag.ActiveSubSection = AdministracionSeccionesDevTools.SubSeccionesDevTools.Descargar_Configuraciones;
@@ -244,6 +258,7 @@ namespace Gnoss.Web.Open.Controllers.Administracion
         [TypeFilter(typeof(PermisosAdministracion), Arguments = new object[] { new ulong[] { (ulong)PermisoComunidad.GestionarTrazas } })]
         public IActionResult IndexTrazas()
         {
+            EliminarPersonalizacionVistas();
             string textoServicio = UtilIdiomas.GetText("DEVTOOLS", "SERVICIOTRAZAS");
             string textoMostrar = ObtenerTextoEnterprise(textoServicio);
             ViewBag.ActiveSubSection = AdministracionSeccionesDevTools.SubSeccionesDevTools.Configuracion_Trazas;
