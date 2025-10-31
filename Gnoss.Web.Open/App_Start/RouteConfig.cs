@@ -710,7 +710,7 @@ namespace Es.Riam.Gnoss.Web.MVC
                     dominio = dominioConfig;
                 }
 
-                mLoggingService.GuardarLogError("RegistrarRutasRedireccionamiento. Domminio: " + dominio, mlogger);
+                mLoggingService.GuardarLog("RegistrarRutasRedireccionamiento. Domminio: " + dominio, mlogger);
 
                 if (!string.IsNullOrEmpty(dominio))
                 {

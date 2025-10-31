@@ -545,7 +545,10 @@ const operativaGestionPaginas = {
             // Establecer la clase de "modified" a la fila
             that.filaPagina = $(this).closest('.page-row');
 
-            that.handleLoadPrevisualizacion();
+            if (!$(this).closest(".page-row").hasClass("newPage"))
+            {
+                that.handleLoadPrevisualizacion();
+            }
 
             that.filaPagina.addClass("modified");
         });
@@ -1353,10 +1356,12 @@ const operativaGestionPaginas = {
     },
     cleanMultiLangString: function (str) {
         return str
-            // eliminar marcadores de idioma vacíos como "@es|||@en|||@fr"
-            .replace(/(@[a-z]{2}\|{3})+/gi, '')
-            // eliminar barras finales "|||"
-            .replace(/\|{3,}$/, '')
+            // eliminar etiquetas de idioma como @fr o @en-US, incluyendo si están rodeadas por |||
+            .replace(/(?:\|{3})*@[a-z]{2}(?:-[A-Z]{2})?(?:\|{3})*/gi, '')
+            // colapsar múltiples separadores en uno único (si los quieres conservar)
+            .replace(/\|{3,}/g, '|||')
+            // quitar separadores al principio o final
+            .replace(/^(\|{3})+|(\|{3})+$/g, '')
             .trim();
     },
     /**
@@ -9618,7 +9623,7 @@ const operativaGestionFlujos = {
         this.radioButtonPublicState = $('.estadoVisibleSinAcceso');
         this.radioButtonPublicStateClassName = 'estadoVisibleSinAcceso';
         this.inputLectores = $("input#txtLectores");
-        this.inputEditores = $("input#txtUsuario");
+        this.inputEditores = $("input#txtEditores");
         this.inputResponsables = $("input#txtResponsables");
         this.btnRemoveTagClassName = 'tag-remove.custom';
         this.inputTxtBuscarFlujo = $('#txtBuscarFlujo');
@@ -10054,11 +10059,11 @@ const operativaGestionFlujos = {
             that.currentRow.remove();
             let oldValue = parseInt($("#numFlujos").text());
             $("#numFlujos").text(oldValue - 1);
-            $("#modal-delete-workflow").modal("show");
+            $("#modal-delete-workflow").modal("hide");
         }).fail(function () {
             loadingOcultar();
             mostrarNotificacion("error", "Ha surgido un problema al borrar el flujo");
-            $("#modal-delete-workflow").modal("show");
+            $("#modal-delete-workflow").modal("hide");
         });
     },
 
@@ -10325,7 +10330,7 @@ const operativaGestionFlujos = {
             let statePrivacy = {};
             statePrivacy["EstadoID"] = estadoID;
             statePrivacy["Editor"] = editor;
-            if ($tagPersona.attr("data-grupo").toLowerCase() == 'true') {
+            if ($tagPersona.data("grupo")) {
                 statePrivacy["GrupoID"] = $tagPersona.attr("data-id");
                 that.workflowStatesPrivacyGroup.push(statePrivacy);
             } else {
@@ -10385,7 +10390,7 @@ const operativaGestionFlujos = {
             return true;
         }
         $listaPrivacidadPersonas.each(function () {
-            if ($(this).attr("data-grupo").toLowerCase() == 'true') {
+            if ($(this).data("grupo")) {
                 that.workflowTransitionsPrivacyGroup.push($(this).attr("data-id"));
             } else {
                 that.workflowTransitionsPrivacy.push($(this).attr("data-id"));
@@ -10428,8 +10433,11 @@ const operativaGestionFlujos = {
         const tagContainer = tagsSection.find(".tag-list");
         // Input oculto donde se añadirá el nuevo item seleccionado
         const inputHack = tagsSection.find("input[type=hidden]").first();
-        // Añadido el id del item seleccionado al inputHack                
-        inputHack.val(inputHack.val() + dataId + ',');
+        // Añadido el id del item seleccionado al inputHack  
+        if (!inputHack.val().includes(dataId)) {
+            let newValue = inputHack.val() == '' ? dataId + ',' : inputHack.val() + ',' + dataId;
+            inputHack.val(newValue);
+        }
 
         // Etiqueta del item seleccionado
         let editorSeleccionadoHtml = '';

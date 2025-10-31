@@ -62,14 +62,14 @@
         <span class="tag-edit material-icons">edit</span>
         <span class="tag-remove material-icons">delete</span>
     </div>
-    <input type="hidden" data-tipo-estado="@((short)estado.TipoEstado)" data-estado-color="@estado.Color" data-estado-publico="@estado.Publico" value="@estado.Nombre">
+    <input type="hidden" data-tipo-estado="@((short)estado.TipoEstado)" data-estado-color="@estado.Color" data-estado-publico="@estado.Publico.ToString().ToLowerInvariant()" value="@estado.Nombre">
 </div>
  
 @functions{
     public string PintarTags(string pNombre, Guid pIdentidadID, bool pGrupo)
     {
         string resultado = "";
-        resultado += $"<span data-grupo='{pGrupo}' data-id='{pIdentidadID}'>{pNombre}</span>";
+        resultado += $"<span data-grupo='{pGrupo.ToString().ToLowerInvariant()}' data-id='{pIdentidadID}'>{pNombre}</span>";
         return resultado;
     }
 }

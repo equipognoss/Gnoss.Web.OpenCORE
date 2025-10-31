@@ -36,6 +36,7 @@ using Es.Riam.Gnoss.AD.Cookie;
 using Gnoss.Web.Open.Filters;
 using Microsoft.Extensions.Logging;
 using Es.Riam.Gnoss.Elementos.Amigos;
+using Es.Riam.Util;
 
 namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
 {
@@ -425,7 +426,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
                     proyectoCookie.CookieID = Guid.NewGuid();
                     proyectoCookie.Descripcion = cookieProyecto.Descripcion;
                     proyectoCookie.Nombre = cookieProyecto.Nombre;
-                    proyectoCookie.NombreCorto = cookieProyecto.Nombre;
+                    proyectoCookie.NombreCorto = UtilCadenas.ObtenerTextoDeIdioma(cookieProyecto.Nombre, IdiomaPorDefecto, IdiomaPorDefecto);
                     proyectoCookie.ProyectoID = ProyectoSeleccionado.Clave;
                     proyectoCookie.EsEditable = !EsCookieTecnica(cookieProyecto.Nombre);
                     proyectoCookie.OrganizacionID = proyectoCN.ObtenerOrganizacionIDAPartirDeProyectoID(proyectoCookie.ProyectoID);
@@ -574,8 +575,8 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
                     categoriaProyectoCookie = new CategoriaProyectoCookie();
                     categoriaProyectoCookie.Descripcion = categoriaCookie.Descripcion;
                     categoriaProyectoCookie.Nombre = categoriaCookie.Nombre;
-                    categoriaProyectoCookie.NombreCorto = categoriaCookie.NombreCorto;
-                    categoriaProyectoCookie.CategoriaID = Guid.NewGuid();
+                    categoriaProyectoCookie.NombreCorto = UtilCadenas.ObtenerTextoDeIdioma(categoriaCookie.NombreCorto, IdiomaPorDefecto, IdiomaPorDefecto);
+					categoriaProyectoCookie.CategoriaID = Guid.NewGuid();
                     categoriaProyectoCookie.ProyectoID = ProyectoSeleccionado.Clave;
                     categoriaProyectoCookie.EsCategoriaTecnica = categoriaProyectoCookie.NombreCorto.Equals("Tecnica");
                     categoriaProyectoCookie.OrganizacionID = proyectoCN.ObtenerOrganizacionIDAPartirDeProyectoID(categoriaProyectoCookie.ProyectoID);
@@ -586,8 +587,8 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
                 {
                     categoriaProyectoCookie.Descripcion = categoriaCookie.Descripcion;
                     categoriaProyectoCookie.Nombre = categoriaCookie.Nombre;
-                    categoriaProyectoCookie.NombreCorto = categoriaCookie.NombreCorto;
-                }
+                    categoriaProyectoCookie.NombreCorto = UtilCadenas.ObtenerTextoDeIdioma(categoriaCookie.NombreCorto, IdiomaPorDefecto, IdiomaPorDefecto);
+				}
                 else if (esEliminada)
                 {
                     if (!cookieCN.HayCookiesVinculadas(categoriaProyectoCookie.CategoriaID))

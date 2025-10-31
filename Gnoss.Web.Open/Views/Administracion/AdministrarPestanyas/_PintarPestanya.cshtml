@@ -394,7 +394,7 @@ string urlModal = $"{@Html.GetComunidad().Url}/{@Html.GetText("URLSEM", "ADMINIS
 					pintar.pestanya = pestanyaHija;
 					pintar.ListaPestanyas = Model.ListaPestanyas;
 					pintar.versionPaginas = pestanyaHija.VersionPagina;
-					Html.PartialView("_PintarPestanya", pintar);
+					@Html.PartialView("_PintarPestanya", pintar);
 				}
 			</ul>
 		</div>

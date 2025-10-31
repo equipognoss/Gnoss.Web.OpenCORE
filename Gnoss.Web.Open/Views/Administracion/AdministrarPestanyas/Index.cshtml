@@ -263,7 +263,7 @@ Variables
                                 PintarPestanyaAdministrar pintar = new PintarPestanyaAdministrar();
                                 pintar.pestanya = pestanya;
                                 pintar.ListaPestanyas = Model.ListaPestanyas;
-                                @Html.PartialView("../Administracion/AdministrarPestanyas/_PintarPestanya", pintar)
+                                @Html.PartialView("_PintarPestanya", pintar)
 
                                 @if (ViewBag.ModificarPaginaPermitido != null && ViewBag.ModificarPaginaPermitido)
                                 {

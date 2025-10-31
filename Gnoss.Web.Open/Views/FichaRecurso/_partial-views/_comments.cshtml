@@ -17,8 +17,10 @@ Variables
 ----------------------------------------------------------------
 *@
 @{
-
-
+    if (FichaDocumento.Comments == null)
+    {
+        FichaDocumento.Comments = new List<CommentModel>();
+    }    
 }
 
 @*
@@ -32,7 +34,7 @@ Variables
     <div class="comentarios-header">
         <h2 class="seccion-title">
             <span class="material-icons">mode_comment</span>
-            @(FichaDocumento.NumComments == 1 ? Html.GetText("COMMON", "COMENTARIO").ToLower() : Html.GetText("COMMON", "COMENTARIOS").ToLower())&nbsp;(<span id="numComentarios">@FichaDocumento.NumComments</span>)
+            @(FichaDocumento.Comments.Count == 1 ? Html.GetText("COMMON", "COMENTARIO").ToLower() : Html.GetText("COMMON", "COMENTARIOS").ToLower())&nbsp;(<span id="numComentarios">@FichaDocumento.Comments.Count</span>)
         </h2>
     </div>
 

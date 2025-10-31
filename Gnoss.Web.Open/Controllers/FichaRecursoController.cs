@@ -1071,13 +1071,13 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
             if (GestorDocumental.GestionComentarios == null || (GenPlantillasOWL != null && !GenPlantillasOWL.Ontologia.ConfiguracionPlantilla.OcultarComentarios))
             {
                 ComentarioCN comentCN = new ComentarioCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<ComentarioCN>(), mLoggerFactory);
-                DataWrapperComentario comentarioDW = comentCN.ObtenerComentariosDeDocumento(Documento.Clave,ProyectoSeleccionado.Clave);
+                DataWrapperComentario comentarioDW = comentCN.ObtenerComentariosDeDocumento(Documento.VersionOriginalID, ProyectoSeleccionado.Clave);
                 comentCN.Dispose();
 
                 GestorDocumental.GestionComentarios = new GestionComentariosDocumento(comentarioDW, GestorDocumental, mLoggingService, mEntityContext, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<GestionComentariosDocumento>(), mLoggerFactory);
 
                 VotoCN votoCN = new VotoCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<VotoCN>(), mLoggerFactory);
-                DataWrapperVoto votoComentariosDW = votoCN.ObtenerVotosComentariosDocumentoPorID(Documento.Clave);
+                DataWrapperVoto votoComentariosDW = votoCN.ObtenerVotosComentariosDocumentoPorID(Documento.VersionOriginalID);
 
                 if (GestorDocumental.GestionComentarios.GestorVotos == null)
                 {
@@ -4777,20 +4777,21 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
 
         #region Certificar
 
-        [HttpPost, TypeFilter(typeof(AccesoRecursoAttribute))]
 		public ActionResult Certify(Guid CertificationID)
         {
             try
             {
-				//Seguridad : 
-				/*
+                //Seguridad : 
+                /*
                     * Si es la ultima version
-                    * Si eres el supervisor
+                    * Si tiene permiso para certificar recursos
                     * Si permite la comunidad Certificaciones
                     * Si el proyecto no es el MetaProyecto
                     * Si la ontologia permite Certificaciones
                 */
-				if (Documento.FilaDocumento.UltimaVersion && EsIdentidadActualSupervisorProyecto && ParametrosGeneralesRow.PermitirCertificacionRec && ProyectoSeleccionado.Clave != ProyectoAD.MetaProyecto && (GenPlantillasOWL == null || !GenPlantillasOWL.Ontologia.ConfiguracionPlantilla.OcultarBotonCertificarDoc))
+                UtilPermisos utilPermisos = new UtilPermisos(mEntityContext, mLoggingService, mConfigService, mLoggerFactory.CreateLogger<UtilPermisos>(), mLoggerFactory);
+                bool tienePermiso = utilPermisos.IdentidadTienePermiso((ulong)PermisoRecursos.CertificarRecurso, IdentidadActual.Clave, IdentidadActual.IdentidadMyGNOSS.Clave, TipoDePermiso.Recursos);
+				if (Documento.FilaDocumento.UltimaVersion && tienePermiso && ParametrosGeneralesRow.PermitirCertificacionRec && ProyectoSeleccionado.Clave != ProyectoAD.MetaProyecto && (GenPlantillasOWL == null || !GenPlantillasOWL.Ontologia.ConfiguracionPlantilla.OcultarBotonCertificarDoc))
                 {
                     return AccionRecurso_Certificar_Aceptar(CertificationID);
                 }
@@ -4924,7 +4925,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                 * Si eres supervisor
                 * Si la comunidad tiene grupos, solo a los grupos de la comunidad
                 */
-                if (ProyectoSeleccionado.Clave != ProyectoAD.MetaProyecto && Documento.TipoDocumentacion == TiposDocumentacion.Newsletter && EsIdentidadActualSupervisorProyecto && !Documento.EsBorrador)
+                if (ProyectoSeleccionado.Clave != ProyectoAD.MetaProyecto && Documento.TipoDocumentacion == TiposDocumentacion.Newsletter && ProyectoSeleccionado.EsAdministradorUsuario(mControladorBase.UsuarioActual.UsuarioID) && !Documento.EsBorrador)
                 {
                     IdentidadCN identidadCN = new IdentidadCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<IdentidadCN>(), mLoggerFactory);
                     GestionIdentidades gestorIdentidades = new GestionIdentidades(identidadCN.ObtenerGruposDeProyecto(ProyectoSeleccionado.Clave), mLoggingService, mEntityContext, mConfigService, mServicesUtilVirtuosoAndReplication);

@@ -2,6 +2,7 @@
 using Es.Riam.Gnoss.AD.Documentacion;
 using Es.Riam.Gnoss.AD.EncapsuladoDatos;
 using Es.Riam.Gnoss.AD.EntityModel;
+using Es.Riam.Gnoss.AD.EntityModel.Models.Comentario;
 using Es.Riam.Gnoss.AD.EntityModel.Models.ParametroGeneralDS;
 using Es.Riam.Gnoss.AD.EntityModelBASE;
 using Es.Riam.Gnoss.AD.ServiciosGenerales;
@@ -13,6 +14,7 @@ using Es.Riam.Gnoss.Elementos.Amigos;
 using Es.Riam.Gnoss.Elementos.Documentacion;
 using Es.Riam.Gnoss.Elementos.Identidad;
 using Es.Riam.Gnoss.Elementos.ServiciosGenerales;
+using Es.Riam.Gnoss.Logica.Comentario;
 using Es.Riam.Gnoss.Logica.Documentacion;
 using Es.Riam.Gnoss.Logica.Identidad;
 using Es.Riam.Gnoss.Logica.ServiciosGenerales;
@@ -372,10 +374,13 @@ namespace Es.Riam.Gnoss.Web.MVC.ControlesMVC
                         }
 
                         fichaRecurso.AllowComments = false;
-                        if (!docActual.EsBorrador && docActual.FilaDocumento.UltimaVersion && comentariosDisponibles && docActual.FilaDocumentoWebVinBR != null)
+                        if (!docActual.EsBorrador && comentariosDisponibles)
                         {
                             fichaRecurso.AllowComments = true;
-                            fichaRecurso.NumComments = docActual.FilaDocumentoWebVinBR.NumeroComentarios;
+							ComentarioCN comentCN = new ComentarioCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<ComentarioCN>(), mLoggerFactory);
+							DataWrapperComentario comentarioDW = comentCN.ObtenerComentariosDeDocumento(docActual.VersionOriginalID, ControllerBase.ProyectoSeleccionado.Clave);
+							comentCN.Dispose();
+							fichaRecurso.NumComments = comentarioDW.ListaComentario.Count;
                         }
 
                         // Agregar a mi espacio personal

@@ -2699,6 +2699,13 @@ const autocompletarWorkflows = {
         formOculto.find('>.input-wrap').remove();
         formOculto.find('.tag-list').html('');
         formOculto.find('select').val('');
+        formOculto.find('#txtResponsables_Hack').val("");
+        formOculto.find('#txtEditores_Hack').val("");
+        formOculto.find('#txtLectores_Hack').val("");
+        formOculto.find('#txtResponsables').val("");
+        formOculto.find('#txtEditores').val("");
+        formOculto.find('#txtLectores').val("");
+        formOculto.find('#estado-publico-si').trigger("click");
     },
     onFormCompleted: function (parent) {
         const lang = $('#panContenidoMultiIdioma .nav-tabs a[aria-selected="true"]').attr('id').split('_')[1];
@@ -3046,12 +3053,26 @@ const autocompletarWorkflows = {
             const responsibles = $(elem).parent().hasClass('responsibles');
             const responsiblesList = formOculto.find('.responsables .tag-list');
 
-            const tagValue = $(elem).text();
-            const tagID = $(elem).attr("id");
+            const tagID = $(elem).data("grupo") ? "g_" + $(elem).attr("data-id") : $(elem).attr("data-id");
 
-            if (editors) editorsList.append(this.addPersonTag(elem));
-            if (readers) readersList.append(this.addPersonTag(elem));
-            if (responsibles) responsiblesList.append(this.addPersonTag(elem));
+            if (editors) {
+                editorsList.append(this.addPersonTag(elem));
+                let prevValue = formOculto.find('input#txtEditores_Hack').val();
+                let newValue = prevValue == '' ? tagID : "," + tagID;
+                formOculto.find('input#txtEditores_Hack').val(prevValue + newValue); 
+            }
+            if (readers) {
+                readersList.append(this.addPersonTag(elem));
+                let prevValue = formOculto.find('input#txtLectores_Hack').val();
+                let newValue = prevValue == '' ? tagID : "," + tagID;
+                formOculto.find('input#txtLectores_Hack').val(prevValue + newValue); 
+            }
+            if (responsibles) {
+                responsiblesList.append(this.addPersonTag(elem));
+                let prevValue = formOculto.find('input#txtResponsables_Hack').val();
+                let newValue = prevValue == '' ? tagID : "," + tagID;
+                formOculto.find('input#txtResponsables_Hack').val(prevValue + newValue); 
+            }
         });
 
         // rellenar selects de estados en transiciones

@@ -38,7 +38,7 @@
     public string PintarTags(string pNombre, Guid pIdentidadID, bool pGrupo)
     {
         string resultado = "";
-        resultado += $"<span data-grupo='{pGrupo}' data-id='{pIdentidadID}'>{pNombre}</span>";
+        resultado += $"<span data-grupo='{pGrupo.ToString().ToLowerInvariant()}' data-id='{pIdentidadID}'>{pNombre}</span>";
         return resultado;
     }
 }

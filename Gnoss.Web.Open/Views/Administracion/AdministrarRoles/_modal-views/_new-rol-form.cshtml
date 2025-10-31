@@ -499,8 +499,7 @@
                                     </div>
                                     <div class="custom-control custom-checkbox component-wrap permisorecurso-row">
                                         <span class="component-name" style="display: none;">@Html.GetText("ROLESYPERMISOS", "TIPONOTA")</span>
-                                        <input type="checkbox" class="custom-control-input" id="tipo-nota">
-                                        <label class="custom-control-label" for="tipo-nota">@Html.GetText("ROLESYPERMISOS", "TIPONOTA")</label>
+                                        <span style="font-weight: 500;">@Html.GetText("ROLESYPERMISOS", "TIPONOTA")</span>
                                     </div>
                                     <div class="custom-control__group">
                                         <div class="custom-control custom-checkbox component-wrap permisorecurso-row">
@@ -532,8 +531,7 @@
 
                                     <div class="custom-control custom-checkbox component-wrap permisorecurso-row">
                                         <span class="component-name" style="display: none;">@Html.GetText("ROLESYPERMISOS", "TIPOLINK")</span>
-                                        <input type="checkbox" class="custom-control-input" id="tipo-link">
-                                        <label class="custom-control-label" for="tipo-link">@Html.GetText("ROLESYPERMISOS", "TIPOLINK")</label>
+                                        <span style="font-weight: 500;">@Html.GetText("ROLESYPERMISOS", "TIPOLINK")</span>
                                     </div>
                                     <div class="custom-control__group">
                                         <div class="custom-control custom-checkbox component-wrap permisorecurso-row">
@@ -565,8 +563,7 @@
 
                                     <div class="custom-control custom-checkbox component-wrap permisorecurso-row">
                                         <span class="component-name" style="display: none;">@Html.GetText("ROLESYPERMISOS", "TIPOADJUNTO")</span>
-                                        <input type="checkbox" class="custom-control-input" id="tipo-adjunto">
-                                        <label class="custom-control-label" for="tipo-adjunto">@Html.GetText("ROLESYPERMISOS", "TIPOADJUNTO")</label>
+                                        <span style="font-weight: 500;">@Html.GetText("ROLESYPERMISOS", "TIPOADJUNTO")</span>
                                     </div>
                                     <div class="custom-control__group">
                                         <div class="custom-control custom-checkbox component-wrap permisorecurso-row">
@@ -598,8 +595,7 @@
 
                                     <div class="custom-control custom-checkbox component-wrap permisorecurso-row">
                                         <span class="component-name" style="display: none;">@Html.GetText("ROLESYPERMISOS", "TIPOREFERENCIA")</span>
-                                        <input type="checkbox" class="custom-control-input" id="tipo-referencia">
-                                        <label class="custom-control-label" for="tipo-referencia">@Html.GetText("ROLESYPERMISOS", "TIPOREFERENCIA")</label>
+                                        <span style="font-weight: 500;">@Html.GetText("ROLESYPERMISOS", "TIPOREFERENCIA")</span>
                                     </div>
                                     <div class="custom-control__group">
                                         <div class="custom-control custom-checkbox component-wrap permisorecurso-row">
@@ -631,8 +627,7 @@
 
                                     <div class="custom-control custom-checkbox component-wrap permisorecurso-row">
                                         <span class="component-name" style="display: none;">@Html.GetText("ROLESYPERMISOS", "TIPOPREGUNTA")</span>
-                                        <input type="checkbox" class="custom-control-input" id="tipo-pregunta">
-                                        <label class="custom-control-label" for="tipo-pregunta">@Html.GetText("ROLESYPERMISOS", "TIPOPREGUNTA")</label>
+                                        <span style="font-weight: 500;">@Html.GetText("ROLESYPERMISOS", "TIPOPREGUNTA")</span>
                                     </div>
                                     <div class="custom-control__group">
                                         <div class="custom-control custom-checkbox component-wrap permisorecurso-row">
@@ -664,8 +659,7 @@
 
                                     <div class="custom-control custom-checkbox component-wrap permisorecurso-row">
                                         <span class="component-name" style="display: none;">@Html.GetText("ROLESYPERMISOS", "TIPODEBATE")</span>
-                                        <input type="checkbox" class="custom-control-input" id="tipo-debate">
-                                        <label class="custom-control-label" for="tipo-debate">@Html.GetText("ROLESYPERMISOS", "TIPODEBATE")</label>
+                                        <span style="font-weight: 500;">@Html.GetText("ROLESYPERMISOS", "TIPODEBATE")</span>
                                     </div>
                                     <div class="custom-control__group">
                                         <div class="custom-control custom-checkbox component-wrap permisorecurso-row">
@@ -697,8 +691,7 @@
 
                                     <div class="custom-control custom-checkbox component-wrap permisorecurso-row">
                                         <span class="component-name" style="display: none;">@Html.GetText("ROLESYPERMISOS", "TIPOENCUESTA")</span>
-                                        <input type="checkbox" class="custom-control-input" id="tipo-encuesta">
-                                        <label class="custom-control-label" for="tipo-encuesta">@Html.GetText("ROLESYPERMISOS", "TIPOENCUESTA")</label>
+                                        <span style="font-weight: 500;">@Html.GetText("ROLESYPERMISOS", "TIPOENCUESTA")</span>
                                     </div>
                                     <div class="custom-control__group">
                                         <div class="custom-control custom-checkbox component-wrap permisorecurso-row">
@@ -733,36 +726,37 @@
                                             int cont = 0;
                                         }
                                         @foreach (Guid docID in Model.DiccionarioOntologias.Keys)
-                                        {
+                                        {                                            
+                                            string nombre = Html.ObtenerTextoDeIdioma(Model.DiccionarioOntologias[docID]);
+                                            
                                             <div class="custom-control custom-checkbox component-wrap permisorecurso-row">
-                                                <input type="checkbox" class="custom-control-input" id="tipo_@docID">
-                                                <label class="custom-control-label" for="tipo_@docID">@Model.DiccionarioOntologias[docID]</label>
+                                                <span style="font-weight: 500;">@nombre</span>
                                             </div>
                                             <div class="custom-control__group">                                                
                                                 <div class="custom-control custom-checkbox CrearRecursoSemantico_@docID component-wrap permisorecurso-row">
-                                                    <span class="component-name" style="display: none;">@Html.GetText("ROLESYPERMISOS", "CREARRECURSOSEMANTICO") - @Model.DiccionarioOntologias[docID]</span>
+                                                    <span class="component-name" style="display: none;">@Html.GetText("ROLESYPERMISOS", "CREARRECURSOSEMANTICO") - @nombre</span>
                                                     <input type="checkbox" class="custom-control-input" id="CrearRecursoSemantico_@docID" />
-                                                    <label class="custom-control-label" for="CrearRecursoSemantico_@docID">@Html.GetText("ROLESYPERMISOS", "CREARRECURSOSEMANTICO") - @Model.DiccionarioOntologias[docID]</label>
+                                                    <label class="custom-control-label" for="CrearRecursoSemantico_@docID">@Html.GetText("ROLESYPERMISOS", "CREARRECURSOSEMANTICO") - @nombre</label>
                                                 </div>
                                                 <div class="custom-control custom-checkbox EditarRecursoSemantico_@docID component-wrap permisorecurso-row">
-                                                    <span class="component-name" style="display: none;">@Html.GetText("ROLESYPERMISOS", "EDITARRECURSOSEMANTICO") - @Model.DiccionarioOntologias[docID]</span>
+                                                    <span class="component-name" style="display: none;">@Html.GetText("ROLESYPERMISOS", "EDITARRECURSOSEMANTICO") - @nombre</span>
                                                     <input type="checkbox" class="custom-control-input" id="EditarRecursoSemantico_@docID" />
-                                                    <label class="custom-control-label" for="EditarRecursoSemantico_@docID">@Html.GetText("ROLESYPERMISOS", "EDITARRECURSOSEMANTICO") - @Model.DiccionarioOntologias[docID]</label>
+                                                    <label class="custom-control-label" for="EditarRecursoSemantico_@docID">@Html.GetText("ROLESYPERMISOS", "EDITARRECURSOSEMANTICO") - @nombre</label>
                                                 </div>
                                                 <div class="custom-control custom-checkbox EliminarRecursoSemantico_@docID component-wrap permisorecurso-row">
-                                                    <span class="component-name" style="display: none;">@Html.GetText("ROLESYPERMISOS", "ELIMINARRECURSOSEMANTICO") - @Model.DiccionarioOntologias[docID]</span>
+                                                    <span class="component-name" style="display: none;">@Html.GetText("ROLESYPERMISOS", "ELIMINARRECURSOSEMANTICO") - @nombre</span>
                                                     <input type="checkbox" class="custom-control-input" id="EliminarRecursoSemantico_@docID" />
-                                                    <label class="custom-control-label" for="EliminarRecursoSemantico_@docID">@Html.GetText("ROLESYPERMISOS", "ELIMINARRECURSOSEMANTICO") - @Model.DiccionarioOntologias[docID]</label>
+                                                    <label class="custom-control-label" for="EliminarRecursoSemantico_@docID">@Html.GetText("ROLESYPERMISOS", "ELIMINARRECURSOSEMANTICO") - @nombre</label>
                                                 </div>
                                                 <div class="custom-control custom-checkbox RestaurarVersionRecursoSemantico_@docID component-wrap permisorecurso-row">
-                                                    <span class="component-name" style="display: none;">@Html.GetText("ROLESYPERMISOS", "RESTAURARVERSIONSEMANTICO") - @Model.DiccionarioOntologias[docID]</span>
+                                                    <span class="component-name" style="display: none;">@Html.GetText("ROLESYPERMISOS", "RESTAURARVERSIONSEMANTICO") - @nombre</span>
                                                     <input type="checkbox" class="custom-control-input" id="RestaurarVersionRecursoSemantico_@docID" />
-                                                    <label class="custom-control-label" for="RestaurarVersionRecursoSemantico_@docID">@Html.GetText("ROLESYPERMISOS", "RESTAURARVERSIONSEMANTICO") - @Model.DiccionarioOntologias[docID]</label>
+                                                    <label class="custom-control-label" for="RestaurarVersionRecursoSemantico_@docID">@Html.GetText("ROLESYPERMISOS", "RESTAURARVERSIONSEMANTICO") - @nombre</label>
                                                 </div>
                                                 <div class="custom-control custom-checkbox EliminarVersionRecursoSemantico_@docID component-wrap permisorecurso-row">
-                                                    <span class="component-name" style="display: none;">@Html.GetText("ROLESYPERMISOS", "ELIMINARVERSIONSEMANTICO") - @Model.DiccionarioOntologias[docID]</span>
+                                                    <span class="component-name" style="display: none;">@Html.GetText("ROLESYPERMISOS", "ELIMINARVERSIONSEMANTICO") - @nombre</span>
                                                     <input type="checkbox" class="custom-control-input" id="EliminarVersionRecursoSemantico_@docID" />
-                                                    <label class="custom-control-label" for="EliminarVersionRecursoSemantico_@docID">@Html.GetText("ROLESYPERMISOS", "ELIMINARVERSIONSEMANTICO") - @Model.DiccionarioOntologias[docID]</label>
+                                                    <label class="custom-control-label" for="EliminarVersionRecursoSemantico_@docID">@Html.GetText("ROLESYPERMISOS", "ELIMINARVERSIONSEMANTICO") - @nombre</label>
                                                 </div>
                                             </div>
                                             
