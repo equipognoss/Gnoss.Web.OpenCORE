@@ -131,7 +131,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
 
             string numElemNuevosOtrasIdent = "";
 
-            bool bandejaOrg = bool.Parse(pBandejaDeOrganizacion);
+            bool.TryParse(pBandejaDeOrganizacion, out bool bandejaOrg);
 
             try
             {

@@ -1392,7 +1392,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
             try
             {
                 // Si las páginas de administración están configuradas en otro dominio, no hacer redirecciones en Login, Logout y en los controladores de las Cookies. Tampoco realizar esta comprobación si estamos depurando.             
-                if (mControladorBase.DominoAplicacion != null && !mControladorBase.DominoAplicacion.Contains("depuracion") && !string.IsNullOrEmpty(DominioPaginasAdministracion) && !Request.Path.ToString().Contains($"/{UtilIdiomas.GetText("URLSEM", "LOGIN")}") && !(this is LogoutController) && !(this is CrearCookieController) && !(this is AceptarCookieController) && !(this is EliminarCookieController) && !(this is ErrorController) && !(this is LoadingController))
+                if (mControladorBase.DominoAplicacion != null && !mControladorBase.DominoAplicacion.Contains("depuracion") && !string.IsNullOrEmpty(DominioPaginasAdministracion) && !Request.Path.ToString().Contains($"/{UtilIdiomas.GetText("URLSEM", "LOGIN")}") && !(this is LogoutController) && !(this is CrearCookieController) && !(this is AceptarCookieController) && !(this is EliminarCookieController) && !(this is ErrorController) && !(this is LoadingController) && !(this is VisualizarDocumentoController))
                 {
                     bool irAdministracion = this is ControllerAdministrationWeb || Request.Path.ToString().Contains(UtilIdiomas.GetText("URLSEM", "COMADMINCOMMIEMBROS"));
                     //Si alguien intenta acceder a dominiopublico.com/comunidad/testing/administrar-vistas responderá con un error 404 y en ningún caso redirigirá a dominobackoffice.com/comunidad/testing/administrar-vistas, con el fin de mantener el dominio en secreto

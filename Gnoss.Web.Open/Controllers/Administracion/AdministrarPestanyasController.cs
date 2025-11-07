@@ -509,8 +509,9 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
 
                     foreach (TabModel pestanya in ListaPestanyas)
                     {
-                        short ordenViejo = mEntityContext.ProyectoPestanyaMenu.Where(x => x.PestanyaID.Equals(pestanya.Key)).Select(x => x.Orden).FirstOrDefault();
-                        if (pestanya.Deleted || pestanya.Order != ordenViejo)
+                        AD.EntityModel.Models.ProyectoDS.ProyectoPestanyaMenu proyectoPestanyaMenuVieja = mEntityContext.ProyectoPestanyaMenu.Where(x => x.PestanyaID.Equals(pestanya.Key)).FirstOrDefault();
+                        Guid proyectoPestanyaMenuViejoPadreID = !proyectoPestanyaMenuVieja.PestanyaPadreID.HasValue ? Guid.Empty : proyectoPestanyaMenuVieja.PestanyaPadreID.Value;
+                        if (proyectoPestanyaMenuVieja != null && (pestanya.Deleted || pestanya.Order != proyectoPestanyaMenuVieja.Orden || !pestanya.ParentTabKey.Equals(proyectoPestanyaMenuViejoPadreID)))
                         {
                             pestanyasEliminadasOrdenadas.Add(pestanya);
                         }

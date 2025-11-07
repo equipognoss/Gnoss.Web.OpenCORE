@@ -7975,7 +7975,7 @@ $(document).ready(function () {
         });
 
         if (typeof (origenAutoCompletar) == 'undefined') {
-            origenAutoCompletar = ObtenerOrigenAutoCompletarBusqueda($('input.inpt_tipoBusquedaAutoCompl').val());
+            origenAutoCompletar = $('input.inpt_tipoBusquedaAutoCompl').val();
             if (origenAutoCompletar == '') {
                 var pathName = window.location.pathname;
 
@@ -8092,11 +8092,11 @@ function PreparaAutoCompletarComunidad() {
         var facetasAutoComTip = '';
         if ($(this).attr('origen') != undefined) {
             pTipoDdlCategorias = $(this).attr('origen');
-            pOrigen = ObtenerOrigenAutoCompletarBusqueda($(this).attr('origen'));
+            pOrigen = $(this).attr('origen');
             tipoAutocompletar = ObtenerTipoAutoCompletarBusqueda($(this).attr('origen'));
             facetasAutoComTip = ObtenerFacetasAutocompletar($(this).attr('origen'));
         } else if (typeof (ddlCategorias.val()) != 'undefined' && ddlCategorias.val() != '') {
-            pOrigen = ObtenerOrigenAutoCompletarBusqueda(ddlCategorias.val());
+            pOrigen = ddlCategorias.val();
             facetasAutoComTip = ObtenerFacetasAutocompletar(ddlCategorias.val());
             tipoAutocompletar = ObtenerTipoAutoCompletarBusqueda(ddlCategorias.val());
             pTipoDdlCategorias = ddlCategorias.val();
@@ -10083,6 +10083,8 @@ const operativaSolicitarCambiarContrasenia = {
                 OcultarUpdateProgress();
                 // Volver a habilitar el botón
                 that.btnCambiarPassword.prop('disabled', false);
+                $("#btnCambiarPassword").remove();
+                $(".actionRegister").remove();
             });
     },
 
@@ -10449,6 +10451,8 @@ const operativaPeticionCambiarContrasenia = {
                 // Ocultar el loading
                 OcultarUpdateProgress();
                 that.btnCambiarPassword.prop('disabled', false);
+                $("#btnCambiarPassword").remove();
+                $(".actionRegister").remove();
             });
     },
 

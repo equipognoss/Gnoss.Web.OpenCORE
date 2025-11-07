@@ -3,6 +3,7 @@ using Es.Riam.Gnoss.AD.BASE_BD;
 using Es.Riam.Gnoss.AD.Documentacion;
 using Es.Riam.Gnoss.AD.EncapsuladoDatos;
 using Es.Riam.Gnoss.AD.EntityModel;
+using Es.Riam.Gnoss.AD.EntityModel.Models.Flujos;
 using Es.Riam.Gnoss.AD.EntityModel.Models.ParametroGeneralDS;
 using Es.Riam.Gnoss.AD.EntityModelBASE;
 using Es.Riam.Gnoss.AD.Facetado.Model;
@@ -52,6 +53,7 @@ using Es.Riam.Gnoss.Web.MVC.Filters;
 using Es.Riam.Gnoss.Web.MVC.Models;
 using Es.Riam.Gnoss.Web.MVC.Models.Administracion;
 using Es.Riam.Gnoss.Web.MVC.Models.FicherosRecursos;
+using Es.Riam.Gnoss.Web.MVC.Models.Flujos;
 using Es.Riam.Interfaces.InterfacesOpen;
 using Es.Riam.InterfacesOpen;
 using Es.Riam.Open.Model;
@@ -3183,6 +3185,12 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
             }
         }
 
+        public bool ComprobarPermisoEdicionEstado(Guid pEstadoID)
+        {
+			FlujosCN flujosCN = new FlujosCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<FlujosCN>(), mLoggerFactory);
+			return flujosCN.ComprobarIdentidadTienePermisoEdicionEnEstado(pEstadoID, IdentidadActual.Clave);
+        }
+
         public bool ComprobarPermisoGeneralEditarRecurso(TiposDocumentacion pTipoDocumento)
         {
             switch (Documento.TipoDocumentacion)
@@ -3214,6 +3222,11 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
         /// <returns>Resultado de la acción</returns>
         private ActionResult ComprobarRedirecciones_ModificarRecurso()
         {
+            if (Documento.Estado.HasValue && ComprobarPermisoEdicionEstado(Documento.Estado.Value))
+            {
+                return null;
+            }
+
             bool permisoEditar = ComprobarPermisoGeneralEditarRecurso(Documento.TipoDocumentacion);
 
             if (!string.IsNullOrEmpty(RequestParams("organizacion")) && (IdentidadActual.OrganizacionID == null || IdentidadActual.OrganizacionID != IdentidadOrganizacion.OrganizacionID.Value))
@@ -10937,10 +10950,10 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
 
             List<Guid> listaIdsEditores = new List<Guid>();
             List<Guid> listaIdsGruposEditores = new List<Guid>();
-           
 
+            bool permisoEdicionEstado = pDocumento.FilaDocumento.EstadoID.HasValue && ComprobarPermisoEdicionEstado(pDocumento.FilaDocumento.EstadoID.Value);
 
-            if (((!EditandoRecurso && !EditandoFormSem) || pDocumento.TienePermisosEdicionIdentidad(IdentidadActual, IdentidadOrganizacion, ProyectoSeleccionado, UsuarioActual.UsuarioID, EsAdministrador(IdentidadActual)) || ControladorDocumentacion.EsEditorPerfilDeDocumento(IdentidadActual.PerfilID, pDocumento, true, UsuarioActual.UsuarioID) || ComprobarPermisoGeneralEditarRecurso(pDocumento.TipoDocumentacion)) && (mOntologia == null || !EditandoFormSem || (mEditRecCont.ModifyResourceModel.SetPermissionsEditionAvailable)))
+			if (((!EditandoRecurso && !EditandoFormSem) || pDocumento.TienePermisosEdicionIdentidad(IdentidadActual, IdentidadOrganizacion, ProyectoSeleccionado, UsuarioActual.UsuarioID, EsAdministrador(IdentidadActual)) || ControladorDocumentacion.EsEditorPerfilDeDocumento(IdentidadActual.PerfilID, pDocumento, true, UsuarioActual.UsuarioID) || ComprobarPermisoGeneralEditarRecurso(pDocumento.TipoDocumentacion) || permisoEdicionEstado) && (mOntologia == null || !EditandoFormSem || (mEditRecCont.ModifyResourceModel.SetPermissionsEditionAvailable)))
             {
                 List<Guid> listaEditoresOriginal = new List<Guid>(pDocumento.ListaPerfilesEditores.Keys);
                 List<Guid> listaGruposEditoresOriginal = null;

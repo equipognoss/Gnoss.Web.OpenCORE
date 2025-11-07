@@ -13,6 +13,11 @@
     string avisoCookies = Html.GetCookiesWarning();
     string rutaCookies = Comunidad.Url + "/" + Html.GetText("URLSEM", "POLITICACOOKIES");
     string textoPoliticaCookies = Html.GetCookiesText();
+    string rutaAceptarCookies = "";
+    if (!string.IsNullOrEmpty(Comunidad.ShortName))
+    {
+        rutaAceptarCookies = $"/{Html.GetText("URLSEM", "COMUNIDAD")}/{Comunidad.ShortName}";
+    }
 }
 
 @*
@@ -52,6 +57,7 @@
             @* Botonera de gestión de cookies *@
             <div class="actionButtons">
                 <input type="submit"
+                       data-url="@rutaAceptarCookies"
                        id="aceptarCookies"
                        title="Aceptar"
                        value="Aceptar"

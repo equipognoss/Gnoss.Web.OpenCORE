@@ -35,6 +35,9 @@ Variables
 	{
 		editionDate = Model.EditionDate.ToString("dd/MM/yyyy");
 	}
+	bool tienePermisoVer = ViewBag.VerComponenteCMSPermitido != null && ViewBag.VerComponenteCMSPermitido;
+	bool tienePermisoModificar = ViewBag.ModificarComponenteCMSPermitido != null && ViewBag.ModificarComponenteCMSPermitido;
+	bool tienePermisoLectura = (tienePermisoVer || tienePermisoModificar) && Model.PermisoLectura;
 }
 
 @*
@@ -75,7 +78,7 @@ Variables
 			</a>
 			<div class="dropdown-menu basic-dropdown dropdown-icons dropdown-menu-right">
 				@* Acción de editar el componete *@
-				@if ((ViewBag.ModificarComponenteCMSPermitido != null && ViewBag.ModificarComponenteCMSPermitido) || (ViewBag.VerComponenteCMSPermitido != null && ViewBag.VerComponenteCMSPermitido))
+				@if (tienePermisoLectura)
 				{
 					<a class="item-dropdown btnEditComponentItem"
 					data-urleditcomponent="@urlEditComponentItem"

@@ -60,15 +60,9 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
     /// </summary>
     public class CMSAdminComponenteEditarController : ControllerAdministrationWeb
 	{
-        private ILogger mlogger;
-        private ILoggerFactory mLoggerFactory;
         public CMSAdminComponenteEditarController(LoggingService loggingService, ConfigService configService, EntityContext entityContext, RedisCacheWrapper redisCacheWrapper, GnossCache gnossCache, VirtuosoAD virtuosoAD, IHttpContextAccessor httpContextAccessor, ICompositeViewEngine viewEngine, EntityContextBASE entityContextBASE, Microsoft.AspNetCore.Hosting.IHostingEnvironment env, IActionContextAccessor actionContextAccessor, IUtilServicioIntegracionContinua utilServicioIntegracionContinua, IServicesUtilVirtuosoAndReplication servicesUtilVirtuosoAndReplication, IOAuth oAuth, IHostApplicationLifetime appLifetime, IAvailableServices availableServices, ILogger<CMSAdminComponenteEditarController> logger, ILoggerFactory loggerFactory)
             : base(loggingService, configService, entityContext, redisCacheWrapper, gnossCache, virtuosoAD, httpContextAccessor, viewEngine, entityContextBASE, env, actionContextAccessor, utilServicioIntegracionContinua, servicesUtilVirtuosoAndReplication, oAuth, appLifetime, availableServices, logger, loggerFactory)
-        {
-            mlogger = logger;
-            mLoggerFactory = loggerFactory;
-
-        }
+        { }
 
         #region Miembros
 
@@ -638,7 +632,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
 
                                             List<string> listaExtensiones = new List<string>() { "jpg", "jpeg", "png", "gif" };
 
-                                            if (listaExtensiones.Contains(nombreFichero.Split('.').Last().ToLower()))
+                                            if (listaExtensiones.Contains(nombreFichero.Substring(nombreFichero.LastIndexOf('.')).ToLower()))
                                             {
                                                 byte[] byteImage = Convert.FromBase64String(base64Image);
                                                 HttpResponseMessage resultadoImagen = InformarCambioAdministracionCMS("ObjetosMultimedia", Convert.ToBase64String(byteImage), nombreFichero);
@@ -660,19 +654,12 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
                             }
                         }
 
+                        GenerarVersionComponente(contrComponente, componenteEdicion, pComentario);
+
                         contrComponente.InvalidarCache(componenteEdicion.Clave);
 
-                        contrComponente.CrearFilasPropiedadesIntegracionContinua(pComponente);
-
-                        if (EntornoActualEsPruebas && iniciado)
-                        {
-                            contrComponente.ModificarFilasIntegracionContinuaEntornoSiguiente(pComponente, UrlApiEntornoSeleccionado("pre"), UsuarioActual.UsuarioID);
-                            contrComponente.ModificarFilasIntegracionContinuaEntornoSiguiente(pComponente, UrlApiEntornoSeleccionado("pro"), UsuarioActual.UsuarioID);
-                        }
-                        CMSAdminComponenteEditarViewModel versionado = CargarModelo(contrComponente.CargarComponente(componenteEdicion.Clave));
-
-                        contrComponente.GuardarVersionComponente(versionado, componenteEdicion.Clave, pComentario);
-
+                        GenerarCambiosIntegracionContinua(contrComponente, pComponente, iniciado);
+                                                
                         if (transaccionIniciada)
                         {
                             mEntityContext.TerminarTransaccionesPendientes(true);
@@ -680,7 +667,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
 
                         if (bloqueContenedor.HasValue)
                         {
-                            return GnossResultUrl(mControladorBase.UrlsSemanticas.ObtenerURLAdministracionComunidad(UtilIdiomas, BaseURLIdioma, ProyectoSeleccionado.NombreCorto, "ADMINISTRARCOMUNIDADCMSEDITARPAGINA") + "/" + ((short)gestorCMS.ListaBloques[bloqueContenedor.Value].TipoUbicacion).ToString());
+                            return GnossResultUrl($"{mControladorBase.UrlsSemanticas.ObtenerURLAdministracionComunidad(UtilIdiomas, BaseURLIdioma, ProyectoSeleccionado.NombreCorto, "ADMINISTRARCOMUNIDADCMSEDITARPAGINA")}/{gestorCMS.ListaBloques[bloqueContenedor.Value].TipoUbicacion.ToString()}");
                         }
                         else
                         {
@@ -708,9 +695,9 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
                 }
 
                 string rutasImagenes = "";
-                if (componenteEdicion is CMSComponenteDestacado)
+                if (componenteEdicion is CMSComponenteDestacado componenteDestacadoCMS)
                 {
-                    rutasImagenes = ((CMSComponenteDestacado)componenteEdicion).Imagen;
+                    rutasImagenes = componenteDestacadoCMS.Imagen;
                 }
                 return GnossResultOK(rutasImagenes);
             }
@@ -804,6 +791,35 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
             }
         }
 
+        /// <summary>
+        /// Se encarga de generar la nueva versión del componente CMS modificado
+        /// </summary>
+        /// <param name="pControladorComponenteCMS">Controlador para los Componente CMS</param>
+        /// <param name="pComponenteCMS">Componente CMS editado para generar la versión</param>
+        /// <param name="pComentario">Comentario hecho en el componente</param>
+        private void GenerarVersionComponente(ControladorComponenteCMS pControladorComponenteCMS, CMSComponente pComponenteCMS, string pComentario)
+        {
+            CMSAdminComponenteEditarViewModel versionado = CargarModelo(pControladorComponenteCMS.CargarComponente(pComponenteCMS.Clave));
+            pControladorComponenteCMS.GuardarVersionComponente(versionado, pComponenteCMS.Clave, pComentario);
+        }
+
+        /// <summary>
+        /// Se encarga de generar los datos necesarios para notificiar los cambios en la integración continua
+        /// </summary>
+        /// <param name="pControladorComponenteCMS">Controlador para los Componente CMS</param>
+        /// <param name="pComponenteViewModel">Modelo del componente obtenido de la vista al guardarlo</param>
+        /// <param name="pHayIntegracionContinua">True si la integración continua está activada en el proyecto o False si no</param>
+        private void GenerarCambiosIntegracionContinua(ControladorComponenteCMS pControladorComponenteCMS, CMSAdminComponenteEditarViewModel pComponenteViewModel, bool pHayIntegracionContinua)
+        {
+            pControladorComponenteCMS.CrearFilasPropiedadesIntegracionContinua(pComponenteViewModel);
+
+            if (EntornoActualEsPruebas && pHayIntegracionContinua)
+            {
+                pControladorComponenteCMS.ModificarFilasIntegracionContinuaEntornoSiguiente(pComponenteViewModel, UrlApiEntornoSeleccionado("pre"), UsuarioActual.UsuarioID);
+                pControladorComponenteCMS.ModificarFilasIntegracionContinuaEntornoSiguiente(pComponenteViewModel, UrlApiEntornoSeleccionado("pro"), UsuarioActual.UsuarioID);
+            }
+        }
+
         #region Propiedades
 
         public CMSAdminComponenteEditarViewModel.PropiedadComponente ObtenerPropiedad(TipoPropiedadCMS tipoPropiedad, Dictionary<TipoPropiedadCMS, bool> propiedadesComponente)
@@ -852,13 +868,19 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
         private void CargarPermisosCMSViewBag()
         {
 			UtilPermisos utilPermisos = new UtilPermisos(mEntityContext, mLoggingService, mConfigService, mLoggerFactory.CreateLogger<UtilPermisos>(), mLoggerFactory);
+            FlujosCN flujosCN = new FlujosCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<FlujosCN>(), mLoggerFactory);
 			ViewBag.VerComponenteCMSPermitido = utilPermisos.IdentidadTienePermiso((ulong)PermisoContenidos.VerComponenteCMS, mControladorBase.IdentidadActual.Clave, mControladorBase.IdentidadActual.IdentidadMyGNOSS.Clave, TipoDePermiso.Contenidos);
 			ViewBag.CrearComponenteCMSPermitido = utilPermisos.IdentidadTienePermiso((ulong)PermisoContenidos.CrearComponenteCMS, mControladorBase.IdentidadActual.Clave, mControladorBase.IdentidadActual.IdentidadMyGNOSS.Clave, TipoDePermiso.Contenidos);
 			ViewBag.EliminarComponenteCMSPermitido = utilPermisos.IdentidadTienePermiso((ulong)PermisoContenidos.EliminarComponenteCMS, mControladorBase.IdentidadActual.Clave, mControladorBase.IdentidadActual.IdentidadMyGNOSS.Clave, TipoDePermiso.Contenidos);
 			ViewBag.ModificarComponenteCMSPermitido = utilPermisos.IdentidadTienePermiso((ulong)PermisoContenidos.EditarComponenteCMS, mControladorBase.IdentidadActual.Clave, mControladorBase.IdentidadActual.IdentidadMyGNOSS.Clave, TipoDePermiso.Contenidos);
 			ViewBag.RestaurarVersionComponenteCMSPermitido = utilPermisos.IdentidadTienePermiso((ulong)PermisoContenidos.RestaurarVersionCMS, mControladorBase.IdentidadActual.Clave, mControladorBase.IdentidadActual.IdentidadMyGNOSS.Clave, TipoDePermiso.Contenidos);
 			ViewBag.EliminarVersionComponenteCMSPermitido = utilPermisos.IdentidadTienePermiso((ulong)PermisoContenidos.EliminarVersionCMS, mControladorBase.IdentidadActual.Clave, mControladorBase.IdentidadActual.IdentidadMyGNOSS.Clave, TipoDePermiso.Contenidos);
-		}
+            ViewBag.EditorComponenteCMSPermitido = ViewBag.ModificarComponenteCMSPermitido || ViewBag.CrearComponenteCMSPermitido;
+            if (CMSComponente != null && CMSComponente.Estado.HasValue)
+            {
+                ViewBag.EditorComponenteCMSPermitido = flujosCN.ComprobarIdentidadTienePermisoEdicionEnEstado(CMSComponente.Estado.Value, IdentidadActual.Clave);
+            }
+        }
 
         private CMSAdminComponenteEditarViewModel PaginaModel
         {
@@ -965,7 +987,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
                 GestionCMS gestorCMS = new GestionCMS(cmsCN.ObtenerCMSDeProyecto(ProyectoSeleccionado.Clave), mLoggingService, mEntityContext);
                 cmsCN.Dispose();
 
-                urlVolver = new Uri(mControladorBase.UrlsSemanticas.ObtenerURLAdministracionComunidad(UtilIdiomas, BaseURLIdioma, ProyectoSeleccionado.NombreCorto, "ADMINISTRARCOMUNIDADCMSEDITARPAGINA") + "/" + ((short)gestorCMS.ListaBloques[bloqueContenedor.Value].TipoUbicacion).ToString());
+                urlVolver = new Uri($"{mControladorBase.UrlsSemanticas.ObtenerURLAdministracionComunidad(UtilIdiomas, BaseURLIdioma, ProyectoSeleccionado.NombreCorto, "ADMINISTRARCOMUNIDADCMSEDITARPAGINA")}/{gestorCMS.ListaBloques[bloqueContenedor.Value].TipoUbicacion.ToString()}");
             }
             if (urlVolver != null)
             {

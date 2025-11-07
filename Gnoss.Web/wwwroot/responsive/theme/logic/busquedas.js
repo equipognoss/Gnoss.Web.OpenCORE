@@ -2189,7 +2189,7 @@ $(document).ready(function () {
         });
 
         if (typeof (origenAutoCompletar) == 'undefined') {
-            origenAutoCompletar = ObtenerOrigenAutoCompletarBusqueda($('input.inpt_tipoBusquedaAutoCompl').val());
+            origenAutoCompletar = $('input.inpt_tipoBusquedaAutoCompl').val();
             if (origenAutoCompletar == '') {
                 var pathName = window.location.pathname;
 
@@ -2303,11 +2303,11 @@ function PreparaAutoCompletarComunidad() {
         tipoAutocompletar = -1;
         if ($(this).attr('origen') != undefined) {
             pTipoDdlCategorias = $(this).attr('origen');
-            pOrigen = ObtenerOrigenAutoCompletarBusqueda($(this).attr('origen'));
+            pOrigen = $(this).attr('origen');
             facetasAutoComTip = ObtenerFacetasAutocompletar($(this).attr('origen'));
             tipoAutocompletar = ObtenerTipoAutoCompletarBusqueda($(this).attr('origen'));
         } else if (typeof (ddlCategorias.val()) != 'undefined' && ddlCategorias.val() != '') {
-            pOrigen = ObtenerOrigenAutoCompletarBusqueda(ddlCategorias.val());
+            pOrigen = ddlCategorias.val();
             tipoAutocompletar = ObtenerTipoAutoCompletarBusqueda(ddlCategorias.val());
             facetasAutoComTip = ObtenerFacetasAutocompletar(ddlCategorias.val());
             pTipoDdlCategorias = ddlCategorias.val();

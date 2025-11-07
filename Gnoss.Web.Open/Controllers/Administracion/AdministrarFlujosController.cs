@@ -55,6 +55,7 @@ namespace Gnoss.Web.Open.Controllers.Administracion
         public IActionResult Index()
         {
             CargarPermisosAdministracionComunidadEnViewBag();
+            EliminarPersonalizacionVistas();
             // Añadir clase para el body del Layout
             ViewBag.BodyClassPestanya = "estructura edicion edicionPaginas listado no-max-width-container workflows";
             ViewBag.ActiveSection = AdministracionSeccionesDevTools.SeccionesDevTools.Comunidad;

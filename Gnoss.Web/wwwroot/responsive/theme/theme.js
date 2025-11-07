@@ -2612,7 +2612,9 @@ var customizarAvisoCookies = {
     guardarAceptarCookies: function () {
         var that = this;
 
-        const urlAcceptCookies = document.location.origin + `/aceptar-cookies`;
+        let communityUrl = $("#aceptarCookies").data("url") ?? '';
+
+        const urlAcceptCookies = document.location.origin + communityUrl + `/aceptar-cookies`;
 
         MostrarUpdateProgress();
         GnossPeticionAjax(

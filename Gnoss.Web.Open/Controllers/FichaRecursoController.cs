@@ -13,6 +13,7 @@ using Es.Riam.Gnoss.AD.EntityModel.Models.ProyectoDS;
 using Es.Riam.Gnoss.AD.EntityModelBASE;
 using Es.Riam.Gnoss.AD.Facetado;
 using Es.Riam.Gnoss.AD.Facetado.Model;
+using Es.Riam.Gnoss.AD.Flujos;
 using Es.Riam.Gnoss.AD.Identidad;
 using Es.Riam.Gnoss.AD.Live;
 using Es.Riam.Gnoss.AD.Parametro;
@@ -38,6 +39,7 @@ using Es.Riam.Gnoss.ExportarImportar.Exportadores;
 using Es.Riam.Gnoss.Logica.Comentario;
 using Es.Riam.Gnoss.Logica.Documentacion;
 using Es.Riam.Gnoss.Logica.Facetado;
+using Es.Riam.Gnoss.Logica.Flujos;
 using Es.Riam.Gnoss.Logica.Identidad;
 using Es.Riam.Gnoss.Logica.Notificacion;
 using Es.Riam.Gnoss.Logica.Parametro;
@@ -68,6 +70,7 @@ using Es.Riam.Gnoss.Web.MVC.Filters;
 using Es.Riam.Gnoss.Web.MVC.Models;
 using Es.Riam.Gnoss.Web.MVC.Models.Administracion;
 using Es.Riam.Gnoss.Web.MVC.Models.FicherosRecursos;
+using Es.Riam.Gnoss.Web.MVC.Models.Flujos;
 using Es.Riam.Gnoss.Web.MVC.Models.ViewModels;
 using Es.Riam.Interfaces;
 using Es.Riam.Interfaces.InterfacesOpen;
@@ -100,12 +103,8 @@ using System.Linq;
 using System.Text;
 using System.Web;
 using System.Xml;
-using static Es.Riam.Gnoss.Web.MVC.Models.ResourceModel;
-using Es.Riam.Gnoss.Web.MVC.Models.Flujos;
-using Es.Riam.Gnoss.AD.EntityModel.Models.Flujos;
 using Universal.Common.Extensions;
-using Es.Riam.Gnoss.Logica.Flujos;
-using Es.Riam.Gnoss.AD.Flujos;
+using static Es.Riam.Gnoss.Web.MVC.Models.ResourceModel;
 
 namespace Es.Riam.Gnoss.Web.MVC.Controllers
 {
@@ -8969,7 +8968,11 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
 					string urlDocumento = mControladorBase.UrlsSemanticas.GetURLBaseRecursosFicha(BaseURLIdioma, UtilIdiomas, ProyectoSeleccionado.NombreCorto, UrlPerfil, Documento, false);
                     gestorNotificaciones.EnviarCorreoAvisoCambioDeEstado(pTransicionID, Documento.ProyectoID, pComentario, urlDocumento, Documento.Titulo, IdentidadActual.Nombre());
 					notificacionCN.ActualizarNotificacion(mAvailableServices);
-					
+                    // Actualizar GnossLive
+                    ActualizarGnossLiveTransicionEstado(estadoDocumento.EstadoID, estadoDestino);
+                    // Invalidar ficha del recurso
+                    ControladorDocumentacion.BorrarCacheControlFichaRecursos(Documento.UltimaVersionID);
+                    
                     notificacionCN.Dispose();
                     facetadoCN.Dispose();
                     flujosCN.Dispose();
@@ -9374,6 +9377,52 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
             }
 
             return resultado;
+        }
+
+        private void ActualizarGnossLiveTransicionEstado(Guid pEstadoOrigen, Guid pEstadoDestino)
+        {
+            FlujosCN flujosCN = new FlujosCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<FlujosCN>(), mLoggerFactory);
+            int tipo;
+            switch (Documento.TipoDocumentacion)
+            {
+                case TiposDocumentacion.Debate:
+                    tipo = (int)TipoLive.Debate;
+                    break;
+                case TiposDocumentacion.Pregunta:
+                    tipo = (int)TipoLive.Pregunta;
+                    break;
+                default:
+                    tipo = (int)TipoLive.Recurso;
+                    break;
+            }
+
+            string infoExtra = null;
+
+            if (Documento.ProyectoID == ProyectoAD.MetaProyecto)
+            {
+                if (IdentidadActual.IdentidadPersonalMyGNOSS != null)
+                {
+                    infoExtra = IdentidadActual.IdentidadPersonalMyGNOSS.PerfilID.ToString();
+                }
+                else
+                {
+                    infoExtra = IdentidadActual.IdentidadMyGNOSS.PerfilID.ToString();
+                }
+            }
+
+            bool privacidadCambiada = flujosCN.ComprobarEstadoEsPublico(pEstadoOrigen) != flujosCN.ComprobarEstadoEsPublico(pEstadoDestino);
+
+            if (privacidadCambiada)
+            {
+                infoExtra += Constantes.PRIVACIDAD_CAMBIADA;
+
+                ControladorDocumentacion.ActualizarGnossLive(Documento.ProyectoID, Documento.Clave, AccionLive.Agregado, tipo, PrioridadLive.Media, null, mAvailableServices);
+                ControladorDocumentacion.ActualizarGnossLive(Documento.ProyectoID, Documento.Clave, AccionLive.Editado, tipo, PrioridadLive.Media, infoExtra, mAvailableServices);
+            }
+            else
+            {
+                ControladorDocumentacion.ActualizarGnossLive(Documento.ProyectoID, Documento.Clave, AccionLive.Agregado, tipo, PrioridadLive.Alta, infoExtra, mAvailableServices);
+            }
         }
 
         #region Propiedades

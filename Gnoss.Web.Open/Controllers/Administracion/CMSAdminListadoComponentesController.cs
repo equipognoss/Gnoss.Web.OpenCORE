@@ -370,6 +370,13 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
                                     ficha.EditionDate = componente.FilaComponente.FechaUltimaActualizacion.Value;
                                 }   
                                 ficha.Activo = componente.Activo;
+                                ficha.PermisoLectura = true;
+
+                                if (componente.FilaComponente.EstadoID.HasValue)
+                                {
+                                    UtilFlujos utilFlujos = new UtilFlujos(mEntityContext, mLoggingService, mConfigService, mLoggerFactory.CreateLogger<UtilFlujos>(), mLoggerFactory);
+                                    ficha.PermisoLectura = utilFlujos.IdentidadTienePermisoLecturaEnEstado(componente.FilaComponente.EstadoID.Value, IdentidadActual.Clave);
+                                }
                                 
                                 mPaginaModel.Result.ListaResultados.Add(ficha);
                             }

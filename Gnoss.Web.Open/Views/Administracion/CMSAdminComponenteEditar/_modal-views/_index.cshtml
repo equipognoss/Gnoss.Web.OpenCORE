@@ -37,7 +37,11 @@ Variables
 	List<TransicionModel> transiciones = new List<TransicionModel>();
 	if (Model.Estado != null){
 		transiciones = Model.Estado.Transiciones;
-	}	
+	}
+	bool tienePermisoCrear = ViewBag.CrearComponenteCMSPermitido != null && ViewBag.CrearComponenteCMSPermitido;
+	bool tienePermisoModificar = ViewBag.ModificarComponenteCMSPermitido != null && ViewBag.ModificarComponenteCMSPermitido;
+	bool esEditor = ViewBag.EditorComponenteCMSPermitido != null && ViewBag.EditorComponenteCMSPermitido;
+	bool permisoParaGuardar = (tienePermisoCrear || tienePermisoCrear) && esEditor;
 }
 
 @{
@@ -138,7 +142,10 @@ Variables
 			htmlNombresPerfilesGrupos += "<div class='tag' id='"+ perfilID.ToString() + "' title='"+ Model.PerfilesPrivacidad[perfilID] +"'>";
 			htmlNombresPerfilesGrupos += "<div class='tag-wrap'>";
 			htmlNombresPerfilesGrupos += "<span class='tag-text'>"+ @Model.PerfilesPrivacidad[perfilID] +"</span>";
-			htmlNombresPerfilesGrupos += "<span class='tag-remove material-icons remove'>close</span>";
+			if(Model.Estado == null)
+			{
+				htmlNombresPerfilesGrupos += "<span class='tag-remove material-icons remove'>close</span>";
+			}
 			htmlNombresPerfilesGrupos += "</div>";												
 			htmlNombresPerfilesGrupos += "</div>"; 
 		}
@@ -149,7 +156,10 @@ Variables
 			htmlNombresPerfilesGrupos += "<div class='tag' id='g_"+ grupoID.ToString() +"' title='"+ Model.GruposPrivacidad[grupoID] +"'>";
 			htmlNombresPerfilesGrupos += "<div class='tag-wrap'>";
 			htmlNombresPerfilesGrupos += "<span class='tag-text'>"+ Model.GruposPrivacidad[grupoID] +"</span>";
-			htmlNombresPerfilesGrupos += "<span class='tag-remove material-icons remove'>close</span>";
+			if (Model.Estado == null)
+			{
+				htmlNombresPerfilesGrupos += "<span class='tag-remove material-icons remove'>close</span>";
+			}
 			htmlNombresPerfilesGrupos += "</div>";												
 			htmlNombresPerfilesGrupos += "</div>"; 
 		}
@@ -372,7 +382,8 @@ Variables
 					name="chkEditarPrivacidad"																
 					data-value="si"
 					@Html.Raw(Model.Private ? "checked" : "")
-					id="chkEditarPrivacidad_SI"/>
+					id="chkEditarPrivacidad_SI"
+					@(Model.Estado != null ? "disabled" : "") />
 					<label class="form-check-label" for="chkEditarPrivacidad_SI">@Html.GetText("COMMON","SI")</label>									
 				</div>
 				<div class="form-check form-check-inline">
@@ -383,7 +394,8 @@ Variables
 					name="chkEditarPrivacidad"																				
 					data-value="no"
 					@Html.Raw(!Model.Private ? "checked" : "")
-					id="chkEditarPrivacidad_NO"/>
+					id="chkEditarPrivacidad_NO"
+						   @(Model.Estado != null ? "disabled" : "") />
 					<label class="form-check-label" for="chkEditarPrivacidad_NO">@Html.GetText("COMMON","NO")</label>									
 				</div>
 				<small class="form-text text-muted mt-n1">Indica si el componente es sólo visible para miembros o grupos de la comunidad específicos.</small>
@@ -391,9 +403,20 @@ Variables
 
 			@* Privacidad del componente + Buscador de Personas para establecer privacidad del componente *@									
 			<div class="form-group mb-4 edit-privacy-panel-privacidad-perfiles-grupos @( Model.Private ? "" : "d-none")">												
-				<p>					
+				@if(Model.Estado != null)
+				{
+					<div class="alert alert-info mt-0" role="alert">
+						<p class="titulo">
+							@Html.GetText("DEVTOOLS", "AVISOPRIVACIDADCOMPONENTECMS")
+						</p>
+					</div>
+					;
+				}else
+				{
+					<p>					
 					@Html.GetText("DEVTOOLS","SELECCIONALOSPERFILESYGRUPOSPARALOSQUEVAAESTARDISPONIBLEELCO")
-				</p>
+					</p>
+				}
 
 				@* Panel seleccíón de perfiles *@
 				<div class="form-group mb-4 edit-privacy-panel-privacidad-perfiles ">																	
@@ -410,7 +433,8 @@ Variables
 							id="privacidadPerfiles"
 							class="form-control txtAutocomplete"
 							data-avoid-autocomplete-with-enter-button="true"
-							autocomplete="off" />												
+							autocomplete="off"
+							@(Model.Estado != null ? "disabled" : "") />
 
 							@* Botón de Añadir Privacidad Perfiles *@
 							<a id="btnAddPrivacidadPerfiles" class="btn btn-grey uppercase btnAddPrivacidadPerfiles">@Html.GetText("ADMINISTRACIONBASICA","AÑADIR")</a>
@@ -571,7 +595,7 @@ Variables
 					@* Botón para el guardado con Ramas activas o en uso *@					
 					<input type="button" disabled class="btn btn-primary uppercase btnNoSaveComponent" value="@Html.GetText("COMMON","GUARDAR")" title="@Html.GetComunidad().MensajeAvisoAdministracionIC"  />
 				}
-				else if ((ViewBag.CrearComponenteCMSPermitido != null && ViewBag.CrearComponenteCMSPermitido) || (ViewBag.ModificarComponenteCMSPermitido != null && ViewBag.ModificarComponenteCMSPermitido))
+				else if (permisoParaGuardar)
 				{
 					<a id="btnSaveComponent" href="javascript: void(0)" class="btn btn-primary uppercase">@Html.GetText("COMMON", "GUARDAR")</a>					
 				}
