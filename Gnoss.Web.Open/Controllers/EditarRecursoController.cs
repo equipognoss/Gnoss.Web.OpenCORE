@@ -3421,8 +3421,9 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
 
             return GnossResultERROR();
         }
-        private void CopiarAdjuntoRecursoSemántico(DocumentEditionModel pModel, Identidad pIdentidadOrganizacion, bool pMasterComunidad)
+        private HashSet<string> ModificarTriplesAdjuntosRecursoSemantico(DocumentEditionModel pModel, Identidad pIdentidadOrganizacion, bool pMasterComunidad)
         {
+            HashSet<string> rutasAdjuntos = new HashSet<string>();
             if (EditandoFormSem && pModel != null)
             {
                 string pattern = $@">([^<]*({UtilArchivos.ContentImagenesSemanticas}|{UtilArchivos.ContentDocumentosSem}|{UtilArchivos.ContentDocLinks}|{UtilArchivos.ContentVideosSemanticos})[^<]*)<";
@@ -3435,16 +3436,12 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
 
                     string nuevaRuta = ControladorDocumentacion.ReemplazarRutaAdjuntoSemantico(rutaArchivo, pModel.Key, DocumentoVersionID);
 
-                    bool correcto = ControladorDocumentacion.CopiarAdjuntoDocumentoSemantico(rutaArchivo, pModel.Key, DocumentoVersionID);
-
-                    if (!correcto)
-                    {
-                        throw new Exception("No se han podido duplicar los archivos para el nuevo documento");
-                    }
+                    rutasAdjuntos.Add(Path.GetDirectoryName(rutaArchivo));
 
                     pModel.RdfValue = pModel.RdfValue.Replace(rutaArchivo, nuevaRuta);
                 }
             }
+            return rutasAdjuntos;
         }
 
         private int GuardarArchivoTemporal_ModificarRecurso_GestorDocumental(byte[] pFichero, string pNombre, string pExtension)
@@ -6404,7 +6401,6 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
         /// <param name="pModel">Argumentos</param>
         private void InicializarModeloParaAccionSemCms(DocumentEditionModel pModel)
         {
-            CopiarAdjuntoRecursoSemántico(pModel, IdentidadOrganizacion, (ProyectoSeleccionado.Clave != ProyectoAD.MyGnoss));
             mModelSaveRec = pModel;
             mEditRecCont = new EditResourceModel();
             mEditRecCont.ModifyResourceModel = new ModifyResourceModel();
@@ -6429,6 +6425,8 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
             {
                 RecuperarEntidadesExtEditablesDocID();
             }
+
+            HashSet<string> rutasAdjuntos = ModificarTriplesAdjuntosRecursoSemantico(mModelSaveRec, IdentidadOrganizacion, (ProyectoSeleccionado.Clave != ProyectoAD.MyGnoss));
 
             mEntidadesGuardar = mSemController.RecogerValoresRdf(mModelSaveRec.RdfValue, mModelSaveRec.EntityIDRegisterInfo);
 
@@ -6458,6 +6456,16 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
             if (repeticion != null)
             {
                 return repeticion;
+            }
+
+            foreach(string rutaAdjunto in rutasAdjuntos)
+            {
+                bool correcto = ControladorDocumentacion.CopiarAdjuntoDocumentoSemantico(rutaAdjunto, mModelSaveRec.Key, DocumentoVersionID);
+
+                if (!correcto)
+                {
+                    throw new Exception($"No se han podido duplicar los archivos para el nuevo documento.\n DocumentoID original: {mModelSaveRec.Key}\n DocumentoID Version: {DocumentoVersionID}");
+                }
             }
 
             if (CargaMasivaFormSem && GuardandoRecursoCargaMasiva)
