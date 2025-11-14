@@ -484,7 +484,7 @@ namespace Gnoss.Web
         }
 		protected string ObtenerRutaTraza()
 		{
-			string ruta = Path.Combine(mEnvironment.ContentRootPath, "trazas1");
+			string ruta = Path.Combine(mEnvironment.ContentRootPath, "trazas");
 
 			if (!Directory.Exists(ruta))
 			{

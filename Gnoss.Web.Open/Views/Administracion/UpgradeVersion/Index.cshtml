@@ -1,12 +1,28 @@
 ﻿@model string
 @{
     Layout = "~/Views/Shared/Layout/_Layout_Admin.cshtml";
+    string urlLogoGnoss = Html.GetBaseUrlStatic() + "/img/entradaSalida.gif";
 }
+
 <div class="formulario-edicion background-blanco">
-    <div class="alert alert-warning">
-        <span class="material-icons" alt="warning" title="warning" aria-label="warning">
-            warning
-        </span>
-        <strong>@Model</strong>
+    <div class="card text-center border-primary">
+        <div class="card-header text-primary bg-white border-primary">
+            Enterprise
+        </div>
+        <div class="card-body">
+            <p class="card-text text-dark">@Html.GetText("DEVTOOLS", "ADQUIRIRVERSIONENTERPRISECONTACTO1")</p>
+            <p class="card-text text-dark">@Html.GetText("DEVTOOLS", "ADQUIRIRVERSIONENTERPRISECONTACTO2")</p>
+            <p class="text-center">
+                <a href="@Html.GetText("DEVTOOLS", "ENLACECONTACTO")" class="btn btn-primary" target="_blank" role="button">
+                    <span class="material-icons">mail</span>
+                    <span class="texto">@Html.GetText("COMMON", "CONTACTO")</span>
+                </a>
+            </p>
+        </div>
+        <div class="card-footer text-primary bg-white border-primary">
+            <img src="@urlLogoGnoss"
+                 id="imgPoweredByGnoss"
+                 style="width:5rem;" />
+        </div>
     </div>
 </div>

@@ -1800,11 +1800,11 @@
 		</pagina>
 		<pagina>
 			<key>@#@@URLSEM,|,ADMINISTRAREVENTOSEXTERNOSECOSISTEMA@@#@</key>
-			<value>UpgradeVersion/IndexAdministrarEventosExternos</value>
+			<value>UpgradeVersion/Index</value>
 		</pagina>
 		<pagina>
 			<key>@#@@URLSEM,|,ADMINISTRARDESCARGARCONFIGURACIONECOSISTEMA@@#@</key>
-			<value>UpgradeVersion/IndexDescargaConfiguraciones</value>
+			<value>UpgradeVersion/Index</value>
 		</pagina>
 	</seccion>
 	<seccion name="acercaYaprende">
@@ -3560,63 +3560,63 @@
 		</pagina>
 		<pagina>
 			<key>@#@@URLSEM,|,ADMINISTRARCONFIGURACIONPESOBUSQUEDAS@@#@</key>
-			<value>UpgradeVersion/IndexAdministrarPesos</value>
+			<value>UpgradeVersion/Index</value>
 		</pagina>
 		<pagina>
 			<key>@#@@URLSEM,|,ADMINISTRARESTADOSISTEMAS@@#@</key>
-			<value>UpgradeVersion/IndexAdministrarEstadoSistemas</value>
+			<value>UpgradeVersion/Index</value>
 		</pagina>
 		<pagina>
 			<key>@#@@URLSEM,|,ADMINISTRAREVENTOSEXTERNOS@@#@</key>
-			<value>UpgradeVersion/IndexAdministrarEventosExternos</value>
+			<value>UpgradeVersion/Index</value>
 		</pagina>
 		<pagina>
 			<key>@#@@URLSEM,|,ADMINISTRARMATOMO@@#@</key>
-			<value>UpgradeVersion/IndexAdministrarEstadisticasComunidad</value>
+			<value>UpgradeVersion/Index</value>
 		</pagina>
 		<pagina>
 			<key>@#@@URLSEM,|,CONSULTACARGAMASIVA@@#@</key>
-			<value>UpgradeVersion/IndexConsultaCargaMasiva</value>
+			<value>UpgradeVersion/Index</value>
 		</pagina>
 		<pagina>
 			<key>@#@@URLSEM,|,ADMINISTRARINTEGRACIONCONTINUA@@#@</key>
-			<value>UpgradeVersion/IndexAdministrarIntegracionContinua</value>
+			<value>UpgradeVersion/Index</value>
 		</pagina>
 		<pagina>
 			<key>@#@@URLSEM,|,CONFIGURARINTEGRACIONCONTINUAINCIAL@@#@</key>
-			<value>UpgradeVersion/IndexAdministrarIntegracionContinua</value>
+			<value>UpgradeVersion/Index</value>
 		</pagina>
 		<pagina>
 			<key>@#@@URLSEM,|,CONFIGURARINTEGRACIONCONTINUAREPOSITORIO@@#@</key>
-			<value>UpgradeVersion/IndexAdministrarIntegracionContinua</value>
+			<value>UpgradeVersion/Index</value>
 		</pagina>
 		<pagina>
 			<key>@#@@URLSEM,|,DIAGNOSTICOPROBLEMAS@@#@</key>
-			<value>UpgradeVersion/IndexDiagnosticoProblemas</value>
+			<value>UpgradeVersion/Index</value>
 		</pagina>
 		<pagina>
 			<key>@#@@URLSEM,|,REPROCESADORECURSOS@@#@</key>
-			<value>UpgradeVersion/IndexReprocesadoRecursos</value>
+			<value>UpgradeVersion/Index</value>
 		</pagina>
 		<pagina>
 			<key>@#@@URLSEM,|,TAREASFONDO@@#@</key>
-			<value>UpgradeVersion/IndexMonitorizarTareas</value>
+			<value>UpgradeVersion/Index</value>
 		</pagina>
 		<pagina>
 			<key>administrar-aplicaciones-especificas</key>
-			<value>UpgradeVersion/IndexAdministrarApliacionesEspecificas</value>
+			<value>UpgradeVersion/Index</value>
 		</pagina>
 		<pagina>
 			<key>@#@@URLSEM,|,ADMINISTRARCONSULTASPARQL@@#@</key>
-			<value>UpgradeVersion/IndexAccesoSparql</value>
+			<value>UpgradeVersion/Index</value>
 		</pagina>
 		<pagina>
 			<key>@#@@URLSEM,|,CONFIGURAFTP@@#@</key>
-			<value>UpgradeVersion/IndexFTP</value>
+			<value>UpgradeVersion/Index</value>
 		</pagina>
 		<pagina>
 			<key>@#@@URLSEM,|,ADMINISTRARCACHE@@#@</key>
-			<value>UpgradeVersion/IndexAdministracionCache</value>
+			<value>UpgradeVersion/Index</value>
 		</pagina>
         <pagina>
 			<key>@#@@URLSEM,|,ADMINISTRARFLUJOS@@#@</key>
@@ -3648,11 +3648,11 @@
 		</pagina>
 		<pagina>
 			<key>@#@@URLSEM,|,ADMINISTRARDESCARGARCONFIGURACION@@#@</key>
-			<value>UpgradeVersion/IndexDescargaConfiguraciones</value>
+			<value>UpgradeVersion/Index</value>
 		</pagina>
 		<pagina>
 			<key>@#@@URLSEM,|,ADMINISTRARTRAZAS@@#@</key>
-			<value>UpgradeVersion/IndexTrazas</value>
+			<value>UpgradeVersion/Index</value>
 		</pagina>
 	</seccion>
 	<seccion name="fichaRecurso">
