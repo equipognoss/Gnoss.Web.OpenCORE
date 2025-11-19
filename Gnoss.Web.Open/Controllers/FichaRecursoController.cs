@@ -6258,8 +6258,10 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
 
             if (pFichaRecurso.Estado != null) 
             {
-                UtilFlujos utilFlujos = new UtilFlujos(mEntityContext, mLoggingService, mConfigService, mLoggerFactory.CreateLogger<UtilFlujos>(), mLoggerFactory);
-                bool tienePermisoEdicionEstado = utilFlujos.ComprobarPermisoEdicionEstado(pFichaRecurso.Estado, IdentidadActual.Clave);
+				//UtilFlujos utilFlujos = new UtilFlujos(mEntityContext, mLoggingService, mConfigService, mLoggerFactory.CreateLogger<UtilFlujos>(), mLoggerFactory);
+				//bool tienePermisoEdicionEstado = utilFlujos.ComprobarPermisoEdicionEstado(pFichaRecurso.Estado, IdentidadActual.Clave);
+				FlujosCN flujosCN = new FlujosCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<FlujosCN>(), mLoggerFactory);
+				bool tienePermisoEdicionEstado = flujosCN.ComprobarIdentidadTienePermisoEdicionEnEstado(pFichaRecurso.Estado.EstadoID, IdentidadActual.Clave, Documento.VersionOriginalID);
 
 				if (tienePermisoEdicionEstado)
 				{
@@ -8945,7 +8947,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                 EstadoModel estadoDocumento = ObtenerEstadoDocumento();
                 bool tienePermiso = estadoDocumento.Transiciones.Any(t => t.TransicionID.Equals(pTransicionID));
                 // TODO FRAN: ¿Permisos creador?
-                if (tienePermiso || Documento.CreadorID.Equals(IdentidadActual.Clave))
+                if (tienePermiso /*|| Documento.CreadorID.Equals(IdentidadActual.Clave)*/)
                 {
 					DocumentacionCN docCN = new DocumentacionCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<DocumentacionCN>(), mLoggerFactory);
 					FlujosCN flujosCN = new FlujosCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<FlujosCN>(), mLoggerFactory);

@@ -921,7 +921,6 @@ var tooltipActivo = '';
  * Inicializa el comportamiento de los tooltips de Freebase.
  */
 function initFreebase() {
-    ocultarFreebaseTt();
     $(".conFbTt")
         .each(function() {
             if (this.title) {

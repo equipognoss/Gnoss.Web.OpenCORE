@@ -133,7 +133,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Filters
                         // TODO Fran: Comprobar si es el creador
                         if (Rol.Equals(RolesAccesoRecurso.Editor))
                         {
-                            if (!flujosCN.ComprobarIdentidadTienePermisoEdicionEnEstado(estadoID.Value, mControladorBase.IdentidadActual.Clave))
+                            if (!flujosCN.ComprobarIdentidadTienePermisoEdicionEnEstado(estadoID.Value, mControladorBase.IdentidadActual.Clave, documentoID))
                             {
                                 pFilterContext.Result = Controlador(pFilterContext).RedireccionarAPaginaNoEncontrada();
                                 return;
@@ -141,7 +141,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Filters
                         }
                         else
                         {
-                            if (!flujosCN.ComprobarIdentidadTienePermisoLecturaEnEstado(estadoID.Value, mControladorBase.IdentidadActual.Clave))
+                            if (!flujosCN.ComprobarIdentidadTienePermisoLecturaEnEstado(estadoID.Value, mControladorBase.IdentidadActual.Clave, documentoID))
                             {
                                 pFilterContext.Result = Controlador(pFilterContext).RedireccionarAPaginaNoEncontrada();
                                 return;

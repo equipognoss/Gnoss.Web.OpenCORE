@@ -504,6 +504,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
 			ViewBag.ModificarPaginaPermitido = utilPermisos.IdentidadTienePermiso((ulong)PermisoContenidos.EditarPagina, mControladorBase.IdentidadActual.Clave, mControladorBase.IdentidadActual.IdentidadMyGNOSS.Clave, TipoDePermiso.Contenidos);
 			ViewBag.PublicarPaginaPermitido = utilPermisos.IdentidadTienePermiso((ulong)PermisoContenidos.PublicarPagina, mControladorBase.IdentidadActual.Clave, mControladorBase.IdentidadActual.IdentidadMyGNOSS.Clave, TipoDePermiso.Contenidos);
 
+
 			ViewBag.VerComponenteCMSPermitido = utilPermisos.IdentidadTienePermiso((ulong)PermisoContenidos.VerComponenteCMS, mControladorBase.IdentidadActual.Clave, mControladorBase.IdentidadActual.IdentidadMyGNOSS.Clave, TipoDePermiso.Contenidos);
 			ViewBag.CrearComponenteCMSPermitido = utilPermisos.IdentidadTienePermiso((ulong)PermisoContenidos.CrearComponenteCMS, mControladorBase.IdentidadActual.Clave, mControladorBase.IdentidadActual.IdentidadMyGNOSS.Clave, TipoDePermiso.Contenidos);
 			ViewBag.EliminarComponenteCMSPermitido = utilPermisos.IdentidadTienePermiso((ulong)PermisoContenidos.EliminarComponenteCMS, mControladorBase.IdentidadActual.Clave, mControladorBase.IdentidadActual.IdentidadMyGNOSS.Clave, TipoDePermiso.Contenidos);
@@ -545,9 +546,13 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
                 if (mPaginaModel == null)
                 {
                     mPaginaModel = new AdministrarPaginasCMSViewModel();
-                }
+                }				
 				mPaginaModel.Estado = utilFlujos.ObtenerEstadoDeContenido(estadoID, IdentidadActual.Clave, UtilIdiomas.LanguageCode, ParametrosGeneralesRow.IdiomaDefecto);
 				mPaginaModel.HistorialTransiciones = utilFlujos.ObtenerHistorialDeTransiciones(pPestanyaID, TipoContenidoFlujo.PaginaCMS, UtilIdiomas.LanguageCode, ParametrosGeneralesRow.IdiomaDefecto);
+
+				ViewBag.ModificarPaginaPermitido = flujosCN.ComprobarIdentidadTienePermisoEdicionEnEstado(estadoID, IdentidadActual.Clave, Guid.Empty);
+				ViewBag.PublicarPaginaPermitido = flujosCN.ComprobarIdentidadTienePermisoEdicionEnEstado(estadoID, IdentidadActual.Clave, Guid.Empty);
+				ViewBag.VerPaginaPermitido = flujosCN.ComprobarIdentidadTienePermisoLecturaEnEstado(estadoID, IdentidadActual.Clave, Guid.Empty);
 			}			
 		}
 

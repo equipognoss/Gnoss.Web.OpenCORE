@@ -3185,10 +3185,10 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
             }
         }
 
-        public bool ComprobarPermisoEdicionEstado(Guid pEstadoID)
+        public bool ComprobarPermisoEdicionEstado(Guid pEstadoID, Guid pDocumentoID)
         {
 			FlujosCN flujosCN = new FlujosCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<FlujosCN>(), mLoggerFactory);
-			return flujosCN.ComprobarIdentidadTienePermisoEdicionEnEstado(pEstadoID, IdentidadActual.Clave);
+			return flujosCN.ComprobarIdentidadTienePermisoEdicionEnEstado(pEstadoID, IdentidadActual.Clave, pDocumentoID);
         }
 
         public bool ComprobarPermisoGeneralEditarRecurso(TiposDocumentacion pTipoDocumento)
@@ -3222,7 +3222,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
         /// <returns>Resultado de la acción</returns>
         private ActionResult ComprobarRedirecciones_ModificarRecurso()
         {
-            if (Documento.Estado.HasValue && ComprobarPermisoEdicionEstado(Documento.Estado.Value))
+            if (Documento.Estado.HasValue && ComprobarPermisoEdicionEstado(Documento.Estado.Value, Documento.VersionOriginalID))
             {
                 return null;
             }
@@ -10959,7 +10959,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
             List<Guid> listaIdsEditores = new List<Guid>();
             List<Guid> listaIdsGruposEditores = new List<Guid>();
 
-            bool permisoEdicionEstado = pDocumento.FilaDocumento.EstadoID.HasValue && ComprobarPermisoEdicionEstado(pDocumento.FilaDocumento.EstadoID.Value);
+            bool permisoEdicionEstado = pDocumento.FilaDocumento.EstadoID.HasValue && ComprobarPermisoEdicionEstado(pDocumento.FilaDocumento.EstadoID.Value, pDocumento.VersionOriginalID);
 
 			if (((!EditandoRecurso && !EditandoFormSem) || pDocumento.TienePermisosEdicionIdentidad(IdentidadActual, IdentidadOrganizacion, ProyectoSeleccionado, UsuarioActual.UsuarioID, EsAdministrador(IdentidadActual)) || ControladorDocumentacion.EsEditorPerfilDeDocumento(IdentidadActual.PerfilID, pDocumento, true, UsuarioActual.UsuarioID) || ComprobarPermisoGeneralEditarRecurso(pDocumento.TipoDocumentacion) || permisoEdicionEstado) && (mOntologia == null || !EditandoFormSem || (mEditRecCont.ModifyResourceModel.SetPermissionsEditionAvailable)))
             {

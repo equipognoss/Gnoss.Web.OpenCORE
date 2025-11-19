@@ -375,7 +375,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
                                 if (componente.FilaComponente.EstadoID.HasValue)
                                 {
                                     UtilFlujos utilFlujos = new UtilFlujos(mEntityContext, mLoggingService, mConfigService, mLoggerFactory.CreateLogger<UtilFlujos>(), mLoggerFactory);
-                                    ficha.PermisoLectura = utilFlujos.IdentidadTienePermisoLecturaEnEstado(componente.FilaComponente.EstadoID.Value, IdentidadActual.Clave);
+                                    ficha.PermisoLectura = utilFlujos.IdentidadTienePermisoLecturaEnEstado(componente.FilaComponente.EstadoID.Value, IdentidadActual.Clave, Guid.Empty);
                                 }
                                 
                                 mPaginaModel.Result.ListaResultados.Add(ficha);

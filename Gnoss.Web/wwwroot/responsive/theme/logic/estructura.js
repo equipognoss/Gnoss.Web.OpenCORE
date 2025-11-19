@@ -396,6 +396,9 @@ const operativaGestionPaginas = {
         this.ChangedPaginaModel = {};
         this.ListaPestanyas = {};
         this.modalClosing = false;
+
+        // Posicion actual de la pagina
+        this.pageRowPosition = 0;
     },
 
     /**
@@ -3766,6 +3769,7 @@ const operativaGestionPaginas = {
             // Recorrer cada página para obtener los datos y guardarlos            
             rowPages.each(function () {
                 if (that.errorDuranteObtenerDatosPestaya == false) {
+                    that.pageRowPosition = cont
                     that.obtenerDatosPestanya($(this), cont++);
                 }
             });
@@ -3797,7 +3801,9 @@ const operativaGestionPaginas = {
         // Mostrar loading
         loadingMostrar();
         // Lista de páginas
-        const rowPages = that.filaPagina;
+        const rowPages = $("#id-added-pages-list").find(".component-wrap.page-row");
+        // Posición actual 
+        that.pageRowPosition = rowPages.index($(`#${that.filaPagina.attr("id")}`));
 
         // Se desean guardar las páginas -> Quitar clase de "newPage" para NO eliminar la página de reciente creación
         $(".newPage").removeClass("newPage");
@@ -3816,13 +3822,12 @@ const operativaGestionPaginas = {
         // Comprobar que no hay errores antes de proceder con el guardado
         if (!that.comprobarErroresGuardado()) {
             // Listado de pestañas/páginas donde se irán añadiendo para su posterior guardado
-            that.ListaPestanyas = {};
-            // Recorrer cada página para obtener los datos y guardarlos            
-            rowPages.each(function () {
-                if (that.errorDuranteObtenerDatosPestaya == false) {
-                    that.obtenerDatosPestanya($(this), 0);
-                }
-            });
+            that.ListaPestanyas = {};          
+
+            if (that.errorDuranteObtenerDatosPestaya == false) {
+                that.obtenerDatosPestanya(that.filaPagina, 0);
+            }
+            
             // Realizar Guardado de páginas si no se han producido errores
             if (!that.errorDuranteObtenerDatosPestaya) {
                 that.savePage(function (savePagesError) {
@@ -4808,7 +4813,7 @@ const operativaGestionPaginas = {
         that.ListaPestanyas[prefijoClave + '.Type'] = panelEdicion.find('[name="TabType"]').val();
         that.ListaPestanyas[prefijoClave + '.Deleted'] = panelEdicion.find('[name="TabEliminada"]').val();
         that.ListaPestanyas[prefijoClave + '.ParentTabKey'] = panelEdicion.find('[name="ParentTabKey"]').val();
-        that.ListaPestanyas[prefijoClave + '.Order'] = num; //panelEdicion.find('[name="TabOrden"]').val();
+        that.ListaPestanyas[prefijoClave + '.Order'] = that.pageRowPosition; //panelEdicion.find('[name="TabOrden"]').val();
         that.ListaPestanyas[prefijoClave + '.FechaModificacion'] = panelEdicion.find('[name="TabFechaModificacion"]').val();
 
         // Indicador de si la página ha sido editada / recién creada

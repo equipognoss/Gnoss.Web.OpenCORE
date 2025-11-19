@@ -878,8 +878,9 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
             ViewBag.EditorComponenteCMSPermitido = ViewBag.ModificarComponenteCMSPermitido || ViewBag.CrearComponenteCMSPermitido;
             if (CMSComponente != null && CMSComponente.Estado.HasValue)
             {
-                ViewBag.EditorComponenteCMSPermitido = flujosCN.ComprobarIdentidadTienePermisoEdicionEnEstado(CMSComponente.Estado.Value, IdentidadActual.Clave);
-            }
+                ViewBag.EditorComponenteCMSPermitido = flujosCN.ComprobarIdentidadTienePermisoEdicionEnEstado(CMSComponente.Estado.Value, IdentidadActual.Clave, Guid.Empty);
+				ViewBag.VerComponenteCMSPermitido = flujosCN.ComprobarIdentidadTienePermisoLecturaEnEstado(CMSComponente.Estado.Value, IdentidadActual.Clave, Guid.Empty);
+			}
         }
 
         private CMSAdminComponenteEditarViewModel PaginaModel

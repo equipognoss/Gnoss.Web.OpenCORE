@@ -252,10 +252,12 @@ Variables
 		}
 		else if (Model.Estado != null && transiciones.Count == 0)
 		{
-			<button class="btn btn-outline-grey" style="margin: 20px;">
-				<span class="material-icons">move_down</span>
-				<span class="texto">@Model.Estado.Nombre</span>
-			</button>
+			<div class="acciones-componente" style="display: flex; justify-content: right; margin: 20px; margin-bottom: -40px;">
+				<button class="btn btn-outline-grey">
+					<span class="material-icons">move_down</span>
+					<span class="texto">@Model.Estado.Nombre</span>
+				</button>
+			</div>			
 		}
 
 		@* Panel de idiomas (Si hay más de un idioma disponible) *@	
