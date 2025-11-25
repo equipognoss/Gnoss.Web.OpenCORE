@@ -7,6 +7,7 @@ using Es.Riam.Gnoss.AD.EntityModel.Models.IdentidadDS;
 using Es.Riam.Gnoss.AD.EntityModel.Models.PersonaDS;
 using Es.Riam.Gnoss.AD.EntityModel.Models.ProyectoDS;
 using Es.Riam.Gnoss.AD.EntityModel.Models.Roles;
+using Es.Riam.Gnoss.AD.EntityModel.Models.UsuarioDS;
 using Es.Riam.Gnoss.AD.EntityModelBASE;
 using Es.Riam.Gnoss.AD.Facetado;
 using Es.Riam.Gnoss.AD.Facetado.Model;
@@ -20,6 +21,7 @@ using Es.Riam.Gnoss.AD.Usuarios;
 using Es.Riam.Gnoss.AD.Virtuoso;
 using Es.Riam.Gnoss.CL;
 using Es.Riam.Gnoss.CL.Amigos;
+using Es.Riam.Gnoss.CL.Identidad;
 using Es.Riam.Gnoss.CL.ServiciosGenerales;
 using Es.Riam.Gnoss.CL.Suscripcion;
 using Es.Riam.Gnoss.Elementos.Amigos;
@@ -572,15 +574,34 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
 				model.IdentidadID = pIdentidadID;
 				model.Roles = new List<RolModel>();
 				model.RolesYaTiene = new List<Guid>();
+                model.RolesHeredados = new List<RolHeredado>();
 				ProyectoCN proyectoCN = new ProyectoCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<ProyectoCN>(), mLoggerFactory);
-				bool esEcosistema = false;
-				if (!string.IsNullOrEmpty(RequestParams("ecosistema")) && RequestParams("ecosistema").Equals("true"))
+                UsuarioCN usuarioCN = new UsuarioCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<UsuarioCN>(), mLoggerFactory);
+                bool esEcosistema = false;
+                
+                List<GrupoUsuarioConRoles> grupos = usuarioCN.ObtenerGruposDeUsuario(pIdentidadID);
+                List<RolHeredado> heredados = new List<RolHeredado>();
+
+                foreach (var grupo in grupos)
+                {
+                    foreach (var rol in grupo.RolesGrupo)
+                    {
+                        heredados.Add(new RolHeredado
+                        {
+                            Nombre = UtilCadenas.ObtenerTextoDeIdioma(rol.Nombre, UtilIdiomas.LanguageCode, null),
+                            Descripcion = HttpUtility.HtmlDecode(UtilCadenas.ObtenerTextoDeIdioma(rol.Descripcion, UtilIdiomas.LanguageCode, null)),
+                            GrupoOrigen = grupo.NombreGrupo + " (Grupo de origen)"
+                        });
+                    }
+                }
+                model.RolesHeredados = heredados;
+                if (!string.IsNullOrEmpty(RequestParams("ecosistema")) && RequestParams("ecosistema").Equals("true"))
 				{
                     esEcosistema = true;
 				}
                 if (esEcosistema)
                 {
-                    UsuarioCN usuarioCN = new UsuarioCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication,  mLoggerFactory.CreateLogger<UsuarioCN>(), mLoggerFactory);
+                    
 					Guid usuarioID = usuarioCN.ObtenerGuidUsuarioIDporIdentidadID(pIdentidadID);
 					List<RolEcosistema> rolesEcosistema = proyectoCN.ObtenerRolesAdministracionEcosistema();
                     List<RolEcosistema> rolesUsuario = proyectoCN.ObtenerRolesAdministracionEcosistemaDeUsuario(usuarioID);
@@ -601,9 +622,9 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
 					}
                 }
                 else
-                {					
-					IdentidadCN identidadCN = new IdentidadCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<IdentidadCN>(), mLoggerFactory);
-					List<Rol> rolesIdentidad = identidadCN.ObtenerRolesDeIdentidad(pIdentidadID);
+                {
+                    IdentidadCN identidadCN = new IdentidadCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<IdentidadCN>(), mLoggerFactory);
+                    List<Rol> rolesIdentidad = identidadCN.ObtenerRolesDeIdentidad(pIdentidadID);
 					List<Rol> rolesProyecto = proyectoCN.ObtenerRolesDeProyecto(ProyectoSeleccionado.Clave);
 
 					foreach (Rol rol in rolesProyecto)
@@ -626,6 +647,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
 				}
 
 				proyectoCN.Dispose();
+                usuarioCN.Dispose();
 
 				return PartialView("_modal-views/_change-rol", model);
 		    }
