@@ -3691,11 +3691,19 @@
 			<value>FichaRecurso/LoadHistory</value>
 		</pagina>
 		<pagina>
+			<key>{nombreRecurso}/{docID}/{versionDocID}/load-action/history</key>
+			<value>FichaRecurso/LoadHistory</value>
+		</pagina>
+		<pagina>
 			<key>{nombreRecurso}/{docID}/load-action/send-link</key>
 			<value>FichaRecurso/LoadSendLinkAction</value>
 		</pagina>
 		<pagina>
 			<key>{nombreRecurso}/{docID}/load-action/history/compare</key>
+			<value>FichaRecursoHistorial/Compare</value>
+		</pagina>
+		<pagina>
+			<key>{nombreRecurso}/{docID}/{versionDocID}/load-action/history/compare</key>
 			<value>FichaRecursoHistorial/Compare</value>
 		</pagina>
 		<pagina>
@@ -3774,6 +3782,18 @@
 		<pagina>
 			<key>{nombreRecurso}/{docID}/{versionDocID}/delete-version</key>
 			<value>FichaRecurso/DeleteVersion</value>
+		</pagina>
+		<pagina>
+			<key>{nombreRecurso}/{docID}/start-improvement</key>
+			<value>FichaRecurso/StartImprovement</value>
+		</pagina>
+		<pagina>
+			<key>{nombreRecurso}/{docID}/{versionDocID}/apply-improvement</key>
+			<value>FichaRecurso/ApplyImprovement</value>
+		</pagina>
+		<pagina>
+			<key>{nombreRecurso}/{docID}/{versionDocID}/cancel-improvement</key>
+			<value>FichaRecurso/CancelImprovement</value>
 		</pagina>
 		<pagina>
 			<key>{nombreRecurso}/{docID}/share</key>

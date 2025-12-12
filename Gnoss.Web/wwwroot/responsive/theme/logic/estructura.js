@@ -9612,6 +9612,7 @@ const operativaGestionFlujos = {
         this.newModalWorkflow = $("#modal-nuevo-workflow");
         this.modalWorkflow = $('#modal-editar-workflow');
         this.modalWorkflowContent = $('#modal-editar-workflow .modal-content');
+        this.modalDisableImprovementState = $('#modal-disable-improvement-workflow')
         this.workflowDiagram = $('#modal-diagrama-workflow');
         this.workflowDiagramContainer = '.mermaid-container';
         this.btnAddWorkflow = $('.btnAddWorkflow');
@@ -9624,9 +9625,11 @@ const operativaGestionFlujos = {
         this.txtEstados_Hack = $("#txtEstados_Hack");
         this.btnSaveWorkFlow = $('.btnGuardarFlujo');
         this.btnSaveWorkFlowClassName = 'btnGuardarFlujo';
+        this.btnDisableImproveClassName = 'btnDialogDisableImprovement';
         this.modalWorkflowClass = 'modal-flujo';
         this.radioButtonPublicState = $('.estadoVisibleSinAcceso');
         this.radioButtonPublicStateClassName = 'estadoVisibleSinAcceso';
+        this.radioButtonEnableImproveStateClassName = 'estadoPermiteMejoraChk';
         this.inputLectores = $("input#txtLectores");
         this.inputEditores = $("input#txtEditores");
         this.inputResponsables = $("input#txtResponsables");
@@ -9650,6 +9653,7 @@ const operativaGestionFlujos = {
         this.emptyNameError = false;
         this.boolCloseModal = false;
         this.transitionsResponsiblesHTML = '';
+        this.keepWorkflowModal = false;
     },
 
     configRutas: function (pParams) {
@@ -9757,6 +9761,7 @@ const operativaGestionFlujos = {
             let id = guidGenerator();
             that.newModalWorkflow.attr("data-flujo-id", id);
             that.workflowID = id;
+            that.currentModal = that.newModalWorkflow;
         });
 
         this.btnDeleteWorkflow.off().on("click", function () {
@@ -9782,6 +9787,13 @@ const operativaGestionFlujos = {
                 that.handleSaveWorkflow($(e.currentTarget));
             });
         });
+
+        configEventByJqueryObject(that.modalDisableImprovementState, function (element) {
+            const $jqueyryElement = $(element);
+            $jqueyryElement.off("hide.bs.modal").on("hide.bs.modal", (e) => {
+                that.modalDisableImprovementState.find('ul').empty();
+            });
+        })
 
         configEventByClassName(`${that.modalWorkflowClass}`, function (element) {
             const $jqueyryElement = $(element);
@@ -9811,17 +9823,62 @@ const operativaGestionFlujos = {
             });
         });
 
+        configEventByClassName(that.radioButtonEnableImproveStateClassName, function (element) {
+            const $jqueryElement = $(element);
+            $jqueryElement.on("click", function (e) {
+                let $input = $(this)
+                let $parent = $input.parents("div.formulario-oculto");
+                let $inptHidden = $parent.find("#inptHiddenPermiteMejora");
+
+                if ($input.data("value") == "no") {
+                    $inptHidden.attr("data-permite-mejora", false).data("permite-mejora", false);
+                } else {
+                    $inptHidden.attr("data-permite-mejora", true).data("permite-mejora", true);
+                }
+            });
+        });
+
+        configEventByClassName(that.btnDisableImproveClassName, function (element) {
+            const $jqueryElement = $(element);
+            $jqueryElement.on("click", function (e) {
+                let $input = $(this)
+                let approved = $input.val() == 'true';
+                that.keepWorkflowModal = false;
+                that.modalDisableImprovementState.modal("hide");
+                if (approved) {
+                    that.saveWorkflow(true);
+                } else {
+                    that.currentModal.modal("show");
+                }
+            });
+        });
+
         configEventByClassName(`${that.radioButtonStateTypeClassName}`, function (element) {
             const $jqueryElement = $(element);
             $jqueryElement.off().on("click", function () {
                 let rdButton = $(this);
-                let inputColor = rdButton.parents('.formulario-oculto').find('input[type="color"]');
-                if (rdButton.attr('id') == "estado-inicial") {
-                    inputColor.val("#80C8F7");
-                } else if (rdButton.attr('id') == "estado-intermedio") {
-                    inputColor.val("#FFB74D");
+                let formOculto = rdButton.parents('.formulario-oculto');
+                let inputColor = formOculto.find('input[type="color"]');
+                let inptHiddenCurrentStateType = formOculto.find("#inptHiddenCurrentStateType")
+                let prevValue = inptHiddenCurrentStateType.val();
+
+                if (prevValue == rdButton.val()) return;
+
+                let inptHiddenPermiteMejora = formOculto.find("input#inptHiddenPermiteMejora");
+                let rdButtonMejoraNo = formOculto.find("input#estado-permite-mejora-no");
+                let divPermiteMejora = formOculto.find("div.estadoPermiteMejora");
+
+                inptHiddenPermiteMejora.attr("data-permite-mejora", false).data("permite-mejora", false);
+                rdButtonMejoraNo.prop("checked", true);
+                inptHiddenCurrentStateType.val(rdButton.val());
+
+                if (rdButton.attr('id') == "estado-inicial" || rdButton.attr('id') == "estado-intermedio") {
+                    let color = rdButton.attr('id') == "estado-inicial" ? "#80C8F7" : "#FFB74D";
+                    inputColor.val(color);
+                    divPermiteMejora.addClass("d-none");
                 } else {
                     inputColor.val("#94c748");
+                    divPermiteMejora.removeClass("d-none");
                 }
             });
         });
@@ -10029,6 +10086,7 @@ const operativaGestionFlujos = {
         const that = this;
         loadingMostrar();
         let workflowID = btn.parents("tr").first().attr("id");
+        that.currentModal = that.modalWorkflow
         let dataPost = {
             pFlujoID: workflowID
         }
@@ -10093,6 +10151,10 @@ const operativaGestionFlujos = {
 
     handleCloseWorkflowModal: function (e) {
         const that = this;
+        if (that.keepWorkflowModal) {
+            that.keepWorkflowModal = false;
+            return;
+        }
         if (that.currentModal.attr("id") !== "modal-nuevo-workflow") {
             that.currentModal.find('.modal-content').html('');
         } else {
@@ -10104,6 +10166,7 @@ const operativaGestionFlujos = {
             that.currentModal.find(".formulario-oculto").addClass("d-none");
             that.currentModal.find(".autocompletar-transiciones select.select-origin option").not(':first').remove();
             that.currentModal.find(".autocompletar-transiciones select.select-end option").not(':first').remove();
+            autocompletarWorkflows.onChecked();
             autocompletarWorkflows.resetForm(that.currentModal.find(".autocompletar-estados"));
             autocompletarWorkflows.resetForm(that.currentModal.find(".autocompletar-transiciones"));
             let $tagsTiposRecurso = that.currentModal.find(".autocompletar-recursos .tag-list").children();
@@ -10125,14 +10188,18 @@ const operativaGestionFlujos = {
         that.workflowItem["Transiciones"] = that.workflowTransitions;
     },
 
-    saveWorkflow: function () {
+    saveWorkflow: function (confirmed = false) {
         loadingMostrar();
         const that = this;
         dataPost = {
             pModelo: that.workflowItem
         }
+        let url = that.urlSaveWorkflow;
+        if (confirmed) {
+            url = url + "?confirmed=true"
+        }
         GnossPeticionAjax(
-            that.urlSaveWorkflow,
+            url,
             dataPost,
             true
         ).done(function (data) {
@@ -10143,7 +10210,17 @@ const operativaGestionFlujos = {
             location.reload();
         }).fail(function (data) {
             loadingOcultar();
-            mostrarNotificacion("error", data);
+            if (data.includes("ERRORHAYMEJORASACTIVAS")) {
+                let lista = data.split("|||")[1];
+                if (lista.length > 0) {
+                    that.keepWorkflowModal = true;
+                    that.modalDisableImprovementState.find("ul").append(lista);
+                    that.modalWorkflow.modal("hide");
+                    that.modalDisableImprovementState.modal("show");
+                }
+            } else {
+                mostrarNotificacion("error", data);
+            }
         });
     },
 
@@ -10296,6 +10373,7 @@ const operativaGestionFlujos = {
         state["Publico"] = input.find(`input[type="hidden"]`).data("estado-publico");
         state["Color"] = input.find(`input[type="hidden"]`).data("estado-color");
         state["TipoEstado"] = input.find(`input[type="hidden"]`).data("tipo-estado");
+        state["PermiteMejora"] = input.find(`input[type="hidden"]`).data("permite-mejora")
         if (input.hasClass("d-none")) {
             state["Eliminado"] = true;
         }
@@ -10524,6 +10602,32 @@ const operativaGestionFlujos = {
                 rowWorkflow.addClass("d-none");
             }
         });
+    },
+
+    handleCheckOnGoingImprovements: function (estadoID) {
+        const that = this;
+        let dataPost = {
+            pEstadoID: estadoID
+        }
+        loadingMostrar();
+        GnossPeticionAjax(
+            that.urlCheckOnGoingImprovements,
+            dataPost,
+            true
+        ).done(function (data) {
+            let lista = data.$values;
+            loadingOcultar();
+            if (lista.length > 0) {
+                lista.forEach(function (item) {
+                    that.modalDisableImprovementState.find("ul").append(`<li>${item}</li>`);
+                });
+                that.modalWorkflow.modal("hide");
+                that.modalDisableImprovementState.modal("show");
+            }
+        }).fail(function () {
+            loadingOcultar();
+            mostrarNotificacion("error", "Ha surgido un problema al cargar comprobar las mejoras activas de los recursos")
+        })
     }
 }
 

@@ -2088,6 +2088,8 @@ span.material-icons.expand[aria-expanded=true]::before {font-family: 'Material I
 .fichaRecurso .col-contenido ul.acciones-recurso > li .dropdown.show > a:before { padding: 0 2px; text-decoration: none !important; content: "close"; display: flex; font-family: "Material Icons"; color: var(--c-texto); font-size: 20px;}
 .fichaRecurso .col-contenido ul.acciones-recurso > li .dropdown.show > a .material-icons { display: none; }
 .fichaRecurso .col-contenido ul.acciones-recurso > li .dropdown .dropdown-menu { top: 8px !important; }
+.fichaRecurso .col-contenido ul.acciones-recurso .acciones-recurso-listado .dropdown-menu > div + div {border-top: 1px solid #bbb;}
+.fichaRecurso .col-contenido ul.acciones-recurso .acciones-recurso-listado .dropdown a.oscuro:before { color: var(--c-blanco); }
 /* Ocultar opciones móviles en dispositivos grandes  */
 .fichaRecurso .col-contenido li.option_mobile { display: none; }
 
@@ -2847,6 +2849,9 @@ span.material-icons.expand[aria-expanded=true]::before {font-family: 'Material I
 
 /* TABLA HISTORIAL */
 table.table > tbody > tr.activo > td { font-weight: 500; color: var(--c-primario); }
+.tabla-versiones .chip-actual{ font-weight: 400; color:#00d640; border: 1px solid #00d640; border-radius: 45px; padding-inline: 12px; }
+.tabla-versiones .chip-mejora{ font-weight: 400; color:#007fd6; border: 1px solid #007fd6; border-radius: 45px; padding-inline: 12px; }
+.tabla-versiones .chip-historico{ font-weight: 400; border: 1px solid; border-radius: 45px; padding-inline: 12px; }
 /* */
 
 
@@ -3350,7 +3355,7 @@ table.table > tbody > tr.activo > td { font-weight: 500; color: var(--c-primario
 .comparar-versiones__wrap .comparar-versiones__header p { color: var(--c-negro); margin-bottom: 0; }
 .comparar-versiones__wrap .comparar-versiones__header p.version { font-size: 16px; font-weight: 700; display: flex; flex-wrap: wrap; align-items: center; gap: 10px; }
 .comparar-versiones__wrap .comparar-versiones__header p.date { font-size: 12px; }
-.comparar-versiones__wrap .comparar-versiones__header .chip { font-size: 12px; font-weight: 400; color: var(--c-blanco); background-color: #00d640; border-radius: 45px; padding-inline: 12px; }
+.comparar-versiones__wrap .comparar-versiones__header .chip { font-weight: 400; color:#00d640; border: 1px solid #00d640; border-radius: 45px; padding-inline: 12px; font-size: 12px; }
 
 .comparar-versiones__wrap .comparar-versiones__body .comparar-version { padding: 25px; padding-top: 0; /*margin-top: 20px;*/ }
 

@@ -1,35 +1,36 @@
-﻿@model EstadoViewModel
+﻿@using System.Text
+@model EstadoViewModel
 @{
     EstadoViewModel estado = Model;
     string collapseId = $"panel_collapse_{Model.EstadoID.ToString().Substring(0, 5)}";
-    string editores = Html.GetText("DEVTOOLS", "EDITORES");
+    string editores = Html.GetText("USUARIOS", "EDITORES");
     string tipoEstado = $"{Html.GetText("DEVTOOLS", "ESTADO")} ";
     switch (estado.TipoEstado)
     {
         case TipoEstado.Inicial:
-            tipoEstado += Html.GetText("DEVTOOLS", "ESTADOINICIAL");
+            tipoEstado += Html.GetText("FLUJOS", "ESTADOINICIAL");
             break;
         case TipoEstado.Intermedio:
-            tipoEstado += Html.GetText("DEVTOOLS", "ESTADOINTERMEDIO");
+            tipoEstado += Html.GetText("FLUJOS", "ESTADOINTERMEDIO");
             break;
         case TipoEstado.Final:
-            tipoEstado += Html.GetText("DEVTOOLS", "ESTADOFINAL");
+            tipoEstado += Html.GetText("FLUJOS", "ESTADOFINAL");
             break;
     }
 
-    List<string> titulosPrivacidad = new List<string> { Html.GetText("DEVTOOLS", "LECTORES"), $"{char.ToUpper(editores[0])}{editores.Substring(1)}" };
+    List<string> titulosPrivacidad = new List<string> { Html.GetText("USUARIOS", "LECTORES"), $"{char.ToUpper(editores[0])}{editores.Substring(1)}" };
 
-    string htmlNombreLectores = "";
-    string htmlNombreEditores = "";
+    StringBuilder htmlNombreLectores = new StringBuilder();
+    StringBuilder htmlNombreEditores = new StringBuilder();
     foreach (EstadoIdentidadViewModel estadoIdentidad in estado.ListaEstadoIdentidad)
     {
         if (estadoIdentidad.Editor)
         {
-            htmlNombreEditores += PintarTags(estadoIdentidad.Nombre, estadoIdentidad.PerfilID, false);
+            htmlNombreEditores.Append(PintarTags(estadoIdentidad.Nombre, estadoIdentidad.PerfilID, false));
         }
         else
         {
-            htmlNombreLectores += PintarTags(estadoIdentidad.Nombre, estadoIdentidad.PerfilID, false);
+            htmlNombreLectores.Append(PintarTags(estadoIdentidad.Nombre, estadoIdentidad.PerfilID, false));
         }
     }
 
@@ -37,11 +38,11 @@
     {
         if (estadoGrupo.Editor)
         {
-            htmlNombreEditores += PintarTags(estadoGrupo.Nombre, estadoGrupo.GrupoID, true);
+            htmlNombreEditores.Append(PintarTags(estadoGrupo.Nombre, estadoGrupo.GrupoID, true));
         }
         else
         {
-            htmlNombreLectores += PintarTags(estadoGrupo.Nombre, estadoGrupo.GrupoID, true);
+            htmlNombreLectores.Append(PintarTags(estadoGrupo.Nombre, estadoGrupo.GrupoID, true));
         }
     }
 
@@ -51,18 +52,18 @@
         <span class="tag-text">
             <span class="tag-label">@Html.ObtenerTextoIdiomaUsuario(estado.Nombre)<span class="tag-state">-@tipoEstado</span></span>
             <span class="users editors">
-                <span class="user-label">@Html.GetText("DEVTOOLS", "EDITORES")</span>
-                @Html.Raw(htmlNombreEditores)
+                <span class="user-label">@Html.GetText("USUARIOS", "EDITORES")</span>
+                @Html.Raw(htmlNombreEditores.ToString())
             </span>
             <span class="users readers">
-                <span class="user-label">@Html.GetText("DEVTOOLS", "LECTORES")</span>
-                @Html.Raw(htmlNombreLectores)
+                <span class="user-label">@Html.GetText("USUARIOS", "LECTORES")</span>
+                @Html.Raw(htmlNombreLectores.ToString())
             </span>
         </span>
         <span class="tag-edit material-icons">edit</span>
         <span class="tag-remove material-icons">delete</span>
     </div>
-    <input type="hidden" data-tipo-estado="@((short)estado.TipoEstado)" data-estado-color="@estado.Color" data-estado-publico="@estado.Publico.ToString().ToLowerInvariant()" value="@estado.Nombre">
+    <input type="hidden" data-tipo-estado="@((short)estado.TipoEstado)" data-estado-color="@estado.Color" data-estado-publico="@estado.Publico.ToString().ToLowerInvariant()" data-permite-mejora="@estado.PermiteMejora.ToString().ToLowerInvariant()" value="@estado.Nombre">
 </div>
  
 @functions{

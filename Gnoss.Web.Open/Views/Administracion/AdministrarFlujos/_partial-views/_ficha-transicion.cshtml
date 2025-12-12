@@ -1,16 +1,17 @@
-﻿@model TransicionViewModel
+﻿@using System.Text
+@model TransicionViewModel
 @{
     TransicionViewModel transicion = Model;
     string collapseId = $"panel_collapse_{Model.TransicionID.ToString().Substring(0, 5)}";
-    string htmlNombreIdentidad = "";
+    StringBuilder htmlNombreIdentidad = new StringBuilder();
     foreach (Guid transicionIdentidadID in transicion.ListaNombreTransicionIdentidad.Keys)
     {
-        htmlNombreIdentidad += PintarTags(transicion.ListaNombreTransicionIdentidad[transicionIdentidadID], transicionIdentidadID, false);
+        htmlNombreIdentidad.Append(PintarTags(transicion.ListaNombreTransicionIdentidad[transicionIdentidadID], transicionIdentidadID, false));
     }
 
     foreach (Guid transicionGrupoID in transicion.ListaNombreTransicionGrupo.Keys)
     {
-        htmlNombreIdentidad += PintarTags(transicion.ListaNombreTransicionGrupo[transicionGrupoID], transicionGrupoID, true);
+        htmlNombreIdentidad.Append(PintarTags(transicion.ListaNombreTransicionGrupo[transicionGrupoID], transicionGrupoID, true));
     }
 }
 
@@ -19,8 +20,8 @@
         <span class="tag-text">
             <span class="tag-label">@Html.ObtenerTextoIdiomaUsuario(transicion.Nombre)</span>
             <span class="users responsibles">
-                <span class="user-label">@Html.GetText("DEVTOOLS","RESPONSABLES")</span>
-                @Html.Raw(htmlNombreIdentidad)
+                <span class="user-label">@Html.GetText("FLUJOS","RESPONSABLES")</span>
+                @Html.Raw(htmlNombreIdentidad.ToString())
             </span>
             <span class="transition">
                 <span class="transition-label" data-publico="@Model.EstadoOrigen.Publico" data-eliminado="@transicion.EstadoOrigen.Eliminado"  data-tipo="@((short)transicion.EstadoOrigen.TipoEstado)" data-id="@transicion.EstadoOrigen.EstadoID" title="@transicion.EstadoOrigen.Nombre">@Html.ObtenerTextoIdiomaUsuario(transicion.EstadoOrigen.Nombre)</span>

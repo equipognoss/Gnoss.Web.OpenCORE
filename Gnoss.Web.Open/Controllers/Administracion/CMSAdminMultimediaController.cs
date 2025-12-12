@@ -288,7 +288,9 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
         private List<FacetModel> CargarFacetas(List<MultimediaFileInfoModel> pListaResultados, string pExt, string pUsos, SortedDictionary<string, List<CMSComponente>> pListaComponentesItem, SortedDictionary<string, List<short>> pListaPaginasItem)
         {
             List<FacetModel> facetas = new List<FacetModel>();
+
             #region Extension
+
             FacetModel facetaExtension = new FacetModel();
             facetas.Add(facetaExtension);
             facetaExtension.Name = "Extension";
@@ -296,15 +298,20 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
             Dictionary<string, int> extensiones = new Dictionary<string, int>();
             foreach (MultimediaFileInfoModel multimediaFile in pListaResultados)
             {
-                string extension = multimediaFile.FileInfo.file_name.Substring(multimediaFile.FileInfo.file_name.LastIndexOf("."));
-                if (extensiones.ContainsKey(extension))
+                int indiceExtension = multimediaFile.FileInfo.file_name.LastIndexOf(".");
+                
+                if(indiceExtension > -1)
                 {
-                    extensiones[extension]++;
-                }
-                else
-                {
-                    extensiones.Add(extension, 1);
-                }
+                    string extension = multimediaFile.FileInfo.file_name.Substring(indiceExtension);
+                    if (extensiones.ContainsKey(extension))
+                    {
+                        extensiones[extension]++;
+                    }
+                    else
+                    {
+                        extensiones.Add(extension, 1);
+                    }
+                }               
             }
 
             foreach (string extension in extensiones.Keys)
@@ -322,43 +329,6 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
                 }
                 facetaExtension.FacetItemList.Add(facetaItem);
             }
-            #endregion
-
-            #region usos
-            /*
-            FacetModel facetaUsos = new FacetModel();
-            facetas.Add(facetaUsos);
-            facetaUsos.Name = "Número de usos";
-            facetaUsos.FacetItemList = new List<FacetItemModel>();
-
-            Dictionary<int, int> numUsos = new Dictionary<int, int>();
-            foreach (string item in pListaComponentesItem.Keys)
-            {
-                int numUso = pListaComponentesItem[item].Count + pListaPaginasItem[item].Count;
-                if (!numUsos.ContainsKey(numUso))
-                {
-                    numUsos.Add(numUso, 0);
-                }
-                numUsos[numUso]++;
-            }
-            foreach (int usos in numUsos.Keys)
-            {
-                if (string.IsNullOrEmpty(pUsos) || pUsos == usos.ToString())
-                {
-                    int numComponentes = numUsos[usos];
-
-                    FacetItemModel facetaItem = new FacetItemModel();
-                    facetaItem.Name = usos.ToString();
-                    facetaItem.Number = numComponentes;
-                    facetaItem.Filter = $"numusos={usos}";
-                    if (pUsos == usos.ToString())
-                    {
-                        facetaItem.Selected = true;
-                    }
-                    facetaUsos.FacetItemList.Add(facetaItem);
-                }
-            }
-            */
 
             #endregion
 

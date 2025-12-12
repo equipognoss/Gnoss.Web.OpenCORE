@@ -3,13 +3,12 @@
     CommunityModel Comunidad = Html.GetComunidad();
     HeaderModel cabecera = Html.GetCabecera();
     string multiIdiomaTabId = @Guid.NewGuid().ToString().Substring(0, 5);
-    string listaEstadosHack = "";
 }
 
 <div class="modal-header">
     <p class="modal-title">
         <span class="material-icons">edit</span>
-        @(Model.Nuevo? @Html.GetText("DEVTOOLS", "CREAR") : @Html.GetText("DEVTOOLS", "EDITAR")) @Html.GetText("DEVTOOLS", "FLUJODETRABAJO").ToLower()
+        @(Model.Nuevo? @Html.GetText("DEVTOOLS", "CREAR") : @Html.GetText("DEVTOOLS", "EDITAR")) @Html.GetText("FLUJOS", "FLUJODETRABAJO").ToLower()
     </p>
     <span class="material-icons cerrar" data-dismiss="modal" aria-label="Close">close</span>
 </div>
@@ -31,12 +30,12 @@
         <div class="tab-content">
             @* Seccion de estados*@
             <div class="form-group mb-4">
-                <label class="control-label d-block">@Html.GetText("DEVTOOLS", "ESTADOS")</label>
+                <label class="control-label d-block">@Html.GetText("FLUJOS", "ESTADOS")</label>
                 <div class="autocompletar autocompletar-estados form-group">
                     @* Input donde introduce el modal *@
                     <div class="input-wrap form-sticky-button">
                         <input type="text"
-                               placeholder="@Html.GetText("DEVTOOLS", "AÑADIRESTADO")"
+                               placeholder="@Html.GetText("FLUJOS", "AÑADIRESTADO")"
                                id="txtEstado"
                                class="form-control"
                                autocomplete="off" />
@@ -56,14 +55,14 @@
                         </div>
                         @* Tipos de Estado RadioBtn*@
                         <div class="form-group mb-4">
-                            <label class="control-label d-block">@Html.GetText("DEVTOOLS", "TIPOESTADO")</label>
+                            <label class="control-label d-block">@Html.GetText("FLUJOS", "TIPOESTADO")</label>
                             <div class="form-check form-check-inline">
                                 <input class="form-check-input tipo-estado"
                                        type="radio"
                                        name="tipo-estado"
                                        id="estado-inicial"
                                        value="@((short)TipoEstado.Inicial)" />
-                                <label class="form-check-label" for="estado-inicial">@Html.GetText("DEVTOOLS", "ESTADOINICIAL")</label>
+                                <label class="form-check-label" for="estado-inicial">@Html.GetText("FLUJOS", "ESTADOINICIAL")</label>
                             </div>
                             <div class="form-check form-check-inline">
                                 <input class="form-check-input tipo-estado"
@@ -71,7 +70,7 @@
                                        name="tipo-estado"
                                        id="estado-intermedio"
                                        value="@((short)TipoEstado.Intermedio)" />
-                                <label class="form-check-label" for="estado-intermedio">@Html.GetText("DEVTOOLS", "ESTADOINTERMEDIO")</label>
+                                <label class="form-check-label" for="estado-intermedio">@Html.GetText("FLUJOS", "ESTADOINTERMEDIO")</label>
                             </div>
                             <div class="form-check form-check-inline">
                                 <input class="form-check-input tipo-estado"
@@ -79,8 +78,34 @@
                                        name="tipo-estado"
                                        id="estado-final"
                                        value="@((short)TipoEstado.Final)" />
-                                <label class="form-check-label" for="estado-final">@Html.GetText("DEVTOOLS", "ESTADOFINAL")</label>
+                                <label class="form-check-label" for="estado-final">@Html.GetText("FLUJOS", "ESTADOFINAL")</label>
                             </div>
+                            <input type="hidden" id="inptHiddenCurrentStateType" value="0" />
+                        </div>
+                        @* Estado permite mejora RadioBtn*@
+                        <div class="form-group mb-4 d-none estadoPermiteMejora">
+                            <label class="control-label d-block">@Html.GetText("FLUJOS", "PERMITEMEJORAESTADO")</label>
+                            <div class="form-check form-check-inline">
+                                <input class="form-check-input estadoPermiteMejoraChk"
+                                       type="radio"
+                                       data-value="si"
+                                       name="estadoMejora"
+                                       id="estado-permite-mejora-si"
+                                       />
+                                <label class="form-check-label" for="estado-permite-mejora-si">@Html.GetText("COMMON", "SI")</label>
+                            </div>
+
+                            <div class="form-check form-check-inline">
+                                <input class="form-check-input estadoPermiteMejoraChk"
+                                       type="radio"
+                                       data-value="no"
+                                       name="estadoMejora"
+                                       id="estado-permite-mejora-no"
+                                       checked
+                                       />
+                                <label class="form-check-label" for="estado-permite-mejora-no">@Html.GetText("COMMON", "NO")</label>
+                            </div>
+                            <input type="hidden" id="inptHiddenPermiteMejora" data-permite-mejora="false"/>
                         </div>
                         @* Estado publico RadioBtn*@
                         <div class="form-group mb-4">
@@ -111,11 +136,11 @@
                         </div>
                         @* Seccion de editores estado*@
                         <div class="form-group mb-4">
-                            <label class="control-label d-block">@Html.GetText("DEVTOOLS", "AGREGAREDITOR")</label>
+                            <label class="control-label d-block">@Html.GetText("FLUJOS", "AGREGAREDITOR")</label>
                             <div class="autocompletar editores mb-4">
                                 <div class="input-wrap">
                                     <input type="text"
-                                           placeholder="@Html.GetText("DEVTOOLS", "AGREGARUSUARIOYGRUPO")"
+                                           placeholder="@Html.GetText("FLUJOS", "AGREGARUSUARIOYGRUPO")"
                                            id="txtEditores"
                                            class="form-control"
                                            autocomplete="off" />
@@ -131,11 +156,11 @@
                         </div>
                         @* Seccion de lectores estado*@
                         <div class="form-group mb-4 estado-lectores d-none">
-                            <label class="control-label d-block">@Html.GetText("DEVTOOLS", "AGREGARLECTOR")</label>
+                            <label class="control-label d-block">@Html.GetText("FLUJOS", "AGREGARLECTOR")</label>
                             <div class="autocompletar lectores mb-4">
                                 <div class="input-wrap">
                                     <input type="text"
-                                           placeholder="@Html.GetText("DEVTOOLS", "AGREGARUSUARIOYGRUPO")"
+                                           placeholder="@Html.GetText("FLUJOS", "AGREGARUSUARIOYGRUPO")"
                                            id="txtLectores"
                                            class="form-control txtAutocomplete"
                                            data-avoid-autocomplete-with-enter-button="true"
@@ -161,7 +186,6 @@
                     <div class="tag-list mb-4">
                         @foreach (var estado in Model.Estados.OrderBy(e => e.TipoEstado).ThenBy(e => e.Nombre))
                         {
-                            listaEstadosHack += $"{estado.EstadoID}:{Html.ObtenerTextoIdiomaUsuario(estado.Nombre)}@@@";
                             @Html.PartialView("_partial-views/_ficha-estado", estado)
                         }
                     </div>
@@ -169,12 +193,12 @@
             </div>
             @* Seccion de transiciones*@
             <div class="form-group mb-4">
-                <label class="control-label d-block">@Html.GetText("DEVTOOLS", "TRANSICIONES")</label>
+                <label class="control-label d-block">@Html.GetText("FLUJOS", "TRANSICIONES")</label>
                 <div class="autocompletar autocompletar-transiciones form-group">
                     @* Input donde introduce el modal *@
                     <div class="input-wrap form-sticky-button">
                         <input type="text"
-                               placeholder="@Html.GetText("DEVTOOLS", "AÑADIRTRANSICION")"
+                               placeholder="@Html.GetText("FLUJOS", "AÑADIRTRANSICION")"
                                id="txtTransicion"
                                class="form-control"
                                autocomplete="off"
@@ -186,18 +210,18 @@
                     @* Formulario que se va a clonar por JS y se rellenará*@
                     <div class="formulario-oculto d-none">
                         <div class="form-group mb-4">
-                            @foreach (KeyValuePair<string, string> idioma in cabecera.Languajes)
+                            @foreach (string key in cabecera.Languajes.Select(kvp => kvp.Key))
                             {
-                                string clase = $"nombre-form-oculto-{idioma.Key}";
-                                <input class="form-control nombre-form-oculto @clase" type="text" placeholder="Nombre estado" lang="@idioma.Key" />
+                                string clase = $"nombre-form-oculto-{key}";
+                                <input class="form-control nombre-form-oculto @clase" type="text" placeholder="Nombre estado" lang="@key" />
                             }
                         </div>
                         <div class="form-group mb-4">
-                            <label class="control-label d-block">@Html.GetText("DEVTOOLS", "AÑADIRRESPONSABLE")</label>
+                            <label class="control-label d-block">@Html.GetText("FLUJOS", "AÑADIRRESPONSABLE")</label>
                             <div class="autocompletar responsables mb-4">
                                 <div class="input-wrap">
                                     <input type="text"
-                                           placeholder="@Html.GetText("DEVTOOLS", "AGREGARUSUARIOYGRUPO")"
+                                           placeholder="@Html.GetText("FLUJOS", "AGREGARUSUARIOYGRUPO")"
                                            id="txtResponsables"
                                            class="form-control"
                                            autocomplete="off" />
@@ -214,16 +238,16 @@
                         @* Seccion del select estado origen y estado destino*@
                         <div class="form-row">
                             <div class="form-group mb-4 col-md-6">
-                                <label class="control-label d-block">@Html.GetText("DEVTOOLS", "ESTADOORIGEN")</label>
+                                <label class="control-label d-block">@Html.GetText("FLUJOS", "ESTADOORIGEN")</label>
                                 <select class="form-control select-origin" name="origen">
-                                    <option value="">@Html.GetText("DEVTOOLS", "SELECCIONESTADOINICIO")</option>
+                                    <option value="">@Html.GetText("FLUJOS", "SELECCIONESTADOINICIO")</option>
                                     @* Se rellenan el resto de option por JS*@
                                 </select>
                             </div>
                             <div class="form-group mb-4 col-md-6">
-                                <label class="control-label d-block">@Html.GetText("DEVTOOLS", "ESTADODESTINO")</label>
+                                <label class="control-label d-block">@Html.GetText("FLUJOS", "ESTADODESTINO")</label>
                                 <select class="form-control select-end" name="final">
-                                    <option value="">@Html.GetText("DEVTOOLS", "SELECCIONESTADODESTINO")</option>
+                                    <option value="">@Html.GetText("FLUJOS", "SELECCIONESTADODESTINO")</option>
                                     @* Se rellenan el resto de option por JS*@
                                 </select>
                             </div>
@@ -246,12 +270,12 @@
             </div>
             @* Seccion de tipos de recursos*@
             <div class="form-group mb-4">
-                <label class="control-label d-block">@Html.GetText("DEVTOOLS", "TIPOSDECONTENIDO")</label>
+                <label class="control-label d-block">@Html.GetText("FLUJOS", "TIPOSDECONTENIDO")</label>
                 <div class="autocompletar autocompletar-recursos form-group">
                     <select class="form-control select-recursos"
                             name="tipo-recursos"
                             @(Model.Nuevo ? "disabled" : "")>
-                        <option value="">@Html.GetText("DEVTOOLS", "SELECCIONCONTENIDO")</option>
+                        <option value="">@Html.GetText("FLUJOS", "SELECCIONCONTENIDO")</option>
                         @foreach (TiposContenidos tipo in Model.TiposRecursos.Keys)
                         {
                             if (Model.TiposRecursos[tipo] && tipo != TiposContenidos.RecursoSemantico)
@@ -274,7 +298,6 @@
                             }
                         }
                     </select>
-                    <input type="hidden" id="txtTransicion_Hack" value="" />
                     <div class="tag-list mb-4">
                         @foreach (var tipo in Model.TiposRecursos.Where(item => item.Value && item.Key != TiposContenidos.RecursoSemantico).Select(item => item.Key).ToList())
                         {

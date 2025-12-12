@@ -464,6 +464,7 @@ namespace Es.Riam.Gnoss.Web.MVC
             mLoggingService.AgregarEntrada("Fin mapeo rutas");
         }
 
+
         private static bool RecalculandoRutas = false;
 
         public void RegisterRoutesIdioma(IRouteBuilder routes, List<string> pIdiomas)

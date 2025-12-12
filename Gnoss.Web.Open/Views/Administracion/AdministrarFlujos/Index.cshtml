@@ -133,7 +133,7 @@
                     <div class="acciones d-flex align-items-center">
                         <a class="btn btn-outline-primary btnAddWorkflow" data-toggle="modal" data-target="#modal-nuevo-workflow">
                             <span class="material-icons">add</span>
-                            @Html.GetText("DEVTOOLS", "NUEVOFLUJO")
+                            @Html.GetText("FLUJOS", "NUEVOFLUJO")
                         </a>
                     </div>
                 </div>
@@ -226,6 +226,13 @@
                             </div>
                         </div>
                     </div>
+                    <div id="modal-disable-improvement-workflow" class="modal modal-top fade modal-edicion" role="dialog" aria-modal="true">
+                        <div class="modal-dialog" role="document">
+                            <div class="modal-content">
+                                @Html.PartialView("_modal-views/_confirm-disable-improvement")
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -255,7 +262,7 @@
                 urlDeleteWorkflow: "@urlDeleteWorkflow",
                 urlDeleteState: "@urlDeleteState",
                 urlDeleteTransition: "@urlDeleteTransition",
-                urlEditWorkflow: "@urlEditWorkflow"
+                urlEditWorkflow: "@urlEditWorkflow",
             }
             // Operativa funcionamiento de Páginas
             operativaGestionFlujos.init(pParams);

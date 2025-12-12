@@ -1,4 +1,5 @@
-﻿@model List<ResourceModel>
+﻿@using Gnoss.Web.Open.Models.FichaRecurso
+@model HistoryViewModel
 @*
     Descripción
     -----------------------------------------------
@@ -9,9 +10,54 @@
     ----------------------------------------------------------------
 *@
 @{
-    ResourceModel DocActual = Model.OrderByDescending(recurso => recurso.Version).First();
-    // Contador para recorrer las versiones del documento y pintarlas
-    int cont = 0;
+    VersionViewModel DocActual = Model.Versions.First(x => x.IsLastVersion);
+
+    IEnumerable<VersionViewModel> SelectVersionsToShow(HistoryViewModel data)
+    {
+        List<VersionViewModel> versions;
+        if (data.IsActiveImprovement)
+        {
+            @* Si es una mejora activa solo mostramos las subversiones de esa mejora en el mismo estado*@
+            VersionViewModel improvement = data.Versions.First(x => x.IsImprovement && x.VersionStatus == EstadoVersion.Pendiente);
+            versions = improvement.ImprovementSubversions.Where(x => x.StatusId == improvement.StatusId).ToList();
+        }
+        else if (data.HasWorkflow)
+        {
+            @* Si es un recurso con flujo solo mostramos las versiones de el estado actual del recurso, para que no puede volver a estados anteriores del flujo*@
+            versions = new List<VersionViewModel>();
+
+            @* La mejora tambien se muestra para que el usuario pueda acceder*@
+            VersionViewModel improvement = data.Versions.FirstOrDefault(x => x.IsImprovement && x.VersionStatus == EstadoVersion.Pendiente);
+
+            if(improvement != null)
+            {
+                versions.Add(improvement);
+            }
+
+            VersionViewModel active = data.Versions.FirstOrDefault(x => x.IsLastVersion);
+            versions.Add(active);
+
+            @* Solo añadimos los cambios desde que entro en este estado por ultima vez*@
+            foreach (VersionViewModel version in data.Versions.OrderByDescending(x => x.Number))
+            {
+                if (!versions.Any(x => x.VersionId == version.VersionId))
+                {
+                    versions.Add(version);
+                }
+
+                if(version.StatusId != active.StatusId)
+                {
+                    break;
+                }
+            }
+        }
+        else
+        {
+            versions = data.Versions;
+        }
+
+        return versions;
+    }
 }
 
 @*
@@ -38,7 +84,7 @@
                 <div class="user-miniatura">
                     <div class="nombre-usuario-wrap">
                         @* <p class="nombre-completo">@DocActual.Publisher.NamePerson - @DocActual.Publisher.NameOrganization</p> *@
-                        <p class="nombre-completo">@DocActual.Publisher.NamePerson</p>
+                        <p class="nombre-completo">@DocActual.Publisher</p>
                     </div>
                 </div>
                 <p class="fecha">@DocActual.PublishDate</p>
@@ -49,53 +95,69 @@
         <table class="display nowrap table table-sm tabla-versiones" id="panHistorial_table">
             <thead>
                 <tr>
-                    @if (DocActual.TypeDocument != ResourceModel.DocumentType.Semantico)
+                    @if (!DocActual.IsSemantic)
                     {
                         <th></th>
                     }
                     <th scope="col">@Html.GetText("HISTORIALVERSIONES", "VERSION")</th>
+                    <th scope="col">@Html.GetText("HISTORIALVERSIONES", "ESTADO")</th>
                     <th scope="col">@Html.GetText("HISTORIALVERSIONES", "HORA")</th>
                     <th scope="col">@Html.GetText("HISTORIALVERSIONES", "FECHA")</th>
                     <th scope="col">@Html.GetText("HISTORIALVERSIONES", "EDITOR")</th>
                     <th scope="col">@Html.GetText("ADMINISTRACIONBASICA", "ACCIONES")</th>
-                    @if (DocActual.TypeDocument == ResourceModel.DocumentType.FicheroServidor)
+                    @if (DocActual.IsServerFile)
                     {
                         <th scope="col">@Html.GetText("HISTORIALVERSIONES", "DESCARGAR")</th>
                     }
                 </tr>
             </thead>
             <tbody>
-                @foreach (ResourceModel doc in Model.OrderByDescending(recurso => recurso.Version))
+                @foreach (VersionViewModel doc in SelectVersionsToShow(Model).OrderByDescending(recurso => recurso.Number))
                 {
                     <tr>
                         @* Columnas de DataTables*@
                         @* INPUT CHECKBOX *@
-                        @if (DocActual.TypeDocument != ResourceModel.DocumentType.Semantico)
+                        @if (!DocActual.IsSemantic)
                         {
                             <td class="align-middle">
                                 <div class="check-wrapper">
                                     <div class="custom-control custom-checkbox">
-                                        <input style="z-index:9999" type="checkbox" class="custom-control-input" onclick="ComprobarChecks(this);" id="@doc.Key">
+                                        <input style="z-index:9999" type="checkbox" class="custom-control-input" onclick="ComprobarChecks(this);" id="@doc.VersionId">
                                         <label class="custom-control-label" for="version3"></label>
                                     </div>
                                 </div>
                             </td>
                         }
                         @* VERSION *@
-                        <td class="align-middle"><a href="@doc.VersionCardLink">@doc.Version</a></td>
+                        <td class="align-middle"><a href="@doc.Url">@doc.Number</a></td>
+                        @* ESTADO *@
+                        <td class="align-middle">
+                            @if (doc.IsLastVersion)
+                            {
+                                <span class="chip-actual">@Html.GetText("HISTORIALVERSIONES", "VERSIONACTUAL")</span>
+                            }
+                            else if (doc.IsImprovement && doc.VersionStatus == EstadoVersion.Pendiente)
+                            {
+                                <span class="chip-mejora">@Html.GetText("HISTORIALVERSIONES", "MEJORAENCURSO")</span>
+                            }
+                            else if (Model.IsActiveImprovement)
+                            {
+                                <span class="chip-historico">@Html.GetText("HISTORIALVERSIONES", "HISTORICOMEJORA")</span>
+                            }
+                            else
+                            {
+                                <span class="chip-historico">@Html.GetText("HISTORIALVERSIONES", "HISTORICO")</span>
+                            }
+                        </td>
                         @* HORA *@
                         <td class="align-middle">@doc.PublishDate.ToString("HH:mm")</td>
                         @* FECHA *@
                         <td class="align-middle">@doc.PublishDate.ToString("dd/MM/yyyy")</td>
                         @* AUTOR *@
-                        <td class="align-middle">@doc.Publisher.NamePerson</td>
+                        <td class="align-middle">@doc.Publisher</td>
                         @* ACCIONES*@
                         <td class="align-middle">
-                            @if (doc.Key == DocActual.Key)
-                            {
-                                @Html.GetText("HISTORIALVERSIONES", "VERSIONACTUAL")
-                            }
-                            else
+                            @if (!doc.IsLastVersion && !(doc.IsImprovement && doc.VersionStatus == EstadoVersion.Pendiente))
                             {
                                 <div class="dropdown">
                                     <a class="btn btn-outline-grey"
@@ -105,15 +167,18 @@
                                        aria-haspopup="true"
                                        aria-expanded="false">
                                         <span class="material-icons">more_vert</span>
-                                        <span class="texto">@Html.GetText("ADMINISTRACIONBASICA", "ACCIONES")</span>
+                                        @*<span class="texto">@Html.GetText("ADMINISTRACIONBASICA", "ACCIONES")</span>*@
                                     </a>
                                     <div class="dropdown-menu basic-dropdown dropdown-icons dropdown-menu-right"
                                          style="will-change: transform">
-                                        <a class="item-dropdown" style="text-decoration:none; color:inherit" onclick="DesplegarRestaurar(this, '@doc.ListActions.UrlLoadActionRestoreVersion', '@doc.Key.ToString()')">
-                                            <span class="material-icons">replay</span>
-                                            <span class="texto">@Html.GetText("HISTORIALVERSIONES", "RESTAURAR")</span>
-                                        </a>
-                                        <a class="item-dropdown" style="text-decoration:none; color:inherit" onclick="DesplegarEliminar(this, '@doc.ListActions.UrlLoadActionDeleteVersion', '@doc.Key.ToString()')">
+                                        @if (!Model.HasActiveImprovement)
+                                        {
+                                            <a class="item-dropdown" style="text-decoration:none; color:inherit" onclick="DesplegarRestaurar(this, '@doc.UrlLoadActionRestoreVersion', '@doc.VersionId.ToString()')">
+                                                <span class="material-icons">replay</span>
+                                                <span class="texto">@Html.GetText("HISTORIALVERSIONES", "RESTAURAR")</span>
+                                            </a>
+                                        }
+                                        <a class="item-dropdown" style="text-decoration:none; color:inherit" onclick="DesplegarEliminar(this, '@doc.UrlLoadActionDeleteVersion', '@doc.VersionId.ToString()')">
                                             <span class="material-icons">delete</span>
                                             <span class="texto">@Html.GetText("DEVTOOLS", "BORRAR")</span>
                                         </a>
@@ -122,15 +187,31 @@
                             }
                         </td>
                         @* DESCARGAR *@
-                        @if (DocActual.TypeDocument == ResourceModel.DocumentType.FicheroServidor)
+                        @if (DocActual.IsServerFile)
                         {
                             <td><a href="@doc.UrlPreview">@Html.GetText("HISTORIALVERSIONES", "DESCARGAR")</a></td>
                         }
                     </tr>
-                    cont++;
                 }
             </tbody>
         </table>
+
+        @if (Model.HasWorkflow)
+        {
+            if (Model.IsActiveImprovement)
+            {
+                <div class="alert alert-warning" role="alert">
+                    @Html.GetText("HISTORIALVERSIONES", "AVISOVERSIONESFLUJOMEJORA")
+                </div>
+            }
+            else
+            {
+                <div class="alert alert-warning" role="alert">
+                    @Html.GetText("HISTORIALVERSIONES", "AVISOVERSIONESFLUJO")
+                </div>
+            }
+        }
+
 
         @* Confirmación de Restaurar *@
         <div class="confirmRestaurar">
@@ -146,7 +227,7 @@
         </div>
 
         @* Acciones a realizar *@
-        @if (DocActual.TypeDocument != ResourceModel.DocumentType.Semantico)
+        @if (!DocActual.IsSemantic)
         {
             <div class="form-actions">
                 <a onclick="DesplegarComparar(event)" class="btn btn-primary uppercase" data-target="#modal-comparar-versiones" data-toggle="modal">@Html.GetText("HISTORIALVERSIONES", "COMPARAR")</a>
@@ -165,7 +246,7 @@
 </div>
 
 @* Mensaje informativo del proceso*@
-<div id="despAccionRec_@DocActual.Key">
+<div id="despAccionRec_@DocActual.VersionId">
     <div>
         <div id="menssages">
             <div class="ok"></div>

@@ -50,7 +50,6 @@ using Es.Riam.Gnoss.Logica.Identidad;
 using Es.Riam.Gnoss.AD.EntityModel.Models.Roles;
 using Es.Riam.Gnoss.UtilServiciosWeb;
 using Microsoft.Extensions.Logging;
-using Serilog.Core;
 
 namespace Es.Riam.Gnoss.Web.MVC.Controllers
 {
@@ -235,12 +234,15 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
 				CargarPermisosAdministrarTesauros();
 				ProyectoCN proyCN = new ProyectoCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<ProyectoCN>(), mLoggerFactory);
 				mProyTesSemDS = proyCN.ObtenerTesaurosSemanticosConfigEdicionDeProyecto(ProyectoSeleccionado.Clave);
-				//FindByProyectoIDUrlOntologiaSourceTesSem(ProyectoSeleccionado.Clave, Ontologia, Source);
 				ProyectoConfigExtraSem filaConfig = mProyTesSemDS.ListaProyectoConfigExtraSem.FirstOrDefault(proy => proy.ProyectoID.Equals(ProyectoSeleccionado.Clave) && proy.UrlOntologia.Equals(Ontologia) && proy.SourceTesSem.Equals(Source));
 				mProyTesSemDS.ListaProyectoConfigExtraSem.Remove(filaConfig);
 				mEntityContext.EliminarElemento(filaConfig);
 				proyCN.ActualizarProyectos();
 				proyCN.Dispose();
+
+				FacetadoCN facetadoCN = new FacetadoCN(UrlIntragnoss, mEntityContext, mLoggingService, mConfigService, mVirtuosoAD, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<FacetadoCN>(), mLoggerFactory);
+				ControladorDocumentacion.EliminarTesauroOntologiaBusqueda(Ontologia, Source, ProyectoSeleccionado.Clave, facetadoCN);
+				facetadoCN.Dispose();
 
 				FacetadoCL facetadoCL = new FacetadoCL(UrlIntragnoss, mEntityContext, mLoggingService, mRedisCacheWrapper, mConfigService, mVirtuosoAD, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<FacetadoCL>(), mLoggerFactory);
 				facetadoCL.InvalidarCacheTesauroFaceta(ProyectoSeleccionado.Clave);

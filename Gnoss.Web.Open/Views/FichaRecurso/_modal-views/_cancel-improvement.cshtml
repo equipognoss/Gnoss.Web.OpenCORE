@@ -1,0 +1,23 @@
+﻿@model ResourceViewModel
+@{
+    ResourceModel fichaRecurso = Model.Resource;
+    CommunityModel Comunidad = Html.GetComunidad();
+    string urlCancelarMejora = $"{fichaRecurso.ListActions.UrlCancelImprovement}";
+    string funcionCancelarMejora = $"CancelarMejoraDocumento('{urlCancelarMejora}')";
+}
+
+<div class="modal-header">
+    <p class="modal-title">
+        <span class="material-icons">cancel</span>@fichaRecurso.Title - @Html.GetText("FLUJOS", "CANCELARMEJORA")
+    </p>
+    <span class="material-icons cerrar" data-dismiss="modal" aria-label="Close">close</span>
+</div>
+<div class="modal-body">
+    <div class="form-group">
+        <label class="control-label">@Html.GetText("FLUJOS", "AVISOCANCELARMEJORA")</label>
+    </div>
+    <div class="form-actions">
+        <button data-dismiss="modal" class="btn btn-outline-primary uppercase btnCerrarModalCancelarMejora_@fichaRecurso.Key">@Html.GetText("COMMON", "CANCELAR")</button>
+        <button class="btn btn-primary uppercase btnCancelarMejora" id="btnCancelarMejora_@fichaRecurso.Key" onclick="@funcionCancelarMejora">@Html.GetText("COMMON", "ACEPTAR")</button>
+    </div>
+</div>

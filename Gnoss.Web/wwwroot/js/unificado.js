@@ -12936,6 +12936,39 @@ function CambiarEstadoDocumento(urlCambiarEstado, documentoID, transicionID) {
     });
 }
 
+function AplicarMejoraDocumento(urlAceptarMejora) {
+    MostrarUpdateProgress();
+    GnossPeticionAjax(urlAceptarMejora, '', true).done(function (data) {
+        window.location.href = data;
+    }).fail(function (data) {
+        mostrarNotificacion("error", data);
+    }).always(function () {
+        OcultarUpdateProgress();
+    });
+}
+
+function CancelarMejoraDocumento(urlCancelarMejora) {
+    MostrarUpdateProgress();
+    GnossPeticionAjax(urlCancelarMejora, '', true).done(function (data) {
+        window.location.href = data;
+    }).fail(function (data) {
+        mostrarNotificacion("error", data);
+    }).always(function () {
+        OcultarUpdateProgress();
+    });
+}
+
+function IniciarMejoraDocumento(urlIniciarMejora) {
+    MostrarUpdateProgress();
+    GnossPeticionAjax(urlIniciarMejora, '', true).done(function (data) {
+        window.location.href = data;
+    }).fail(function (data) {
+        mostrarNotificacion("error", data);
+    }).always(function () {
+        OcultarUpdateProgress();
+    });
+}
+
 /** 
  * Maneja la creación de un nuevo comentario en un documento específico.
  *

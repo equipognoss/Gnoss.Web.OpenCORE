@@ -91,8 +91,8 @@ namespace Gnoss.Web.Open.Controllers.Administracion
             try
             {
                 ControladorFlujos controladorFlujos = new ControladorFlujos(mLoggingService, mConfigService, mEntityContext, mRedisCacheWrapper, mGnossCache, mVirtuosoAD, mHttpContextAccessor, mServicesUtilVirtuosoAndReplication, mAvailableServices, mLoggerFactory.CreateLogger<ControladorFlujos>(), mLoggerFactory);
-
-                string error = controladorFlujos.ComprobarErrores(pModelo);
+                bool confirmado = !string.IsNullOrEmpty(RequestParams("confirmed")) && RequestParams("confirmed").Equals("true");
+                string error = controladorFlujos.ComprobarErrores(pModelo, confirmado);
 
                 if (!string.IsNullOrEmpty(error))
                 {
@@ -109,11 +109,15 @@ namespace Gnoss.Web.Open.Controllers.Administracion
                         {
                             tipo = UtilIdiomas.GetText("DEVTOOLS", tipo);
                         }
-                        errorFormateado = UtilIdiomas.GetText("DEVTOOLS", mensaje, tipo);
+                        errorFormateado = UtilIdiomas.GetText("FLUJOS", mensaje, tipo);
+                    }
+                    else if (error.Contains("ERRORHAYMEJORASACTIVAS"))
+                    {
+                        errorFormateado = error;
                     }
                     else
                     {
-                        errorFormateado = UtilIdiomas.GetText("DEVTOOLS", error);
+                        errorFormateado = UtilIdiomas.GetText("FLUJOS", error);
                     }
 
                     return GnossResultERROR(errorFormateado);

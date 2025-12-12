@@ -564,6 +564,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
         {
             try
             {
+                mLoggingService.AgregarEntrada($"EliminarObjetoConocimiento - Entra -> DocumentoId: {DocumentoId.ToString()} -- Id: {Id}");
                 GuardarLogAuditoria();
 				CargarPermisosAdministrarOC();
 				bool iniciado = false;
@@ -580,18 +581,24 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
                 ControladorObjetosConocimiento contrObjetosConocim = new ControladorObjetosConocimiento(ProyectoSeleccionado, ParametroProyecto, mLoggingService, mEntityContext, mConfigService, mRedisCacheWrapper, mGnossCache, mVirtuosoAD, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<ControladorObjetosConocimiento>(), mLoggerFactory);
                 string nombreOntologia = $"{Id}.owl";
                 bool esPrincipal = false;
+                
+                mLoggingService.AgregarEntrada($"EliminarObjetoConocimiento - Entrando a cargar el objeto de conocimiento -> Nombre ontología: {nombreOntologia}");
                 ObjetoConocimientoModel objetoConocimiento = contrObjetosConocim.CargarObjetoConocimiento(nombreOntologia);
-
+                
                 if (objetoConocimiento != null)
                 {
                     objetoConocimiento.Deleted = true;
                     esPrincipal = true;
+                    mLoggingService.AgregarEntrada($"EliminarObjetoConocimiento - Objeto conocimiento marcado como eliminado");
                 }
 
+                mLoggingService.AgregarEntrada($"EliminarObjetoConocimiento - Entrando a eliminar objeto de conocimiento");
                 EditOntologyViewModel ontologyBorrar = contrObjetosConocim.EliminarObjetoConocimientoOntologia(DocumentoId, Id, esPrincipal);
 
+                mLoggingService.AgregarEntrada($"EliminarObjetoConocimiento - Entrando a eliminar facetas de objeto de conocimiento");
                 EliminarFacetasDeObjetoConocimiento(Id, ProyectoSeleccionado.Clave);
-
+                mLoggingService.AgregarEntrada($"EliminarObjetoConocimiento - Facetas de objeto de conocimiento eliminadas");
+                
                 if (iniciado)
                 {
                     HttpResponseMessage resultado = InformarCambioAdministracion("Ontologias", JsonConvert.SerializeObject(ontologyBorrar, Newtonsoft.Json.Formatting.Indented));
@@ -612,6 +619,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
             }
             catch (Exception ex)
             {
+                mLoggingService.GuardarLogError(ex);
                 return GnossResultERROR(ex.Message);
             }
         }

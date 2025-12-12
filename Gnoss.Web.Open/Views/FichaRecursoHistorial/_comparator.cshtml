@@ -19,7 +19,7 @@
                 <div class="comparar-versiones__header">
                     <p class="version">
                         @Html.GetText("HISTORIALVERSIONES", "VERSION") @modelo1.Version
-                        @if (modelo1.LastVersion.Equals(modelo1.Key))
+                        @if (modelo1.IsLastVersion)
                         {
                             <span class="chip">@Html.GetText("HISTORIALVERSIONES", "VERSIONACTUAL")</span>
                         }
@@ -41,7 +41,7 @@
                 <div class="comparar-versiones__header">
                     <p class="version">
                         @Html.GetText("HISTORIALVERSIONES", "VERSION") @modelo2.Version
-                        @if (modelo2.LastVersion.Equals(modelo2.Key))
+                        @if (modelo2.IsLastVersion)
                         {
                             <span class="chip">@Html.GetText("HISTORIALVERSIONES", "VERSIONACTUAL")</span>
                         }

@@ -2684,6 +2684,12 @@ const autocompletarWorkflows = {
                     that.updateOption(modalID, '.select-end', id, typeStateValue, isPublic, tagValue, null, tagValues);
                 }
             });
+        } else if (parent.hasClass("autocompletar-estados") && $(e.currentTarget).hasClass("input-wrap")) {
+            let selectedStateType = parent.find("input[name='tipo-estado']:checked")
+            parent.find("#inptHiddenCurrentStateType").val(selectedStateType.val());
+            if (selectedStateType.val() == 2) {
+                parent.find("div.estadoPermiteMejora").removeClass("d-none");
+            }
         }
     },
     resetForm: function (parent) {
@@ -2706,6 +2712,10 @@ const autocompletarWorkflows = {
         formOculto.find('#txtEditores').val("");
         formOculto.find('#txtLectores').val("");
         formOculto.find('#estado-publico-si').trigger("click");
+        formOculto.find("div.estadoPermiteMejora").addClass("d-none");
+        formOculto.find("input#estado-inicial").prop("checked", true);
+        formOculto.find("#estado-permite-mejora-no").prop("checked", true);
+        formOculto.find("#inptHiddenPermiteMejora").attr("data-permite-mejora", false).data("permite-mejora", false);
     },
     onFormCompleted: function (parent) {
         const lang = $('#panContenidoMultiIdioma .nav-tabs a[aria-selected="true"]').attr('id').split('_')[1];
@@ -2736,7 +2746,8 @@ const autocompletarWorkflows = {
             let tagReadersList = parent.find(".lectores .tag-list").children();
             let statePrivacy = formOculto.find('#estado-publico-si').prop('checked');
             let stateColor = formOculto.find('input[type="color"]').val();
-            list.append(this.addTagState(id, this.formatMultiLangText(tagValues), tagValue, statePrivacy, stateColor, typeStateText, typeStateValue, tagEditorsList, tagReadersList));
+            let stateImprove = formOculto.find('#estado-permite-mejora-si').prop('checked');
+            list.append(this.addTagState(id, this.formatMultiLangText(tagValues), tagValue, statePrivacy, stateColor, stateImprove, typeStateText, typeStateValue, tagEditorsList, tagReadersList));
             $(`#${modalID} .select-origin option[value=${id}]`).remove();
             $(`#${modalID} .select-end option[value=${id}]`).remove();
             // añade los estados en las transiciones
@@ -2749,14 +2760,13 @@ const autocompletarWorkflows = {
             } else if (typeStateValue == '2') {
                 this.updateOption(modalID, '.select-end', id, typeStateValue, statePrivacy, tagValue, tagValues);
             }
-
         } else if (parent.hasClass('autocompletar-transiciones')) {
             //Todo: añadir validación
             const origin = formOculto.find('.select-origin option:selected');
             const end = formOculto.find('.select-end option:selected');
 
             let tagResponsiblesList = formOculto.find(".responsables .tag-list").children();
-            list.append(this.addTagState(id, this.formatMultiLangText(tagValues), tagValue,null, null, null, null, null, null, tagResponsiblesList, origin, end));
+            list.append(this.addTagState(id, this.formatMultiLangText(tagValues), tagValue,null, null, null, null, null, null, null, tagResponsiblesList, origin, end));
         } else {
             list.append(this.addSpanTag(tagValue));
         }
@@ -2816,7 +2826,7 @@ const autocompletarWorkflows = {
             `
     },
 
-    addTagState: function (stateID, stateNameMultiLang, stateName, statePrivacy, stateColor, stateText, stateType, stateEditorsList, stateReadersList, responsiblesList, origin, end) {
+    addTagState: function (stateID, stateNameMultiLang, stateName, statePrivacy, stateColor, stateImprove, stateText, stateType, stateEditorsList, stateReadersList, responsiblesList, origin, end) {
         let editorsHtml = "";
         if (stateEditorsList !== null && stateEditorsList !== undefined) {
             stateEditorsList.each((i, element) => {
@@ -2872,7 +2882,7 @@ const autocompletarWorkflows = {
                 </div>
                 ${stateReadersList == null ?
                 `<input type="hidden" data-estado-origen-id="${origin.attr('data-id')}" data-estado-fin-id="${end.attr('data-id')}" value="${stateNameMultiLang}">` :
-                `<input type="hidden" data-tipo-estado="${stateType}" data-estado-color="${stateColor}" data-estado-publico="${statePrivacy}" value="${stateNameMultiLang}">`}
+            `<input type="hidden" data-tipo-estado="${stateType}" data-estado-color="${stateColor}" data-estado-publico="${statePrivacy}" data-permite-mejora="${stateImprove}" value="${stateNameMultiLang}">`}
             </div>
         `
     },
@@ -3003,16 +3013,28 @@ const autocompletarWorkflows = {
         if (parent.hasClass('autocompletar-estados')) {
             let $datosEstado = tag.find('input[type="hidden"]');
             let color = $datosEstado.data("estado-color");
+            let $inptHiddenPermiteMejora = formOculto.find("#inptHiddenPermiteMejora");
             // Tipo de estado 
-            if ($datosEstado.data("tipo-estado") == 0) {
+            let stateType = $datosEstado.data("tipo-estado");
+            parent.find("#inptHiddenCurrentStateType").val(stateType);
+            if (stateType == 0) {
                 formOculto.find('input#estado-inicial').prop('checked', true);
                 color = color == "" ? "#80C8F7" : color;
-            } else if ($datosEstado.data("tipo-estado") == 1) {
+            } else if (stateType == 1) {
                 formOculto.find('input#estado-intermedio').prop('checked', true);
                 color = color == "" ? "#FFB74D" : color;
-            } else if ($datosEstado.data("tipo-estado") == 2) {
+            } else if (stateType == 2) {
+                formOculto.find("div.estadoPermiteMejora").removeClass("d-none");
                 formOculto.find('input#estado-final').prop('checked', true);
                 color = color == "" ? "#94c748" : color;
+            }
+            // Estado permite mejora
+            if ($datosEstado.data("permite-mejora")) {
+                formOculto.find("input#estado-permite-mejora-si").prop("checked", true);
+                $inptHiddenPermiteMejora.attr("data-permite-mejora", true).data("permite-mejora", true);
+            } else {
+                formOculto.find("input#estado-permite-mejora-no").prop("checked", true);
+                $inptHiddenPermiteMejora.attr("data-permite-mejora", false).data("permite-mejora", false);
             }
             // Privacidad de estado
             if ($datosEstado.data("estado-publico")) {

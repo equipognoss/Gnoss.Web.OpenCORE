@@ -2829,7 +2829,8 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
             #endregion
 
             mEditRecCont.ModifyResourceModel.CreatingVersion = (RequestParams("version") != null && RequestParams("version") == "true");
-            mEditRecCont.ModifyResourceModel.DocumentEditionModel.Draft = Documento.FilaDocumento.Borrador;
+            mEditRecCont.ModifyResourceModel.IsImprovement = ComprobarSiSeEstaEditandoUnaMejora(mDocumentoID);
+			mEditRecCont.ModifyResourceModel.DocumentEditionModel.Draft = Documento.FilaDocumento.Borrador;
 
             #region Editores
 
@@ -3646,6 +3647,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
             List<Guid> listaPerfiles = new List<Guid>();
             listaPerfiles.AddRange(Documento.ListaPerfilesEditores.Keys);
             List<Guid> categoriasSeleccionadas = RecogerCategoriasSeleccionadas();
+            bool esMejora = ComprobarSiSeEstaEditandoUnaMejora(DocumentoID);
 
             Guid docAntiguoID = mDocumentoID;
             bool borrador = mModelSaveRec.Draft;
@@ -3717,8 +3719,13 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
 
                 GuardarVinculados(Documento.Clave, pCreandoVersion);
                 GuardarRecursoModeloAcido(categoriasSeleccionadas, pCreandoVersion, pVersionCreadaPorConcurrencia, out privacidadCambiada, out listaEditoresEliminados, out listaGruposEditoresEliminados);
-                GuardarRecursoModeloLive(privacidadCambiada, pCreandoVersion, mCambioDeBorradoAPublicado, docAntiguoID, Documento, listaEditoresEliminados, listaGruposEditoresEliminados);
-                GuardarRecursoModeloBase(pCreandoVersion, mCambioDeBorradoAPublicado, docAntiguoID, Documento);
+
+                if (!esMejora)
+                {
+					GuardarRecursoModeloLive(privacidadCambiada, pCreandoVersion, mCambioDeBorradoAPublicado, docAntiguoID, Documento, listaEditoresEliminados, listaGruposEditoresEliminados);
+					GuardarRecursoModeloBase(pCreandoVersion, mCambioDeBorradoAPublicado, docAntiguoID, Documento);
+				}
+                
 
                 if (parCapturaWeb_GeneraImgMini.Key)
                 {
@@ -3745,7 +3752,11 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
 
                 ControladorDocumentacion.InsertarEnColaProcesarFicherosRecursosModificadosOEliminados(Documento.Clave, TipoEventoProcesarFicherosRecursos.Modificado, mAvailableServices);
 
-                string urlRedirect = mControladorBase.UrlsSemanticas.GetURLBaseRecursosFicha(BaseURLIdioma, UtilIdiomas, NombreProy, UrlPerfil, Documento, (IdentidadOrganizacion != null)).Replace(Documento.Clave.ToString(), Documento.VersionOriginalID.ToString()); ;
+                string urlRedirect = mControladorBase.UrlsSemanticas.GetURLBaseRecursosFicha(BaseURLIdioma, UtilIdiomas, NombreProy, UrlPerfil, Documento, (IdentidadOrganizacion != null)).Replace(Documento.Clave.ToString(), Documento.VersionOriginalID.ToString());
+                if (esMejora)
+                {
+                    urlRedirect = $"{mControladorBase.UrlsSemanticas.GetURLBaseRecursosFichaConIDs(BaseURLIdioma, UtilIdiomas, NombreProy, UrlPerfil, UtilCadenas.EliminarCaracteresUrlSem(Documento.Titulo), Documento.VersionOriginalID, Documento.ElementoVinculadoID, false)}/{pNuevoDoc.Clave}";
+                }
                 if (pCreandoVersion)
                 {
                     urlRedirect += "?versioned";
@@ -4837,8 +4848,8 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
             GestorDocumental.DataWrapperDocumentacion.Merge(docCN.ObtenerVinculacionesRecurso(Documento.Clave, true));
 
             Documento nuevoDoc = null;
-
-            nuevoDoc = GestorDocumental.CrearNuevaVersionDocumento(Documento, IdentidadCrearVersion);
+            bool esMejora = ComprobarSiSeEstaEditandoUnaMejora(mDocumentoID);
+			nuevoDoc = GestorDocumental.CrearNuevaVersionDocumento(Documento, IdentidadCrearVersion, pEsMejora: esMejora);
 
             if (nuevoDoc != null)
             {
@@ -5232,7 +5243,8 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
             mEditRecCont.ModifyResourceModel.SemanticResourceModel.EditingMassiveResourceLoad = mEditandoRecursoCargaMasiva;
 
             mEditRecCont.ModifyResourceModel.CreatingVersion = CreandoVersionFormSem;
-            mEditRecCont.ModifyResourceModel.DocumentEditionModel.Draft = Documento == null || Documento.FilaDocumento.Borrador;
+            mEditRecCont.ModifyResourceModel.IsImprovement = ComprobarSiSeEstaEditandoUnaMejora(mDocumentoID);
+			mEditRecCont.ModifyResourceModel.DocumentEditionModel.Draft = Documento == null || Documento.FilaDocumento.Borrador;
             mEditRecCont.ModifyResourceModel.SemanticResourceModel.VirtualForm = FormSemVirtual;
 
             if (EditandoFormSem)
@@ -6508,8 +6520,12 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
             string infoExtra = null;
             Guid docIDAuxiliar = CreandoVersion ? Documento.VersionOriginalID : mDocumentoID;
 
-            mListaTriplesSemanticos = ControladorDocumentacion.GuardarRDFEnVirtuoso(mEntidadesGuardar, GestorDocumental.ListaDocumentos[mOntologiaID].Enlace, UrlIntragnoss, "", mControladorBase.UsuarioActual.ProyectoID, docIDAuxiliar.ToString(), false, infoExtra, mModelSaveRec.Draft, false, (short)PrioridadBase.Alta);
-
+            bool esMejora = ComprobarSiSeEstaEditandoUnaMejora(DocumentoID);
+            if (!esMejora)
+            {
+				mListaTriplesSemanticos = ControladorDocumentacion.GuardarRDFEnVirtuoso(mEntidadesGuardar, GestorDocumental.ListaDocumentos[mOntologiaID].Enlace, UrlIntragnoss, "", mControladorBase.UsuarioActual.ProyectoID, docIDAuxiliar.ToString(), false, infoExtra, mModelSaveRec.Draft, false, (short)PrioridadBase.Alta);
+			}
+            
             try
             {
                 ControladorDocumentacion.GuardarRDFEnBDRDF(ficheroRDF, DocumentoVersionID == Guid.Empty ? mDocumentoID : DocumentoVersionID, mControladorBase.UsuarioActual.ProyectoID, GestorDocumental.RdfDS);
@@ -6519,14 +6535,17 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
             {
                 GuardarLogError(ex, $"Error al guardar modificaciones en BD RDF o BD RdfHistorico. Se van a revertir los cambios en virtuoso del recurso {mDocumentoID}");
 
-                if (!EditandoFormSem)
+                if (!esMejora)
                 {
-                    ControladorDocumentacion.BorrarRDFDeVirtuoso(mDocumentoID, GestorDocumental.ListaDocumentos[mOntologiaID].Enlace, UrlIntragnoss, false, ProyectoSeleccionado.Clave);
-                }
-                else
-                {
-                    ControladorDocumentacion.GuardarRDFEnVirtuoso(EntidadesDocAntiguas, GestorDocumental.ListaDocumentos[mOntologiaID].Enlace, UrlIntragnoss, "", mControladorBase.UsuarioActual.ProyectoID, Documento.VersionOriginalID.ToString(), false, infoExtra, Documento.FilaDocumento.Borrador, false, (short)PrioridadBase.Alta);
-                }
+					if (!EditandoFormSem)
+					{
+						ControladorDocumentacion.BorrarRDFDeVirtuoso(mDocumentoID, GestorDocumental.ListaDocumentos[mOntologiaID].Enlace, UrlIntragnoss, false, ProyectoSeleccionado.Clave);
+					}
+					else
+					{
+						ControladorDocumentacion.GuardarRDFEnVirtuoso(EntidadesDocAntiguas, GestorDocumental.ListaDocumentos[mOntologiaID].Enlace, UrlIntragnoss, "", mControladorBase.UsuarioActual.ProyectoID, Documento.VersionOriginalID.ToString(), false, infoExtra, Documento.FilaDocumento.Borrador, false, (short)PrioridadBase.Alta);
+					}
+				}                
 
                 if (ex.Message.Contains("PRIMARY KEY"))
                 {
@@ -6536,7 +6555,11 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                 throw;
             }
 
-            GuardarValoresInsertarEnGrafosAuxiliares();
+            if (!esMejora)
+            {
+				GuardarValoresInsertarEnGrafosAuxiliares();
+			}
+            
 
             ActionResult result = null;
             try
@@ -6553,12 +6576,18 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                 {
                     if (!EditandoFormSem)
                     {
-                        ControladorDocumentacion.BorrarRDFDeVirtuoso(mDocumentoID, GestorDocumental.ListaDocumentos[mOntologiaID].Enlace, UrlIntragnoss, false, ProyectoSeleccionado.Clave);
+                        if (!esMejora)
+                        {
+							ControladorDocumentacion.BorrarRDFDeVirtuoso(mDocumentoID, GestorDocumental.ListaDocumentos[mOntologiaID].Enlace, UrlIntragnoss, false, ProyectoSeleccionado.Clave);
+						}                        
                         ControladorDocumentacion.BorrarRDFDeBDRDF(mDocumentoID);
                     }
                     else
                     {
-                        ControladorDocumentacion.GuardarRDFEnVirtuoso(EntidadesDocAntiguas, GestorDocumental.ListaDocumentos[mOntologiaID].Enlace, UrlIntragnoss, "", mControladorBase.UsuarioActual.ProyectoID, mDocumentoID.ToString(), false, infoExtra, Documento.FilaDocumento.Borrador, false, (short)PrioridadBase.Alta);
+						if (!esMejora)
+						{
+							ControladorDocumentacion.GuardarRDFEnVirtuoso(EntidadesDocAntiguas, GestorDocumental.ListaDocumentos[mOntologiaID].Enlace, UrlIntragnoss, "", mControladorBase.UsuarioActual.ProyectoID, mDocumentoID.ToString(), false, infoExtra, Documento.FilaDocumento.Borrador, false, (short)PrioridadBase.Alta);
+						}						
                         ControladorDocumentacion.GuardarRDFEnBDRDF(rdfDocAntiguo, mDocumentoID, Documento.FilaDocumento.ProyectoID.Value, GestorDocumental.RdfDS);
                     }
                 }
@@ -6576,9 +6605,12 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
             {
                 rdfConfiguradoRecursoNoSemantico = ObtenerRdfRecursoNoSemantico();
             }
-
-            UtilidadesVirtuoso.GuardarRecursoEnGrafoBusqueda(Documento, true, mDocumentosExtraGuardar, ProyectoSeleccionado, mListaTriplesSemanticos, mOntologia, GestorDocumental.GestorTesauro, rdfConfiguradoRecursoNoSemantico, mCreandoVersion, Documento.VersionOriginalID, UrlIntragnoss, mOtrosArgumentosBase, PrioridadBase.Alta, mAvailableServices);
-            mInsertadoEnGrafoBusqueda = true;
+            
+            if (!esMejora)
+            {
+				UtilidadesVirtuoso.GuardarRecursoEnGrafoBusqueda(Documento, true, mDocumentosExtraGuardar, ProyectoSeleccionado, mListaTriplesSemanticos, mOntologia, GestorDocumental.GestorTesauro, rdfConfiguradoRecursoNoSemantico, mCreandoVersion, Documento.VersionOriginalID, UrlIntragnoss, mOtrosArgumentosBase, PrioridadBase.Alta, mAvailableServices);
+				mInsertadoEnGrafoBusqueda = true;
+			}            
 
             if (servicioExterno)
             {
@@ -7103,7 +7135,8 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
 
                 if (CreandoVersionFormSem)
                 {
-                    doc = gesDoc.CrearNuevaVersionDocumento(doc, IdentidadCrearVersion, pDocumentoVersionID);
+                    bool esMejora = ComprobarSiSeEstaEditandoUnaMejora(mDocumentoID);
+					doc = gesDoc.CrearNuevaVersionDocumento(doc, IdentidadCrearVersion, pEsMejora: esMejora);
                 }
 
                 doc.Titulo = titulo;
@@ -7384,32 +7417,41 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
         {
             Documento doc = null;
             Guid docAntiguoID = mDocumentoID;
-            if (!EditandoFormSem)
+			bool esMejora = ComprobarSiSeEstaEditandoUnaMejora(mDocumentoID);
+			if (!EditandoFormSem)
             {
-
                 doc = CrearDocumentoEnModeloAcido(mDocumentoID, pCategoriasSeleccionadas);
-                CrearDocumentoEnModeloLive(doc);
-                CrearDocumentoAccionesExtra(doc);
+                if (!esMejora)
+                {
+					CrearDocumentoEnModeloLive(doc);					
+				}
+				CrearDocumentoAccionesExtra(doc);
 
-                mOtrosArgumentosBase = ",##enlaces####enlaces##";
+				mOtrosArgumentosBase = ",##enlaces####enlaces##";
 
                 if (mDocumentosExtraGuardar != null)
                 {
                     foreach (Documento docExtra in mDocumentosExtraGuardar)
                     {
-                        CrearDocumentoEnModeloLive(docExtra);
+                        if (!esMejora)
+                        {
+							CrearDocumentoEnModeloLive(docExtra);
+						}                        
                         CrearDocumentoAccionesExtra(docExtra);
                     }
                 }
-
-                return GnossResultUrl(mControladorBase.UrlsSemanticas.GetURLBaseRecursosFicha(BaseURLIdioma, UtilIdiomas, NombreProy, UrlPerfil, doc, (IdentidadOrganizacion != null)));
+                string urlRedirect = mControladorBase.UrlsSemanticas.GetURLBaseRecursosFicha(BaseURLIdioma, UtilIdiomas, NombreProy, UrlPerfil, doc, (IdentidadOrganizacion != null));
+                if (esMejora)
+                {
+					urlRedirect = $"{mControladorBase.UrlsSemanticas.GetURLBaseRecursosFichaConIDs(BaseURLIdioma, UtilIdiomas, NombreProy, UrlPerfil, UtilCadenas.EliminarCaracteresUrlSem(doc.Titulo), Documento.VersionOriginalID, Documento.ElementoVinculadoID, false)}/{doc.Clave}";
+				}
+				return GnossResultUrl(urlRedirect);
             }
             else
             {
                 if (CreandoVersionFormSem)
-                {
-
-                    doc = GestorDocumental.CrearNuevaVersionDocumento(Documento, IdentidadCrearVersion, DocumentoVersionID);
+                {                    
+					doc = GestorDocumental.CrearNuevaVersionDocumento(Documento, IdentidadCrearVersion, DocumentoVersionID, pEsMejora: esMejora);
 
                     // A partir de aqui se trata con el nuevo documento creado ya que luego al invocar la propoedad Documento
                     // necesitamos el nuevo documento versionado.
@@ -7430,12 +7472,16 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                 List<Guid> listaEditoresEliminados;
                 List<Guid> listaGruposEditoresEliminados;
                 GuardarRecursoModeloAcido(pCategoriasSeleccionadas, CreandoVersionFormSem, false, out privacidadCambiada, out listaEditoresEliminados, out listaGruposEditoresEliminados);
-                GuardarRecursoModeloLive(privacidadCambiada, CreandoVersionFormSem, mCambioDeBorradoAPublicado, docAntiguoID, Documento, listaEditoresEliminados, listaGruposEditoresEliminados);
-                GuardarRecursoModeloBase(CreandoVersionFormSem, mCambioDeBorradoAPublicado, docAntiguoID, Documento);
+                if (!esMejora)
+                {
+					GuardarRecursoModeloLive(privacidadCambiada, CreandoVersionFormSem, mCambioDeBorradoAPublicado, docAntiguoID, Documento, listaEditoresEliminados, listaGruposEditoresEliminados);
+					GuardarRecursoModeloBase(CreandoVersionFormSem, mCambioDeBorradoAPublicado, docAntiguoID, Documento);
+				}
+                
 
                 ControladorDocumentacion.BorrarCacheControlFichaRecursos(docAntiguoID);
 
-                if (mDocumentosExtraGuardar != null)
+                if (mDocumentosExtraGuardar != null && !esMejora)
                 {
                     foreach (Documento docExtra in mDocumentosExtraGuardar)
                     {
@@ -7450,8 +7496,13 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                 ControladorPersonas controladorPersonas = new ControladorPersonas(mLoggingService, mEntityContext, mConfigService, mRedisCacheWrapper, mGnossCache, mEntityContextBASE, mVirtuosoAD, mHttpContextAccessor, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<ControladorPersonas>(), mLoggerFactory);
                 // Identidad proyecto actual
                 controladorPersonas.ActivoEnComunidad(IdentidadActual, mAvailableServices);
-
-                return GnossResultUrl(mControladorBase.UrlsSemanticas.GetURLBaseRecursosFicha(BaseURLIdioma, UtilIdiomas, NombreProy, UrlPerfil, Documento, (IdentidadOrganizacion != null)).Replace(Documento.Clave.ToString(), Documento.VersionOriginalID.ToString()));
+                
+                string urlRedirect = mControladorBase.UrlsSemanticas.GetURLBaseRecursosFicha(BaseURLIdioma, UtilIdiomas, NombreProy, UrlPerfil, Documento, (IdentidadOrganizacion != null)).Replace(Documento.Clave.ToString(), Documento.VersionOriginalID.ToString());
+				if (esMejora)
+                {
+                    urlRedirect = $"{mControladorBase.UrlsSemanticas.GetURLBaseRecursosFichaConIDs(BaseURLIdioma, UtilIdiomas, NombreProy, UrlPerfil, UtilCadenas.EliminarCaracteresUrlSem(Documento.Titulo), Documento.VersionOriginalID, Documento.ElementoVinculadoID, false)}/{doc.Clave}";
+                }
+				return GnossResultUrl(urlRedirect);
             }
         }
 
@@ -11976,11 +12027,15 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                     else
                     {
                         docOriginalID = DocumentoID;
-                    }
-
-                    traza.Append("Antes de GuardarRecursoEnGrafoBusqueda");
-                    UtilidadesVirtuoso.GuardarRecursoEnGrafoBusqueda(Documento, true, mDocumentosExtraGuardar, ProyectoSeleccionado, mListaTriplesSemanticos, mOntologia, GestorDocumental.GestorTesauro, rdfConfiguradoRecursoNoSemantico, mCreandoVersion, docOriginalID, UrlIntragnoss, mOtrosArgumentosBase, PrioridadBase.Alta, mAvailableServices);
-                    traza.Append("Despues de GuardarRecursoEnGrafoBusqueda");
+                    }                    
+                   
+                    if (!ComprobarSiSeEstaEditandoUnaMejora(DocumentoID))
+                    {
+						traza.Append("Antes de GuardarRecursoEnGrafoBusqueda");
+						UtilidadesVirtuoso.GuardarRecursoEnGrafoBusqueda(Documento, true, mDocumentosExtraGuardar, ProyectoSeleccionado, mListaTriplesSemanticos, mOntologia, GestorDocumental.GestorTesauro, rdfConfiguradoRecursoNoSemantico, mCreandoVersion, docOriginalID, UrlIntragnoss, mOtrosArgumentosBase, PrioridadBase.Alta, mAvailableServices);
+						traza.Append("Despues de GuardarRecursoEnGrafoBusqueda");
+					}
+                    
                 }
 
                 return respuesta;
@@ -12152,12 +12207,24 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
             }
         }
 
-        /// <summary>
-        /// Añade título y texto alternativo a las imágenes contenidas en la descripción del recurso
-        /// </summary>
-        /// <param name="pPaginaModel">Modelo de subir archivo adjunto</param>
-        /// <returns>Modelo de subir archivo adjunto con las imágenes de la descripción modificadas</returns>
-        private DocumentEditionModel TratarImagenesDescripcion(DocumentEditionModel pPaginaModel)
+        private bool ComprobarSiSeEstaEditandoUnaMejora(Guid pDocumentoID)
+        {
+            bool esMejora = false;
+
+            using (DocumentacionCN documentacionCN = new DocumentacionCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<DocumentacionCN>(), mLoggerFactory))
+            {
+                esMejora = documentacionCN.ComprobarSiDocumentoEsUnaMejora(pDocumentoID);
+            } 
+
+            return esMejora;
+        }
+
+		/// <summary>
+		/// Añade título y texto alternativo a las imágenes contenidas en la descripción del recurso
+		/// </summary>
+		/// <param name="pPaginaModel">Modelo de subir archivo adjunto</param>
+		/// <returns>Modelo de subir archivo adjunto con las imágenes de la descripción modificadas</returns>
+		private DocumentEditionModel TratarImagenesDescripcion(DocumentEditionModel pPaginaModel)
         {
             string descripcion = HttpUtility.UrlDecode(ExtraerTexto(pPaginaModel.Description));
             string descripcionParcial = "";

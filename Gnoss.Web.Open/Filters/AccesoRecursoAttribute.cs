@@ -130,7 +130,6 @@ namespace Es.Riam.Gnoss.Web.MVC.Filters
                     bool publico = flujosCN.ComprobarEstadoEsPublico(estadoID.Value);
                     if (!publico)
                     {
-                        // TODO Fran: Comprobar si es el creador
                         if (Rol.Equals(RolesAccesoRecurso.Editor))
                         {
                             if (!flujosCN.ComprobarIdentidadTienePermisoEdicionEnEstado(estadoID.Value, mControladorBase.IdentidadActual.Clave, documentoID))

@@ -1,59 +1,65 @@
-﻿@model FlujoViewModel
+﻿@using System.Text
+@model FlujoViewModel
 
 @{
-    string diagramaFlujo = "flowchart LR\n";
-    string seccionCallback = "";
+    StringBuilder diagramaFlujo = new StringBuilder();
+    diagramaFlujo.AppendLine("flowchart LR");
+    StringBuilder seccionCallback = new StringBuilder();
     @foreach (EstadoViewModel estado in Model.Estados.OrderBy(e => e.TipoEstado).ThenBy(e => e.Nombre))
     {
         var resultadoPersonas = PintarPersonas(estado.ListaEstadoIdentidad);
         var resultadoGrupos = PintarGrupos(estado.ListaEstadoGrupo);
-        string titulo = $"<h4 class='card-subtitle mb-2 text-muted'>{Html.GetText("BLOGS", "EDITORES")}</h4>";
-        string resultado = titulo + "<div class='mb-3'>" + resultadoPersonas.Item1 + resultadoGrupos.Item1 + "</div>";
+        string titulo = $"<h4 class='card-subtitle mb-2 text-muted'>{Html.GetText("USUARIOS", "EDITORES")}</h4>";
+        StringBuilder sbResultado = new StringBuilder($"{titulo}<div class='mb-3'>{resultadoPersonas.Item1}{resultadoGrupos.Item1}</div>");
 
         if (!estado.Publico)
         {
             titulo = $"<h4 class='card-subtitle mb-2 text-muted'>{Html.GetText("USUARIOS", "LECTORES")}</h4>";
-            resultado += titulo + "<div class='mb-3'>" + resultadoPersonas.Item2 + resultadoGrupos.Item2 + "</div>";
+            sbResultado.Append($"{titulo}<div class='mb-3'>{resultadoPersonas.Item2}{resultadoGrupos.Item2}</div>");
         }
-        seccionCallback += $"click {estado.EstadoID} call handlePopOverNode(\"{estado.EstadoID}\",\"{resultado}\")\n";
+        seccionCallback.AppendLine($"click {estado.EstadoID} call handlePopOverNode(\"{estado.EstadoID}\",\"{sbResultado}\")");
     }
 
-    string seccionEstilos = "";
-    string seccionRelaciones = "";
-    string htmlResponsables = "";
+    StringBuilder seccionEstilos = new StringBuilder();
+    StringBuilder seccionRelaciones = new StringBuilder();
+    StringBuilder htmlResponsables = new StringBuilder();
+    HashSet<Guid> estadosPintados = new HashSet<Guid>();
     foreach (var transicion in Model.Transiciones.OrderBy(t => t.EstadoOrigen.TipoEstado).ToList())
     {
-        htmlResponsables += $"<div id='{transicion.TransicionID}'>" + PintarPersonasGruposTransicion(transicion.ListaNombreTransicionIdentidad, transicion.ListaNombreTransicionGrupo) + "</div>";
+        htmlResponsables.Append($"<div id='{transicion.TransicionID}'>" + PintarPersonasGruposTransicion(transicion.ListaNombreTransicionIdentidad, transicion.ListaNombreTransicionGrupo) + "</div>");
         Guid estadoOrigenID = transicion.EstadoOrigen.EstadoID;
         string nombreEstadoOrigen = Html.ObtenerTextoIdiomaUsuario(Model.Estados.Where(e => e.EstadoID.Equals(estadoOrigenID)).Select(e => e.Nombre).FirstOrDefault());
         Guid estadoDestinoID = transicion.EstadoDestino.EstadoID;
         string nombreEstadoDestino = Html.ObtenerTextoIdiomaUsuario(Model.Estados.Where(e => e.EstadoID.Equals(estadoDestinoID)).Select(e => e.Nombre).FirstOrDefault());
         string nombreTransicion = Html.ObtenerTextoDeIdioma(transicion.Nombre);
 
-        if (!seccionEstilos.Contains(estadoOrigenID.ToString()))
+        if (!estadosPintados.Contains(estadoOrigenID))
         {
+            estadosPintados.Add(estadoOrigenID);
             string colorOrigen = transicion.EstadoOrigen.Color;
             if (string.IsNullOrEmpty(colorOrigen))
             {
-                colorOrigen = transicion.EstadoOrigen.TipoEstado.Equals(TipoEstado.Inicial) ? "#80C8F7" : transicion.EstadoOrigen.TipoEstado.Equals(TipoEstado.Intermedio) ? "#FFB74D" : "#94c748";
+                colorOrigen = PintarColorSegunTipoEstado(transicion.EstadoOrigen.TipoEstado);
             }
-            seccionEstilos += $"style {estadoOrigenID} fill:{colorOrigen}\n";
+            seccionEstilos.AppendLine($"style {estadoOrigenID} fill:{colorOrigen}");
         }
-        if (!seccionEstilos.Contains(estadoDestinoID.ToString()))
+        if (!estadosPintados.Contains(estadoDestinoID))
         {
+            estadosPintados.Add(estadoDestinoID);
             string colorDestino = transicion.EstadoDestino.Color;
             if (string.IsNullOrEmpty(colorDestino))
             {
-                colorDestino = transicion.EstadoDestino.TipoEstado.Equals(TipoEstado.Inicial) ? "#80C8F7" : transicion.EstadoDestino.TipoEstado.Equals(TipoEstado.Intermedio) ? "#FFB74D" : "#94c748";
+                colorDestino = PintarColorSegunTipoEstado(transicion.EstadoDestino.TipoEstado);
             }
-            seccionEstilos += $"style {estadoDestinoID} fill:{colorDestino}\n";
+            seccionEstilos.AppendLine($"style {estadoDestinoID} fill:{colorDestino}");
         }
 
         string direccion = "-->";
-
-        seccionRelaciones += $"{estadoOrigenID}[\"{nombreEstadoOrigen}\"] {transicion.TransicionID}@{direccion} |{nombreTransicion}| {estadoDestinoID}[\"{nombreEstadoDestino}\"]\n";
+        seccionRelaciones.AppendLine($"{estadoOrigenID}[\"{nombreEstadoOrigen}\"] {transicion.TransicionID}@{direccion} |{nombreTransicion}| {estadoDestinoID}[\"{nombreEstadoDestino}\"]");
     }
-    diagramaFlujo += seccionEstilos + seccionRelaciones + seccionCallback;
+    diagramaFlujo.Append(seccionEstilos);
+    diagramaFlujo.Append(seccionRelaciones);
+    diagramaFlujo.Append(seccionCallback);
 }
 
 <div class="modal-header">
@@ -64,61 +70,62 @@
     <span class="material-icons cerrar" data-dismiss="modal" aria-label="Close">close</span>
 </div>
 <div class="modal-body">
-    <div class="d-none mermaid-container p-5" align="center">
-        @Html.Raw(diagramaFlujo)
+    <div class="d-none mermaid-container p-5 text-center">
+        @Html.Raw(diagramaFlujo.ToString())
     </div>
 </div>
 @functions {
     public string PintarPersonasGruposTransicion(Dictionary<Guid, string> pListaNombresIdentidad, Dictionary<Guid, string> pListaNombresGrupo)
     {
-        string titulo = $"<h4 class='card-subtitle mb-2 text-muted'>{Html.GetText("DEVTOOLS", "RESPONSABLES")}</h4>";
-        string resultado = "<div class='mb-3'>";
+        StringBuilder sbResultado = new StringBuilder();
+        sbResultado.Append($"<h4 class='card-subtitle mb-2 text-muted'>{Html.GetText("FLUJOS", "RESPONSABLES")}</h4>");
+        sbResultado.Append("<div class='mb-3'>");
         foreach (Guid transicionIdentidadID in pListaNombresIdentidad.Keys)
         {
-            resultado += PintarTags(pListaNombresIdentidad[transicionIdentidadID], transicionIdentidadID, false);
+            sbResultado.Append(PintarTags(pListaNombresIdentidad[transicionIdentidadID], transicionIdentidadID, false));
         }
 
         foreach (Guid transicionGrupoID in pListaNombresGrupo.Keys)
         {
-            resultado += PintarTags(pListaNombresGrupo[transicionGrupoID], transicionGrupoID, true);
+            sbResultado.Append(PintarTags(pListaNombresGrupo[transicionGrupoID], transicionGrupoID, true));
         }
-        resultado += "</div>";
-        resultado = titulo + resultado;
-        return resultado;
+
+        sbResultado.Append("</div>");
+        return sbResultado.ToString();
     }
     public (string, string) PintarPersonas(List<EstadoIdentidadViewModel> pEstadoIdentidad)
     {
-        string htmlEditores = "";
-        string htmlLectores = "";
+        StringBuilder htmlEditores = new StringBuilder();
+        StringBuilder htmlLectores = new StringBuilder();
         foreach (EstadoIdentidadViewModel estadoIdentidad in pEstadoIdentidad)
         {
             if (estadoIdentidad.Editor)
             {
-                htmlEditores += PintarTags(estadoIdentidad.Nombre, estadoIdentidad.PerfilID, false);
+                htmlEditores.Append(PintarTags(estadoIdentidad.Nombre, estadoIdentidad.PerfilID, false));
             }
             else
             {
-                htmlLectores += PintarTags(estadoIdentidad.Nombre, estadoIdentidad.PerfilID, false);
+                htmlLectores.Append(PintarTags(estadoIdentidad.Nombre, estadoIdentidad.PerfilID, false));
             }
         }
-        return (htmlEditores, htmlLectores);
+        return (htmlEditores.ToString(), htmlLectores.ToString());
     }
     public (string, string) PintarGrupos(List<EstadoGrupoViewModel> pEstadoGrupo)
     {
-        string htmlEditores = "";
-        string htmlLectores = ""; ;
+        StringBuilder htmlEditores = new StringBuilder();
+        StringBuilder htmlLectores = new StringBuilder();
         foreach (EstadoGrupoViewModel estadoGrupo in pEstadoGrupo)
         {
             if (estadoGrupo.Editor)
             {
-                htmlEditores += PintarTags(estadoGrupo.Nombre, estadoGrupo.GrupoID, true);
+                htmlEditores.Append(PintarTags(estadoGrupo.Nombre, estadoGrupo.GrupoID, true));
             }
             else
             {
-                htmlLectores += PintarTags(estadoGrupo.Nombre, estadoGrupo.GrupoID, true);
+                htmlLectores.Append(PintarTags(estadoGrupo.Nombre, estadoGrupo.GrupoID, true));
             }
         }
-        return (htmlEditores, htmlLectores);
+        return (htmlEditores.ToString(), htmlLectores.ToString());
     }
     public string PintarTags(string pNombre, Guid pIdentidadID, bool pGrupo)
     {
@@ -126,6 +133,15 @@
         string grupo = pGrupo ? $"[{Html.GetText("CONTACTOS", "GRUPO")}]" : "";
         resultado += $"<span class='list-group-item' data-grupo='{pGrupo}' data-id='{pIdentidadID}'>{pNombre} {grupo}</span>";
         return resultado;
+    }
+    public string PintarColorSegunTipoEstado(TipoEstado pTipoEstado)
+    {
+        if (pTipoEstado == TipoEstado.Inicial)
+        {
+            return "#80C8F7";
+        }
+
+        return pTipoEstado == TipoEstado.Intermedio ? "#FFB74D" : "#94c748";
     }
 }
 

@@ -1,0 +1,21 @@
+﻿<div class="modal-header">
+	<p class="modal-title">
+		<span class="material-icons">toggle_off</span>@Html.GetText("FLUJOS", "DESHABILITARMEJORAESTADO")
+	</p>
+	<span class="material-icons cerrar" data-dismiss="modal" aria-label="Close">close</span>
+</div>
+<div class="modal-body">
+	<div class="form-group">
+		<label class="control-label">
+			@Html.Raw(Html.GetText("FLUJOS", "DESEADESHABILITARMEJORAESTADO"))
+		</label>
+	</div>
+	<div class="form-group test">
+		<label class="control-label">@Html.Raw(Html.GetText("FLUJOS", "INFOMEJORASACTIVASAFECTADAS"))</label>
+		<ul></ul>
+	</div>
+	<div class="form-actions">
+		<button class="btn btn-outline-primary btnDialogDisableImprovement" value="false">@Html.GetText("COMMON", "NO")</button>
+		<button class="btn btn-primary btnDialogDisableImprovement" value="true">@Html.GetText("COMMON", "SI")</button>
+	</div>
+</div>

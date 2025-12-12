@@ -106,6 +106,14 @@ Variables
                 }
             }
 
+            @if (FichaDocumento.IsImprovement)
+            {
+                <div role="alert" class="alert alert-warning mt-2 d-flex" id="avisoMejora-info">
+                    <span class="material-icons mr-3">construction</span>
+                    <span>@Html.Raw(Html.GetText("FLUJOS", "AVISOESTASENMEJORA", Html.GetUrlPagina().Substring(0, Html.GetUrlPagina().LastIndexOf('/') + 1)))</span>
+                </div>
+            }
+
             @* Mostrar útiles del recurso *@
             @if (!Model.HideUtilsResource)
             {

@@ -466,7 +466,7 @@ namespace Es.Riam.Gnoss.Web.MVC.ControlesMVC
             {
                 pFichaRecurso.UrlNewVersion = ControllerBase.UrlsSemanticas.GetURLBaseRecursosEditarDocumento(ControllerBase.BaseURLIdioma, ControllerBase.UtilIdiomas, NombreProyEdicionRecurso(pDocumento), ControllerBase.UrlPerfil, pDocumento, 1, esIdentidadBrOrg);
             }
-        }
+		}
 
         public bool TienePermisosEditarDoc(Documento pDocumento, Identidad pIdentidadActual, Identidad IdentidadOrganizacionBROrg, Proyecto pProyectoActual, SemCmsController pGenPlantillasOwl, bool pBloqueadoPorOtroUsuario)
         {

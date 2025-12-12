@@ -1,0 +1,23 @@
+﻿@model ResourceViewModel
+@{
+    ResourceModel fichaRecurso = Model.Resource;
+    CommunityModel Comunidad = Html.GetComunidad();
+    string urlIniciarMejora = $"{fichaRecurso.ListActions.UrlStartImprovement}";
+    string funcionIniciarMejora = $"IniciarMejoraDocumento('{urlIniciarMejora}')";
+}
+
+<div class="modal-header">
+    <p class="modal-title">
+        <span class="material-icons">construction</span>@fichaRecurso.Title - @Html.GetText("FLUJOS", "INICIARPROCESOMEJORA")
+    </p>
+    <span class="material-icons cerrar" data-dismiss="modal" aria-label="Close">close</span>
+</div>
+<div class="modal-body">
+    <div class="form-group">
+        <label class="control-label">@Html.GetText("FLUJOS", "INFOMEJORA")</label>
+    </div>
+    <div class="form-actions">
+        <button data-dismiss="modal" class="btn btn-outline-primary uppercase btnCerrarModalIniciarMejora_@fichaRecurso.Key">@Html.GetText("COMMON", "CANCELAR")</button>
+        <a class="btn btn-primary uppercase btnIniciarMejora" id="btnIniciarMejora_@fichaRecurso.Key" onclick="@funcionIniciarMejora">@Html.GetText("FLUJOS", "INICIAR")</a>
+    </div>
+</div>
