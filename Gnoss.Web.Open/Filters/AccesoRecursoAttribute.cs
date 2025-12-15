@@ -88,7 +88,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Filters
                 DocumentacionCN documentacionCN = new DocumentacionCN(mEntityContext, mLoggingService, mConfigService, null, mLoggerFactory.CreateLogger<DocumentacionCN>(), mLoggerFactory);
 
                 // Si no viene la version en la peticion es que estamos en la ficha de la ultima version
-                documentoVersionID = documentoVersionID == Guid.Empty ? documentacionCN.ObtenerVersionesDocumentoIDPorID(documentoID).Keys.LastOrDefault() : documentoVersionID;
+                documentoVersionID = documentoVersionID == Guid.Empty ? documentacionCN.ObtenerUltimaVersionDeDocumento(documentoID) : documentoVersionID;
 
                 documentoID = documentoVersionID != Guid.Empty ? documentoVersionID : documentoID;
                 //TODO JUAN. Hay que meter aquí la comprobación de MyGNOSS o se hace en la ficha?

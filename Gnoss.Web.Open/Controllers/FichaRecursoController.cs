@@ -2803,7 +2803,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
             {
                 //Seguridad : si Tiene Permisos la Identidad para Desvincular estos Recursos
                 DocumentacionCN docCN = new DocumentacionCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<DocumentacionCN>(), mLoggerFactory);
-                Guid docVinculadoUltimaVersion = docCN.ObtenerVersionesDocumentoIDPorID(pDocVinculadoID).MaxBy(item => item.Value).Key;
+                Guid docVinculadoUltimaVersion = docCN.ObtenerUltimaVersionDeDocumento(pDocVinculadoID);
 
                 DataWrapperDocumentacion dwDocumentacion = new DataWrapperDocumentacion();
                 docCN.ObtenerDocumentoPorIDCargarTotal(docVinculadoUltimaVersion, dwDocumentacion, true, true, null);
@@ -4180,6 +4180,8 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                 {
                     ControladorDocumentacion.EliminarVersionDocumentoRDF(Documento.Clave);
                 }
+
+                ControladorDocumentacion.InsertarEnColaProcesarFicherosRecursosModificadosOEliminados(Documento.Clave, TipoEventoProcesarFicherosRecursos.BorradoPersistente, mAvailableServices);
             }
             catch (Exception ex)
             {
@@ -4335,7 +4337,13 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
         {
             try
             {
-				Elementos.Documentacion.Documento docMejora = GestorDocumental.CrearNuevaVersionDocumento(Documento, IdentidadActual, pEsMejora: true);
+                // Si no tiene versiones, se crea una para evitar errores al cargar el historial
+                if (Documento.ListaDocumentosVersionesAnteriores.Count == 0)
+                {
+                    GestorDocumental.CrearPrimeraVersionDocumento(Documento);
+                    mEntityContext.SaveChanges();
+                }
+                Elementos.Documentacion.Documento docMejora = GestorDocumental.CrearNuevaVersionDocumento(Documento, IdentidadActual, pEsMejora: true);
 				ControladorDocumentacion controladorDocumentacion = new ControladorDocumentacion(mLoggingService, mEntityContext, mConfigService, mRedisCacheWrapper, mGnossCache, mEntityContextBASE, mVirtuosoAD, mHttpContextAccessor, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<ControladorDocumentacion>(), mLoggerFactory);
                 controladorDocumentacion.IniciarMejoraSobreDocumento(Documento, docMejora, UsuarioActual, IdentidadOrganizacionBROrg, ProyectoSeleccionado.Clave != ProyectoAD.MetaProyecto);
 
@@ -4841,7 +4849,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                     // Hay que eliminar todos los archivos que tenga sus versiones anteriores
                     foreach (Guid docID in documentoIDs)
                     {
-                        ControladorDocumentacion.InsertarEnColaProcesarFicherosRecursosModificadosOEliminados(docID, TipoEventoProcesarFicherosRecursos.Borrado, mAvailableServices);
+                        ControladorDocumentacion.InsertarEnColaProcesarFicherosRecursosModificadosOEliminados(docID, TipoEventoProcesarFicherosRecursos.BorradoPersistente, mAvailableServices);
                     }
 
                     // Hay que eliminar logicamente los documentos que sean versiones anteriores.

@@ -2191,6 +2191,11 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
             //Asignamos el doc de nuevo porque se crea una nueva instancia en los métodos anteriores:
             doc = GestorDocumental.ListaDocumentos[doc.Clave];
 
+            if (CreandoFormSem || !EditandoRecurso)
+            {
+                GestorDocumental.CrearPrimeraVersionDocumento(doc);
+            }
+
             ExtraerCambiosBasicos(doc);
             GuardarDatosAutoriaDocumento(doc);
 
@@ -3647,7 +3652,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
             List<Guid> listaPerfiles = new List<Guid>();
             listaPerfiles.AddRange(Documento.ListaPerfilesEditores.Keys);
             List<Guid> categoriasSeleccionadas = RecogerCategoriasSeleccionadas();
-            bool esMejora = ComprobarSiSeEstaEditandoUnaMejora(DocumentoID);
+            bool esMejora = ComprobarSiSeEstaEditandoUnaMejora(pNuevoDoc.Clave);
 
             Guid docAntiguoID = mDocumentoID;
             bool borrador = mModelSaveRec.Draft;
@@ -12029,7 +12034,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                         docOriginalID = DocumentoID;
                     }                    
                    
-                    if (!ComprobarSiSeEstaEditandoUnaMejora(DocumentoID))
+                    if (!ComprobarSiSeEstaEditandoUnaMejora(Documento.Clave))
                     {
 						traza.Append("Antes de GuardarRecursoEnGrafoBusqueda");
 						UtilidadesVirtuoso.GuardarRecursoEnGrafoBusqueda(Documento, true, mDocumentosExtraGuardar, ProyectoSeleccionado, mListaTriplesSemanticos, mOntologia, GestorDocumental.GestorTesauro, rdfConfiguradoRecursoNoSemantico, mCreandoVersion, docOriginalID, UrlIntragnoss, mOtrosArgumentosBase, PrioridadBase.Alta, mAvailableServices);
