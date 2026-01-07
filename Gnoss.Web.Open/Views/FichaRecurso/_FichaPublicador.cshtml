@@ -221,7 +221,7 @@ string iconoTipoRecurso = "";
         </div>
     }
     @* Mostrar información de versión. Si la versión del documento no es reciente *@
-    @if (!FichaDocumento.LastVersion.Equals(FichaDocumento.Key))
+    @if (!FichaDocumento.LastVersion.Equals(FichaDocumento.Key) && !FichaDocumento.IsImprovement)
     {
         <div role="alert" class="alert alert-warning mt-2 d-flex" id="noUltVer-info">
             <span class="material-icons mr-3">content_paste_off</span>

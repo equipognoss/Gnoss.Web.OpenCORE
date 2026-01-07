@@ -171,13 +171,10 @@
                                     </a>
                                     <div class="dropdown-menu basic-dropdown dropdown-icons dropdown-menu-right"
                                          style="will-change: transform">
-                                        @if (!Model.HasActiveImprovement)
-                                        {
-                                            <a class="item-dropdown" style="text-decoration:none; color:inherit" onclick="DesplegarRestaurar(this, '@doc.UrlLoadActionRestoreVersion', '@doc.VersionId.ToString()')">
-                                                <span class="material-icons">replay</span>
-                                                <span class="texto">@Html.GetText("HISTORIALVERSIONES", "RESTAURAR")</span>
-                                            </a>
-                                        }
+                                        <a class="item-dropdown" style="text-decoration:none; color:inherit" onclick="DesplegarRestaurar(this, '@doc.UrlLoadActionRestoreVersion', '@doc.VersionId.ToString()')">
+                                            <span class="material-icons">replay</span>
+                                            <span class="texto">@Html.GetText("HISTORIALVERSIONES", "RESTAURAR")</span>
+                                        </a>
                                         <a class="item-dropdown" style="text-decoration:none; color:inherit" onclick="DesplegarEliminar(this, '@doc.UrlLoadActionDeleteVersion', '@doc.VersionId.ToString()')">
                                             <span class="material-icons">delete</span>
                                             <span class="texto">@Html.GetText("DEVTOOLS", "BORRAR")</span>

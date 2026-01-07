@@ -76,9 +76,9 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
             List<Guid> listaVersionDocumentos = new List<Guid>();
             listaVersionDocumentos.Add(DocumentoID);
             listaVersionDocumentos.Add(DocumentoAntID);
-
-            Dictionary<Guid, ResourceModel> listaRecursos = ControladorProyectoMVC.ObtenerRecursosPorID(listaVersionDocumentos, "", null, false);
             
+            Dictionary<Guid, ResourceModel> listaRecursos = ControladorProyectoMVC.ObtenerRecursosPorID(listaVersionDocumentos, "", null, false, pEsFichaRecurso: true);
+
             DocumentacionCN docCN = new DocumentacionCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<DocumentacionCN>(), mLoggerFactory);
             Dictionary<Guid, int> listaVersionDocumentosAux = docCN.ObtenerVersionesDocumentoIDPorID(listaRecursos.Values.First().OriginalKey);
             Guid ultimaVersion = listaVersionDocumentosAux.OrderByDescending(item => item.Value).FirstOrDefault().Key;

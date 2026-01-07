@@ -212,54 +212,8 @@ namespace Gnoss.Web
             }
 			var sp = services.BuildServiceProvider();
 			var loggingService = sp.GetService<LoggingService>();
-			if (bdType.Equals("0"))
-			{
-                services.AddDbContext<EntityContext>(options =>
-                        options.UseSqlServer(acid, o => o.UseCompatibilityLevel(110)).LogTo(loggingService.AgregarEntradaTrazaEntity));
-                services.AddDbContext<EntityContextBASE>(options =>
-                        options.UseSqlServer(baseConnection, o => o.UseCompatibilityLevel(110)).LogTo(loggingService.AgregarEntradaTrazaEntity));
-                services.AddDbContext<EntityContextOauth>(options =>
-                        options.UseSqlServer(oauthConnection, o => o.UseCompatibilityLevel(110)).LogTo(loggingService.AgregarEntradaTrazaEntity));
-            }
-			else if (bdType.Equals("1"))
-			{
-				services.AddDbContext<EntityContext, EntityContextOracle>(options =>
-						options.UseOracle(acid).LogTo(loggingService.AgregarEntradaTrazaEntity)
-						);
-				services.AddDbContext<EntityContextBASE, EntityContextBASEOracle>(options =>
-						options.UseOracle(baseConnection).LogTo(loggingService.AgregarEntradaTrazaEntity)
-
-						);
-				services.AddDbContext<EntityContextOauth, EntityContextOauthOracle>(options =>
-						options.UseOracle(oauthConnection).LogTo(loggingService.AgregarEntradaTrazaEntity)
-
-						);
-			}
-			else if (bdType.Equals("2"))
-			{
-				services.AddDbContext<EntityContext, EntityContextPostgres>(opt =>
-				{
-					var builder = new NpgsqlDbContextOptionsBuilder(opt);
-					builder.SetPostgresVersion(new Version(9, 6));
-					opt.UseNpgsql(acid).LogTo(loggingService.AgregarEntradaTrazaEntity);
-
-				});
-				services.AddDbContext<EntityContextBASE, EntityContextBASEPostgres>(opt =>
-				{
-					var builder = new NpgsqlDbContextOptionsBuilder(opt);
-					builder.SetPostgresVersion(new Version(9, 6));
-					opt.UseNpgsql(baseConnection).LogTo(loggingService.AgregarEntradaTrazaEntity);
-
-				});
-				services.AddDbContext<EntityContextOauth, EntityContextOauthPostgres>(opt =>
-				{
-					var builder = new NpgsqlDbContextOptionsBuilder(opt);
-					builder.SetPostgresVersion(new Version(9, 6));
-					opt.UseNpgsql(oauthConnection).LogTo(loggingService.AgregarEntradaTrazaEntity);
-
-				});
-			}
-			sp = services.BuildServiceProvider();
+            AgregarEntityContextService(bdType, services);
+            sp = services.BuildServiceProvider();
             // Resolve the services from the service provider
             var virtualProvider = sp.GetService<BDVirtualPath>();
             var servicesUtilVirtuosoAndReplication = sp.GetService<IServicesUtilVirtuosoAndReplication>();
@@ -683,6 +637,28 @@ namespace Gnoss.Web
         public void CrearColaEventosInternos()
         {
             mIPublishEvents.CrearCola();
+        }
+
+        private void AgregarEntityContextService(string bdType, IServiceCollection pServices)
+        {
+            if (bdType.Equals("0"))
+            {
+                pServices.AddDbContext<EntityContext>();
+                pServices.AddDbContext<EntityContextBASE>();
+                pServices.AddDbContext<EntityContextOauth>();
+            }
+            else if (bdType.Equals("1"))
+            {
+                pServices.AddDbContext<EntityContext, EntityContextOracle>();
+                pServices.AddDbContext<EntityContextBASE, EntityContextBASEOracle>();
+                pServices.AddDbContext<EntityContextOauth, EntityContextOauthOracle>();
+            }
+            else if (bdType.Equals("2"))
+            {
+                pServices.AddDbContext<EntityContext, EntityContextPostgres>();
+                pServices.AddDbContext<EntityContextBASE, EntityContextBASEPostgres>();
+                pServices.AddDbContext<EntityContextOauth, EntityContextOauthPostgres>();
+            }
         }
     }
 }

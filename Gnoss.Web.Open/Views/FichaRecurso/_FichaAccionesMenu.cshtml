@@ -43,7 +43,7 @@
     if (fichaRecurso.Estado != null)
     {
         transiciones = fichaRecurso.Estado.Transiciones;
-        pintarTransiciones = transiciones?.Count > 0;
+        pintarTransiciones = transiciones?.Count > 0 && (fichaRecurso.VersionState == EstadoVersion.Pendiente || fichaRecurso.VersionState == EstadoVersion.Vigente);
         pintarHistorialTransiciones = fichaRecurso.HistorialTransiciones != null && fichaRecurso.HistorialTransiciones.Count > 0;
         pintarIniciarMejora = !fichaRecurso.IsImprovement && fichaRecurso.Estado.EsFinal && fichaRecurso.Estado.PermiteMejora && fichaRecurso.Actions.Edit && !fichaRecurso.IsInProcessOfImprovement;
         pintarAplicarMejora = fichaRecurso.IsImprovement && fichaRecurso.VersionState == EstadoVersion.Pendiente && fichaRecurso.Estado.EsFinal && fichaRecurso.Actions.Edit;

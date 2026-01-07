@@ -2191,11 +2191,6 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
             //Asignamos el doc de nuevo porque se crea una nueva instancia en los métodos anteriores:
             doc = GestorDocumental.ListaDocumentos[doc.Clave];
 
-            if (CreandoFormSem || !EditandoRecurso)
-            {
-                GestorDocumental.CrearPrimeraVersionDocumento(doc);
-            }
-
             ExtraerCambiosBasicos(doc);
             GuardarDatosAutoriaDocumento(doc);
 
@@ -2245,6 +2240,11 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
             }
 
             AgregarEstadoDocumento(doc.FilaDocumento);
+
+            if (CreandoFormSem || !EditandoRecurso)
+            {
+                GestorDocumental.CrearPrimeraVersionDocumento(doc);
+            }
 
             GuardarEnBD_SubirRecursoPart2(listaProyectosAcuNumRec);
 
@@ -3266,9 +3266,10 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                 return Redirect(BaseURLIdioma);
             }
 
+            DocumentacionCN docCN = new DocumentacionCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<DocumentacionCN>(), mLoggerFactory);
+
             if (Documento.TipoDocumentacion == TiposDocumentacion.Semantico && mOntologiaID == Guid.Empty)
             {
-                DocumentacionCN docCN = new DocumentacionCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<DocumentacionCN>(), mLoggerFactory);
                 string nombreEntVinc = docCN.ObtenerNombreElementoVinculadoDocumento(Documento.ElementoVinculadoID);
                 docCN.Dispose();
                 bool docVirtual = false;
@@ -3280,6 +3281,12 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                 }
 
                 return Redirect(mControladorBase.UrlsSemanticas.GetURLBaseRecursosVerDocumentoCreado(BaseURLIdioma, UtilIdiomas, NombreProy, UrlPerfil, Documento.Clave, Documento.ElementoVinculadoID.ToString(), true, (IdentidadOrganizacion != null), docVirtual));
+            }
+            // Si se intenta editar un recurso vigente que tiene una mejora activa
+            if(docCN.ComprobarDocumentoTieneMejoraActiva(Documento.VersionOriginalID) && Documento.FilaDocumento.UltimaVersion)
+            {
+                string url = mControladorBase.UrlsSemanticas.GetURLBaseRecursosFicha(BaseURLIdioma, UtilIdiomas, NombreProy, UrlPerfil, Documento, (IdentidadOrganizacion != null)).Replace(Documento.Clave.ToString(), Documento.VersionOriginalID.ToString());
+                return Redirect(url);
             }
 
             return null;
@@ -11914,7 +11921,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                 traza.Append("Antes de TratarImagenesDescripcion");
                 TratarImagenesDescripcion(pPaginaModel);
                 ActionResult respuesta;
-
+                
 
                 if (EditandoRecurso && !Duplicando)
                 {

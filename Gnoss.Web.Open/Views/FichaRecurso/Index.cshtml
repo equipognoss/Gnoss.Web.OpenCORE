@@ -16,6 +16,11 @@ Variables
 
     //Url de la pestaña para mostrarla en el Breadcrumb
     string urlPestanya = Comunidad.Url + "/" + Html.GetNombreUrlPestanya();
+    bool pintarEnlaceAMejora = false;
+    if (FichaDocumento.Estado != null)
+    {
+        pintarEnlaceAMejora = !FichaDocumento.IsImprovement && FichaDocumento.IsInProcessOfImprovement && FichaDocumento.Actions.EditImprovement;
+    }
     //Nombre o título de la pestaña para ponerlo en el Breadcrumb
     string nombrePestanya = Html.GetNombrePestanya();
     // Nombre de la clase para un div del recurso
@@ -97,7 +102,7 @@ Variables
             else
             {
                 @* Mostrar información de versión. Si la versión del documento no es reciente *@
-                @if (!FichaDocumento.LastVersion.Equals(FichaDocumento.Key))
+                @if (!FichaDocumento.LastVersion.Equals(FichaDocumento.Key) && !FichaDocumento.IsImprovement)
                 {
                     <div role="alert" class="alert alert-warning mt-2 d-flex" id="noUltVer-info">
                         <span class="material-icons mr-3">content_paste_off</span>
@@ -105,12 +110,27 @@ Variables
                     </div>
                 }
             }
-
-            @if (FichaDocumento.IsImprovement)
+            @if (pintarEnlaceAMejora)
+            {
+                // Url a la ficha de mejora
+                string urlAMejora = $"{FichaDocumento.ListActions.UrlImprovement}";
+                <div class="alert alert-warning" role="alert">
+                    <span class="material-icons mr-3">construction</span>
+                    <span> @Html.Raw(Html.GetText("FLUJOS", "AVISOESTASENPROCESOMEJORA", urlAMejora))</span>
+                </div>
+            }
+            @if (FichaDocumento.IsImprovement && FichaDocumento.VersionState == EstadoVersion.Pendiente)
             {
                 <div role="alert" class="alert alert-warning mt-2 d-flex" id="avisoMejora-info">
                     <span class="material-icons mr-3">construction</span>
                     <span>@Html.Raw(Html.GetText("FLUJOS", "AVISOESTASENMEJORA", Html.GetUrlPagina().Substring(0, Html.GetUrlPagina().LastIndexOf('/') + 1)))</span>
+                </div>
+            }
+            @if (FichaDocumento.IsImprovement && FichaDocumento.VersionState == EstadoVersion.Historico)
+            {
+                <div role="alert" class="alert alert-warning mt-2 d-flex" id="avisoMejora-info">
+                    <span class="material-icons mr-3">construction</span>
+                    <span>@Html.Raw(Html.GetText("FLUJOS", "AVISOESTASENHISTORICOMEJORA", FichaDocumento.ImprovementCardLink))</span>
                 </div>
             }
 
