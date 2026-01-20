@@ -3,10 +3,14 @@ using Es.Riam.Gnoss.AD.EncapsuladoDatos;
 using Es.Riam.Gnoss.AD.EntityModel;
 using Es.Riam.Gnoss.AD.EntityModelBASE;
 using Es.Riam.Gnoss.AD.ParametroAplicacion;
+using Es.Riam.Gnoss.AD.ServiciosGenerales;
 using Es.Riam.Gnoss.AD.Virtuoso;
 using Es.Riam.Gnoss.CL;
+using Es.Riam.Gnoss.CL.Documentacion;
 using Es.Riam.Gnoss.CL.ParametrosAplicacion;
 using Es.Riam.Gnoss.CL.ServiciosGenerales;
+using Es.Riam.Gnoss.Elementos.Documentacion;
+using Es.Riam.Gnoss.Logica.Documentacion;
 using Es.Riam.Gnoss.Logica.ParametroAplicacion;
 using Es.Riam.Gnoss.Recursos;
 using Es.Riam.Gnoss.Util.Configuracion;
@@ -16,20 +20,19 @@ using Es.Riam.Gnoss.Web.MVC.Filters;
 using Es.Riam.Gnoss.Web.MVC.Models.Administracion;
 using Es.Riam.Interfaces.InterfacesOpen;
 using Es.Riam.InterfacesOpen;
+using Es.Riam.Util;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Infrastructure;
 using Microsoft.AspNetCore.Mvc.ViewEngines;
 using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Net.Http;
 using System.Net;
-using Es.Riam.Gnoss.CL.Documentacion;
-using Es.Riam.Gnoss.Elementos.Documentacion;
-using Es.Riam.Gnoss.Logica.Documentacion;
+using System.Net.Http;
 using System.Text;
 using Es.Riam.Gnoss.AD.ServiciosGenerales;
 using Gnoss.Web.Open.Filters;
@@ -54,7 +57,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
             _appLifetime = appLifetime;
         }
 
-        private static string[] LISTA_IDIOMAS = { "es", "en", "pt", "ca", "eu", "gl", "fr", "de", "it" };
+        private static string[] LISTA_IDIOMAS = { "es", "en", "pt", "ca", "ca-valencia","eu", "gl", "fr", "de", "it" };
 
         #region Miembros
 
@@ -295,8 +298,8 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
             string[] idiomas = pIdiomas.Split("&&&");
             foreach (string idioma in idiomas)
             {
-                string clave = idioma.Substring(0, 2);
-                if (!LISTA_IDIOMAS.Contains(clave))
+                string clave = idioma.Split("|")[0];
+                if (!LISTA_IDIOMAS.Contains(clave) && UtilCadenas.RegexPrefijoIdioma.IsMatch(clave))
                 {
                     idiomasPersonalizados.Append($"{idioma}&&&");
                 }

@@ -7249,10 +7249,12 @@ operativaGestionConfiguracionPlataforma = {
         const that = this;
         const inputClaveIdioma = that.inputClaveIdioma.val().trim();
         const inputValorIdioma = that.inputValorIdioma.val().trim();
+        const regexPrefijoIdioma = new RegExp("^[a-zA-z]{2}(-[a-zA-z]{2,10}){0,2}$")
 
-        // Comprobar si el id tiene exactamente 2 caracteres
-        if (inputClaveIdioma.length != 2) {
-            mostrarNotificacion("error", "El id tiene que tener 2 caracteres exactamente");
+        // Comprobar si el id cumple con la estructura BCP-47:
+        // Ej: es, es-ES, ca-valencia
+        if (!regexPrefijoIdioma.test(inputClaveIdioma) || inputClaveIdioma.length > 20) {
+            mostrarNotificacion("error", "El id tiene no sigue el formato indicado o tiene más de 20 caracteres");
             return;
         }
 

@@ -18,7 +18,7 @@ Variables
 			<div class="modal-header">
 				<p class="modal-title">
 					@* Título del Modal *@
-					<span class="material-icons">language</span>Añadir idioma
+					<span class="material-icons">language</span>@Html.GetText("DEVTOOLS", "AÑADIRIDIOMAPERSONALIZADOECOSISTEMA")
 				</p>
 				@* Cierre del Modal *@
 				<span class="material-icons cerrar" data-dismiss="modal" aria-label="Close">close</span>
@@ -27,18 +27,18 @@ Variables
 			<div class="modal-body">				
 				<div class="form-group">
 					<div class="form-group mb-3">
-						<label class="control-label d-block">Clave del idioma (Solo puede tener 2 caracteres)</label>
+						<label class="control-label d-block">@Html.GetText("DEVTOOLS", "CLAVEIDIOMAPERSONALIZADOECOSISTEMA")</label>
 						<input id="inputClaveIdioma" type="text" class="form-control not-outline">
-						<small class="form-text text-muted">Añadir la clave del idioma: Ej: Para el idioma Finlandés correspondería: fi</small>
+						<small class="form-text text-muted">@Html.GetText("DEVTOOLS", "CLAVEAYUDAIDIOMAPERSONALIZADOECOSISTEMA")</small>
 					</div>
 					<div class="form-group mb-3">
-						<label class="control-label d-block">Nombre del idioma</label>
+						<label class="control-label d-block">@Html.GetText("DEVTOOLS", "NOMBREIDIOMAPERSONALIZADOECOSISTEMA")</label>
 						<input id="inputValorIdioma" type="text" class="form-control not-outline">
-						<small class="form-text text-muted">Nombre del idioma que se desea añadir: Ejemplo: Finlandés</small>
+						<small class="form-text text-muted">@Html.GetText("DEVTOOLS", "NOMBREAYUDAIDIOMAPERSONALIZADOECOSISTEMA")</small>
 					</div>
 				</div>
-				<button id="btnAddCustomLanguage" class="btn btn-primary d-none">Añadir</button>			
-				<button id="btnEditCustomLanguage" class="btn btn-primary d-none">Editar</button>	
+				<button id="btnAddCustomLanguage" class="btn btn-primary d-none">@Html.GetText("DEVTOOLS","AÑADIR")</button>			
+				<button id="btnEditCustomLanguage" class="btn btn-primary d-none">@Html.GetText("DEVTOOLS", "EDITAR")</button>
 			</div>
 		</div>
 	</div>

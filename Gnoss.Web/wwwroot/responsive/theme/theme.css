@@ -2057,14 +2057,16 @@ span.material-icons.expand[aria-expanded=true]::before {font-family: 'Material I
 .header-resource .title-wrap .tipo { font-size: 0.75rem; font-weight: 500; line-height: 18px; color: #767676; margin-bottom: 2px; position: relative; }
 .header-resource .title-wrap .title { margin-bottom: 10px; position: relative; font-weight: 500; font-size: 1.2rem; line-height: 1; }
 .header-resource .title-wrap .title:before { font-family: 'Material Icons'; position: absolute; top: -1px; left: -35px; font-size: 1.5rem;}
-.header-resource .upper-wrap { display: flex; flex-wrap: wrap; font-size: 1rem; color: var(--c-texto); justify-content: space-between; align-items: center;}
+.header-resource .upper-wrap { display: flex; flex-wrap: wrap; font-size: 1rem; color: var(--c-texto); justify-content: space-between; align-items: flex-start;}
 .header-resource .upper-wrap .user-miniatura .imagen-usuario-wrap { display: none; }
  .header-resource .upper-wrap .nombre-usuario-wrap .nombre,
  .header-resource .upper-wrap .userCorporateInfo .userCorporateInfoAuthor {font-weight: normal;font-size: 0.8rem;color: var(--c-texto-claro);}
  .header-resource .upper-wrap .userCorporateInfo .material-icons {font-size: 22px;color: var(--c-texto-claro);cursor: pointer;}
 /* No hace falta -> Lo controlo desde CORE .header-resource .upper-wrap .nombre-usuario-wrap .nombre-completo { display: none; }*/
 .header-resource .upper-wrap .fecha { white-space: nowrap; margin-bottom: 0; font-weight: normal; font-size: 0.8rem; color: var(--c-texto-claro); }
-
+.header-resource > .d-flex { margin-bottom: 0.5rem; }
+.texto-traduccion-ia { align-self: center; font-size: 0.8rem; white-space: nowrap; color: var(--c-texto-claro); }
+.icono-ia { font-size: 1rem; }
 .fichaRecurso .col-contenido .acciones-recurso-wrapper { padding-left: 40px; margin-bottom: 15px; border-bottom: 1px solid #ddd; padding-bottom: 10px; display: flex; justify-content: space-between; }
 .fichaRecurso .col-contenido .acciones-recurso-wrapper .izquierda,
 .fichaRecurso .col-contenido .acciones-recurso-wrapper .derecha { display: flex; align-items: center;}

@@ -30,6 +30,7 @@ using Es.Riam.Gnoss.AD.ServiciosGenerales;
 using Microsoft.Extensions.Logging;
 using Serilog.Core;
 using Es.Riam.Gnoss.Web.MVC.Controllers.Administracion;
+using Es.Riam.Util;
 
 namespace Gnoss.Web.Middlewares
 {
@@ -127,11 +128,13 @@ namespace Gnoss.Web.Middlewares
                 string idioma = proyectoCN.ObtenerIdiomaPrincipalDominio(dominio);
                 UtilIdiomas utilIdiomas = new UtilIdiomas(idioma, loggingService, entityContext, _configService, redisCacheWrapper, mLoggerFactory.CreateLogger<UtilIdiomas>(), mLoggerFactory);
                 string comunidadTxt = utilIdiomas.GetText("COMMON", "COMUNIDAD").ToLower();
-                
-				if (segmentos[0].Length == 2)
+                ParametroAplicacionCL paramCL = new ParametroAplicacionCL(entityContext, loggingService, redisCacheWrapper, _configService, null, mLoggerFactory.CreateLogger<ParametroAplicacionCL>(), mLoggerFactory);
+                Dictionary<string, string> listaIdiomasPlataforma = paramCL.ObtenerListaIdiomasDictionary();
+                paramCL.Dispose();
+
+                if (UtilCadenas.RegexPrefijoIdioma.IsMatch(segmentos[0]))
 				{
-                    ParametroAplicacionCL paramCL = new ParametroAplicacionCL(entityContext, loggingService, redisCacheWrapper, _configService, null, mLoggerFactory.CreateLogger<ParametroAplicacionCL>(), mLoggerFactory);
-                    if (paramCL.ObtenerListaIdiomasDictionary().ContainsKey(segmentos[0]))
+                    if (listaIdiomasPlataforma.ContainsKey(segmentos[0]))
                     {
                         idioma = segmentos[0];
                     }
@@ -234,7 +237,7 @@ namespace Gnoss.Web.Middlewares
                         else
                         {
                             context.Items["statusCode"] = 404;
-                            if (segmentos[0].Length == 2)
+                            if (UtilCadenas.RegexPrefijoIdioma.IsMatch(segmentos[0])  && listaIdiomasPlataforma.ContainsKey(segmentos[0]))
                             {
                                 return $"/{idioma}/{comunidadTxt}/{nombreCortoComunidad}/error";
                             }

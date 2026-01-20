@@ -3434,6 +3434,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
 
             return GnossResultERROR();
         }
+
         private HashSet<string> ModificarTriplesAdjuntosRecursoSemantico(DocumentEditionModel pModel, Identidad pIdentidadOrganizacion, bool pMasterComunidad)
         {
             HashSet<string> rutasAdjuntos = new HashSet<string>();
@@ -3449,7 +3450,8 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
 
                     string nuevaRuta = ControladorDocumentacion.ReemplazarRutaAdjuntoSemantico(rutaArchivo, pModel.Key, DocumentoVersionID);
 
-                    rutasAdjuntos.Add(Path.GetDirectoryName(rutaArchivo));
+                    rutasAdjuntos.Add(rutaArchivo);
+                    //rutasAdjuntos.Add(Path.GetDirectoryName(rutaArchivo));
 
                     pModel.RdfValue = pModel.RdfValue.Replace(rutaArchivo, nuevaRuta);
                 }

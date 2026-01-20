@@ -213,7 +213,7 @@
                             @foreach (string key in cabecera.Languajes.Select(kvp => kvp.Key))
                             {
                                 string clase = $"nombre-form-oculto-{key}";
-                                <input class="form-control nombre-form-oculto @clase" type="text" placeholder="Nombre estado" lang="@key" />
+                                <input class="form-control nombre-form-oculto @clase" type="text" placeholder="Nombre transición" lang="@key" />
                             }
                         </div>
                         <div class="form-group mb-4">
@@ -337,7 +337,7 @@
                 </div>
             </div>
             <div class="panelBotonera">
-                <a class="btn btn-primary uppercase btnGuardarFlujo">Guardar</a>
+                <a class="btn btn-primary uppercase btnGuardarFlujo">@Html.GetText("COMMON", "GUARDAR")</a>
             </div>
         </div>
     </div>

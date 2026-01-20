@@ -46,12 +46,13 @@ function ObtenerIdiomasUsadosRecurso() {
     idiomasUsadosText = "";
     var valorRdf = $('#' + TxtValorRdf).val();
     var valoresConLang = valorRdf.split('[|lang|]');
+    const regexPrefijoIdioma = new RegExp("^[a-zA-z]{2}(-[a-zA-z]{2,10}){0,2}$")
 
     for (var i = 0; i < (valoresConLang.length - 1) ; i++) {
         if (valoresConLang[i].substring(0, valoresConLang[i].indexOf('@')) != 'null') {
             var idioma = valoresConLang[i].substring(valoresConLang[i].lastIndexOf('@') + 1);
 
-            if (idioma.length == 2 && idiomasUsadosText.indexOf(idioma + ',') == -1) {
+            if (regexPrefijoIdioma.test(idioma) && idiomasUsadosText.indexOf(idioma + ',') == -1) {
                 idiomasUsadosText += idioma + ',';
             }
         }

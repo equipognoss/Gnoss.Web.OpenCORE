@@ -36,40 +36,41 @@ string privado = "";
 
 
 <div class="header-resource">
-    <div class="title-wrap">
-        @* Título del recurso*@
-        <h1 class="title" property="dcterms:title" content="@FichaDocumento.Title">
-            @if (string.IsNullOrEmpty(FichaDocumento.UrlDocument))
-            {
-                @FichaDocumento.Title
-            }
-            else
-            {
-                string claseEnviarAccGogAnac = "";
-                if (FichaDocumento.TypeDocument == ResourceModel.DocumentType.Imagen || FichaDocumento.TypeDocument == Es.Riam.Gnoss.Web.MVC.Models.ResourceModel.DocumentType.FicheroServidor)
-                {
-                    claseEnviarAccGogAnac = "class=\"linkDescargaFichero\"";
-                }
-                if(acciones.Edit && FichaDocumento.EsEnlaceSharepoint)
-                {
-                    if (FichaDocumento.OpenInNewWindow)
-                    {
-                        <a target="_blank" title="@FichaDocumento.Title" href="@FichaDocumento.UrlDocument" @Html.Raw(claseEnviarAccGogAnac)>@FichaDocumento.Title</a>
-                    }
-                    else
-                    {
-                        <a href="@FichaDocumento.UrlDocument" @Html.Raw(claseEnviarAccGogAnac)>@FichaDocumento.Title</a>
-                    }
-                }
-                else
+    <div class="d-flex justify-content-between align-items-start">
+        <div class="title-wrap">
+            @* Título del recurso*@
+            <h1 class="title" property="dcterms:title" content="@FichaDocumento.Title">
+                @if (string.IsNullOrEmpty(FichaDocumento.UrlDocument))
                 {
                     @FichaDocumento.Title
                 }
+                else
+                {
+                    string claseEnviarAccGogAnac = "";
+                    if (FichaDocumento.TypeDocument == ResourceModel.DocumentType.Imagen || FichaDocumento.TypeDocument == Es.Riam.Gnoss.Web.MVC.Models.ResourceModel.DocumentType.FicheroServidor)
+                    {
+                        claseEnviarAccGogAnac = "class=\"linkDescargaFichero\"";
+                    }
+                    if (acciones.Edit && FichaDocumento.EsEnlaceSharepoint)
+                    {
+                        if (FichaDocumento.OpenInNewWindow)
+                        {
+                            <a target="_blank" title="@FichaDocumento.Title" href="@FichaDocumento.UrlDocument" @Html.Raw(claseEnviarAccGogAnac)>@FichaDocumento.Title</a>
+                        }
+                        else
+                        {
+                            <a href="@FichaDocumento.UrlDocument" @Html.Raw(claseEnviarAccGogAnac)>@FichaDocumento.Title</a>
+                        }
+                    }
+                    else
+                    {
+                        @FichaDocumento.Title
+                    }
 
-            }
-        </h1>
-        
-        @* Lo ocultamos para ponerlo en _FichaPublicador
+                }
+            </h1>
+
+            @* Lo ocultamos para ponerlo en _FichaPublicador
             Añadir información del tipo de Recurso (Recurso privado)
         <p class="resourceType @(FichaDocumento.TypeDocument == ResourceModel.DocumentType.Semantico ? "semantico " + FichaDocumento.RdfType : FichaDocumento.NameImage)  @privado">
             <span>tipo de documento</span>
@@ -99,7 +100,13 @@ string privado = "";
                 }
             }
         </p>*@
-    </div>
+        </div>
+        @*Traducción generada por IA*@
+        @if (FichaDocumento.AIGeneratedTranslation)
+        {
+            <p class="texto-traduccion-ia mb-1"><span class="material-icons icono-ia">auto_awesome</span> @Html.GetText("PERFILBASERECURSOSFICHA", "TRADUCCIONGENERADAPORIA")</p>
+        }
+    </div>    
 
         @* Mostrar información del Publisher/Autor del Recurso *@
         @if (Model.Resource.Publisher != null)

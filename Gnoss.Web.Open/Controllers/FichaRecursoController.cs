@@ -4381,11 +4381,11 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
         {
             if (DocumentoVersionID == Guid.Empty)
             {
-			List<AD.EntityModel.Models.Documentacion.VersionDocumento> versiones = mGestorDocumental.DataWrapperDocumentacion.ListaVersionDocumento.Where(item => item.DocumentoOriginalID.Equals(DocumentoID) && item.EsMejora && item.EstadoVersion.Equals((short)EstadoVersion.Pendiente)).ToList();
-			if (versiones.Count > 0)
-			{
-				return true;
-			}
+			    List<AD.EntityModel.Models.Documentacion.VersionDocumento> versiones = mGestorDocumental.DataWrapperDocumentacion.ListaVersionDocumento.Where(item => item.DocumentoOriginalID.Equals(DocumentoID) && item.EsMejora && item.EstadoVersion.Equals((short)EstadoVersion.Pendiente)).ToList();
+			    if (versiones.Count > 0)
+			    {
+				    return true;
+			    }
 			}			
 
 			return false;
@@ -4424,7 +4424,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
             DocumentacionCN documentacionCN = new DocumentacionCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<DocumentacionCN>(), mLoggerFactory);
             try
             {
-                ControladorDocumentacion controDoc = new ControladorDocumentacion(mLoggingService, mEntityContext, mConfigService, mRedisCacheWrapper, mGnossCache, mEntityContextBASE, mVirtuosoAD, mHttpContextAccessor, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<ControladorDocumentacion>(), mLoggerFactory);
+                ControladorDocumentacion controDoc = new ControladorDocumentacion(Documento.GestorDocumental, mLoggingService, mEntityContext, mConfigService, mRedisCacheWrapper, mGnossCache, mEntityContextBASE, mVirtuosoAD, mHttpContextAccessor, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<ControladorDocumentacion>(), mLoggerFactory);
                 documentacionCN.IniciarTransaccion();
                 AD.EntityModel.Models.Documentacion.Documento documentoPrevio = documentacionCN.ObtenerUltimaVersionDocumento(pVersionDocumento.DocumentoOriginalID);
                 if (documentoPrevio == null)
@@ -4448,8 +4448,9 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                 dataWrapperDocumentacionDocMejorado.ListaDocumento.Add(documentoMejorado);
                 DocumentoWeb documentoWebPrevio = new DocumentoWeb(documentoPrevio, new GestorDocumental(dataWrapperDocumentacionDocPrevio, mLoggingService, mEntityContext, mLoggerFactory.CreateLogger<GestorDocumental>(), mLoggerFactory));
                 DocumentoWeb documentoWebMejorado = new DocumentoWeb(documentoMejorado, new GestorDocumental(dataWrapperDocumentacionDocMejorado, mLoggingService, mEntityContext, mLoggerFactory.CreateLogger<GestorDocumental>(), mLoggerFactory));
+                documentoWebMejorado.GestorDocumental.GestorIdentidades = IdentidadActual.GestorIdentidades;
 
-                if (documentoWebPrevio.TipoDocumentacion == TiposDocumentacion.Semantico)
+				if (documentoWebPrevio.TipoDocumentacion == TiposDocumentacion.Semantico)
                 {
                     controDoc.AplicarMejoraDocumentoRDF(documentoWebPrevio, documentoWebMejorado, mAvailableServices);
                 }
@@ -6968,9 +6969,15 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                 }
 
                 string baseUrlBusqueda = $"{mControladorBase.UrlsSemanticas.GetURLBaseRecursos(BaseURLIdioma, UtilIdiomas, nombreProy, UrlPerfil, EsIdentidadBROrg, nombreSem)}/";
-                List<Guid> listaRecursosID = new List<Guid>();
+				AD.EntityModel.Models.Documentacion.VersionDocumento versionDocumento = mGestorDocumental.DataWrapperDocumentacion.ListaVersionDocumento.FirstOrDefault(item => item.DocumentoID.Equals(Documento.Clave));
+				List<Guid> listaRecursosID = new List<Guid>();
                 listaRecursosID.Add(Documento.Clave);
-                paginaModel.Resource = ControladorProyectoMVC.ObtenerRecursosPorIDSinProcesarIdioma(listaRecursosID, baseUrlBusqueda, baseRecursosPersonaID, Documento.FilaDocumento.ProyectoID, pEsFichaRecurso: true)[Documento.Clave];
+                Dictionary<Guid, ResourceModel> diccRecursos = ControladorProyectoMVC.ObtenerRecursosPorIDSinProcesarIdioma(listaRecursosID, baseUrlBusqueda, baseRecursosPersonaID, Documento.FilaDocumento.ProyectoID, pEsFichaRecurso: true, pEsMejora: versionDocumento.EsMejora);
+                if (!diccRecursos.ContainsKey(Documento.Clave))
+                {
+					return Redirect(Comunidad.Url);
+				}
+				paginaModel.Resource = diccRecursos[Documento.Clave];
                 bool recursoObtenidoDeCache = true;
 
                 paginaModel.Resource.LastVersion = Documento.UltimaVersionID;
@@ -7271,15 +7278,14 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                     }
                 }
 
-                string rdfType = Documento.TipoDocumentacion.ToString();
+				paginaModel.Resource.Title = UtilCadenas.ObtenerTextoDeIdioma(paginaModel.Resource.Title, UtilIdiomas.LanguageCode, ParametrosGeneralesRow.IdiomaDefecto);
+				paginaModel.Resource.Description = UtilCadenas.ObtenerTextoDeIdioma(paginaModel.Resource.Description, UtilIdiomas.LanguageCode, ParametrosGeneralesRow.IdiomaDefecto);
+
+				string rdfType = Documento.TipoDocumentacion.ToString();
                 if (Documento.TipoDocumentacion == TiposDocumentacion.Semantico)
                 {
                     rdfType = Path.GetFileNameWithoutExtension(GestorDocumental.ListaDocumentos[Documento.ElementoVinculadoID].Enlace);
-
-                    paginaModel.Resource.Title = UtilCadenas.ObtenerTextoDeIdioma(paginaModel.Resource.Title, UtilIdiomas.LanguageCode, ParametrosGeneralesRow.IdiomaDefecto);
-
-                    paginaModel.Resource.Description = UtilCadenas.ObtenerTextoDeIdioma(paginaModel.Resource.Description, UtilIdiomas.LanguageCode, ParametrosGeneralesRow.IdiomaDefecto);
-
+                    
                     paginaModel.Resource.Description = ModificarVideoSiNoHayCookiesYoutube(paginaModel.Resource.Description);
 
                     if (Documento.GestorDocumental.ListaDocumentos.ContainsKey(paginaModel.Resource.ItemLinked) && Documento.GestorDocumental.ListaDocumentos[paginaModel.Resource.ItemLinked].FilaDocumento.VersionFotoDocumento.HasValue && Documento.GestorDocumental.ListaDocumentos[paginaModel.Resource.ItemLinked].FilaDocumento.VersionFotoDocumento > 0)
@@ -7297,6 +7303,8 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
 
                 paginaModel.Resource.Graphs = CargarGrafosRecurso();
                 paginaModel.UrlIntragnoss = UrlIntragnoss;
+
+                paginaModel.Resource.AIGeneratedTranslation = ComprobarSiDocumentoEstaTraducidoConIAEnIdiomaActual();
 
                 try
                 {
@@ -7317,8 +7325,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                 CambiarIndexacionDelRecurso();
 
                 paginaModel.Resource.Estado = ObtenerEstadoDocumento();
-
-                AD.EntityModel.Models.Documentacion.VersionDocumento versionDocumento = mGestorDocumental.DataWrapperDocumentacion.ListaVersionDocumento.FirstOrDefault(item => item.DocumentoID.Equals(Documento.Clave));
+                
                 if (versionDocumento != null)
                 {
                     paginaModel.Resource.IsImprovement = versionDocumento.EsMejora;
@@ -8208,6 +8215,14 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
             {
                 AsignarMetaRobots("NOINDEX, FOLLOW");
             }
+        }
+
+        private bool ComprobarSiDocumentoEstaTraducidoConIAEnIdiomaActual()
+        {
+            using (DocumentacionCN docCN = new DocumentacionCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<DocumentacionCN>(), mLoggerFactory))
+			{
+                return docCN.ComprobarSiDocumentoEstaTraducidoConIAEnIdioma(Documento.Clave, UtilIdiomas.LanguageCode);
+            }                
         }
 
         private List<GrafoRecurso> CargarGrafosRecurso()

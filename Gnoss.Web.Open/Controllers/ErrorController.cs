@@ -260,7 +260,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
             string[] delimiter = { "/" };
             string[] trozos = pRequestUrl.Split(delimiter, StringSplitOptions.RemoveEmptyEntries);
 
-            if (trozos.Length >= 2 && trozos[2].Length == 2)
+            if (trozos.Length >= 2 && UtilCadenas.RegexPrefijoIdioma.IsMatch(trozos[2]))
             {
                 IdiomaUsuario = trozos[2];
             }

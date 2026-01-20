@@ -1,4 +1,5 @@
-﻿@*
+﻿@using static Es.Riam.Gnoss.Web.MVC.Models.ResourceModel
+@*
 Descripción
 -----------------------------------------------
 Vista que contiene información acerca de la interacción de los usuarios con un determinado recurso:
@@ -37,9 +38,12 @@ textoVisitas = Html.GetText("LISTARECURSOS", "REPRODUCCIONES");
 }
 }*@
 
-
-<div class="acciones-recurso-wrapper">
-
+@*Traducción generada por IA*@
+@if (FichaDocumento.AIGeneratedTranslation && FichaDocumento.TypeDocument.Equals(DocumentType.Semantico))
+{
+    <p class="texto-traduccion-ia mb-1"><span class="material-icons icono-ia">auto_awesome</span> @Html.GetText("PERFILBASERECURSOSFICHA", "TRADUCCIONGENERADAPORIA")</p>
+}
+<div class="acciones-recurso-wrapper">    
     @* Área izquierda - Interacciones del usuario en el recurso *@
     <div class="izquierda">
         @* Mostrar Nº de visualizaciones/reproducciones del recurso *@

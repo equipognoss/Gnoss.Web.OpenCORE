@@ -429,10 +429,11 @@ Variables
                                 </ul>
                             </div>
                             @* Botón para añadir un idioma *@
+
                             <div class="d-flex align-items-center justify-content-between mb-3">
-                                <label class="control-label">Lista de idiomas personalizados en la plataforma.</label>
+                                <label class="control-label">@Html.GetText("DEVTOOLS", "LISTAIDIOMASPERSONALIZADOSECOSISTEMA")</label>
                                 <button id="btnAddLanguage" type="button" class="btn btn-primary btn-sm" data-toggle="modal" data-target="#modal-add-language" style="height:30px">
-                                    Añadir idioma
+                                    @Html.GetText("DEVTOOLS", "AÑADIRIDIOMAPERSONALIZADOECOSISTEMA")
                                 </button>
                             </div>
                             <ul id="customLanguageList" class="component-list no-list-style">

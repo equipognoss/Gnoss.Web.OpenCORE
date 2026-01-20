@@ -2676,10 +2676,7 @@ const autocompletarWorkflows = {
                 let isPublic = estado.attr("data-publico");
                 if (typeStateValue == '0' || typeStateValue == '1') {
                     that.updateOption(modalID, '.select-origin', id, typeStateValue, isPublic, tagValue, null, tagValues);
-
-                    if (typeStateValue == '1') {
-                        that.updateOption(modalID, '.select-end', id, typeStateValue, isPublic, tagValue, null, tagValues);
-                    }
+                    that.updateOption(modalID, '.select-end', id, typeStateValue, isPublic, tagValue, null, tagValues);
                 } else if (typeStateValue == '2') {
                     that.updateOption(modalID, '.select-end', id, typeStateValue, isPublic, tagValue, null, tagValues);
                 }
@@ -2753,10 +2750,7 @@ const autocompletarWorkflows = {
             // añade los estados en las transiciones
             if (typeStateValue == '0' || typeStateValue == '1') {
                 this.updateOption(modalID, '.select-origin', id, typeStateValue, statePrivacy, tagValue, tagValues);
-
-                if (typeStateValue == '1') {
-                    this.updateOption(modalID, '.select-end', id, typeStateValue, statePrivacy, tagValue, tagValues);
-                }
+                this.updateOption(modalID, '.select-end', id, typeStateValue, statePrivacy, tagValue, tagValues);
             } else if (typeStateValue == '2') {
                 this.updateOption(modalID, '.select-end', id, typeStateValue, statePrivacy, tagValue, tagValues);
             }
@@ -3057,10 +3051,7 @@ const autocompletarWorkflows = {
                 let isPublic = estado.find('input[type="hidden"]').attr("data-estado-publico");
                 if (typeStateValue == '0' || typeStateValue == '1') {
                     that.updateOption(modalID, '.select-origin', id, typeStateValue, isPublic, tagValue, null, tagValues);
-
-                    if (typeStateValue == '1') {
-                        that.updateOption(modalID, '.select-end', id, typeStateValue, isPublic, tagValue, null, tagValues);
-                    }
+                    that.updateOption(modalID, '.select-end', id, typeStateValue, isPublic, tagValue, null, tagValues);
                 } else if (typeStateValue == '2') {
                     that.updateOption(modalID, '.select-end', id, typeStateValue, isPublic, tagValue, null, tagValues);
                 }

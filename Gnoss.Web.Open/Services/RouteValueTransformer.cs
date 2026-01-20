@@ -213,7 +213,7 @@ namespace Gnoss.Web.Services
                             }
                         }
 
-                        if (segmentos.Length > 0 && segmentos[0].Length == 2)
+                        if (segmentos.Length > 0 && UtilCadenas.RegexPrefijoIdioma.IsMatch(segmentos[0]))
                         {
                             if (paramCL.ObtenerListaIdiomasDictionary().ContainsKey(segmentos[0]))
                             {
