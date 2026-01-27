@@ -6656,7 +6656,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                         {
                             rdfAntiguo = mSemController.ResourceRDF;
                         }
-                        JsonExtServResponse respuesta = GuardarRdfEnServicioExterno(streamRDF, urlServComple, mOntologiaID, mDocumentoID, editandoForm, UtilIdiomas.LanguageCode, IdentidadActual, mModelSaveRec, ProyectoSeleccionado, rdfAntiguo);
+                        JsonExtServResponse respuesta = GuardarRdfEnServicioExterno(streamRDF, urlServComple, mOntologiaID, Documento.VersionOriginalID, editandoForm, UtilIdiomas.LanguageCode, IdentidadActual, mModelSaveRec, ProyectoSeleccionado, rdfAntiguo);
                         if (respuesta.Status == 1)
                         {
                             if (respuesta.Action != null)
