@@ -187,6 +187,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
 
             if (filterContext.Result != null)
             {
+                CargarViewBagBasico();
                 return;
             }
 
@@ -201,6 +202,17 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
             }
 
             base.OnActionExecuting(filterContext);
+        }
+
+        private void CargarViewBagBasico()
+        {
+            ViewBag.Comunidad = Comunidad;
+            ViewBag.Perfil = Perfil;
+            ViewBag.UtilIdiomas = UtilIdiomas;
+            ViewBag.NotificacionesPushConfiguradas = !string.IsNullOrEmpty(mConfigService.ObtenerVapidPublicKey());
+            ViewBag.UrlPagina = UrlPagina;
+            ViewBag.ListaCategoriaCookie = ListaPersonalizacionCategoriaCookieModel;
+            CargarPermisosViewBag();
         }
 
         /// <summary>
@@ -323,12 +335,12 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
         {
             try
             {
-                if (DocumentoVersionado && DocumentoVersionID == Guid.Empty)
+                DocumentacionCN docCN = new DocumentacionCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<DocumentacionCN>(), mLoggerFactory);
+                Guid documentoIDOriginal = docCN.ObtenerDocumentoOriginalIDPorID(DocumentoID);
+
+                if (pFilterContext.ActionDescriptor.RouteValues["action"].Equals("Index") && DocumentoID != documentoIDOriginal)
                 {
-                    if (DocumentoID != mDocumentoOriginalVersionID && pFilterContext.ActionDescriptor.RouteValues["action"].Equals("Index"))
-                    {
-                        pFilterContext.Result = RedireccionarAPaginaNoEncontrada();
-                    }
+                    pFilterContext.Result = RedireccionarAPaginaNoEncontrada();
                 }
             }
             catch (Exception ex)
@@ -6969,10 +6981,16 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                 }
 
                 string baseUrlBusqueda = $"{mControladorBase.UrlsSemanticas.GetURLBaseRecursos(BaseURLIdioma, UtilIdiomas, nombreProy, UrlPerfil, EsIdentidadBROrg, nombreSem)}/";
+
+                bool esMejora = false;
 				AD.EntityModel.Models.Documentacion.VersionDocumento versionDocumento = mGestorDocumental.DataWrapperDocumentacion.ListaVersionDocumento.FirstOrDefault(item => item.DocumentoID.Equals(Documento.Clave));
+                if (versionDocumento != null)
+                {
+                    esMejora = versionDocumento.EsMejora;
+                }
 				List<Guid> listaRecursosID = new List<Guid>();
                 listaRecursosID.Add(Documento.Clave);
-                Dictionary<Guid, ResourceModel> diccRecursos = ControladorProyectoMVC.ObtenerRecursosPorIDSinProcesarIdioma(listaRecursosID, baseUrlBusqueda, baseRecursosPersonaID, Documento.FilaDocumento.ProyectoID, pEsFichaRecurso: true, pEsMejora: versionDocumento.EsMejora);
+                Dictionary<Guid, ResourceModel> diccRecursos = ControladorProyectoMVC.ObtenerRecursosPorIDSinProcesarIdioma(listaRecursosID, baseUrlBusqueda, baseRecursosPersonaID, Documento.FilaDocumento.ProyectoID, pEsFichaRecurso: true, pEsMejora: esMejora);
                 if (!diccRecursos.ContainsKey(Documento.Clave))
                 {
 					return Redirect(Comunidad.Url);

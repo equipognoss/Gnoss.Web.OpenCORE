@@ -99,7 +99,7 @@ const operativaGestionConfiguracionInicial = {
         }); 
 
         this.txtNombreUsuario.off().on("blur", function(){
-            comprobarInputNoVacio($(this), true, false, "El nombre corto de la comunidad debe contener al menos 3 caracteres en minúsculas.", 2, 47);
+            comprobarInputNoVacio($(this), true, false, "El nombre del usuario administrador debe contener entre 3 y 12 caracteres.", 2, 12);
         });
         
         // Correo electrónico del usuario
@@ -278,11 +278,11 @@ const operativaGestionConfiguracionInicial = {
         const that = this;
 
         // Comprobar nombre de usuario        
-        if (that.txtNombreUsuario.val().length < 2){
+        if (that.txtNombreUsuario.val().length < 2 || that.txtNombreUsuario.val().length > 12){
             // Mostrar el panel correspondiente y disparar el error
             that.tabDatosAcceso.trigger("click");
             this.txtNombreUsuario.trigger("blur");
-            mostrarNotificacion("error", "El nombre del usuario administrador debe contener al menos 3 caracteres.");
+            mostrarNotificacion("error", "El nombre del usuario administrador debe contener entre 3 y 12 caracteres.");
             return;
         }   
 

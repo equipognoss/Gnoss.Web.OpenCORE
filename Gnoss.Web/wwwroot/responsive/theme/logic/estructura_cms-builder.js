@@ -13,7 +13,7 @@ const operativaGestionCMSBuilder = {
         this.pParams = pParams;
         this.config(pParams);
         this.configEvents();
-        this.configRutas(); 
+        this.configRutas(pParams); 
         this.triggerEvents();            
     },
 
@@ -40,6 +40,11 @@ const operativaGestionCMSBuilder = {
         this.urlBase = refineURL();
         this.urlSaveCMSPage = this.urlBase;
         this.urlSearchComponent = `${this.urlBase}/searchComponent`;
+        this.urlLoadPageHistory = `${pParams.urlBasePageCMSHistory}/load-history`;
+        this.urlCompareStruct = `${pParams.urlBasePageCMSHistory}/compare`;
+        this.urlDeleteStrcutVersionPage = `${this.urlBase.replace(this.pageId, "")}delete`;
+        this.urlAddCommentStruct = `${this.urlBase.replace(this.pageId, "")}add-comment`;
+        this.urlRestoreStruct = `${this.urlBase.replace(this.pageId, "")}restore`;
     },
     
     /*
@@ -67,6 +72,8 @@ const operativaGestionCMSBuilder = {
 
         // Botones de guardado de página CMS (Guardar borrador, publicar, descartar)
         this.btnSaveCMSPage = $(`.saveButton`);
+        // Boton de historial de pagina CMS
+        this.btnHistoryCMSPage = $(`.historyButton`);
 
         // Input para buscar componentes
         this.txtSearchComponentItem = $(`#filtro-componentes`);
@@ -114,11 +121,28 @@ const operativaGestionCMSBuilder = {
         // Contenedor modal de contenido dinámico
         this.modalContainer = $("#modal-container");
 
+        // Inputs y contenedores del modal de historial estructura
+        this.modalComparatorStruct = $("#modal-comparar-estructura");
+        this.modalComparatorStructContainer = $("#modal-comparar-versiones-estructura-content");
+        this.btnComparePaginaClassName = "btnCompare";
+        this.numChecksActivos = 0;
+        this.txtHackCheckSeleccionados = $('#txtHackCheckSeleccionados');
+        // Botón borrar version historial pagina
+        this.btnEliminarVersionPaginaClassName = 'btnEliminarVersionPagina';
+        this.btnConfirmDeleteVersionPageClassName = 'btnConfirmDeleteVersionPage';
+        this.configPageVersionID = '';
+        // Seccion comparador para restaurar version
+        this.btnAddcommentClassName = "btnAgregarComentario";
+        this.btnRestorePaginaVersionClassName = "btnRestorePaginaVersion";
+
         // Botones de la vista "wizard" para elegir una plantilla predefinida para páginas CMS
         this.btnSelectTemplate = $(".btnSelectTemplate");
 
         // Objeto jquery que contiene el nuevo componente arrastrado (cuando se cree uno nuevo)
         this.newItemCreated = undefined;
+
+        // Identificador de la pagina CMS
+        this.pageId = pParams.pageId;
     },  
     
     /**
@@ -179,6 +203,25 @@ const operativaGestionCMSBuilder = {
             that.handleSaveCMSPage(action);
         });
 
+        this.btnHistoryCMSPage.off().on("click", function () {
+            dataPost = {
+                pPestanyaID: that.pageId
+            }
+            GnossPeticionAjax(
+                that.urlLoadPageHistory,
+                dataPost,
+                true
+            ).done(function (data) {
+                $("#modal-dinamic-content").html(data);
+                // Asignamos la comprobacion de los checks en el modal de historial
+                $('.tabla-versiones-estructura-pagina input').on("click", function () {
+                    that.handleCheckInputCheckboxHistory(this);
+                });
+            }).fail(function (data) {
+                mostrarNotificacion("error", "No se ha podido cargar el historial de esta pagina");
+            });
+        });
+
         // Botón para editar un componente dentro de una columna CMS        
         configEventByClassName(`${that.btnEditComponentFromCMSBuilderClassName}`, function(element){
             const $jqueryElement = $(element);
@@ -193,6 +236,87 @@ const operativaGestionCMSBuilder = {
             const button = $(this);
             that.handleSelectCMSTemplateWizard(button);
         });
+
+         configEventByClassName(that.btnComparePaginaClassName, function (element) {
+             const $jqueryElement = $(element);
+             $jqueryElement.off().on("click", function (e) {
+                 let input = $(this);
+                 let latestVersion = input.parents("tbody").find("tr").first().find("input");
+                 let items = `&${latestVersion.data("version-id")}&${input.data("version-id")}`;
+                 let restore = true;
+
+                 if (input.parent().hasClass("panelBotonera")) {
+                     items = that.txtHackCheckSeleccionados.val();
+                     restore = false;
+                 }
+                 // Comparando configracion de la pagina
+                 let dataPost = {
+                     documentosComparar: items,
+                     pRestaurar: restore
+                 }
+                 let url = that.urlCompareStruct;
+                 let modal = that.modalComparatorStruct;
+                 let modalContainer = that.modalComparatorStructContainer;
+
+                 dataPost = {
+                     documentosComparar: items,
+                     pRestaurar: restore,
+                     pPestanyaID: that.pageId
+                 }
+
+                 that.compareVersion(e, dataPost, url, modal, modalContainer);
+             });
+         });
+
+         configEventByClassName(that.btnEliminarVersionPaginaClassName, function (element) {
+             const $jqueryElement = $(element);
+             $jqueryElement.off().on("click", function () {
+                 that.configPageVersionID = $(this).data("version-id");
+                 dismissVistaModal();
+             });
+         });
+
+         // Evento al confirmar el borrado de una version de configuracion/estructura de una pagina
+         configEventByClassName(that.btnConfirmDeleteVersionPageClassName, function (element) {
+             const $jqueryElement = $(element);
+             $jqueryElement.off().on("click", function () {
+                 $button = $(this);
+                 let url = that.urlDeleteStrcutVersionPage;
+                 let currentModal = $button.parents(".modal");
+                 that.handleDeletePageVersion(url, currentModal);
+             });
+         });
+
+         // Evento para agregar el comentario al restaurar una version
+         configEventByClassName(that.btnAddcommentClassName, function (element) {
+             const $jqueryElement = $(element);
+             $jqueryElement.off().on("click", function () {
+                 let $input = $(this);
+
+                 let dataPost = {
+                     pVersionID: $input.data("version-id")
+                 }
+
+                 let url = that.urlAddCommentStruct;
+                 let currentModal = that.modalComparatorStruct;
+
+                 that.handleAddCommentRestorePageVersion(dataPost, url, currentModal);
+             });
+         });
+
+         // Evento al hacer clikc en guardar en el modal de agregar comentario en la restauracion
+         configEventByClassName(that.btnRestorePaginaVersionClassName, function (element) {
+             const $jqueryElement = $(element);
+             $jqueryElement.off().on("click", function () {
+                 let $button = $(this);
+                 let dataPost = {
+                     pVersionID: $button.data("version-id"),
+                     pComentario: $('#txt_ComentarioPaginaVersion').val()
+                 }
+                 let url = that.urlRestoreStruct;
+                 that.handleRestoreVersionPage(dataPost, url);
+             });
+         });
     }, 
 
 
@@ -767,8 +891,115 @@ const operativaGestionCMSBuilder = {
             }
         });
         return strOpcionComponente;
-    }
+    },
 
+    handleCheckInputCheckboxHistory: function (input) {
+        const that = this;
+        that.numChecksActivos = 0;
+        let $currentChecks = $(input).parents('tbody').find('.version-check');
+        for (var i = 0; i < $currentChecks.length; i++) {
+            if ($currentChecks[i].checked == true) {
+                that.numChecksActivos++;
+            }
+        }
+
+        if ($(input).is(':checked')) {
+            that.txtHackCheckSeleccionados.val(that.txtHackCheckSeleccionados.val() + '&' + $(input).data('version-id'));
+            if (that.numChecksActivos > 2) {
+                $(input).prop('checked', false);
+                that.txtHackCheckSeleccionados.val(that.txtHackCheckSeleccionados.val().replace('&' + $(input).data('version-id'), ''));
+                that.numChecksActivos = that.numChecksActivos - 1;
+                return false;
+            }
+        }
+        else {
+            that.txtHackCheckSeleccionados.val(that.txtHackCheckSeleccionados.val().replace('&' + $(input).data('version-id'), ''));
+        }
+
+        return false;
+    },
+
+    compareVersion: function (element, dataPost, url, modal, modalContainer) {
+        const that = this;
+        if (!dataPost.pRestaurar && that.numChecksActivos != 2) {
+            element.preventDefault();
+            element.stopPropagation();
+            mostrarNotificacion("error", "¡Necesitas seleccionar 2 versiones para poder comparar!");
+        } else {
+            loadingMostrar();
+            GnossPeticionAjax(
+                url,
+                dataPost,
+                true
+            ).done(function (data) {
+                dismissVistaModal();
+                modalContainer.html(data);
+                modal.modal("show");
+            }).fail(function (data) {
+                mostrarNotificacion("error", "No puedes elegir solo 1 o mas de 2 versiones para comparar");
+            }).always(function () {
+                // Ocultar el loading
+                loadingOcultar();
+            });
+        }
+    },
+
+    handleDeletePageVersion: function (url, modal) {
+        const that = this;
+        loadingMostrar();
+        let dataPost = {
+            pPestanyaID: that.pageId,
+            pVersionID: that.configPageVersionID
+        }
+        GnossPeticionAjax(
+            url,
+            dataPost,
+            true
+        ).done(function (data) {
+            modal.modal("hide");
+            mostrarNotificacion("success", data);
+        }).fail(function (data) {
+            mostrarNotificacion("error", data);
+        }).always(function () {
+            loadingOcultar();
+        });
+    },
+
+    handleAddCommentRestorePageVersion: function (dataPost, url, currentModal) {
+        const that = this;
+        dismissVistaModal(currentModal);
+        dismissVistaModal();
+        loadingMostrar();
+        GnossPeticionAjax(
+            url,
+            dataPost,
+            true
+        ).done(function (data) {
+            $('#modal-dinamic-content').html(data);
+            $('#modal-container').modal("show");
+        }).fail(function (data) {
+            mostrarNotificacion("error", data);
+        }).always(function () {
+            loadingOcultar();
+        });
+    },
+
+    handleRestoreVersionPage: function (dataPost, url) {
+        loadingMostrar();
+        GnossPeticionAjax(
+            url,
+            dataPost,
+            true
+        ).done(function (data) {
+            mostrarNotificacion("success", data);
+            location.reload();
+        }).fail(function (data) {
+            mostrarNotificacion("error", data);
+        }).always(function () {
+            loadingOcultar();
+            dismissVistaModal();
+        });
+    }
 }
 
 

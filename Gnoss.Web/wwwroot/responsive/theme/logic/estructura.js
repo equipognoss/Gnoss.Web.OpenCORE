@@ -386,7 +386,7 @@ const operativaGestionPaginas = {
         this.configPageVersionID = '';
 
         // Seccion comparador version configuracion pagina
-        this.btnAddcommentClassName = "btnAgregarComentarioRestauracion";
+        this.btnAddcommentClassName = "btnAgregarComentario";
         this.btnRestorePaginaVersionClassName = "btnRestorePaginaVersion";
         // Boton historial estructura CMS
         this.btnHistorialEstructura = $(".btnHistorialEstructura");
@@ -10123,9 +10123,9 @@ const operativaGestionFlujos = {
             let oldValue = parseInt($("#numFlujos").text());
             $("#numFlujos").text(oldValue - 1);
             $("#modal-delete-workflow").modal("hide");
-        }).fail(function () {
+        }).fail(function (error) {
             loadingOcultar();
-            mostrarNotificacion("error", "Ha surgido un problema al borrar el flujo");
+            mostrarNotificacion("error", error);
             $("#modal-delete-workflow").modal("hide");
         });
     },

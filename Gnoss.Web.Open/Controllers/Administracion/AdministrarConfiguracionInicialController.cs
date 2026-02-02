@@ -75,7 +75,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
             // Establecer el título para el header de DevTools
             ViewBag.HeaderParentTitle = UtilIdiomas.GetText("DEVTOOLS", "CONFIGURACIONINICIAL");
             ViewBag.HeaderTitle = UtilIdiomas.GetText("DEVTOOLS", "DATOSDEACCESOYURLS");
-            
+
             ViewBag.isInitialConfiguration = true;
 
             ComunidadInicialModel model = new ComunidadInicialModel();
@@ -95,6 +95,12 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
             GuardarLogAuditoria();
             if (!string.IsNullOrEmpty(Name) && !string.IsNullOrEmpty(ShortName) && !string.IsNullOrEmpty(UserName) && !string.IsNullOrEmpty(UserEmail) && !string.IsNullOrEmpty(UserPassword) && !string.IsNullOrEmpty(UrlProyectosPublicos))
             {
+                string error = ComprobarErroresConfiguracionInicial(UserName, ShortName);
+                if (!string.IsNullOrEmpty(error))
+                {
+                    return GnossResultERROR(error);
+                }
+
                 #region Actualizar los parámetros de UrlIntragnoss y UrlsPropiasProyecto
                 ParametroAplicacionCN parametroAplicacionCN = new ParametroAplicacionCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<ParametroAplicacionCN>(), mLoggerFactory);
 
@@ -117,24 +123,20 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
                 #endregion
 
                 #region Crear la comunidad
-                string error = ComprobarErrores(Name, ShortName, Type);
-                if (!string.IsNullOrEmpty(error))
-                {
-                    return GnossResultERROR(error);
-                }
-
+                
                 CrearComunidad(Name, ShortName, Type, urlPropia);
+                
                 #endregion
 
                 #region Modificar los datos del administrador por defecto
-                EstablecerUsuarioAdministrador(UserName, UserEmail, UserPassword);           
+                EstablecerUsuarioAdministrador(UserName, UserEmail, UserPassword);
                 #endregion
             }
             else
             {
                 return GnossResultERROR(UtilIdiomas.GetText("SOLICITARCOMUNIDAD", "CAMPOSINCOMPLETOS"));
             }
-           
+
             return GnossResultOK();
         }
 
@@ -254,21 +256,29 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
             }
         }
 
-        private string ComprobarErrores(string Name, string ShortName, short Type)
-        {
-            ProyectoCN proyectoCN = new ProyectoCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<ProyectoCN>(), mLoggerFactory);
-            PeticionCN peticionCN = new PeticionCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<PeticionCN>(), mLoggerFactory);
-            string error = "";
-
-            if (proyectoCN.ExisteNombreCortoEnBD(ShortName) || peticionCN.ExistePeticionProyectoMismoNombreCorto(ShortName))
+        /// <summary>
+        /// Comprueba que los datos introducidos para la configuración inicial son válidos
+        /// </summary>
+        /// <param name="pUserShortName">Nombre corto del usuario administrador (Login)</param>
+        /// <param name="pCommunityShortName">Nombre corto de la comunidad a crear</param>
+        /// <returns>Devuelve el error en caso de haberlo, si no lo hay devuelve una cadena vacía</returns>
+        private string ComprobarErroresConfiguracionInicial(string pUserShortName, string pCommunityShortName)
+        {            
+            if(pUserShortName.Length < 3 || pUserShortName.Length > 12)
             {
-                error = UtilIdiomas.GetText("SOLICITARCOMUNIDAD", "NOMBRECORTOREPETIDO", NombreProyectoEcosistema);
+                return UtilIdiomas.GetText("DEVTOOLS", "CARACTERESMINIMOSMAXIMOSNOMBRECORTOUSUARIO");
             }
 
-            proyectoCN.Dispose();
-            peticionCN.Dispose();
+            using (ProyectoCN proyectoCN = new ProyectoCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<ProyectoCN>(), mLoggerFactory))
+            using (PeticionCN peticionCN = new PeticionCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<PeticionCN>(), mLoggerFactory))
+            {
+                if (proyectoCN.ExisteNombreCortoEnBD(pCommunityShortName) || peticionCN.ExistePeticionProyectoMismoNombreCorto(pCommunityShortName))
+                {
+                    return UtilIdiomas.GetText("SOLICITARCOMUNIDAD", "NOMBRECORTOREPETIDO", NombreProyectoEcosistema);
+                }
+            }
 
-            return error;
+            return string.Empty;
         }
     }
 }

@@ -218,6 +218,19 @@ Variables
 											<span class="texto">@Html.GetText("ADMINISTRACIONPAGINAS","PUBLICAR")</span>
 										</a>
 									</li>
+								@if (ViewBag.PaginaCMSVersionado && (ViewBag.RestaurarVersionPaginaPermitido || ViewBag.EliminarVersionPaginaPermitido))
+									{
+										@* Historial de estructura *@		
+										<li>
+											<a href="javascript: void(0)"
+											   data-target="#modal-container" data-toggle="modal"
+											   class="item-dropdown js-action-edit-component historyButton">
+												<span class="material-icons">history</span>
+												<span class="texto">@Html.GetText("DEVTOOLS", "HISTORIALESTRUCTURA")</span>
+											</a>
+										</li>
+									}
+								
 									@* Opciones de edición *@																														
 									<li>
 										<a href="javascript: void(0)" 

@@ -25,6 +25,7 @@ using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using System;
 using System.Linq;
+using System.Text;
 
 namespace Gnoss.Web.Open.Controllers.Administracion
 {
@@ -141,6 +142,37 @@ namespace Gnoss.Web.Open.Controllers.Administracion
             try
             {
                 ControladorFlujos controladorFlujos = new ControladorFlujos(mLoggingService, mConfigService, mEntityContext, mRedisCacheWrapper, mGnossCache, mVirtuosoAD, mHttpContextAccessor, mServicesUtilVirtuosoAndReplication, mAvailableServices, mLoggerFactory.CreateLogger<ControladorFlujos>(), mLoggerFactory);
+                string error = controladorFlujos.ComprobarEliminarFlujo(pFlujoID);
+                if (!string.IsNullOrEmpty(error))
+                {
+                    string errorFormateado = "";
+                    string mensaje = error.Split(":")[0];
+                    string tipos = error.Split(":")[1];
+                    StringBuilder parametro = new StringBuilder();
+                    if (error.Contains("ERRORHAYMEJORASACTIVAS"))
+                    {
+                        errorFormateado = UtilIdiomas.GetText("FLUJOS", "ERRORHAYMEJORASACTIVAS");
+                    }
+                    else
+                    {
+                        foreach (string tipo in tipos.Split("|"))
+                        {
+                            if (tipo.Contains(','))
+                            {
+                                parametro.Append(tipo);
+                            }
+                            else
+                            {
+                                parametro.Append(UtilIdiomas.GetText("DEVTOOLS", tipo));
+                            }
+                            parametro.Append(", ");
+                        }
+                        parametro.Remove(parametro.Length - 2, 2);
+                        errorFormateado = UtilIdiomas.GetText("FLUJOS", mensaje, parametro.ToString());
+                    }
+
+                    return GnossResultERROR(errorFormateado);
+                }
                 controladorFlujos.EliminarFlujo(pFlujoID);
             }
             catch (Exception ex)
@@ -239,6 +271,12 @@ namespace Gnoss.Web.Open.Controllers.Administracion
             DocumentacionCN docCN = new DocumentacionCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<DocumentacionCN>(), mLoggerFactory);
             docCN.ObtenerOntologiasProyecto(ProyectoSeleccionado.Clave, dwDocumentacion, true, false, false);
             ViewBag.DiccionarioOntologias =  dwDocumentacion.ListaDocumento.ToDictionary(k => k.DocumentoID, k => k.Enlace.Replace(".owl",""));
+            docCN.Dispose();
+
+            FlujosCN flujosCN = new FlujosCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<FlujosCN>(), mLoggerFactory);
+            ViewBag.DiccionarioTipoRecursosAfectados = flujosCN.ObtenerTiposContenidosEnProyecto(ProyectoSeleccionado.Clave);
+            ViewBag.OntologiasProyectoNombre = flujosCN.ObtenerOntologiaNombrePorPoryectoID(ProyectoSeleccionado.Clave);
+            flujosCN.Dispose();
 
             return modelo;
         }

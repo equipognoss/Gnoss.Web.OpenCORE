@@ -276,9 +276,9 @@
                             name="tipo-recursos"
                             @(Model.Nuevo ? "disabled" : "")>
                         <option value="">@Html.GetText("FLUJOS", "SELECCIONCONTENIDO")</option>
-                        @foreach (TiposContenidos tipo in Model.TiposRecursos.Keys)
+                        @foreach (TiposContenidos tipo in Model.TiposRecursosProyecto.Keys)
                         {
-                            if (Model.TiposRecursos[tipo] && tipo != TiposContenidos.RecursoSemantico)
+                            if (Model.TiposRecursosProyecto[tipo] && tipo != TiposContenidos.RecursoSemantico)
                             {
                                 continue;
                             }
@@ -299,37 +299,40 @@
                         }
                     </select>
                     <div class="tag-list mb-4">
-                        @foreach (var tipo in Model.TiposRecursos.Where(item => item.Value && item.Key != TiposContenidos.RecursoSemantico).Select(item => item.Key).ToList())
+                        @if (!Model.Nuevo)
                         {
-                            string titulo = Html.GetText("DEVTOOLS", Enum.GetName(typeof(TiposContenidos), tipo));
-                            <div class="tag" title="@titulo">
-                                <div class="tag-wrap">
-                                    <span class="tag-text ">
-                                        <span class="tag-label" value="@((short)tipo)">@titulo</span>
-                                    </span>
-                                    <input type="hidden" value="@((short)tipo)">
-                                    <span class="tag-remove material-icons">delete</span>
-                                </div>
-                            </div>
-                        }
-                        @if (Model.TiposRecursos[TiposContenidos.RecursoSemantico])
-                        {
-                            @foreach (Guid clave in Model.OntologiasProyecto.Keys)
+                            @foreach (var tipo in Model.TiposRecursos.Where(item => item.Value && item.Key != TiposContenidos.RecursoSemantico).Select(item => item.Key).ToList())
                             {
-                                string nombreOntologia = Html.ObtenerTextoDeIdioma(Model.OntologiasProyecto[clave]);
-                                if (Model.OntologiasProyectoNombre.Contains(nombreOntologia))
-                                {
-                                    <div class="tag" data-id="@clave" data-onto-name="@Model.OntologiasProyecto[clave]" title="@nombreOntologia">
-                                        <div class="tag-wrap">
-                                            <span class="tag-text ">
-
-                                                <span class="tag-label">@nombreOntologia</span>
-                                                
-                                            </span>
-                                            <input type="hidden" value="@((short)TiposContenidos.RecursoSemantico)">
-                                            <span class="tag-remove material-icons">delete</span>
-                                        </div>
+                                string titulo = Html.GetText("DEVTOOLS", Enum.GetName(typeof(TiposContenidos), tipo));
+                                <div class="tag" title="@titulo">
+                                    <div class="tag-wrap">
+                                        <span class="tag-text ">
+                                            <span class="tag-label" value="@((short)tipo)">@titulo</span>
+                                        </span>
+                                        <input type="hidden" value="@((short)tipo)">
+                                        <span class="tag-remove material-icons">delete</span>
                                     </div>
+                                </div>
+                            }
+                            @if (Model.TiposRecursos[TiposContenidos.RecursoSemantico])
+                            {
+                                @foreach (Guid clave in Model.OntologiasProyecto.Keys)
+                                {
+                                    string nombreOntologia = Html.ObtenerTextoDeIdioma(Model.OntologiasProyecto[clave]);
+                                    if (Model.OntologiasProyectoNombre.Contains(nombreOntologia))
+                                    {
+                                        <div class="tag" data-id="@clave" data-onto-name="@Model.OntologiasProyecto[clave]" title="@nombreOntologia">
+                                            <div class="tag-wrap">
+                                                <span class="tag-text ">
+
+                                                    <span class="tag-label">@nombreOntologia</span>
+
+                                                </span>
+                                                <input type="hidden" value="@((short)TiposContenidos.RecursoSemantico)">
+                                                <span class="tag-remove material-icons">delete</span>
+                                            </div>
+                                        </div>
+                                    }
                                 }
                             }
                         }

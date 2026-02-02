@@ -208,6 +208,8 @@
                                     modelo.FlujoID = Guid.NewGuid();
                                     modelo.Nuevo = true;
                                     modelo.OntologiasProyecto = ViewBag.DiccionarioOntologias;
+                                    modelo.TiposRecursosProyecto = ViewBag.DiccionarioTipoRecursosAfectados;
+                                    modelo.OntologiasProyectoNombre = ViewBag.OntologiasProyectoNombre;
                                 }
                                 @Html.PartialView("_modal-views/_edit-flujo", modelo)
                             </div>

@@ -462,19 +462,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
 
             ViewBag.Perfil = Perfil;
 
-            ViewBag.IdentidadActual = CargarDatosIdentidadActual();
-            ViewBag.EsMetaAdministrador = EsMetaAdministrador();
-            UtilPermisos utilPermisos = new UtilPermisos(mEntityContext, mLoggingService, mConfigService, mLoggerFactory.CreateLogger<UtilPermisos>(), mLoggerFactory);
-
-            List<PermisoComunidad> listaPermisosComunidadIdentidad = utilPermisos.ObtenerListaPermisosAdministracionIdentidad(IdentidadActual.Clave, IdentidadActual.IdentidadMyGNOSS.Clave);
-            List<PermisoContenidos> listaPermisoContenidosIdentidad = utilPermisos.ObtenerListaPermisosContenidosIdentidad(IdentidadActual.Clave, IdentidadActual.IdentidadMyGNOSS.Clave);
-            List<PermisoEcosistema> listaPermisoEcosistemaUsuario = utilPermisos.ObtenerListaPermisosAdministracionEcosistema(UsuarioActual.UsuarioID);
-
-			ViewBag.ListaPermisosAdministracionIdentidad = listaPermisosComunidadIdentidad;
-            ViewBag.ListaPermisosContenidosIdentidad = listaPermisoContenidosIdentidad;
-            ViewBag.ListaPermisosAdministracionEcosistemaUsuario = listaPermisoEcosistemaUsuario;
-            ViewBag.IdentidadTienePermisoAdministracion = listaPermisoContenidosIdentidad.Count > 0 || listaPermisosComunidadIdentidad.Count > 0;
-            ViewBag.UsuarioTienePermisoAdministracionEcosistema = listaPermisoEcosistemaUsuario.Count > 0;
+            CargarPermisosViewBag();
 
             if (string.IsNullOrEmpty(RequestParams("callback")) && !ViewBag.ControllerName.Equals("Widget"))
             {
@@ -1549,6 +1537,23 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
         {
             ProyectoCN proyCN = new ProyectoCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<ProyectoCN>(), mLoggerFactory);
             return proyCN.EsUsuarioAdministradorProyecto(mControladorBase.UsuarioActual.UsuarioID, ProyectoAD.MetaProyecto);
+        }
+
+        protected void CargarPermisosViewBag()
+        {
+            ViewBag.IdentidadActual = CargarDatosIdentidadActual();
+            ViewBag.EsMetaAdministrador = EsMetaAdministrador();
+            UtilPermisos utilPermisos = new UtilPermisos(mEntityContext, mLoggingService, mConfigService, mLoggerFactory.CreateLogger<UtilPermisos>(), mLoggerFactory);
+
+            List<PermisoComunidad> listaPermisosComunidadIdentidad = utilPermisos.ObtenerListaPermisosAdministracionIdentidad(IdentidadActual.Clave, IdentidadActual.IdentidadMyGNOSS.Clave);
+            List<PermisoContenidos> listaPermisoContenidosIdentidad = utilPermisos.ObtenerListaPermisosContenidosIdentidad(IdentidadActual.Clave, IdentidadActual.IdentidadMyGNOSS.Clave);
+            List<PermisoEcosistema> listaPermisoEcosistemaUsuario = utilPermisos.ObtenerListaPermisosAdministracionEcosistema(UsuarioActual.UsuarioID);
+
+            ViewBag.ListaPermisosAdministracionIdentidad = listaPermisosComunidadIdentidad;
+            ViewBag.ListaPermisosContenidosIdentidad = listaPermisoContenidosIdentidad;
+            ViewBag.ListaPermisosAdministracionEcosistemaUsuario = listaPermisoEcosistemaUsuario;
+            ViewBag.IdentidadTienePermisoAdministracion = listaPermisoContenidosIdentidad.Count > 0 || listaPermisosComunidadIdentidad.Count > 0;
+            ViewBag.UsuarioTienePermisoAdministracionEcosistema = listaPermisoEcosistemaUsuario.Count > 0;
         }
 
         private UserIdentityModel CargarDatosIdentidadActual()

@@ -24,6 +24,8 @@ Variables
     string urlEditComponentTemplate = Html.GetComunidad().Url + "/" + Html.GetText("URLSEM", "ADMINISTRARCOMUNIDADCMSEDITARCOMPONENTE") + "/COMPONENT_KEY/load-modal";		
     // Plantilla de Url para guardar un componente desde CMS. Se utilizará y modificará en el fichero JS una vez se cree el componente 
     string urlSaveComponentTemplate = Html.GetComunidad().Url + "/" + Html.GetText("URLSEM", "ADMINISTRARCOMUNIDADCMSEDITARCOMPONENTE") + "/COMPONENT_KEY/save";
+    // Plantilla de Url para visualizar el historial de estructura de la pagina CMS
+    string urlBasePageCMSHistory = Html.GetComunidad().Url + "/" + Html.GetText("URLSEM", "ADMINISTRARCMSPAGINAHISTORIAL");
     // Mostrar el wizard para selección de plantilla
     bool showTemplateWizard = Model.Rows.Count == 0 ? true : false; 
 
@@ -303,6 +305,17 @@ Variables
 
 @* Modal de pregunta por restauruación de página CMS *@
 @Html.PartialView("_modal-views/_show-cms-backup-restore")
+@* Input para trackear los elementos seleccionados en el historial*@
+<input type="hidden" id="txtHackCheckSeleccionados" />
+<div id="modal-comparar-estructura" class="modal modal-top fade modal-edicion"
+     role="dialog"
+     aria-modal="true">
+    <div class="modal-dialog">
+        <div class="modal-content" id="modal-comparar-versiones-estructura-content">
+        </div>
+    </div>
+</div>
+@Html.PartialView("_modal-views/_confirm-delete", Html.GetText("DEVTOOLS", "DESEAELIMINARVERSIONESTRUCTURAPAGINA"))
 
 
 @* Carga de operativa *@
@@ -318,6 +331,7 @@ Variables
             const pParams = {
                 urlEditComponentTemplate: "@urlEditComponentTemplate",
                 urlSaveComponentTemplate: "@urlSaveComponentTemplate",
+                urlBasePageCMSHistory: "@urlBasePageCMSHistory",
                 pageId: "@Model.Key",
             }  
 

@@ -3365,13 +3365,14 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
 
                     GestorDocumental gestorDoc = new GestorDocumental(docCN.ObtenerDocumentoNewsletterPorDocumentoID(mDocumentoID), mLoggingService, mEntityContext, mLoggerFactory.CreateLogger<GestorDocumental>(), mLoggerFactory);
 
+                    string newsletterSanitized = LimpiarInyeccionCodigoSegunTipoRecurso(txtNewsletter.ToString());
                     if (gestorDoc.DataWrapperDocumentacion.ListaDocumentoNewsLetter.Count == 1)
                     {
-                        gestorDoc.DataWrapperDocumentacion.ListaDocumentoNewsLetter.FirstOrDefault().NewsletterTemporal = txtNewsletter.ToString();
+                        gestorDoc.DataWrapperDocumentacion.ListaDocumentoNewsLetter.FirstOrDefault().NewsletterTemporal = newsletterSanitized;
                     }
                     else
                     {
-                        gestorDoc.AgregarNewsletterDocumento(mDocumentoID, "", txtNewsletter.ToString());
+                        gestorDoc.AgregarNewsletterDocumento(mDocumentoID, "", newsletterSanitized);
                     }
 
                     docCN.ActualizarDocumentacion();
@@ -12089,16 +12090,20 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
         /// <returns></returns>
         private string LimpiarInyeccionCodigoSegunTipoRecurso(string pTexto)
         {
-            if (mTipoDocumento == TiposDocumentacion.Newsletter)
+            if (!string.IsNullOrEmpty(pTexto))
             {
-                HtmlSanitizer htmlSanitizer = new HtmlSanitizer();
-                htmlSanitizer.AllowedTags.Add("style");
-                return UtilCadenas.LimpiarInyeccionCodigo(pTexto, htmlSanitizer);
+                if (mTipoDocumento == TiposDocumentacion.Newsletter)
+                {
+                    HtmlSanitizer htmlSanitizer = new HtmlSanitizer();
+                    htmlSanitizer.AllowedTags.Add("style");
+                    return UtilCadenas.LimpiarInyeccionCodigo(pTexto, htmlSanitizer);
+                }
+                else
+                {
+                    return UtilCadenas.LimpiarInyeccionCodigo(pTexto);
+                }
             }
-            else
-            {
-                return UtilCadenas.LimpiarInyeccionCodigo(pTexto);
-            }
+            return "";
         }
 
         /// <summary>

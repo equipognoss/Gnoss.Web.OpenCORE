@@ -1,0 +1,32 @@
+﻿@model string
+@{
+	string clase = "estructura";
+	if (Model.Contains("config"))
+	{
+		clase = "configuracion";
+	}
+}
+<div id="modal-borrar-version-pagina-@clase"
+	 class="modal modal-top fade modal-edicion @(Model.Contains("CONFIG") ? "config" : "struct")"
+	 role="dialog"
+	 aria-modal="true">
+	<div class="modal-dialog" role="document">
+		<div id="modal-comparar-cms-content" class="modal-content">
+			<div class="modal-header">
+				<p class="modal-title">
+					<span class="material-icons">delete</span>@Html.GetText("DEVTOOLS", "ELIMINAR")
+				</p>
+				<span class="material-icons cerrar" data-dismiss="modal" aria-label="Close">close</span>
+			</div>
+			<div class="modal-body">
+				<div class="form-group">
+					<label class="control-label">@Model</label>
+				</div>
+				<div class="form-actions">
+					<button data-dismiss="modal" class="btn btn-outline-primary">@Html.GetText("COMMON", "NO")</button>
+					<a class="btn btn-primary btnConfirmDeleteVersionPage">@Html.GetText("COMMON", "SI")</a>
+				</div>
+			</div>
+		</div>
+	</div>
+</div>
