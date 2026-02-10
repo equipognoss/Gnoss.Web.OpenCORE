@@ -553,8 +553,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                 }
             }
 
-            bool busquedaIndicada = Request.Query.ContainsKey("buscar");
-            parametroadicional = ObtenerParametroAdicionalBusqueda();
+            parametroadicional = ObtenerParametroAdicionalBusqueda(paginaModel.FilterOrderList.Values.FirstOrDefault());
 
             if (VariableTipoBusqueda.Equals(TipoBusqueda.PersonasYOrganizaciones))
             {
@@ -3958,7 +3957,13 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
             }
         }
 
-        private string ObtenerParametroAdicionalBusqueda()
+        /// <summary>
+        /// Genera los parámetros adicionales de la búsqueda según la pestaña actual y los filtros
+        /// ya aplicados
+        /// </summary>
+        /// <param name="pOrder">Orden por defecto a aplicar según la página o búsqueda</param>
+        /// <returns>Devuelve los parametros adicionales a enviar al servicio resultados y facetas</returns>
+        private string ObtenerParametroAdicionalBusqueda(string pOrder)
         {
             string parametroadicional = "";
 
@@ -4005,22 +4010,21 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
 
             #region Configuracion Orden
 
-            if (FiltrosOrdenConfig.Count > 0 && RequestParams("filtroContexto") == null)
+            if (!string.IsNullOrEmpty(pOrder) && RequestParams("filtroContexto") == null)
             {
-                string filtro = new List<string>(FiltrosOrdenConfig.Keys)[0];
-                string filtroLimpio = filtro;
+                string cleanOrder = pOrder;
 
-                if (filtroLimpio.Contains("|"))
+                if (cleanOrder.Contains("|"))
                 {
-                    filtroLimpio = filtro.Split('|')[0];
+                    cleanOrder = pOrder.Split('|')[0];
 
-                    if (filtro.Split('|')[1].ToLower() == "asc")
+                    if (pOrder.Split('|')[1].ToLower() == "asc")
                     {
                         parametroadicional += "|orden=asc";
                     }
                 }
 
-                parametroadicional += $"|ordenarPor={filtroLimpio}";
+                parametroadicional += $"|ordenarPor={cleanOrder}";
             }
 
             #endregion

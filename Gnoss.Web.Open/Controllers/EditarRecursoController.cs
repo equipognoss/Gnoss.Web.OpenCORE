@@ -3436,9 +3436,34 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
             return GnossResultERROR();
         }
 
-        private HashSet<string> ModificarTriplesAdjuntosRecursoSemantico(DocumentEditionModel pModel, Identidad pIdentidadOrganizacion, bool pMasterComunidad)
+
+        /// <summary>
+        /// Get the paths of the attached files in the rdf to be able to copy them later
+        /// </summary>
+        /// <param name="pRdf">Rdf of the semantic resource that is being edited</param>
+        /// <returns> Return the list of paths of the attached files in the rdf</returns>
+        private static List<string> GetFilesPathsFromRdf(string pRdf)
         {
-            HashSet<string> rutasAdjuntos = new HashSet<string>();
+            List<string> pathFiles = new List<string>();
+            string pattern = $@"<([^<]*({UtilArchivos.ContentImagenesSemanticas}|{UtilArchivos.ContentDocumentosSem}|{UtilArchivos.ContentDocLinks}|{UtilArchivos.ContentVideosSemanticos})[^<]*)>";
+            Regex regex = new Regex(pattern);
+
+            MatchCollection pathsMatch = regex.Matches(pRdf);
+
+            foreach(Match pathFileMatch in pathsMatch)
+            {
+                pathFiles.Add(pathFileMatch.Groups[1].Value.TrimEnd(']'));
+            }
+
+            return pathFiles;
+        }
+
+        /// <summary>
+        /// Modifica los triples de los archivos adjuntos del recurso semántico pasado por parámetro
+        /// </summary>
+        /// <param name="pModel">Modelo recibido del recurso que contiene los datos a actualizar</param>
+        private void ModificarTriplesAdjuntosRecursoSemantico(DocumentEditionModel pModel)
+        {            
             if (EditandoFormSem && pModel != null)
             {
                 string pattern = $@">([^<]*({UtilArchivos.ContentImagenesSemanticas}|{UtilArchivos.ContentDocumentosSem}|{UtilArchivos.ContentDocLinks}|{UtilArchivos.ContentVideosSemanticos})[^<]*)<";
@@ -3451,13 +3476,9 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
 
                     string nuevaRuta = ControladorDocumentacion.ReemplazarRutaAdjuntoSemantico(rutaArchivo, pModel.Key, DocumentoVersionID);
 
-                    rutasAdjuntos.Add(rutaArchivo);
-                    //rutasAdjuntos.Add(Path.GetDirectoryName(rutaArchivo));
-
                     pModel.RdfValue = pModel.RdfValue.Replace(rutaArchivo, nuevaRuta);
                 }
             }
-            return rutasAdjuntos;
         }
 
         private int GuardarArchivoTemporal_ModificarRecurso_GestorDocumental(byte[] pFichero, string pNombre, string pExtension)
@@ -6453,8 +6474,8 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                 RecuperarEntidadesExtEditablesDocID();
             }
 
-            HashSet<string> rutasAdjuntos = ModificarTriplesAdjuntosRecursoSemantico(mModelSaveRec, IdentidadOrganizacion, (ProyectoSeleccionado.Clave != ProyectoAD.MyGnoss));
-
+            ModificarTriplesAdjuntosRecursoSemantico(mModelSaveRec);
+            
             mEntidadesGuardar = mSemController.RecogerValoresRdf(mModelSaveRec.RdfValue, mModelSaveRec.EntityIDRegisterInfo);
 
             if (CargaMasivaFormSem && !GuardandoRecursoCargaMasiva)
@@ -6483,16 +6504,6 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
             if (repeticion != null)
             {
                 return repeticion;
-            }
-
-            foreach(string rutaAdjunto in rutasAdjuntos)
-            {
-                bool correcto = ControladorDocumentacion.CopiarAdjuntoDocumentoSemantico(rutaAdjunto, mModelSaveRec.Key, DocumentoVersionID);
-
-                if (!correcto)
-                {
-                    throw new Exception($"No se han podido duplicar los archivos para el nuevo documento.\n DocumentoID original: {mModelSaveRec.Key}\n DocumentoID Version: {DocumentoVersionID}");
-                }
             }
 
             if (CargaMasivaFormSem && GuardandoRecursoCargaMasiva)
@@ -6528,6 +6539,18 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                 ActionResult resultadoCargaMasiva = GuardadoCargaMasivaFormSem(ficheroRDF);
 
                 return resultadoCargaMasiva;
+            }
+
+            List<string> filesPaths = GetFilesPathsFromRdf(ficheroRDF);
+
+            foreach (string rutaAdjunto in filesPaths)
+            {
+                bool correcto = ControladorDocumentacion.CopiarAdjuntoDocumentoSemantico(rutaAdjunto, mModelSaveRec.Key, DocumentoVersionID);
+
+                if (!correcto)
+                {
+                    throw new ExcepcionWeb($"No se han podido duplicar los archivos para el nuevo documento.\n DocumentoID original: {mModelSaveRec.Key}\n DocumentoID Version: {DocumentoVersionID}");
+                }
             }
 
             bool servicioExterno = (PropiedadesTextoOntologia.ContainsKey(PropiedadesOntologia.urlserviciocomplementario.ToString()) || PropiedadesTextoOntologia.ContainsKey(PropiedadesOntologia.urlserviciocomplementarioSincrono.ToString())) && !mModelSaveRec.Draft;

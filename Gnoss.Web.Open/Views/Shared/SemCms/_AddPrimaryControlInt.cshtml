@@ -691,7 +691,7 @@
                 extraBooleano = "bool=\"" + mPropiedad.ValoresUnificados.Keys.ToArray()[0] + "\"";
             }
 
-            <span class="@classControl" @Html.Raw(aboutRDFa) @Html.Raw(propRDFa) @Html.Raw(microDatos) @Html.Raw(microFormatos) @Html.Raw(extraBooleano)>@valorPropTexto</span>
+            <span class="@classControl" @Html.Raw(aboutRDFa) @Html.Raw(propRDFa) @Html.Raw(microDatos) @Html.Raw(microFormatos) @Html.Raw(extraBooleano)>@Html.Raw(valorPropTexto)</span>
         }
     }
 
