@@ -455,10 +455,6 @@ namespace Es.Riam.Gnoss.Web.MVC
                        template: "it/comunità/{*datosextra}",
                        defaults: new { controller = "Redirect", action = "RedireccionarComunitaItaliano" });
 
-            /*RouteBuilder.MapControllerRoute(
-                    name: "default",
-                    pattern: "{controller=Home}/{action=Index}/{id?}");*/
-
             RegisterRoutesIdioma(RouteBuilder, paramCL.ObtenerListaIdiomas());
 
             mLoggingService.AgregarEntrada("Fin mapeo rutas");
