@@ -83,12 +83,14 @@
 
     @if (!Model.DocumentEditionModel.Key.Equals(Guid.Empty))
     {
-        @Html.Raw("var documentoID = '" + Model.DocumentEditionModel.Key + "';");
+        @Html.Raw("var documentoID = '" + Model.DocumentEditionModel.Key + "';")        
     }
     else
     {
-        @Html.Raw("var documentoID = guidGenerator().toLowerCase();");
+        @Html.Raw("var documentoID = guidGenerator().toLowerCase();")
     }
+    @Html.Raw("\nvar documentoVersionID = '" + Model.DocumentEditionModel.DocumentoVersionId + "';")
+
 </script>
 
 @if (Model.DocumentEditionModel.SharedDocumentJustInPrivateProject)

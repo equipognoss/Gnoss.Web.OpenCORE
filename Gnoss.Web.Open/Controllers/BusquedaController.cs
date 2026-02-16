@@ -553,7 +553,13 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                 }
             }
 
-            parametroadicional = ObtenerParametroAdicionalBusqueda(paginaModel.FilterOrderList.Values.FirstOrDefault());
+            string ordenAplicarDefecto = string.Empty;
+            if(paginaModel.FilterOrderList != null && paginaModel.FilterOrderList.Values.Count > 0)
+            {
+                ordenAplicarDefecto = paginaModel.FilterOrderList.Values.FirstOrDefault();
+            }
+
+            parametroadicional = ObtenerParametroAdicionalBusqueda(ordenAplicarDefecto);
 
             if (VariableTipoBusqueda.Equals(TipoBusqueda.PersonasYOrganizaciones))
             {

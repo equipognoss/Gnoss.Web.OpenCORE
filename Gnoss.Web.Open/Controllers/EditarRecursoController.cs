@@ -2807,7 +2807,8 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
             mEditRecCont.ModifyResourceModel.EditUrlAvailable = recursoTipo2Visible;
 
             mEditRecCont.ModifyResourceModel.DocumentEditionModel = new DocumentEditionModel();
-            mEditRecCont.ModifyResourceModel.DocumentEditionModel.Key = mDocumentoID;
+            mEditRecCont.ModifyResourceModel.DocumentEditionModel.Key = mDocumentoID;            
+            mEditRecCont.ModifyResourceModel.DocumentEditionModel.DocumentoVersionId = DocumentoVersionID;
 
             CargarDatosDocumento_ModificarRecurso(mEditRecCont.ModifyResourceModel.DocumentEditionModel);
 
@@ -5261,6 +5262,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
             modelModRec.DocumentType = ResourceModel.DocumentType.Semantico;
             mEditRecCont.ModifyResourceModel.DocumentEditionModel = new DocumentEditionModel();
             mEditRecCont.ModifyResourceModel.DocumentEditionModel.Key = mDocumentoID;
+            mEditRecCont.ModifyResourceModel.DocumentEditionModel.DocumentoVersionId = DocumentoVersionID;
             mEditRecCont.ModifyResourceModel.DocumentEditionModel.ActualIdentityIsCreator = true;
             if (CreandoFormSem || CargaMasivaFormSem)
             {

@@ -1306,7 +1306,13 @@ function FinCargarArchivo_SemCms(data) {
     OcultarLoadingArchivo();
     $('#fuExaminarSemCms').val('');
 
-    var docID = documentoID;
+    var docID;
+    if (documentoVersionID != "00000000-0000-0000-0000-000000000000") {
+        docID = documentoVersionID;
+    }
+    else {
+        docID = documentoID;
+    }
     
     if (docID == null || docID == '') {
         docID = document.URL.substring(0, document.URL.lastIndexOf('/'));

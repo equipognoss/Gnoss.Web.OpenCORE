@@ -1547,7 +1547,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
 				ManageViewsViewModel.CMSGroupComponentViewModel presentacionGrupoComponentesActual = new ManageViewsViewModel.CMSGroupComponentViewModel();
                 presentacionGrupoComponentesActual.PathName = $"{vistaComponenteGrupoComponentes}_{tipoPresentacion}.cshtml";
                 List<VistaVirtualCMS> filasGruposComponentes = VistaVirtualDW.ListaVistaVirtualCMS.Where(item => item.TipoComponente.Equals(presentacionGrupoComponentesActual.PathName)).ToList();
-                presentacionGrupoComponentesActual.Generic = true;
+                
                 if (filasGruposComponentes.Count > 0)
                 {
                     presentacionGrupoComponentesActual.Name = filasGruposComponentes[0].Nombre;
@@ -1555,27 +1555,26 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
                 }
                 else
                 {
+                    presentacionGrupoComponentesActual.Generic = true;
                     presentacionGrupoComponentesActual.CustomizationID = Guid.Empty;
                     presentacionGrupoComponentesActual.Name = UtilIdiomas.GetText("COMADMINCMS", $"PRESENTACIONGRUPO_{tipoPresentacion.ToString().ToUpper()}");
                 }
                 paginaModel.ListCMSGroupComponents.Add(presentacionGrupoComponentesActual);
                 presentacionesGrupoComponentesCargadas.Add(presentacionGrupoComponentesActual.PathName);
             }
-            foreach (VistaVirtualCMS filaVistaVirtualCMS in VistaVirtualDW.ListaVistaVirtualCMS.Where(item => item.TipoComponente.StartsWith(vistaComponenteGrupoComponentes)))
+
+            foreach (VistaVirtualCMS filaVistaVirtualCMS in VistaVirtualDW.ListaVistaVirtualCMS.Where(item => item.TipoComponente.StartsWith(vistaComponenteGrupoComponentes) && !presentacionesGrupoComponentesCargadas.Contains(item.TipoComponente)))
             {
-                if (!presentacionesGrupoComponentesCargadas.Contains(filaVistaVirtualCMS.TipoComponente))
-                {
-					//Presentaciones nuevas
-					ManageViewsViewModel.CMSGroupComponentViewModel presentacionGrupoComponentesActual = new ManageViewsViewModel.CMSGroupComponentViewModel();
-                    presentacionGrupoComponentesActual.PathName = filaVistaVirtualCMS.TipoComponente;
-                    presentacionGrupoComponentesActual.Name = filaVistaVirtualCMS.Nombre;
-                    presentacionGrupoComponentesActual.Generic = false;
-                    presentacionGrupoComponentesActual.CustomizationID = filaVistaVirtualCMS.PersonalizacionComponenteID;
-                    presentacionGrupoComponentesActual.FechaCreacion = filaVistaVirtualCMS.FechaCreacion;
-                    presentacionGrupoComponentesActual.FechaModificacion = filaVistaVirtualCMS.FechaModificacion;
-                    paginaModel.ListCMSGroupComponents.Add(presentacionGrupoComponentesActual);
-                    presentacionesGrupoComponentesCargadas.Add(presentacionGrupoComponentesActual.PathName);
-                }
+                //Presentaciones nuevas
+                ManageViewsViewModel.CMSGroupComponentViewModel presentacionGrupoComponentesActual = new ManageViewsViewModel.CMSGroupComponentViewModel();
+                presentacionGrupoComponentesActual.PathName = filaVistaVirtualCMS.TipoComponente;
+                presentacionGrupoComponentesActual.Name = filaVistaVirtualCMS.Nombre;
+                presentacionGrupoComponentesActual.Generic = false;
+                presentacionGrupoComponentesActual.CustomizationID = filaVistaVirtualCMS.PersonalizacionComponenteID;
+                presentacionGrupoComponentesActual.FechaCreacion = filaVistaVirtualCMS.FechaCreacion;
+                presentacionGrupoComponentesActual.FechaModificacion = filaVistaVirtualCMS.FechaModificacion;
+                paginaModel.ListCMSGroupComponents.Add(presentacionGrupoComponentesActual);
+                presentacionesGrupoComponentesCargadas.Add(presentacionGrupoComponentesActual.PathName);
             }
 
             #endregion
