@@ -1306,6 +1306,11 @@ function FinCargarArchivo_SemCms(data) {
     OcultarLoadingArchivo();
     $('#fuExaminarSemCms').val('');
 
+    if (documentoID == null || documentoID == '') {
+        documentoID = document.URL.substring(0, document.URL.lastIndexOf('/'));
+        documentoID = docID.substring(docID.lastIndexOf('/') + 1);
+    }
+
     var docID;
     if (documentoVersionID != "00000000-0000-0000-0000-000000000000") {
         docID = documentoVersionID;
@@ -1313,11 +1318,7 @@ function FinCargarArchivo_SemCms(data) {
     else {
         docID = documentoID;
     }
-    
-    if (docID == null || docID == '') {
-        docID = document.URL.substring(0, document.URL.lastIndexOf('/'));
-        docID = docID.substring(docID.lastIndexOf('/') + 1);
-    }
+       
     var txtHackID = 'txtHackArchivoSelecc';
     var idCampoControl = $('#' + txtHackID).val().split('|')[0];
     var entProp = ObtenerEntidadPropiedadSegunID(idCampoControl, TxtRegistroIDs);
@@ -1347,7 +1348,14 @@ function FinCargarArchivo_SemCms(data) {
             var idCampoControl = txtHack.split('|')[0];
             var entProp = ObtenerEntidadPropiedadSegunID(idCampoControl, TxtRegistroIDs);
 
-            MontarJCROP($('#panContenedorJcrop'), valorProp, entProp[1] + ',' + entProp[0], docID, datosJCrop);
+            if (docID == documentoVersionID) {
+                MontarJCROP($('#panContenedorJcrop'), valorProp, entProp[1] + ',' + entProp[0], documentoID, datosJCrop, documentoVersionID);
+            }
+            else
+            {
+                MontarJCROP($('#panContenedorJcrop'), valorProp, entProp[1] + ',' + entProp[0], docID, datosJCrop);
+            }
+            
         }
         else {
             AgregarArchivoComoPropiedad(txtHackID, docID, 'txtHackValorImgRepresentante', rutaImg, rutaVideosSem, rutaDocLinks, data, extensionDoc);

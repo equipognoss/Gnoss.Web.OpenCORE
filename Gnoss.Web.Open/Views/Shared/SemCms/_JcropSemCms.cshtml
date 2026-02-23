@@ -188,12 +188,25 @@
         args.ImgSrc = rutaImagen;
         args.Extra = argsExtra;
         args.documentoID = documentoID;
+
+        if(documentoVersionID != "00000000-0000-0000-0000-000000000000")
+        {
+            args.documentoVersionID = documentoVersionID;
+        }
+
         GnossPeticionAjax(urlPaginaActual + '/savejcrop', args, true).done(function (data) {
             var img = contenedorJcrop.find('.contenedorImg img')[0];
             var rutaImagen = img.src;
             var extensionDoc = rutaImagen.substr(rutaImagen.lastIndexOf('.'));
 
-            AgregarArchivoComoPropiedad('txtHackArchivoSelecc', documentoID, 'txtHackValorImgRepresentante', 'imagenes/Documentos/imgsem/', 'VideosSemanticos/', 'doclinks/', data, extensionDoc);
+            if(documentoVersionID != "00000000-0000-0000-0000-000000000000")
+            {
+                AgregarArchivoComoPropiedad('txtHackArchivoSelecc', documentoVersionID, 'txtHackValorImgRepresentante', 'imagenes/Documentos/imgsem/', 'VideosSemanticos/', 'doclinks/', data, extensionDoc);
+            }
+            else{
+                AgregarArchivoComoPropiedad('txtHackArchivoSelecc', documentoID, 'txtHackValorImgRepresentante', 'imagenes/Documentos/imgsem/', 'VideosSemanticos/', 'doclinks/', data, extensionDoc);
+            }
+                        
         }).fail(function (data) {
             ErrorCargarArchivo_SemCms(null);
         }).always(function () {

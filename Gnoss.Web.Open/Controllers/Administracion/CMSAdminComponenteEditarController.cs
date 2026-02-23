@@ -799,7 +799,12 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
         /// <param name="pComentario">Comentario hecho en el componente</param>
         private void GenerarVersionComponente(ControladorComponenteCMS pControladorComponenteCMS, CMSComponente pComponenteCMS, string pComentario)
         {
-            CMSAdminComponenteEditarViewModel versionado = CargarModelo(pControladorComponenteCMS.CargarComponente(pComponenteCMS.Clave));
+            VistaVirtualCL vistaVirtualCL = new VistaVirtualCL(mEntityContext, mLoggingService, mGnossCache, mRedisCacheWrapper, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<VistaVirtualCL>(), mLoggerFactory);
+
+            DataWrapperVistaVirtual vistaVirtualDW = vistaVirtualCL.ObtenerVistasVirtualPorProyectoID(ProyectoSeleccionado.Clave, PersonalizacionEcosistemaID, ComunidadExcluidaPersonalizacionEcosistema);
+            vistaVirtualCL.Dispose();
+
+            CMSAdminComponenteEditarViewModel versionado = CargarModelo(pControladorComponenteCMS.CargarComponente(pComponenteCMS.Clave, vistaVirtualDW));
             pControladorComponenteCMS.GuardarVersionComponente(versionado, pComponenteCMS.Clave, pComentario);
         }
 
@@ -891,7 +896,11 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
                 {
                     ControladorComponenteCMS contrComponente = new ControladorComponenteCMS(ProyectoSeleccionado, ParametroProyecto, mLoggingService, mEntityContext, mConfigService, mRedisCacheWrapper, mEntityContextBASE, mVirtuosoAD, mGnossCache, mHttpContextAccessor, mServicesUtilVirtuosoAndReplication, mAvailableServices, mLoggerFactory.CreateLogger<ControladorComponenteCMS>(), mLoggerFactory);
 
-                    mPaginaModel = contrComponente.CargarComponente(TipoComponenteCMSActual, CMSComponente);
+                    VistaVirtualCL vistaVirtualCL = new VistaVirtualCL(mEntityContext, mLoggingService, mGnossCache, mRedisCacheWrapper, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<VistaVirtualCL>(), mLoggerFactory);
+                    DataWrapperVistaVirtual vistaVirtualDW = vistaVirtualCL.ObtenerVistasVirtualPorProyectoID(ProyectoSeleccionado.Clave, PersonalizacionEcosistemaID, ComunidadExcluidaPersonalizacionEcosistema);
+                    vistaVirtualCL.Dispose();
+
+                    mPaginaModel = contrComponente.CargarComponente(TipoComponenteCMSActual, CMSComponente, vistaVirtualDW);
 
                     mPaginaModel = CargarModelo(mPaginaModel);
                 }

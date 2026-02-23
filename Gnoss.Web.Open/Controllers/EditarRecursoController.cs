@@ -8464,7 +8464,15 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
 
                 string propiedad = pModel.Extra;
 
-                AgregarArchivoAServicio_SemCms(mDocumentoID, 0, especialID, bytesImagenCortada, extensionArchivo, propiedad);
+                if (!DocumentoVersionID.Equals(Guid.Empty))
+                {
+                    AgregarArchivoAServicio_SemCms(DocumentoVersionID, 0, especialID, bytesImagenCortada, extensionArchivo, propiedad);
+                }
+                else
+                {
+                    AgregarArchivoAServicio_SemCms(mDocumentoID, 0, especialID, bytesImagenCortada, extensionArchivo, propiedad);
+                }
+                    
 
                 servicioImagenes.BorrarImagenDeDirectorio(ruta + extensionArchivo);
 

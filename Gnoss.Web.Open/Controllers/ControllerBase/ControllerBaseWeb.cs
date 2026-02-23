@@ -3751,6 +3751,28 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
             }
         }
 
+        /// <summary>
+        /// Obtiene si se trata de un ecosistema sin metaproyecto
+        /// </summary>
+        public Guid PersonalizacionEcosistemaID
+        {
+            get
+            {
+                return mControladorBase.PersonalizacionEcosistemaID;
+            }
+        }
+
+        /// <summary>
+        /// Obtiene si se trata de un ecosistema sin metaproyecto
+        /// </summary>
+        public bool ComunidadExcluidaPersonalizacionEcosistema
+        {
+            get
+            {
+                return mControladorBase.ComunidadExcluidaPersonalizacionEcosistema;
+            }
+        }
+
         #region Configuración AutoCompletar
 
         /// <summary>
