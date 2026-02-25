@@ -1,3 +1,3 @@
 FROM nginx
 
-COPY Gnoss.Web/wwwroot /usr/share/nginx/html
+COPY Gnoss.Web.OpenCORE/Gnoss.Web/wwwroot /usr/share/nginx/html

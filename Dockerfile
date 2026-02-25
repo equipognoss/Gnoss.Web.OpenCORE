@@ -11,9 +11,9 @@ RUN apt-get update && apt-get install -y --allow-unauthenticated libgdiplus libc
 
 WORKDIR /app
 
-COPY Gnoss.Web/*.csproj ./
+COPY . ./
 
-RUN dotnet restore
+RUN dotnet restore Gnoss.Web.OpenCORE/Gnoss.Web/Gnoss.Web.csproj
 
 # Install dotnet debug tools
 RUN dotnet tool install --tool-path /tools dotnet-trace \
@@ -21,11 +21,9 @@ RUN dotnet tool install --tool-path /tools dotnet-trace \
  && dotnet tool install --tool-path /tools dotnet-dump \
  && dotnet tool install --tool-path /tools dotnet-gcdump
 
-COPY . ./
+RUN echo $(date +%s) > Gnoss.Web.OpenCORE/Gnoss.Web/Config/version.txt
 
-RUN echo $(date +%s) > Gnoss.Web/Config/version.txt
-
-RUN dotnet publish Gnoss.Web/Gnoss.Web.csproj -c Release -o out
+RUN dotnet publish Gnoss.Web.OpenCORE/Gnoss.Web/Gnoss.Web.csproj -c Release -o out
 
 FROM mcr.microsoft.com/dotnet/aspnet:8.0
 
@@ -47,7 +45,7 @@ WORKDIR /app
 
 COPY --from=build-env /app/out .
 
-COPY --from=build-env /app/Gnoss.Web.Open/Views/ Views/
+COPY --from=build-env /app/Gnoss.Web.OpenCORE/Gnoss.Web.Open/Views/ Views/
 
 ARG version=latest
 
