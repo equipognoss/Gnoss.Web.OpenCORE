@@ -34,6 +34,7 @@ using Es.Riam.Gnoss.Web.MVC.Models.Flujos;
 using Es.Riam.Gnoss.Web.MVC.Models.ViewModels;
 using Es.Riam.Interfaces.InterfacesOpen;
 using Es.Riam.InterfacesOpen;
+using Es.Riam.InterfacesOpen.Model;
 using Es.Riam.Util;
 using Gnoss.Web.Open.Filters;
 using Microsoft.AspNetCore.Hosting;
@@ -60,9 +61,11 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
     /// </summary>
     public class CMSAdminComponenteEditarController : ControllerAdministrationWeb
 	{
-        public CMSAdminComponenteEditarController(LoggingService loggingService, ConfigService configService, EntityContext entityContext, RedisCacheWrapper redisCacheWrapper, GnossCache gnossCache, VirtuosoAD virtuosoAD, IHttpContextAccessor httpContextAccessor, ICompositeViewEngine viewEngine, EntityContextBASE entityContextBASE, Microsoft.AspNetCore.Hosting.IHostingEnvironment env, IActionContextAccessor actionContextAccessor, IUtilServicioIntegracionContinua utilServicioIntegracionContinua, IServicesUtilVirtuosoAndReplication servicesUtilVirtuosoAndReplication, IOAuth oAuth, IHostApplicationLifetime appLifetime, IAvailableServices availableServices, ILogger<CMSAdminComponenteEditarController> logger, ILoggerFactory loggerFactory)
+        public CMSAdminComponenteEditarController(LoggingService loggingService, ConfigService configService, EntityContext entityContext, RedisCacheWrapper redisCacheWrapper, GnossCache gnossCache, VirtuosoAD virtuosoAD, IHttpContextAccessor httpContextAccessor, ICompositeViewEngine viewEngine, EntityContextBASE entityContextBASE, Microsoft.AspNetCore.Hosting.IHostingEnvironment env, IActionContextAccessor actionContextAccessor, IUtilServicioIntegracionContinua utilServicioIntegracionContinua, IServicesUtilVirtuosoAndReplication servicesUtilVirtuosoAndReplication, IOAuth oAuth, IHostApplicationLifetime appLifetime, IPublishEvents publishEvents, IAvailableServices availableServices, ILogger<CMSAdminComponenteEditarController> logger, ILoggerFactory loggerFactory)
             : base(loggingService, configService, entityContext, redisCacheWrapper, gnossCache, virtuosoAD, httpContextAccessor, viewEngine, entityContextBASE, env, actionContextAccessor, utilServicioIntegracionContinua, servicesUtilVirtuosoAndReplication, oAuth, appLifetime, availableServices, logger, loggerFactory)
-        { }
+        { 
+            mIPublishEvents = publishEvents;
+        }
 
         #region Miembros
 
@@ -70,6 +73,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
 
         private CMSComponente mCMSComponente = null;
 
+        private readonly IPublishEvents mIPublishEvents;
         #endregion
 
         /// <summary>
@@ -281,6 +285,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
                             contrCMS.BorrarComponenteCrearFilasIntegracionContinua(ComponenteID, cmsCN, gestorCMS);
                             CMSAdminComponenteEditarViewModel componente = null;
                             InformarCambioAdministracion("ComponentesCMS", JsonConvert.SerializeObject(new KeyValuePair<Guid, CMSAdminComponenteEditarViewModel>(ComponenteID, componente), Formatting.Indented));
+                            PublicarEventoExternoComponenteCMS(ComponenteID, ActionTypeExternalEvent.Delete);
                             return GnossResultOK();
                         }
                         else
@@ -458,8 +463,14 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
 					string urlComponente = $"{mControladorBase.UrlsSemanticas.ObtenerURLAdministracionComunidad(UtilIdiomas, BaseURLIdioma, ProyectoSeleccionado.NombreCorto, "ADMINISTRARCOMUNIDADCMSLISTADOCOMPONENTES")}";
                     gestorNotificaciones.EnviarCorreoAvisoCambioDeEstado(pTransicionID, ProyectoSeleccionado.Clave, pComentario, urlComponente, UtilCadenas.ObtenerTextoDeIdioma(CMSComponente.Nombre, UtilIdiomas.LanguageCode, ParametrosGeneralesRow.IdiomaDefecto), IdentidadActual.Nombre());
 					notificacionCN.ActualizarNotificacion(mAvailableServices);
+                    // Enviar evento a cola externa
+                    string nombreTransicion = UtilCadenas.ObtenerTextoDeIdioma(flujosCN.ObtenerNombreTransicion(pTransicionID), UtilIdiomas.LanguageCode, ParametrosGeneralesRow.IdiomaDefecto);
+                    string nombreEstadoOrigen = UtilCadenas.ObtenerTextoDeIdioma(flujosCN.ObtenerNombreEstadoOrigenTransicion(pTransicionID), UtilIdiomas.LanguageCode, ParametrosGeneralesRow.IdiomaDefecto);
+                    string nombreEstadoDestino = UtilCadenas.ObtenerTextoDeIdioma(flujosCN.ObtenerNombreEstadoDestinoTransicion(pTransicionID), UtilIdiomas.LanguageCode, ParametrosGeneralesRow.IdiomaDefecto);
+                    CmsComponentEvent modelo = new CmsComponentEvent(pContenidoID, ProyectoSeleccionado.Clave, UsuarioActual.UsuarioID, DateTime.Now, nombreTransicion, nombreEstadoOrigen, nombreEstadoDestino, ActionTypeExternalEvent.ApplyImporvement);
+                    mIPublishEvents.PublishComponentCms(modelo);
 
-					notificacionCN.Dispose();
+                    notificacionCN.Dispose();
 					facetadoCN.Dispose();
 					flujosCN.Dispose();
 				}
@@ -659,7 +670,10 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
                         contrComponente.InvalidarCache(componenteEdicion.Clave);
 
                         GenerarCambiosIntegracionContinua(contrComponente, pComponente, iniciado);
-                                                
+
+                        ActionTypeExternalEvent action = esEdicion ? ActionTypeExternalEvent.Update : ActionTypeExternalEvent.Create;
+                        PublicarEventoExternoComponenteCMS(componenteEdicion.Clave, action);
+
                         if (transaccionIniciada)
                         {
                             mEntityContext.TerminarTransaccionesPendientes(true);
@@ -823,6 +837,12 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
                 pControladorComponenteCMS.ModificarFilasIntegracionContinuaEntornoSiguiente(pComponenteViewModel, UrlApiEntornoSeleccionado("pre"), UsuarioActual.UsuarioID);
                 pControladorComponenteCMS.ModificarFilasIntegracionContinuaEntornoSiguiente(pComponenteViewModel, UrlApiEntornoSeleccionado("pro"), UsuarioActual.UsuarioID);
             }
+        }
+
+        private void PublicarEventoExternoComponenteCMS(Guid pComponenteID, ActionTypeExternalEvent pAction)
+        {
+            CmsComponentEvent modelo = new CmsComponentEvent(pComponenteID, ProyectoSeleccionado.Clave, UsuarioActual.UsuarioID, DateTime.Now, pAction);
+            mIPublishEvents.PublishComponentCms(modelo);
         }
 
         #region Propiedades

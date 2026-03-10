@@ -34,6 +34,7 @@ using Es.Riam.Gnoss.Web.MVC.Models.Administracion;
 using Es.Riam.Gnoss.Web.MVC.Models.ViewModels;
 using Es.Riam.Interfaces.InterfacesOpen;
 using Es.Riam.InterfacesOpen;
+using Es.Riam.InterfacesOpen.Model;
 using Es.Riam.Util;
 using Gnoss.Web.Open.Filters;
 using Gnoss.Web.Services;
@@ -101,11 +102,13 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
     {
         private ILogger mlogger;
         private ILoggerFactory mLoggerFactory;
-        public AdministrarPestanyasController(LoggingService loggingService, ConfigService configService, EntityContext entityContext, RedisCacheWrapper redisCacheWrapper, GnossCache gnossCache, VirtuosoAD virtuosoAD, IHttpContextAccessor httpContextAccessor, ICompositeViewEngine viewEngine, EntityContextBASE entityContextBASE, Microsoft.AspNetCore.Hosting.IHostingEnvironment env, IActionContextAccessor actionContextAccessor, IUtilServicioIntegracionContinua utilServicioIntegracionContinua, IServicesUtilVirtuosoAndReplication servicesUtilVirtuosoAndReplication, IOAuth oAuth, IHostApplicationLifetime appLifetime, IAvailableServices pAvailableService, ILogger<AdministrarPestanyasController> logger, ILoggerFactory loggerFactory)
+        private readonly IPublishEvents mIPublishEvents;
+        public AdministrarPestanyasController(LoggingService loggingService, ConfigService configService, EntityContext entityContext, RedisCacheWrapper redisCacheWrapper, GnossCache gnossCache, VirtuosoAD virtuosoAD, IHttpContextAccessor httpContextAccessor, ICompositeViewEngine viewEngine, EntityContextBASE entityContextBASE, Microsoft.AspNetCore.Hosting.IHostingEnvironment env, IActionContextAccessor actionContextAccessor, IUtilServicioIntegracionContinua utilServicioIntegracionContinua, IServicesUtilVirtuosoAndReplication servicesUtilVirtuosoAndReplication, IOAuth oAuth, IHostApplicationLifetime appLifetime, IPublishEvents publishEvents, IAvailableServices pAvailableService, ILogger<AdministrarPestanyasController> logger, ILoggerFactory loggerFactory)
             : base(loggingService, configService, entityContext, redisCacheWrapper, gnossCache, virtuosoAD, httpContextAccessor, viewEngine, entityContextBASE, env, actionContextAccessor, utilServicioIntegracionContinua, servicesUtilVirtuosoAndReplication, oAuth, appLifetime, pAvailableService, logger, loggerFactory)
         {
             mlogger = logger;
             mLoggerFactory = loggerFactory;
+            mIPublishEvents = publishEvents;
         }
 
         #region Miembros
@@ -569,6 +572,10 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
 
                 contrPest.InvalidarCaches(UrlIntragnoss);
                 //RouteValueTransformer.RecalcularRutasProyecto(ProyectoSeleccionado.FilaProyecto.NombreCorto, mConfigService, mScopedFactory);
+                foreach(TabModel pestanyaCmsEliminada in ListaPestanyas.Where(x => x.Deleted && x.Type == TipoPestanyaMenu.CMS))
+                {
+                    PublicarEventoExternoPaginaCMS(pestanyaCmsEliminada, ActionTypeExternalEvent.Delete);
+                }
                 return GnossResultOK();
             }
             else
@@ -602,64 +609,69 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
             if (string.IsNullOrEmpty(errores))
             { 
                 ProyectoAD proyAD = new ProyectoAD(mLoggingService, mEntityContext, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<ProyectoAD>(), mLoggerFactory);
-            bool transaccionIniciada = false;
-            try
-            {
-                List<TabModel> paginaModelPestanyas = PaginaModel.ListaPestanyas;
-                mEntityContext.NoConfirmarTransacciones = true;
-                transaccionIniciada = proyAD.IniciarTransaccion(true);
-                contrPest.GuardarPestanya(Pestanya);
-                if (iniciado)
+                bool transaccionIniciada = false;
+                try
                 {
-
-                    HttpResponseMessage resultado = InformarCambioAdministracion("Pestanyas", JsonConvert.SerializeObject(Pestanya, Formatting.Indented));
-                    if (!resultado.StatusCode.Equals(HttpStatusCode.OK))
+                    List<TabModel> paginaModelPestanyas = PaginaModel.ListaPestanyas;
+                    mEntityContext.NoConfirmarTransacciones = true;
+                    transaccionIniciada = proyAD.IniciarTransaccion(true);
+                    contrPest.GuardarPestanya(Pestanya);
+                    if (iniciado)
                     {
-                        throw new Exception("Contacte con el administrador del Proyecto, no es posible atender la petición.");
+
+                        HttpResponseMessage resultado = InformarCambioAdministracion("Pestanyas", JsonConvert.SerializeObject(Pestanya, Formatting.Indented));
+                        if (!resultado.StatusCode.Equals(HttpStatusCode.OK))
+                        {
+                            throw new Exception("Contacte con el administrador del Proyecto, no es posible atender la petición.");
+                        }
+                    }
+
+                    if (transaccionIniciada)
+                    {
+                        mEntityContext.TerminarTransaccionesPendientes(true);
+                    }
+                }
+                catch (DbEntityValidationException e)
+                {
+                    foreach (var eve in e.EntityValidationErrors)
+                    {
+                        Console.WriteLine("Entity of type \"{0}\" in state \"{1}\" has the following validation errors:",
+                            eve.Entry.Entity.GetType().Name, eve.Entry.State);
+                    }
+                    if (transaccionIniciada)
+                    {
+                        mEntityContext.TerminarTransaccionesPendientes(false);
+                    }
+                    return GnossResultERROR(e.Message);
+                }
+                catch (Exception ex)
+                {
+                    if (transaccionIniciada)
+                    {
+                        mEntityContext.TerminarTransaccionesPendientes(false);
+                        //proyAD.TerminarTransaccion(false);
                     }
                 }
 
-                if (transaccionIniciada)
-                {
-                    mEntityContext.TerminarTransaccionesPendientes(true);
-                }
-            }
-            catch (DbEntityValidationException e)
-            {
-                foreach (var eve in e.EntityValidationErrors)
-                {
-                    Console.WriteLine("Entity of type \"{0}\" in state \"{1}\" has the following validation errors:",
-                        eve.Entry.Entity.GetType().Name, eve.Entry.State);
-                }
-                if (transaccionIniciada)
-                {
-                    mEntityContext.TerminarTransaccionesPendientes(false);
-                }
-                return GnossResultERROR(e.Message);
-            }
-            catch (Exception ex)
-            {
-                if (transaccionIniciada)
-                {
-                    mEntityContext.TerminarTransaccionesPendientes(false);
-                    //proyAD.TerminarTransaccion(false);
-                }
-            }
+                contrPest.CrearFilasPropiedadesIntegracionContinuaPestanya(Pestanya);
 
-            contrPest.CrearFilasPropiedadesIntegracionContinuaPestanya(Pestanya);
+                if (EntornoActualEsPruebas && iniciado)
+                {
+                    //con esto funciona para PRE
+                    //contrPest.ModificarFilasIntegracionContinuaEntornoSiguiente(ListaPestanyas.ToList(), UrlApiDesplieguesEntornoSiguiente);
 
-            if (EntornoActualEsPruebas && iniciado)
-            {
-                //con esto funciona para PRE
-                //contrPest.ModificarFilasIntegracionContinuaEntornoSiguiente(ListaPestanyas.ToList(), UrlApiDesplieguesEntornoSiguiente);
+                    contrPest.ModificarFilasIntegracionContinuaEntornoSiguientePestanya(Pestanya, UrlApiEntornoSeleccionado("pre"), UsuarioActual.UsuarioID);
+                    contrPest.ModificarFilasIntegracionContinuaEntornoSiguientePestanya(Pestanya, UrlApiEntornoSeleccionado("pro"), UsuarioActual.UsuarioID);
+                }
 
-                contrPest.ModificarFilasIntegracionContinuaEntornoSiguientePestanya(Pestanya, UrlApiEntornoSeleccionado("pre"), UsuarioActual.UsuarioID);
-                contrPest.ModificarFilasIntegracionContinuaEntornoSiguientePestanya(Pestanya, UrlApiEntornoSeleccionado("pro"), UsuarioActual.UsuarioID);
-            }
-
-            contrPest.InvalidarCaches(UrlIntragnoss);
-            //RouteValueTransformer.RecalcularRutasProyecto(ProyectoSeleccionado.FilaProyecto.NombreCorto, mConfigService, mScopedFactory);
-            return GnossResultOK();
+                contrPest.InvalidarCaches(UrlIntragnoss);
+                //RouteValueTransformer.RecalcularRutasProyecto(ProyectoSeleccionado.FilaProyecto.NombreCorto, mConfigService, mScopedFactory);
+                if(Pestanya.Type == TipoPestanyaMenu.CMS)
+                {
+                    ActionTypeExternalEvent action = Pestanya.Nueva ? ActionTypeExternalEvent.Create : ActionTypeExternalEvent.Update;
+                    PublicarEventoExternoPaginaCMS(Pestanya, action);
+                }
+                return GnossResultOK();
             }
             else
             {
@@ -1092,6 +1104,12 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
                 }
             }
             return modelo;
+        }
+
+        private void PublicarEventoExternoPaginaCMS(TabModel pPestanya, ActionTypeExternalEvent pAction)
+        {
+            CmsPageEvent modelo = new CmsPageEvent(pPestanya.Key, ProyectoSeleccionado.Clave, UsuarioActual.UsuarioID, DateTime.Now, pAction);
+            mIPublishEvents.PublishPageCms(modelo);
         }
 
         #endregion

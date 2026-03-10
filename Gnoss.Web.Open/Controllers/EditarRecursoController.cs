@@ -56,6 +56,7 @@ using Es.Riam.Gnoss.Web.MVC.Models.FicherosRecursos;
 using Es.Riam.Gnoss.Web.MVC.Models.Flujos;
 using Es.Riam.Interfaces.InterfacesOpen;
 using Es.Riam.InterfacesOpen;
+using Es.Riam.InterfacesOpen.Model;
 using Es.Riam.Open.Model;
 using Es.Riam.Semantica.OWL;
 using Es.Riam.Semantica.Plantillas;
@@ -11983,8 +11984,8 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
 
                     traza.Append("Antes de GuardarRecurso_ModificarRecurso");
                     respuesta = GuardarRecurso_ModificarRecurso(pPaginaModel);
-                    PublicarModificarEliminarRecurso modelo = new PublicarModificarEliminarRecurso(ProyectoSeleccionado.Clave, Documento.Clave, IdentidadActual.Persona.UsuarioID, DateTime.Now);
-                    mIPublishEvents.PublishResource(modelo, "Modificar");
+                    PublicarModificarEliminarRecurso modelo = new PublicarModificarEliminarRecurso(ProyectoSeleccionado.Clave, Documento.Clave, Documento.VersionOriginalID, IdentidadActual.Persona.UsuarioID, DateTime.Now);
+                    mIPublishEvents.PublishResource(modelo, ActionTypeExternalEvent.Update);
                 }
                 else if (EditandoRecurso && Duplicando)
                 {
@@ -11999,8 +12000,8 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
 
                     traza.Append("Antes de CrearRecurso_SubirRecursoPart2");
                     respuesta = CrearRecurso_SubirRecursoPart2(pPaginaModel);
-                    PublicarModificarEliminarRecurso modelo = new PublicarModificarEliminarRecurso(ProyectoSeleccionado.Clave, Documento.Clave, IdentidadActual.Persona.UsuarioID, DateTime.Now);
-                    mIPublishEvents.PublishResource(modelo, "Modificar");
+                    PublicarModificarEliminarRecurso modelo = new PublicarModificarEliminarRecurso(ProyectoSeleccionado.Clave, Documento.Clave, Documento.VersionOriginalID, IdentidadActual.Persona.UsuarioID, DateTime.Now);
+                    mIPublishEvents.PublishResource(modelo, ActionTypeExternalEvent.Update);
 
                 }
                 else if (EditandoFormSem || CreandoFormSem || CargaMasivaFormSem)
@@ -12029,6 +12030,13 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
 
                     traza.Append("Antes de GuardarRecurso_ModificarRecursoSemantico");
                     respuesta = GuardarRecurso_ModificarRecursoSemantico(pPaginaModel);
+                    ActionTypeExternalEvent action = CreandoFormSem ? ActionTypeExternalEvent.Create : ActionTypeExternalEvent.Update;
+                    PublicarModificarEliminarRecurso modelo = new PublicarModificarEliminarRecurso(ProyectoSeleccionado.Clave, Documento.Clave, Documento.VersionOriginalID, IdentidadActual.Persona.UsuarioID, DateTime.Now);
+                    if (ComprobarSiSeEstaEditandoUnaMejora(Documento.Clave))
+                    {
+                        modelo.EnlaceMejora = $"{mControladorBase.UrlsSemanticas.GetURLBaseRecursosFichaConIDs(BaseURLIdioma, UtilIdiomas, ProyectoSeleccionado.NombreCorto, UrlPerfil, UtilCadenas.EliminarCaracteresUrlSem(Documento.Titulo), Documento.VersionOriginalID, Documento.ElementoVinculadoID, false)}/{Documento.Clave}";
+                    }
+                    mIPublishEvents.PublishResource(modelo, action);
                 }
                 else if (AñadiendoAGnoss)
                 {
@@ -12051,8 +12059,8 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                     traza.Append("Antes de CrearRecurso_SubirRecursoPart2");
 
                     respuesta = CrearRecurso_SubirRecursoPart2(pPaginaModel, false);
-                    PublicarModificarEliminarRecurso modelo = new PublicarModificarEliminarRecurso(ProyectoSeleccionado.Clave, pPaginaModel.Key, IdentidadActual.Persona.UsuarioID, DateTime.Now);
-                    mIPublishEvents.PublishResource(modelo, "Crear");
+                    PublicarModificarEliminarRecurso modelo = new PublicarModificarEliminarRecurso(ProyectoSeleccionado.Clave, pPaginaModel.Key, pPaginaModel.Key, IdentidadActual.Persona.UsuarioID, DateTime.Now);
+                    mIPublishEvents.PublishResource(modelo, ActionTypeExternalEvent.Create);
                 }
 
                 if (!AñadiendoAGnoss && !FormSemVirtual && !mInsertadoEnGrafoBusqueda && Documento != null && (!(respuesta is GnossResult) || !((GnossResult)respuesta).result.Status.Equals(GnossResult.GnossStatus.Error.ToString())))

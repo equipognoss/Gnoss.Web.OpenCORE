@@ -25,6 +25,7 @@ using Es.Riam.Gnoss.Web.MVC.Models.Flujos;
 using Es.Riam.Gnoss.Web.MVC.Models.ViewModels;
 using Es.Riam.Interfaces.InterfacesOpen;
 using Es.Riam.InterfacesOpen;
+using Es.Riam.InterfacesOpen.Model;
 using Es.Riam.Util;
 using Gnoss.Web.Open.Filters;
 using Microsoft.AspNetCore.Hosting;
@@ -50,11 +51,13 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
 	{
         private ILogger mlogger;
         private ILoggerFactory mLoggerFactory;
-        public AdministrarPaginasCMSController(LoggingService loggingService, ConfigService configService, EntityContext entityContext, RedisCacheWrapper redisCacheWrapper, GnossCache gnossCache, VirtuosoAD virtuosoAD, IHttpContextAccessor httpContextAccessor, ICompositeViewEngine viewEngine, EntityContextBASE entityContextBASE, Microsoft.AspNetCore.Hosting.IHostingEnvironment env, IActionContextAccessor actionContextAccessor, IUtilServicioIntegracionContinua utilServicioIntegracionContinua, IServicesUtilVirtuosoAndReplication servicesUtilVirtuosoAndReplication, IOAuth oAuth, IHostApplicationLifetime appLifetime, IAvailableServices availableServices, ILogger<AdministrarPaginasCMSController> logger, ILoggerFactory loggerFactory)
+        private readonly IPublishEvents mIPublishEvents;
+        public AdministrarPaginasCMSController(LoggingService loggingService, ConfigService configService, EntityContext entityContext, RedisCacheWrapper redisCacheWrapper, GnossCache gnossCache, VirtuosoAD virtuosoAD, IHttpContextAccessor httpContextAccessor, ICompositeViewEngine viewEngine, EntityContextBASE entityContextBASE, Microsoft.AspNetCore.Hosting.IHostingEnvironment env, IActionContextAccessor actionContextAccessor, IUtilServicioIntegracionContinua utilServicioIntegracionContinua, IServicesUtilVirtuosoAndReplication servicesUtilVirtuosoAndReplication, IOAuth oAuth, IHostApplicationLifetime appLifetime, IPublishEvents publishEvents, IAvailableServices availableServices, ILogger<AdministrarPaginasCMSController> logger, ILoggerFactory loggerFactory)
             : base(loggingService, configService, entityContext, redisCacheWrapper, gnossCache, virtuosoAD, httpContextAccessor, viewEngine, entityContextBASE, env, actionContextAccessor, utilServicioIntegracionContinua, servicesUtilVirtuosoAndReplication, oAuth, appLifetime, availableServices, logger, loggerFactory)
         {
             mlogger = logger;
             mLoggerFactory = loggerFactory;
+            mIPublishEvents = publishEvents;
 
         }
 
@@ -190,7 +193,8 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
             }
 
             Guardar(Estructura, OpcionesPropiedades, MostrarSoloCuerpo);
-
+            CmsPageEvent modelo = new CmsPageEvent(mPestanyaID, ProyectoSeleccionado.Clave, UsuarioActual.UsuarioID, DateTime.Now, ActionTypeExternalEvent.SaveDraft);
+            mIPublishEvents.PublishPageCms(modelo);
             return GnossResultOK();
         }
 
@@ -321,6 +325,8 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
 
                 ControladorCMS controlador = new ControladorCMS(mLoggingService, mEntityContext, mConfigService, mRedisCacheWrapper, mEntityContextBASE, mVirtuosoAD, mAvailableServices, mLoggerFactory.CreateLogger<ControladorCMS>(), mLoggerFactory);
                 controlador.ActualizarModeloBaseSimple(mPestanyaID, ProyectoSeleccionado.Clave, AD.BASE_BD.PrioridadBase.Alta, false);
+                CmsPageEvent modelo = new CmsPageEvent(mPestanyaID, ProyectoSeleccionado.Clave, UsuarioActual.UsuarioID, DateTime.Now, ActionTypeExternalEvent.Publish);
+                mIPublishEvents.PublishPageCms(modelo);
 
             }
             catch (Exception ex)
@@ -470,6 +476,12 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
 						string urlPagina = $"{mControladorBase.UrlsSemanticas.ObtenerURLAdministracionComunidad(UtilIdiomas, BaseURLIdioma, ProyectoSeleccionado.NombreCorto, "ADMINISTRARCOMUNIDADCMSEDITARPAGINA")}/{pContenidoID}";
 						gestorNotificaciones.EnviarCorreoAvisoCambioDeEstado(pTransicionID, ProyectoSeleccionado.Clave, pComentario, urlPagina, UtilCadenas.ObtenerTextoDeIdioma(mPestanya.Nombre, UtilIdiomas.LanguageCode, ParametrosGeneralesRow.IdiomaDefecto), IdentidadActual.Nombre());
 						notificacionCN.ActualizarNotificacion(mAvailableServices);
+						// Enviar evento 
+						string nombreTransicion = UtilCadenas.ObtenerTextoDeIdioma(flujosCN.ObtenerNombreTransicion(pTransicionID), UtilIdiomas.LanguageCode, ParametrosGeneralesRow.IdiomaDefecto);
+						string nombreEstadoOrigen = UtilCadenas.ObtenerTextoDeIdioma(flujosCN.ObtenerNombreEstadoOrigenTransicion(pTransicionID), UtilIdiomas.LanguageCode, ParametrosGeneralesRow.IdiomaDefecto);
+						string nombreEstadoDestino = UtilCadenas.ObtenerTextoDeIdioma(flujosCN.ObtenerNombreEstadoDestinoTransicion(pTransicionID), UtilIdiomas.LanguageCode, ParametrosGeneralesRow.IdiomaDefecto);
+						CmsPageEvent modelo = new CmsPageEvent(pContenidoID, ProyectoSeleccionado.Clave, UsuarioActual.UsuarioID, DateTime.Now, nombreTransicion, nombreEstadoOrigen, nombreEstadoDestino, ActionTypeExternalEvent.ApplyImporvement);
+						mIPublishEvents.PublishPageCms(modelo);
 
 						notificacionCN.Dispose();
 						facetadoCN.Dispose();

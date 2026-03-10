@@ -71,6 +71,7 @@ using Es.Riam.Gnoss.Web.MVC.Models.ViewModels;
 using Es.Riam.Interfaces;
 using Es.Riam.Interfaces.InterfacesOpen;
 using Es.Riam.InterfacesOpen;
+using Es.Riam.InterfacesOpen.Model;
 using Es.Riam.Metagnoss.ExportarImportar;
 using Es.Riam.Open.Model;
 using Es.Riam.Semantica.OWL;
@@ -4418,8 +4419,11 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                 Elementos.Documentacion.Documento docMejora = GestorDocumental.CrearNuevaVersionDocumento(Documento, IdentidadActual, pEsMejora: true);
 				ControladorDocumentacion controladorDocumentacion = new ControladorDocumentacion(mLoggingService, mEntityContext, mConfigService, mRedisCacheWrapper, mGnossCache, mEntityContextBASE, mVirtuosoAD, mHttpContextAccessor, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<ControladorDocumentacion>(), mLoggerFactory);
                 controladorDocumentacion.IniciarMejoraSobreDocumento(Documento, docMejora, UsuarioActual, IdentidadOrganizacionBROrg, ProyectoSeleccionado.Clave != ProyectoAD.MetaProyecto);
-
-				return GnossResultUrl($"{mControladorBase.UrlsSemanticas.GetURLBaseRecursosFichaConIDs(BaseURLIdioma, UtilIdiomas, ProyectoSeleccionado.NombreCorto, UrlPerfil, UtilCadenas.EliminarCaracteresUrlSem(Documento.Titulo), Documento.VersionOriginalID, Documento.ElementoVinculadoID, false)}/{docMejora.Clave}");
+                string urlMejora = $"{mControladorBase.UrlsSemanticas.GetURLBaseRecursosFichaConIDs(BaseURLIdioma, UtilIdiomas, ProyectoSeleccionado.NombreCorto, UrlPerfil, UtilCadenas.EliminarCaracteresUrlSem(Documento.Titulo), Documento.VersionOriginalID, Documento.ElementoVinculadoID, false)}/{docMejora.Clave}";
+                PublicarModificarEliminarRecurso publicarModificarEliminarRecursoModel = new PublicarModificarEliminarRecurso(ProyectoSeleccionado.Clave, Documento.Clave, Documento.VersionOriginalID, mControladorBase.UsuarioActual.UsuarioID, Documento.Fecha);
+                publicarModificarEliminarRecursoModel.EnlaceMejora = urlMejora;
+                mIPublishEvents.PublishResource(publicarModificarEliminarRecursoModel, ActionTypeExternalEvent.StartImprovement);
+                return GnossResultUrl(urlMejora);
 			}
             catch (Exception ex)
             {
@@ -4485,6 +4489,8 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                 string url = mControladorBase.UrlsSemanticas.GetURLBaseRecursosFicha(BaseURLIdioma, UtilIdiomas, ProyectoSeleccionado.NombreCorto, UrlPerfil, documentoWebMejorado, false).Replace(documentoWebMejorado.Clave.ToString(), pVersionDocumento.DocumentoOriginalID.ToString());
                 gestorNotificaciones.EnviarCorreoAvisoAplicarMejora(pVersionDocumento.MejoraID.Value, documentoPrevio.DocumentoID, Documento.ProyectoID, url, documentoPrevio.Titulo, IdentidadActual.Nombre());
                 notificacionCN.ActualizarNotificacion(mAvailableServices);
+                PublicarModificarEliminarRecurso publicarModificarEliminarRecursoModel = new PublicarModificarEliminarRecurso(ProyectoSeleccionado.Clave, Documento.Clave, Documento.VersionOriginalID, mControladorBase.UsuarioActual.UsuarioID, Documento.Fecha);
+                mIPublishEvents.PublishResource(publicarModificarEliminarRecursoModel, ActionTypeExternalEvent.ApplyImporvement);
                 return GnossResultUrl(url);
             }
             catch (Exception ex)
@@ -4572,6 +4578,8 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
 
                 gestorNotificaciones.EnviarCorreoAvisoCancelarMejora(pVersionDocumento.MejoraID.Value, ultimaVersion.DocumentoID, Documento.ProyectoID, url, ultimaVersion.Titulo, IdentidadActual.Nombre());
                 notificacionCN.ActualizarNotificacion(mAvailableServices);
+                PublicarModificarEliminarRecurso publicarModificarEliminarRecursoModel = new PublicarModificarEliminarRecurso(ProyectoSeleccionado.Clave, Documento.Clave, Documento.VersionOriginalID, mControladorBase.UsuarioActual.UsuarioID, Documento.Fecha);
+                mIPublishEvents.PublishResource(publicarModificarEliminarRecursoModel, ActionTypeExternalEvent.CancelImprovement);
 
                 return GnossResultUrl(url);
             }
@@ -4908,8 +4916,8 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                     ControladorDocumentacion controDoc = new ControladorDocumentacion(mLoggingService, mEntityContext, mConfigService, mRedisCacheWrapper, mGnossCache, mEntityContextBASE, mVirtuosoAD, mHttpContextAccessor, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<ControladorDocumentacion>(), mLoggerFactory);
                     //Si el documento que se borra es un recurso normal, ni debate, ni pregunta, ni encuesta.... se tiene que omitir la eliminación de la caché.
                     controDoc.ActualizarNumRecCatTesDeTesauroDeRecursoEliminado(Documento, mAvailableServices);
-                    PublicarModificarEliminarRecurso publicarModificarEliminarRecursoModel = new PublicarModificarEliminarRecurso(ProyectoSeleccionado.Clave, Documento.Clave, mControladorBase.UsuarioActual.UsuarioID, Documento.Fecha);
-                    mIPublishEvents.PublishResource(publicarModificarEliminarRecursoModel, "Eliminar");
+                    PublicarModificarEliminarRecurso publicarModificarEliminarRecursoModel = new PublicarModificarEliminarRecurso(ProyectoSeleccionado.Clave, Documento.Clave, Documento.VersionOriginalID, mControladorBase.UsuarioActual.UsuarioID, Documento.Fecha);
+                    mIPublishEvents.PublishResource(publicarModificarEliminarRecursoModel, ActionTypeExternalEvent.Delete);
                     string nombreSem = PestanyaRecurso.Value;
 
                     string nombreCortoProy = "";
@@ -9497,13 +9505,22 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                     ActualizarGnossLiveTransicionEstado(estadoDocumento.EstadoID, estadoDestino);
                     // Invalidar ficha del recurso
                     ControladorDocumentacion.BorrarCacheControlFichaRecursos(Documento.UltimaVersionID);
+                    // Enviar evento
+                    PublicarModificarEliminarRecurso publicarModificarEliminarRecursoModel = new PublicarModificarEliminarRecurso(ProyectoSeleccionado.Clave, Documento.Clave, Documento.VersionOriginalID, mControladorBase.UsuarioActual.UsuarioID, Documento.Fecha);
+                    publicarModificarEliminarRecursoModel.Transicion = UtilCadenas.ObtenerTextoDeIdioma(flujosCN.ObtenerNombreTransicion(pTransicionID), UtilIdiomas.LanguageCode, ParametrosGeneralesRow.IdiomaDefecto);
+                    publicarModificarEliminarRecursoModel.EstadoOrigen = UtilCadenas.ObtenerTextoDeIdioma(flujosCN.ObtenerNombreEstadoOrigenTransicion(pTransicionID), UtilIdiomas.LanguageCode, ParametrosGeneralesRow.IdiomaDefecto);
+                    publicarModificarEliminarRecursoModel.EstadoDestino = UtilCadenas.ObtenerTextoDeIdioma(flujosCN.ObtenerNombreEstadoDestinoTransicion(pTransicionID), UtilIdiomas.LanguageCode, ParametrosGeneralesRow.IdiomaDefecto);
+                    if (docCN.ComprobarSiDocumentoEsUnaMejora(Documento.Clave))
+                    {
+                        publicarModificarEliminarRecursoModel.EnlaceMejora = $"{mControladorBase.UrlsSemanticas.GetURLBaseRecursosFichaConIDs(BaseURLIdioma, UtilIdiomas, ProyectoSeleccionado.NombreCorto, UrlPerfil, UtilCadenas.EliminarCaracteresUrlSem(Documento.Titulo), Documento.VersionOriginalID, Documento.ElementoVinculadoID, false)}/{Documento.Clave}";
+                    }
+                    mIPublishEvents.PublishResource(publicarModificarEliminarRecursoModel, ActionTypeExternalEvent.ChangeState);
 
                     notificacionCN.Dispose();
                     facetadoCN.Dispose();
                     flujosCN.Dispose();
                     docCN.Dispose();
-                }
-
+                }                
                 return GnossResultOK(UtilIdiomas.GetText("FLUJOS", "TRANSICIONREALIZADA"));
             }
             catch (Exception ex)

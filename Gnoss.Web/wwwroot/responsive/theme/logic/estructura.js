@@ -1,4 +1,4 @@
-/**
+﻿/**
  ***************************************************************************************
  * Logica / Operativas de comportamiento JS para la sección de Estrucuta de páginas de la Comunidad del DevTools
  * *************************************************************************************
@@ -1360,7 +1360,7 @@ const operativaGestionPaginas = {
     cleanMultiLangString: function (str) {
         return str
             // eliminar etiquetas de idioma como @fr o @en-US, incluyendo si están rodeadas por |||
-            .replace(/(?:\|{3})*@[a-z]{2}(?:-[A-Z]{2})?(?:\|{3})*/gi, '')
+            .replace(/(?:\|{3})*@[a-z]{2}(?:-[a-z]{2,10}){0,2}(?:\|{3})*/gi, '')
             // colapsar múltiples separadores en uno único (si los quieres conservar)
             .replace(/\|{3,}/g, '|||')
             // quitar separadores al principio o final
@@ -3805,9 +3805,6 @@ const operativaGestionPaginas = {
         // Posición actual 
         that.pageRowPosition = rowPages.index($(`#${that.filaPagina.attr("id")}`));
 
-        // Se desean guardar las páginas -> Quitar clase de "newPage" para NO eliminar la página de reciente creación
-        $(".newPage").removeClass("newPage");
-
         // Resetear los errores globales previos (Flags urlRepetidos, urlVacíos,)
         that.errorRutaRepetida = false;
         that.errorRutaVacia = false;
@@ -3849,6 +3846,8 @@ const operativaGestionPaginas = {
             loadingOcultar();
         }
 
+        // Se desean guardar la página -> Quitar clase de "newPage" para NO eliminar la página de reciente creación
+        $(".newPage").removeClass("newPage");
     },
 
     handleCompareVersion: function (element, dataPost, url, modal, modalContainer, completion) {
@@ -4819,6 +4818,8 @@ const operativaGestionPaginas = {
         // Indicador de si la página ha sido editada / recién creada
         const modified = fila.hasClass("modified");
         that.ListaPestanyas[prefijoClave + '.Modified'] = modified;
+        const newPage = fila.hasClass("newPage");
+        that.ListaPestanyas[prefijoClave + '.Nueva'] = newPage;
 
         // Recoger los datos de la página que haya podido sufrir cambios
         if (modified) {
@@ -5357,10 +5358,7 @@ const operativaGestionPaginas = {
                 completion != undefined && completion(true);
             }
 
-        }).always(function () {
-            // Ocultar el loading
-            loadingOcultar();
-        });
+        })
     },
 
     /**
