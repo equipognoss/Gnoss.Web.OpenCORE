@@ -284,6 +284,32 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
             }
         }
 
+        /// <summary>
+        /// Carga la variable UsuarioActual o la crea la sesión en caso de no existir.
+        /// </summary>
+        /// <param name="pFilterContext">Contexto de la petición</param>
+        public void CargarUsuarioActual(ActionExecutingContext pFilterContext)
+        {
+            if (Session.Get<GnossIdentity>("Usuario") == null)
+            {
+                //Si después de lo anterior no hay sesión de usuario, el usuario no se ha logueado en ningún dominio, le conecto como invitado
+                CrearUsuarioInvitado();
+            }
+            else
+            {
+                try
+                {
+                    //La sesión ya estaba iniciada, recupero el usuario
+                    mControladorBase.RecuperarUsuarioDeSesion(UsuarioActual);
+                }
+                catch
+                {
+                    pFilterContext.Result = NotFound();
+                    return;
+                }
+            }
+        }
+
         public override void OnActionExecuting(ActionExecutingContext filterContext)
         {
             IniciarTraza();
@@ -322,24 +348,8 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                     }
                 }
             }
-            if (Session.Get<GnossIdentity>("Usuario") == null)
-            {
-                //Si después de lo anterior no hay sesión de usuario, el usuario no se ha logueado en ningún dominio, le conecto como invitado
-                CrearUsuarioInvitado();
-            }
-            else
-            {
-                try
-                {
-                    //La sesión ya estaba iniciada, recupero el usuario
-                    mControladorBase.RecuperarUsuarioDeSesion(UsuarioActual);
-                }
-                catch
-                {
-                    filterContext.Result = NotFound();
-                    return;
-                }
-            }
+
+            CargarUsuarioActual(filterContext);
 
             // Si el usuario tiene que ir al Master, 
             if (mControladorBase.UsuarioActual.UsarMasterParaLectura)

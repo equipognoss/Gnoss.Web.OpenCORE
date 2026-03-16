@@ -2863,12 +2863,19 @@ const operativaMultiIdioma = {
      * @param {*} pTexto : Array descompuesto en caracteres para poder buscar el idioma en el que está "@en" o "@es"... que corresponde con los últimos 3 caracteres.
      * @return Devuelve un objeto con el key del idioma y el value del idioma: Ejemplo: "es": "Español", "en", "English"
      */	
-    obtenerTextoYClaveDeIdioma: function (pTexto) {
-        const that = this;
-		let idioma = that.idiomaPorDefecto;
-		let textoIdioma = pTexto.trim().split("@");
-		idioma = textoIdioma[1] ?? idioma;
-        return { "key": idioma, "value": textoIdioma[0] };
+     obtenerTextoYClaveDeIdioma: function (pTexto) {
+		 const that = this;
+		 let idioma = that.idiomaPorDefecto;
+
+		 const ultimoArroba = pTexto.trim().lastIndexOf('@');
+
+		 if (ultimoArroba !== -1) {
+			 idioma = pTexto.slice(ultimoArroba + 1).trim() || idioma;
+			 const valor = pTexto.slice(0, ultimoArroba).trim();
+			 return { "key": idioma, "value": valor };
+		 }
+
+		 return { "key": idioma, "value": pTexto.trim() };
     },
 
     /**

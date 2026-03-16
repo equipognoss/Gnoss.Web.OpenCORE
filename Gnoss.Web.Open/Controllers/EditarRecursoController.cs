@@ -3438,28 +3438,6 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
             return GnossResultERROR();
         }
 
-
-        /// <summary>
-        /// Get the paths of the attached files in the rdf to be able to copy them later
-        /// </summary>
-        /// <param name="pRdf">Rdf of the semantic resource that is being edited</param>
-        /// <returns> Return the list of paths of the attached files in the rdf</returns>
-        private static List<string> GetFilesPathsFromRdf(string pRdf)
-        {
-            List<string> pathFiles = new List<string>();
-            string pattern = $@"<([^<]*({UtilArchivos.ContentImagenesSemanticas}|{UtilArchivos.ContentDocumentosSem}|{UtilArchivos.ContentDocLinks}|{UtilArchivos.ContentVideosSemanticos})[^<]*)>";
-            Regex regex = new Regex(pattern);
-
-            MatchCollection pathsMatch = regex.Matches(pRdf);
-
-            foreach(Match pathFileMatch in pathsMatch)
-            {
-                pathFiles.Add(pathFileMatch.Groups[1].Value.TrimEnd(']'));
-            }
-
-            return pathFiles;
-        }
-
         /// <summary>
         /// Modifica los triples de los archivos adjuntos del recurso semántico pasado por parámetro
         /// </summary>
@@ -6543,12 +6521,12 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
 
                 return resultadoCargaMasiva;
             }
+            
+            Dictionary<string, TipoCampoOntologia> nombresArchivosYTipos = ControladorDocumentacion.ObtenerNombresArchivosDeRdf(ficheroRDF, mOntologia);
 
-            List<string> filesPaths = GetFilesPathsFromRdf(ficheroRDF);
-
-            foreach (string rutaAdjunto in filesPaths)
+            foreach (string nombreArchivoYTipo in nombresArchivosYTipos.Keys)
             {
-                bool correcto = ControladorDocumentacion.CopiarAdjuntoDocumentoSemantico(rutaAdjunto, mModelSaveRec.Key, DocumentoVersionID);
+                bool correcto = ControladorDocumentacion.CopiarAdjuntoDocumentoSemantico(nombreArchivoYTipo, nombresArchivosYTipos[nombreArchivoYTipo], mModelSaveRec.Key, DocumentoVersionID);
 
                 if (!correcto)
                 {
@@ -11984,7 +11962,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
 
                     traza.Append("Antes de GuardarRecurso_ModificarRecurso");
                     respuesta = GuardarRecurso_ModificarRecurso(pPaginaModel);
-                    PublicarModificarEliminarRecurso modelo = new PublicarModificarEliminarRecurso(ProyectoSeleccionado.Clave, Documento.Clave, Documento.VersionOriginalID, IdentidadActual.Persona.UsuarioID, DateTime.Now);
+                    ResourceEvent modelo = new ResourceEvent(ProyectoSeleccionado.Clave, Documento.Clave, Documento.VersionOriginalID, IdentidadActual.Persona.UsuarioID, DateTime.Now);
                     mIPublishEvents.PublishResource(modelo, ActionTypeExternalEvent.Update);
                 }
                 else if (EditandoRecurso && Duplicando)
@@ -12000,7 +11978,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
 
                     traza.Append("Antes de CrearRecurso_SubirRecursoPart2");
                     respuesta = CrearRecurso_SubirRecursoPart2(pPaginaModel);
-                    PublicarModificarEliminarRecurso modelo = new PublicarModificarEliminarRecurso(ProyectoSeleccionado.Clave, Documento.Clave, Documento.VersionOriginalID, IdentidadActual.Persona.UsuarioID, DateTime.Now);
+                    ResourceEvent modelo = new ResourceEvent(ProyectoSeleccionado.Clave, Documento.Clave, Documento.VersionOriginalID, IdentidadActual.Persona.UsuarioID, DateTime.Now);
                     mIPublishEvents.PublishResource(modelo, ActionTypeExternalEvent.Update);
 
                 }
@@ -12031,10 +12009,10 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                     traza.Append("Antes de GuardarRecurso_ModificarRecursoSemantico");
                     respuesta = GuardarRecurso_ModificarRecursoSemantico(pPaginaModel);
                     ActionTypeExternalEvent action = CreandoFormSem ? ActionTypeExternalEvent.Create : ActionTypeExternalEvent.Update;
-                    PublicarModificarEliminarRecurso modelo = new PublicarModificarEliminarRecurso(ProyectoSeleccionado.Clave, Documento.Clave, Documento.VersionOriginalID, IdentidadActual.Persona.UsuarioID, DateTime.Now);
+                    ResourceEvent modelo = new ResourceEvent(ProyectoSeleccionado.Clave, Documento.Clave, Documento.VersionOriginalID, IdentidadActual.Persona.UsuarioID, DateTime.Now);
                     if (ComprobarSiSeEstaEditandoUnaMejora(Documento.Clave))
                     {
-                        modelo.EnlaceMejora = $"{mControladorBase.UrlsSemanticas.GetURLBaseRecursosFichaConIDs(BaseURLIdioma, UtilIdiomas, ProyectoSeleccionado.NombreCorto, UrlPerfil, UtilCadenas.EliminarCaracteresUrlSem(Documento.Titulo), Documento.VersionOriginalID, Documento.ElementoVinculadoID, false)}/{Documento.Clave}";
+                        modelo.ImprovementLink = $"{mControladorBase.UrlsSemanticas.GetURLBaseRecursosFichaConIDs(BaseURLIdioma, UtilIdiomas, ProyectoSeleccionado.NombreCorto, UrlPerfil, UtilCadenas.EliminarCaracteresUrlSem(Documento.Titulo), Documento.VersionOriginalID, Documento.ElementoVinculadoID, false)}/{Documento.Clave}";
                     }
                     mIPublishEvents.PublishResource(modelo, action);
                 }
@@ -12059,7 +12037,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                     traza.Append("Antes de CrearRecurso_SubirRecursoPart2");
 
                     respuesta = CrearRecurso_SubirRecursoPart2(pPaginaModel, false);
-                    PublicarModificarEliminarRecurso modelo = new PublicarModificarEliminarRecurso(ProyectoSeleccionado.Clave, pPaginaModel.Key, pPaginaModel.Key, IdentidadActual.Persona.UsuarioID, DateTime.Now);
+                    ResourceEvent modelo = new ResourceEvent(ProyectoSeleccionado.Clave, pPaginaModel.Key, pPaginaModel.Key, IdentidadActual.Persona.UsuarioID, DateTime.Now);
                     mIPublishEvents.PublishResource(modelo, ActionTypeExternalEvent.Create);
                 }
 

@@ -480,7 +480,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
 						string nombreTransicion = UtilCadenas.ObtenerTextoDeIdioma(flujosCN.ObtenerNombreTransicion(pTransicionID), UtilIdiomas.LanguageCode, ParametrosGeneralesRow.IdiomaDefecto);
 						string nombreEstadoOrigen = UtilCadenas.ObtenerTextoDeIdioma(flujosCN.ObtenerNombreEstadoOrigenTransicion(pTransicionID), UtilIdiomas.LanguageCode, ParametrosGeneralesRow.IdiomaDefecto);
 						string nombreEstadoDestino = UtilCadenas.ObtenerTextoDeIdioma(flujosCN.ObtenerNombreEstadoDestinoTransicion(pTransicionID), UtilIdiomas.LanguageCode, ParametrosGeneralesRow.IdiomaDefecto);
-						CmsPageEvent modelo = new CmsPageEvent(pContenidoID, ProyectoSeleccionado.Clave, UsuarioActual.UsuarioID, DateTime.Now, nombreTransicion, nombreEstadoOrigen, nombreEstadoDestino, ActionTypeExternalEvent.ApplyImporvement);
+						CmsPageEvent modelo = new CmsPageEvent(pContenidoID, ProyectoSeleccionado.Clave, UsuarioActual.UsuarioID, DateTime.Now, nombreTransicion, nombreEstadoOrigen, nombreEstadoDestino, ActionTypeExternalEvent.ChangeState);
 						mIPublishEvents.PublishPageCms(modelo);
 
 						notificacionCN.Dispose();

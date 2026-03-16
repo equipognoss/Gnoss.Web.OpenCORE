@@ -2432,7 +2432,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                 } 
                 
             }
-            ModificarUsuarios modificarUsuariosModel = new ModificarUsuarios(ProyectoSeleccionado.Clave, filaNuevoUsuario.UsuarioID, DateTime.Now);
+            UserModifyEvent modificarUsuariosModel = new UserModifyEvent(ProyectoSeleccionado.Clave, filaNuevoUsuario.UsuarioID, DateTime.Now);
             mIPublishEvents.PublishUser(modificarUsuariosModel);
             string nombreCortoUsu = usuarioCN.ObtenerNombreCortoUsuarioPorID(mControladorBase.UsuarioActual.UsuarioID);
             usuarioCN.Dispose();
