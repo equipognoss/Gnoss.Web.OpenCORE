@@ -6708,6 +6708,14 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
 
             ControladorDocumentacion.InsertarEnColaProcesarFicherosRecursosModificadosOEliminados(Documento.Clave, TipoEventoProcesarFicherosRecursos.Modificado, mAvailableServices);
 
+            ActionTypeExternalEvent action = CreandoFormSem ? ActionTypeExternalEvent.Create : ActionTypeExternalEvent.Update;
+            string improvementLink = "";
+            if (ComprobarSiSeEstaEditandoUnaMejora(Documento.Clave))
+            {
+                improvementLink = $"{mControladorBase.UrlsSemanticas.GetURLBaseRecursosFichaConIDs(BaseURLIdioma, UtilIdiomas, ProyectoSeleccionado.NombreCorto, UrlPerfil, UtilCadenas.EliminarCaracteresUrlSem(Documento.Titulo), Documento.VersionOriginalID, Documento.ElementoVinculadoID, false)}/{Documento.Clave}";
+            }
+            PublicarEventoExternoRecurso(Documento.Clave, Documento.VersionOriginalID, improvementLink, action);
+
             return result;
         }
 
@@ -11962,8 +11970,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
 
                     traza.Append("Antes de GuardarRecurso_ModificarRecurso");
                     respuesta = GuardarRecurso_ModificarRecurso(pPaginaModel);
-                    ResourceEvent modelo = new ResourceEvent(ProyectoSeleccionado.Clave, Documento.Clave, Documento.VersionOriginalID, IdentidadActual.Persona.UsuarioID, DateTime.Now);
-                    mIPublishEvents.PublishResource(modelo, ActionTypeExternalEvent.Update);
+                    PublicarEventoExternoRecurso(Documento.Clave, Documento.VersionOriginalID, "", ActionTypeExternalEvent.Update);
                 }
                 else if (EditandoRecurso && Duplicando)
                 {
@@ -11978,9 +11985,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
 
                     traza.Append("Antes de CrearRecurso_SubirRecursoPart2");
                     respuesta = CrearRecurso_SubirRecursoPart2(pPaginaModel);
-                    ResourceEvent modelo = new ResourceEvent(ProyectoSeleccionado.Clave, Documento.Clave, Documento.VersionOriginalID, IdentidadActual.Persona.UsuarioID, DateTime.Now);
-                    mIPublishEvents.PublishResource(modelo, ActionTypeExternalEvent.Update);
-
+                    PublicarEventoExternoRecurso(Documento.Clave, Documento.VersionOriginalID, "", ActionTypeExternalEvent.Update);
                 }
                 else if (EditandoFormSem || CreandoFormSem || CargaMasivaFormSem)
                 {
@@ -12008,13 +12013,6 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
 
                     traza.Append("Antes de GuardarRecurso_ModificarRecursoSemantico");
                     respuesta = GuardarRecurso_ModificarRecursoSemantico(pPaginaModel);
-                    ActionTypeExternalEvent action = CreandoFormSem ? ActionTypeExternalEvent.Create : ActionTypeExternalEvent.Update;
-                    ResourceEvent modelo = new ResourceEvent(ProyectoSeleccionado.Clave, Documento.Clave, Documento.VersionOriginalID, IdentidadActual.Persona.UsuarioID, DateTime.Now);
-                    if (ComprobarSiSeEstaEditandoUnaMejora(Documento.Clave))
-                    {
-                        modelo.ImprovementLink = $"{mControladorBase.UrlsSemanticas.GetURLBaseRecursosFichaConIDs(BaseURLIdioma, UtilIdiomas, ProyectoSeleccionado.NombreCorto, UrlPerfil, UtilCadenas.EliminarCaracteresUrlSem(Documento.Titulo), Documento.VersionOriginalID, Documento.ElementoVinculadoID, false)}/{Documento.Clave}";
-                    }
-                    mIPublishEvents.PublishResource(modelo, action);
                 }
                 else if (AñadiendoAGnoss)
                 {
@@ -12037,8 +12035,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                     traza.Append("Antes de CrearRecurso_SubirRecursoPart2");
 
                     respuesta = CrearRecurso_SubirRecursoPart2(pPaginaModel, false);
-                    ResourceEvent modelo = new ResourceEvent(ProyectoSeleccionado.Clave, pPaginaModel.Key, pPaginaModel.Key, IdentidadActual.Persona.UsuarioID, DateTime.Now);
-                    mIPublishEvents.PublishResource(modelo, ActionTypeExternalEvent.Create);
+                    PublicarEventoExternoRecurso(pPaginaModel.Key, pPaginaModel.Key, "", ActionTypeExternalEvent.Create);
                 }
 
                 if (!AñadiendoAGnoss && !FormSemVirtual && !mInsertadoEnGrafoBusqueda && Documento != null && (!(respuesta is GnossResult) || !((GnossResult)respuesta).result.Status.Equals(GnossResult.GnossStatus.Error.ToString())))
@@ -12709,6 +12706,17 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
             {
                 GestorDocumental.GestorTesauro.EliminarCategoriasPublicasSiEsMetaEspacioGNOSS(UtilIdiomas.LanguageCode);
             }
+        }
+
+        #endregion
+
+        #region Eventos Externos
+
+        private void PublicarEventoExternoRecurso(Guid pDocumentoId, Guid pVersionOriginalId, string pEnlaceMejora, ActionTypeExternalEvent pAction)
+        {
+            ResourceEvent modelo = new ResourceEvent(ProyectoSeleccionado.Clave, pDocumentoId, pVersionOriginalId, IdentidadActual.Persona.UsuarioID, DateTime.Now);
+            modelo.ImprovementLink = pEnlaceMejora;
+            mIPublishEvents.PublishResource(modelo, pAction);
         }
 
         #endregion
