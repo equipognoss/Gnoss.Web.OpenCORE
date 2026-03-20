@@ -351,8 +351,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                         }
                         else if (doc.EsEditoraOLectoraIdentidad(IdentidadActual))
                         {
-
-                            if (descargaDesdeRdf || (UrlReferrer.ToLower().Contains($"/{ficheroID.ToString().ToLower()}")))
+                            if (descargaDesdeRdf || UrlReferrer.Contains(ficheroID.ToString(), StringComparison.InvariantCultureIgnoreCase) || new Uri(UrlReferrer).AbsolutePath.EndsWith(doc.VersionOriginalID.ToString(), StringComparison.InvariantCultureIgnoreCase))
                             {
                                 redireccionarFicha = false;
                             }

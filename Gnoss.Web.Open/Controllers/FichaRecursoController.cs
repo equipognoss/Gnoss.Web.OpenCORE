@@ -4130,7 +4130,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
             bool correcto = true;
             if (pDocUltimaVersion.TipoDocumentacion == TiposDocumentacion.Semantico)
             {
-                correcto = pControladroDocumentacion.CrearNuevaVersionDocumentoRDF(Documento, pDocVersionRestaurada, mAvailableServices, pEsMejora);
+                correcto = pControladroDocumentacion.CrearNuevaVersionDocumentoRDF(Documento, pDocVersionRestaurada, mAvailableServices, GenPlantillasOWL.Ontologia, pEsMejora);
             }
             else if (pDocUltimaVersion.EsFicheroDigital)
             {
@@ -4419,7 +4419,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                 docCN.Dispose();
                 Elementos.Documentacion.Documento docMejora = GestorDocumental.CrearNuevaVersionDocumento(Documento, IdentidadActual, pEsMejora: true);
 				ControladorDocumentacion controladorDocumentacion = new ControladorDocumentacion(mLoggingService, mEntityContext, mConfigService, mRedisCacheWrapper, mGnossCache, mEntityContextBASE, mVirtuosoAD, mHttpContextAccessor, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<ControladorDocumentacion>(), mLoggerFactory);
-                controladorDocumentacion.IniciarMejoraSobreDocumento(Documento, docMejora, UsuarioActual, IdentidadOrganizacionBROrg, ProyectoSeleccionado.Clave != ProyectoAD.MetaProyecto);
+                controladorDocumentacion.IniciarMejoraSobreDocumento(Documento, docMejora, UsuarioActual, IdentidadOrganizacionBROrg, ProyectoSeleccionado.Clave != ProyectoAD.MetaProyecto, GenPlantillasOWL.Ontologia);
                 string urlMejora = $"{mControladorBase.UrlsSemanticas.GetURLBaseRecursosFichaConIDs(BaseURLIdioma, UtilIdiomas, ProyectoSeleccionado.NombreCorto, UrlPerfil, UtilCadenas.EliminarCaracteresUrlSem(Documento.Titulo), Documento.VersionOriginalID, Documento.ElementoVinculadoID, false)}/{docMejora.Clave}";
                 ResourceEvent publicarModificarEliminarRecursoModel = new ResourceEvent(ProyectoSeleccionado.Clave, Documento.Clave, Documento.VersionOriginalID, mControladorBase.UsuarioActual.UsuarioID, Documento.Fecha);
                 publicarModificarEliminarRecursoModel.ImprovementLink = urlMejora;
@@ -9478,7 +9478,6 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
             {
                 EstadoModel estadoDocumento = ObtenerEstadoDocumento();
                 bool tienePermiso = estadoDocumento.Transiciones.Any(t => t.TransicionID.Equals(pTransicionID));
-                // TODO FRAN: ¿Permisos creador?
                 if (tienePermiso /*|| Documento.CreadorID.Equals(IdentidadActual.Clave)*/)
                 {
                     DocumentacionCN docCN = new DocumentacionCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<DocumentacionCN>(), mLoggerFactory);
@@ -9487,6 +9486,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                     NotificacionCN notificacionCN = new NotificacionCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<NotificacionCN>(), mLoggerFactory);
                     DataWrapperNotificacion notificacionDW = new DataWrapperNotificacion();
                     GestionNotificaciones gestorNotificaciones = new GestionNotificaciones(notificacionDW, mLoggingService, mEntityContext, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<GestionNotificaciones>(), mLoggerFactory);
+                    ResourceEvent publicarModificarEliminarRecursoModel = new ResourceEvent(ProyectoSeleccionado.Clave, Documento.Clave, Documento.VersionOriginalID, mControladorBase.UsuarioActual.UsuarioID, Documento.Fecha);
 
                     pComentario = pComentario ?? "";
                     // Cambiar estado en base de datos y añadir al historial
@@ -9497,9 +9497,16 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                     // Cambiar estado en Virtuoso                    
                     facetadoCN.ModificarEstadoDeContenido(Documento.ProyectoID, estadoDocumento.EstadoID, estadoDestino, Documento.Clave);
 
-                    // Enviar correo de aviso a lectores y editores de los estados de origen y destino
-                    // TODO FRAN: ¿Enviar correo al creador?					
-                    string urlDocumento = mControladorBase.UrlsSemanticas.GetURLBaseRecursosFicha(BaseURLIdioma, UtilIdiomas, ProyectoSeleccionado.NombreCorto, UrlPerfil, Documento, false);
+                    // Enviar correo de aviso a lectores y editores de los estados de origen y destino				
+                    string urlDocumento = $"{mControladorBase.UrlsSemanticas.GetURLBaseRecursosFichaConIDs(BaseURLIdioma, UtilIdiomas, ProyectoSeleccionado.NombreCorto, UrlPerfil, UtilCadenas.EliminarCaracteresUrlSem(Documento.Titulo), Documento.VersionOriginalID, Documento.ElementoVinculadoID, false)}";
+                    bool esMejora = docCN.ComprobarSiDocumentoEsUnaMejora(Documento.Clave);
+                    if (esMejora)
+                    {
+                        string urlMejora = $"{mControladorBase.UrlsSemanticas.GetURLBaseRecursosFichaConIDs(BaseURLIdioma, UtilIdiomas, ProyectoSeleccionado.NombreCorto, UrlPerfil, UtilCadenas.EliminarCaracteresUrlSem(Documento.Titulo), Documento.VersionOriginalID, Documento.ElementoVinculadoID, false)}/{Documento.Clave}";
+                        publicarModificarEliminarRecursoModel.ImprovementLink = urlMejora;
+                        urlDocumento = urlMejora;
+                    }
+                    
                     gestorNotificaciones.EnviarCorreoAvisoCambioDeEstado(pTransicionID, Documento.ProyectoID, pComentario, urlDocumento, Documento.Titulo, IdentidadActual.Nombre());
                     notificacionCN.ActualizarNotificacion(mAvailableServices);
                     // Actualizar GnossLive
@@ -9507,14 +9514,11 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                     // Invalidar ficha del recurso
                     ControladorDocumentacion.BorrarCacheControlFichaRecursos(Documento.UltimaVersionID);
                     // Enviar evento
-                    ResourceEvent publicarModificarEliminarRecursoModel = new ResourceEvent(ProyectoSeleccionado.Clave, Documento.Clave, Documento.VersionOriginalID, mControladorBase.UsuarioActual.UsuarioID, Documento.Fecha);
+                    
                     publicarModificarEliminarRecursoModel.Transition = UtilCadenas.ObtenerTextoDeIdioma(flujosCN.ObtenerNombreTransicion(pTransicionID), UtilIdiomas.LanguageCode, ParametrosGeneralesRow.IdiomaDefecto);
                     publicarModificarEliminarRecursoModel.SourceStatus = UtilCadenas.ObtenerTextoDeIdioma(flujosCN.ObtenerNombreEstadoOrigenTransicion(pTransicionID), UtilIdiomas.LanguageCode, ParametrosGeneralesRow.IdiomaDefecto);
                     publicarModificarEliminarRecursoModel.TargetStatus = UtilCadenas.ObtenerTextoDeIdioma(flujosCN.ObtenerNombreEstadoDestinoTransicion(pTransicionID), UtilIdiomas.LanguageCode, ParametrosGeneralesRow.IdiomaDefecto);
-                    if (docCN.ComprobarSiDocumentoEsUnaMejora(Documento.Clave))
-                    {
-                        publicarModificarEliminarRecursoModel.ImprovementLink = $"{mControladorBase.UrlsSemanticas.GetURLBaseRecursosFichaConIDs(BaseURLIdioma, UtilIdiomas, ProyectoSeleccionado.NombreCorto, UrlPerfil, UtilCadenas.EliminarCaracteresUrlSem(Documento.Titulo), Documento.VersionOriginalID, Documento.ElementoVinculadoID, false)}/{Documento.Clave}";
-                    }
+
                     mIPublishEvents.PublishResource(publicarModificarEliminarRecursoModel, ActionTypeExternalEvent.ChangeState);
 
                     notificacionCN.Dispose();

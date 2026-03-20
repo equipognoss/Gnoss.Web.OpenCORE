@@ -480,6 +480,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
                 {
                     //Si existe no se marca para eliminar posteriormente
                     redireccionDirecta.UrlRedireccion = pRedireccionRegistroRuta.DestinationUrl;
+                    redireccionDirecta.MantenerFiltros = pRedireccionRegistroRuta.PreserveFilters;
                     listaRedireccionesValorParametroBD.Remove(redireccionDirecta);
                 }
                 else
