@@ -1350,7 +1350,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
 
             if (listaIdentidades.Count > 0)
             {
-                Dictionary<Guid, ProfileModel> identidadesModel = ControladorProyectoMVC.ObtenerIdentidadesPorID(listaIdentidades);
+                Dictionary<Guid, ProfileModel> identidadesModel = ControladorProyectoMVC.ObtenerIdentidadesPorID(listaIdentidades, pExcluirIdentidadesEliminadas: true);
 
                 List<ProfileModel> listaPerfiles = new List<ProfileModel>();
                 foreach (ProfileModel perfil in identidadesModel.Values)

@@ -96,13 +96,13 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
     public class AdministrarObjetosConocimientoController : ControllerAdministrationWeb
     {
 		public PlantillaOntologicaUtil mPlantillaOntologicaUtil;
-        private ILogger mlogger;
+        private ILogger mLogger;
         private ILoggerFactory mLoggerFactory;
         public AdministrarObjetosConocimientoController(LoggingService loggingService, ConfigService configService, EntityContext entityContext, RedisCacheWrapper redisCacheWrapper, GnossCache gnossCache, VirtuosoAD virtuosoAD, IHttpContextAccessor httpContextAccessor, ICompositeViewEngine viewEngine, EntityContextBASE entityContextBASE, Microsoft.AspNetCore.Hosting.IHostingEnvironment env, IActionContextAccessor actionContextAccessor, IUtilServicioIntegracionContinua utilServicioIntegracionContinua, IServicesUtilVirtuosoAndReplication servicesUtilVirtuosoAndReplication, IOAuth oAuth, IMassiveOntologyToClass massiveOntologyToClass, IHostApplicationLifetime appLifetime, IAvailableServices availableServices, ILogger<AdministrarObjetosConocimientoController> logger, ILoggerFactory loggerFactory)
             : base(loggingService, configService, entityContext, redisCacheWrapper, gnossCache, virtuosoAD, httpContextAccessor, viewEngine, entityContextBASE, env, actionContextAccessor, utilServicioIntegracionContinua, servicesUtilVirtuosoAndReplication, oAuth, appLifetime, availableServices, logger, loggerFactory)
         {
             mMassiveOntologyToClass = massiveOntologyToClass;
-            mlogger = logger;
+            mLogger = logger;
             mLoggerFactory = loggerFactory;
             APlantillaOntologica plantillaOntologica = new PlantillaOntologicaProyectoUtil(entityContext,loggingService, configService, servicesUtilVirtuosoAndReplication, redisCacheWrapper, ProyectoSeleccionado.Clave, ProyectoSeleccionado.FilaProyecto.OrganizacionID, UsuarioActual.UsuarioID, OntologiaID, ProyectoSeleccionado.NombreCorto, mLoggerFactory.CreateLogger<PlantillaOntologicaProyectoUtil>(), mLoggerFactory);
             mPlantillaOntologicaUtil = new PlantillaOntologicaUtil(entityContext, loggingService, mRedisCacheWrapper, configService, servicesUtilVirtuosoAndReplication, massiveOntologyToClass, plantillaOntologica, mLoggerFactory.CreateLogger<PlantillaOntologicaUtil>(), mLoggerFactory);
@@ -619,7 +619,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
             }
             catch (Exception ex)
             {
-                mLoggingService.GuardarLogError(ex);
+                mLoggingService.GuardarLogError(ex, mLogger);
                 return GnossResultERROR(ex.Message);
             }
         }
@@ -637,7 +637,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
 			}
 			catch (Exception ex)
 			{
-				mLoggingService.GuardarLogError(ex.Message, mlogger);
+				mLoggingService.GuardarLogError(ex.Message, mLogger);
 				Response.StatusCode = 500;
 				return GnossResultERROR(ex.Message);
 			}
@@ -776,7 +776,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
                     }
                     catch (Exception ex)
                     {
-                        mLoggingService.GuardarLogError(ex, $"error en la ontología {ontologiaPrimaria.OntologyName}", mlogger);
+                        mLoggingService.GuardarLogError(ex, $"error en la ontología {ontologiaPrimaria.OntologyName}", mLogger);
                         throw new Exception(ex.Message);
                     }
                 }
@@ -826,7 +826,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
             }
             catch (Exception ex)
             {
-                mLoggingService.GuardarLogError(ex, mlogger);
+                mLoggingService.GuardarLogError(ex, mLogger);
                 return GnossResultERROR("Error al generar las clases");
             }
         }
@@ -2714,8 +2714,8 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
             }
             catch (Exception ex)
             {
-                string mensajeError = $"Error al leer el XML de la ontología con ID {pOntologiaID}:{Environment.NewLine}{ex}";
-                GuardarLogErrorAJAX(mensajeError);
+                string mensajeError = $"Error al leer el XML de la ontología con ID {pOntologiaID}";
+                mLoggingService.GuardarLogError(ex, mensajeError, mLogger);
                 throw new ExcepcionWeb(mensajeError);
             }
 
@@ -2735,8 +2735,8 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
             }
             catch (Exception ex)
             {
-                string mensajeError = $"La ontología con ID {pOntologiaID} no es correcta:{Environment.NewLine}{ex}";
-                GuardarLogErrorAJAX(mensajeError);
+                string mensajeError = $"La ontología con ID {pOntologiaID} no es correcta";
+                mLoggingService.GuardarLogError(ex,mensajeError, mLogger);
                 throw new ExcepcionWeb(mensajeError);
             }
 

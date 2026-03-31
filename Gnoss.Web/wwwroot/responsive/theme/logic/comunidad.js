@@ -1,4 +1,4 @@
-/**
+﻿/**
  ***************************************************************************************
  * Logica / Operativas de comportamiento JS para la sección de Comunidad del DevTools
  * *************************************************************************************
@@ -4971,6 +4971,10 @@ const operativaGestionDeRoles = {
         this.modalBodyEditar.ready(function () {
             that.selectAllRoles("modal-body-editar-rol");
             that.selectRol("modal-body-editar-rol");
+        });
+
+        $("#modal-container").on('hidden.bs.modal', (e) => {
+            resetearModalContainer();
         });
     },
     triggerEvents: function () {

@@ -38,7 +38,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Filters
         protected RedisCacheWrapper mRedisCacheWrapper;
         protected VirtuosoAD mVirtuosoAD;
         protected IHttpContextAccessor mHttpContextAccessor;
-        protected ILogger mlogger;
+        protected ILogger mLogger;
         protected ILoggerFactory mLoggerFactory;
         public PermisosPaginasUsuariosAttribute(LoggingService loggingService, ConfigService configService, EntityContext entityContext, RedisCacheWrapper redisCacheWrapper, GnossCache gnossCache, VirtuosoAD virtuosoAD, IHttpContextAccessor httpContextAccessor, ILogger<PermisosPaginasUsuariosAttribute> logger, ILoggerFactory loggerFactory, bool pComprobarPermisoUsuarioNoAdministrador = false)
         {
@@ -48,7 +48,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Filters
             mEntityContext = entityContext;
             mRedisCacheWrapper = redisCacheWrapper;
             mVirtuosoAD = virtuosoAD;
-            mlogger = logger;
+            mLogger = logger;
             mLoggerFactory = loggerFactory;
             mControladorBase = new ControladorBase(loggingService, configService, entityContext, redisCacheWrapper, gnossCache, virtuosoAD, httpContextAccessor, null, mLoggerFactory.CreateLogger<ControladorBase>(), mLoggerFactory);
         }
@@ -127,7 +127,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Filters
 			}
 			catch (Exception ex)
 			{
-				mLoggingService.GuardarLogError(ex.Message);
+				mLoggingService.GuardarLogError(ex.Message, mLogger);
                 return false;
 			}
 		}

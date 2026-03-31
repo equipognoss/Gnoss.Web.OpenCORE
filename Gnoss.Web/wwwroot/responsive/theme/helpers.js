@@ -2870,8 +2870,8 @@ const operativaMultiIdioma = {
 		 const ultimoArroba = pTexto.trim().lastIndexOf('@');
 
 		 if (ultimoArroba !== -1) {
-			 idioma = pTexto.trim().slice(ultimoArroba + 1) || idioma;
-			 const valor = pTexto.trim().slice(0, ultimoArroba);
+			 idioma = pTexto.trim().slice(ultimoArroba + 1).trim() || idioma;
+			 const valor = pTexto.trim().slice(0, ultimoArroba).trim();
 			 return { "key": idioma, "value": valor };
 		 }
 

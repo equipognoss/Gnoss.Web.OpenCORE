@@ -20,12 +20,12 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
 {
     public class ControllerAdministrationWeb : ControllerBaseWeb
     {
-        protected ILogger mlogger;
+        protected ILogger mLogger;
         protected ILoggerFactory mLoggerFactory;
         public ControllerAdministrationWeb(LoggingService loggingService, ConfigService configService, EntityContext entityContext, RedisCacheWrapper redisCacheWrapper, GnossCache gnossCache, VirtuosoAD virtuosoAD, IHttpContextAccessor httpContextAccessor, ICompositeViewEngine viewEngine, EntityContextBASE entityContextBASE, Microsoft.AspNetCore.Hosting.IHostingEnvironment env, IActionContextAccessor actionContextAccessor, IUtilServicioIntegracionContinua utilServicioIntegracionContinua, IServicesUtilVirtuosoAndReplication servicesUtilVirtuosoAndReplication, IOAuth oAuth, IHostApplicationLifetime appLifetime, IAvailableServices availableServices, ILogger<ControllerAdministrationWeb> logger, ILoggerFactory loggerFactory)
             : base(loggingService, configService, entityContext, redisCacheWrapper, gnossCache, virtuosoAD, httpContextAccessor, viewEngine, entityContextBASE, env, actionContextAccessor, utilServicioIntegracionContinua, servicesUtilVirtuosoAndReplication, oAuth, appLifetime, availableServices,logger,loggerFactory)
         {
-            mlogger = logger;
+            mLogger = logger;
             mLoggerFactory = loggerFactory;
         }
 

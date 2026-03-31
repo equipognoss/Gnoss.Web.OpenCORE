@@ -1,4 +1,4 @@
-
+﻿
 
 //TFG LAYO
 /**
@@ -2381,6 +2381,148 @@ const operativaGestionTraducciones = {
                 // Ocultar el loading
                 loadingOcultar();
             });
+        }
+    }
+}
+
+const operativaGestionTraductor = {
+
+    init: function () {
+        this.config();
+        this.configEvents();
+        this.configRutas(); 
+    },
+
+    config: function () {
+        this.btnGuardar = $("#btnGuardar");
+        this.btnEliminar = $("#btnEliminar");
+        this.btnTest = $("#btnTest");
+        this.inptResultadoTest = $("#textoTraducido");
+        this.resultadoTraduccion = $("#resultadoTraduccion");
+        this.selectNivel = $("#nivel");
+    },
+
+    configRutas: function () {
+        this.urlBase = refineURL();
+        this.urlGuardar = `${this.urlBase}/save`;
+        this.urlEliminar = `${this.urlBase}/delete`;
+        this.urlTest = `${this.urlBase}/test`;
+    },
+
+    configEvents: function () {
+        const that = this;
+
+        this.btnGuardar.on("click", function () {
+            that.handleSaveTranslator();
+        });
+
+        this.btnEliminar.on("click", function () {
+            that.handleDeleteTranslator();
+        });
+
+        this.btnTest.on("click", function () {
+            that.handleTestTranslator();
+        });
+
+        this.selectNivel.on("change", function () {
+            that.handleTogglePrompt();
+        });   
+    },
+
+    handleSaveTranslator: function () {
+        const that = this;
+        
+        loadingMostrar();
+
+        const dataPost = {
+            Token: $('#token').val(),
+            Endpoint: $('#endpoint').val(),
+            Nivel: $('#nivel').find(":selected").val(),
+            Prompt: $('#prompt').val(),
+            Activo: $('#activo').prop('checked')
+        };
+
+        GnossPeticionAjax(
+            that.urlGuardar,
+            dataPost,
+            false
+        ).done(function (data) {
+            mostrarNotificacion("success", data);
+            that.btnEliminar.removeClass('d-none');
+        }).fail(function () {
+            mostrarNotificacion("error", "Error al guardar los cambios");
+        }).always(function () {
+            loadingOcultar();
+        });
+    },
+
+    handleDeleteTranslator: function () {
+        const that = this;
+
+        loadingMostrar();
+
+        GnossPeticionAjax(
+            that.urlEliminar,
+            "",
+            false
+        ).done(function (data) {
+            mostrarNotificacion("success", data);
+            that.btnEliminar.addClass('d-none');
+            that.limpiarFormulario();
+        }).fail(function () {
+            mostrarNotificacion("error", "Error al intentar eliminar el traductor.");
+        }).always(function () {
+            loadingOcultar();
+        });
+    },
+
+    handleTestTranslator: function () {
+        const that = this;
+
+        loadingMostrar();        
+
+        const dataPost = {
+            Token: $('#token').val(),
+            Endpoint: $('#endpoint').val(),
+            Nivel: $('#nivel').find(":selected").val(),
+            Prompt: $('#prompt').val(),
+            TextoTraducir: $('#textoTraducir').val(),
+            IdiomaOrigen: $('#idiomaOrigen').find(":selected").val(),
+            IdiomaTraducir: $('#idiomaTraducir').find(":selected").val(),
+        };
+
+        GnossPeticionAjax(
+            that.urlTest,
+            dataPost,
+            false
+        ).done(function (data) {
+            mostrarNotificacion("success", "OK");
+            that.resultadoTraduccion.removeClass("d-none");
+            that.inptResultadoTest.val(data);
+        }).fail(function () {
+            mostrarNotificacion("error", "ERROR: Compruebe que todos los datos del formulario sean correctos.");
+        }).always(function () {
+            loadingOcultar();
+        });
+    },
+
+    limpiarFormulario: function () {
+        $('#token').val("");
+        $('#endpoint').val("");            
+        $('#prompt').val("");
+        $('#activo').prop('checked', false);
+        $('#textoTraducir').val("");
+        $('#textoTraducido').val("");
+    },
+
+    handleTogglePrompt: function () {
+        const that = this;
+
+        const nivel = that.selectNivel.find(":selected").val();
+        const mostrar = nivel === "premium" || nivel === "high";
+        $('#seccionPrompt').toggleClass("d-none", !mostrar);     
+        if (!mostrar) {
+            $('#prompt').val('');
         }
     }
 }
@@ -7137,6 +7279,7 @@ operativaGestionConfiguracionPlataforma = {
         });
         // Elimina el idioma personalizado de la vista
         customLanguageRowEdited.remove();
+        that.checkBoxIdiomas = $(".languageOption");
     },
 
     /**
@@ -8110,4 +8253,590 @@ const operativaEventosExternos = {
             location.reload();
         })
     }
+}
+
+/**
+ * Operativa para la administracion de asistentes
+ */
+const operativaGestionAsistentes = {
+
+    init: function (pParams) {
+        this.config(pParams);
+        this.configRutas(pParams);
+        this.configEvents();
+        this.triggerEvents();
+    },
+
+    config: function (pParams) {
+        this.pParams = pParams;
+        this.newModalAssistant = $("#modal-nuevo-asistente");
+        this.editModalAssistant = $("#modal-editar-asistente");
+        this.editModalAssistantContent = $("#modal-editar-asistente .modal-content");
+        this.btnAddAssistant = $(".btnAddAssistant");
+        this.btnDeleteAssistant = $(".btnDeleteAssistant");
+        this.btnConfirmDeleteAssistantClassName = 'btnConfirmDeleteAssistant';
+        this.btnEditAssistant = $(".btnEditAssistant");
+        this.btnSaveAssistantClassName = "btnSaveAssistant";
+        this.btnTestAssistantClassName = "btnTestAssistant";
+        this.btnAddIconAssistantClassName = 'iconAssistantInput';
+        this.iconDropAreaClassName = 'iconDropZone';
+        this.assistantModalClass = "modal-asistente"
+        this.currentAssistantId;
+        this.currentModal;
+        this.cmbAssistantRoleClassName = "cmbRoles";
+        this.deleteRoleTagClassName = 'tag-remove';
+        this.tabIdiomaItem = $(".tabIdiomaItem");
+        this.labelLanguageComponent = $(".language-component");
+        this.inputTxtBuscador = $("#txtBuscarAsistente");
+    },
+
+    configRutas: function (pParams) {
+        this.urlCreateAssistant = pParams.urlCreateAssistant;
+        this.urlSaveAssistant = pParams.urlSaveAssistant;
+        this.urlTestAssistant = pParams.urlTestAssistant;
+        this.urlDeleteAssistant = pParams.urlDeleteAssistant;
+        this.urlEditAssistant = pParams.urlEditAssistant;
+        this.urlSaveIcon = pParams.urlSaveIcon;
+    },
+
+    configEvents: function () {
+        const that = this;
+
+        this.btnAddAssistant.off("click").on("click", function (event) {
+            that.currentModal = that.newModalAssistant;
+            that.newModalAssistant.modal("show");
+        });
+
+        configEventByClassName(that.btnAddIconAssistantClassName, function (element) {
+            const $jqueyryElement = $(element);
+            $jqueyryElement.on("change", (e) => {
+                that.handleSaveIconAssistant(e.target);
+            });
+        });
+
+        configEventByClassName(that.iconDropAreaClassName, function (element) {
+            const $jqueyryElement = $(element);
+            $jqueyryElement.off("dragenter dragover").on("dragenter dragover", (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+            });
+            $jqueyryElement.off("click").on("click", (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                that.currentModal.find("." + that.btnAddIconAssistantClassName).trigger("click");
+            });
+            $jqueyryElement.off("dragleave").on("dragleave", (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+            });
+            $jqueyryElement.off("drop").on("drop", (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                let dt = e.originalEvent.dataTransfer;
+                let files = dt.files;
+                let currentInput = that.currentModal.find("." + that.btnAddIconAssistantClassName);
+                currentInput.get(0).files = files;
+                currentInput.trigger("change");
+            });
+        });
+
+        this.btnEditAssistant.off("click").on("click", function () {
+            that.currentModal = that.editModalAssistant;
+            that.currentAssistantId = $(this).parents("tr").attr("id");
+            that.handleEditAssitant();
+        });
+
+        configEventByClassName(that.cmbAssistantRoleClassName, function (element) {
+            const $jqueyryElement = $(element);
+            $jqueyryElement.on("change", (e) => {
+                that.handleAddRole(e.target);
+            });
+        });
+
+        configEventByClassName(that.deleteRoleTagClassName, function (element) {
+            const $jqueyryElement = $(element);
+            $jqueyryElement.on("click", (e) => {
+                that.handleDeleteRole(e.target);
+            });
+        });
+
+        configEventByClassName(that.btnSaveAssistantClassName, function (element) {
+            const $jqueyryElement = $(element);
+            $jqueyryElement.on("click", (e) => {
+                that.handleSaveAssistant();
+            });
+        });
+
+        configEventByClassName(that.btnTestAssistantClassName, function (element) {
+            const $jqueyryElement = $(element);
+            $jqueyryElement.on("click", (e) => {
+                that.handleTestAssistant();
+            });
+        });
+
+        configEventByClassName(`${that.assistantModalClass}`, function (element) {
+            const $jqueyryElement = $(element);
+            $jqueyryElement.off("hide.bs.modal").on("hide.bs.modal", (e) => {
+                that.currentModal = $(e.currentTarget);
+                that.handleCloseAssistantModal();
+            });
+        });
+
+        configEventByClassName(that.btnConfirmDeleteAssistantClassName, function (element) {
+            const $jqueyryElement = $(element);
+            $jqueyryElement.on("click", function () {
+                that.handleDeleteAssistant();
+            });
+        });
+
+        this.btnDeleteAssistant.off().on("click", function () {
+            that.currentRow = $(this).parents('tr');
+            that.assistantID = that.currentRow.attr("id");
+            $("#modal-delete-assistant").modal("show");
+        });
+
+        this.tabIdiomaItem.off().on("click", function () {
+            that.handleViewAssistantLanguageInfo();
+        });
+
+        this.inputTxtBuscador.off().on("keyup", function (event) {
+            clearTimeout(that.timer);
+            that.timer = setTimeout(function () {
+                that.handleSearchAssistantByName();
+            }, 500);
+        });
+    },
+
+    triggerEvents: function () {
+        const that = this;
+        // Operativa multiIdiomas
+        // Parámetros para la operativa multiIdioma (helpers.js)
+        this.operativaMultiIdiomaParams = {
+            // Nº máximo de pestañas con idiomas a mostrar. Los demás quedarán ocultos
+            numIdiomasVisibles: 3,
+            // Establecer 1 tab por cada input (true, false) - False es la forma vieja
+            useOnlyOneTab: true,
+            panContenidoMultiIdiomaClassName: "panContenidoMultiIdioma",
+            // No permitir padding bottom y si padding top
+            allowPaddingBottom: false,
+        };
+
+        // Inicializar operativa multiIdioma
+        operativaMultiIdioma.init(this.operativaMultiIdiomaParams);
+
+        // Tabs de idioma de los modales de nuevo y edicion
+        $('#modal-editar-asistente .nav-link, #modal-nuevo-asistente .nav-link').off("click").on("click", function () {
+            let lang = $(this).attr('id').split("_")[1];
+
+            that.currentModal.find(".cmbRoles option").each(function () {
+                let option = $(this);
+                let languageValues = option.attr("data-languagevalues");
+                if (!languageValues) return
+
+                var partes = languageValues.split("|||");
+                var textoIdioma = partes.find(v => v.endsWith("@" + lang)) || partes[0];
+                var texto = textoIdioma.split("@")[0];
+                option.text(texto);
+            });
+
+            that.currentModal.find(".tag-list .tag").each(function () {
+                let languageValues = $(this).attr("data-languagevalues");
+                if (!languageValues) return
+
+                var partes = languageValues.split("|||");
+                var textoIdioma = partes.find(v => v.endsWith("@" + lang)) || partes[0];
+                var texto = textoIdioma.split("@")[0];
+
+                $(this).find(".tag-label").text(texto);
+                $(this).attr("title", texto);
+            });
+        });
+    },
+
+    handleSaveIconAssistant: function (inputFile) {
+        const that = this;
+
+        if (!inputFile.files || inputFile.files.length === 0) {
+            return;
+        }
+
+        loadingMostrar();
+
+        let formData = new FormData();
+        let fileName = inputFile.files[0].name
+        formData.append("pIcono", inputFile.files[0]);
+
+        GnossPeticionAjax(
+            that.urlSaveIcon,
+            formData,
+            true
+        ).done(function (data) {
+            $(inputFile).next('.custom-file-label').text(fileName);
+            $("#hiddenRutaIcono").val(data);
+            let urlIcon = `${$("#inpt_baseURLContent").val()}/imagenes/${data}`;
+            that.currentModal.find(".previewIcono").attr("src", urlIcon);
+            that.currentModal.find(".previewContainer").hasClass("d-none") && that.currentModal.find(".previewContainer").removeClass("d-none");
+            loadingOcultar();
+        }).fail(function (data) {
+            loadingOcultar();
+            mostrarNotificacion("error", data)
+        });
+    },
+
+    handleEditAssitant: function () {
+        const that = this;
+
+        loadingMostrar();
+
+        let dataPost = {
+            pAsistenteId: that.currentAssistantId
+        }
+
+        GnossPeticionAjax(
+            that.urlEditAssistant,
+            dataPost,
+            true
+        ).done(function (data) {
+            loadingOcultar();
+            that.editModalAssistantContent.append(data);
+            that.triggerEvents();
+            //that.editModalAssistant.modal("show");
+            loadingOcultar();
+        }).fail(function (data) {
+            loadingOcultar();
+            mostrarNotificacion("error", data)
+        });
+    },
+
+    handleSaveAssistant: function () {
+        const that = this;
+
+        if (that.checkErrorForm()) {
+            return;
+        }
+        loadingMostrar();
+        let asistente = {
+            Nombre: that.currentModal.find('input[name="assistantName"]').val(),
+            Descripcion: that.currentModal.find('textarea[name="assistantDescription"]').val(),
+            AsistenteId: that.currentModal.find("#idAsistente").val(),
+            Token: that.currentModal.find("#tokenAsistente").val(),
+            HostAsistente: that.currentModal.find("#hostAsistente").val(),
+            Icono: that.currentModal.find("#hiddenRutaIcono").val(),
+            Activo: that.currentModal.find('input[name="asistenteActivo"]:checked').data('value') === 'si',
+            Nuevo: that.currentModal.find(".btnSaveAssistant").parent().hasClass("nuevo"),
+            RoleIds: that.getSelectedRoles()
+        }
+
+        let dataPost = {
+            pModelo: asistente
+        }
+
+        let url = that.currentModal.attr("id") == "modal-nuevo-asistente" ? that.urlCreateAssistant : that.urlSaveAssistant;
+
+        GnossPeticionAjax(
+            url,
+            dataPost,
+            true
+        ).done(function (data) {
+            that.currentModal.modal("hide");
+            loadingOcultar();
+            location.reload();
+        }).fail(function (data) {
+            loadingOcultar();
+            mostrarNotificacion("error", data)
+        });
+    },
+
+    handleTestAssistant: function () {
+        const that = this;
+
+        if (that.checkErrorForm()) {
+            return;
+        }
+        loadingMostrar();
+        let asistente = {
+            Nombre: that.currentModal.find('input[name="assistantName"]').val(),
+            Descripcion: that.currentModal.find('textarea[name="assistantDescription"]').val(),
+            AsistenteId: that.currentModal.find("#idAsistente").val(),
+            Token: that.currentModal.find("#tokenAsistente").val(),
+            HostAsistente: that.currentModal.find("#hostAsistente").val(),
+            Icono: that.currentModal.find("#hiddenRutaIcono").val(),
+            Activo: that.currentModal.find('input[name="asistenteActivo"]:checked').data('value') === 'si',
+            Nuevo: that.currentModal.find(".btnSaveAssistant").parent().hasClass("nuevo"),
+            RoleIds: that.getSelectedRoles()
+        }
+
+        let dataPost = {
+            pModelo: asistente
+        }
+
+        GnossPeticionAjax(
+            that.urlTestAssistant,
+            dataPost,
+            true
+        ).done(function (data) {
+            loadingOcultar();
+            mostrarNotificacion("success", "OK")
+        }).fail(function (data) {
+            loadingOcultar();
+            mostrarNotificacion("error", data)
+        });
+    },
+
+    handleDeleteAssistant: function () {
+        const that = this;
+
+        let dataPost = {
+            pAsistenteId: that.assistantID
+        }
+        loadingMostrar();
+        GnossPeticionAjax(
+            that.urlDeleteAssistant,
+            dataPost,
+            true
+        ).done(function () {
+            loadingOcultar();
+            mostrarNotificacion("success", "Asistente eliminado correctamete");
+            that.currentRow.remove();
+            let oldValue = parseInt($("#numAsistentes").text());
+            $("#numAsistentes").text(oldValue - 1);
+            $("#modal-delete-assistant").modal("hide");
+        }).fail(function (error) {
+            loadingOcultar();
+            mostrarNotificacion("error", error);
+            $("#modal-delete-assistant").modal("hide");
+        });
+    },
+
+    checkErrorForm: function () {
+        const that = this;
+
+        if (that.checkAssistantFields()) {
+            return true;
+        }
+    },
+
+    checkAssistantFields: function () {
+        const that = this
+
+        let inputName = that.currentModal.find('input[name="assistantName"]');
+        if (that.checkEmptyMultiLangField(inputName)) {
+            return true;
+        }
+
+        let inputDescription = that.currentModal.find('textarea[name="assistantDescription"]');
+        if (that.checkEmptyMultiLangField(inputDescription, false)) {
+            return true;
+        }
+
+        let inputAsistantId = that.currentModal.find('#idAsistente');
+        if (that.mostrarErrorCampoVacio(inputAsistantId)) {
+            return true;
+        }
+
+        let inputToken = that.currentModal.find('#tokenAsistente');
+        if (that.mostrarErrorCampoVacio(inputToken)) {
+            return true;
+        }
+
+        let inputAssistantHost = that.currentModal.find('#hostAsistente');
+        if (that.mostrarErrorCampoVacio(inputAssistantHost)) {
+            return true;
+        }
+    },
+
+    checkEmptyMultiLangField: function (input, required = true) {
+        const that = this;
+        // Contenedor donde se encuentran datos básicos de la página (Nombre, Url/Ruta, MetaDescripción )
+        const panMultiIdioma = that.currentModal.find(".panContenidoMultiIdioma.basicInfo");
+        const inputId = input.attr("id");
+        const listaTextos = [];
+
+        if (operativaMultiIdioma.listaIdiomas.length > 1 && panMultiIdioma.length > 0) {
+            let textoMultiIdioma = "";
+            // Comprobar que hay al menos un texto por defecto para el nombre
+            let textoIdiomaDefecto = panMultiIdioma.find(`#input_${inputId}_${operativaMultiIdioma.idiomaPorDefecto}`).val();
+
+            if ((textoIdiomaDefecto == null || textoIdiomaDefecto == "") && required) {
+                that.mostrarErrorCampoVacio(panMultiIdioma.find(`#input_${inputId}_${operativaMultiIdioma.idiomaPorDefecto}`));
+                that.emptyNameError = true;
+                return true;
+            }
+            // Recorrer todos los idiomas para detectar posibles problemas con el nombre                
+            $.each(operativaMultiIdioma.listaIdiomas, function () {
+                // Obtención del Key del idioma
+                const idioma = this.key;
+                // Asignar el valor por defecto de la ruta al idioma si este no dispone de valor para Nombre
+                let textoIdioma = $(`#input_${inputId}_${idioma}`).val();
+                if (textoIdioma == null || textoIdioma == "") {
+                    textoIdioma = textoIdiomaDefecto;
+                    $(`#input_${inputId}_${idioma}`).val(textoIdioma);
+                }
+                // Escribir el nombre del multiIdioma en el campo Hidden
+                textoMultiIdioma += textoIdioma + "@" + idioma + "|||";
+
+                listaTextos.push({ "key": idioma, "value": textoIdioma });
+            });
+            input.val(textoMultiIdioma);
+        } else {
+            // Sin multiIdioma.
+            let textoIdiomaDefecto = panMultiIdioma.find(`#input_${inputId}_${operativaMultiIdioma.idiomaPorDefecto}`).val();
+            // Establecer el nombre en el input correspondiente
+            input.val(textoIdiomaDefecto);
+        }
+        return false;
+    },
+
+    mostrarErrorCampoVacio: function (input) {
+        let isEmpty = comprobarInputNoVacio(input, true, false, "El campo no puede estar vacio", 0);
+        if (isEmpty) {
+            setTimeout(function () {
+                mostrarNotificacion("error", "El campo no puede estar vacío.");
+            }, 1000);
+            return true;
+        }
+        return false;
+    },
+
+    handleOnInputNameChanged: function (event, className) {
+        const that = this;
+        // Input que ha sido actualizado
+        const input = $(event.currentTarget);
+        // Idioma del input que ha sido actualizado
+        const language = input.data("language");
+        // Valor actual del input
+        const value = input.val().trim();
+
+        // Flujo a actualizar
+        let id = input.parents('div.modal-asistente').find("#idAsistente").val();
+        if (id.length == 0) return;
+        const assistantRow = $(`tr#${id}`);
+        // Nombre a actualizar en el listado de páginas
+        let componentPageName = undefined;
+
+        if (language != undefined) {
+            componentPageName = assistantRow.find(`.${className}`).filter(`[data-languageitem='${language}']`);
+        } else {
+            componentPageName = assistantRow.find(`.${className}`);
+        }
+
+        // Actualizar el contenido
+        componentPageName.html(value);
+    },
+
+    handleCloseAssistantModal: function () {
+        const that = this;
+        if (that.currentModal.attr("id") !== "modal-nuevo-asistente") {
+            that.currentModal.find('.modal-content').html('');
+        } else {
+            that.currentModal.find(".tab-content").first().find(".tab-pane input, textarea").each(function () {
+                $(this).val("")
+            });
+            that.currentModal.find("#idAsistente").val("");
+            that.currentModal.find("#tokenAsistente").val("");
+            that.currentModal.find("#hostAsistente").val("");
+            that.currentModal.find("#iconAssistant").val("");
+            that.currentModal.find("#asistente-activo-si").click();
+        } 
+    },
+
+    handleAddRole: function (select) {
+        const $select = $(select);
+        const selectedOption = $select.find("option:selected");
+
+        const id = selectedOption.val();
+        const text = selectedOption.text();
+        const languageValues = selectedOption.data("languagevalues");
+
+        if (!id) return;
+
+        // Crear tag
+        const tagHtml = `
+        <div class="tag" data-id="${id}" data-languagevalues='${languageValues}' title="${text}">
+            <div class="tag-wrap">
+                <span class="tag-text">
+                    <span class="tag-label">${text}</span>
+                </span>
+                <span class="tag-remove custom material-icons">delete</span>
+            </div>
+        </div>
+    `;
+
+        $(".tag-list").append(tagHtml);
+
+        // Eliminar opción del select
+        selectedOption.remove();
+
+        // Resetear select
+        $select.val("");
+    },
+
+    handleDeleteRole: function (tag) {
+        const that = this;
+        const $tag = $(tag).closest(".tag");
+
+        const id = $tag.data("id");
+        const text = $tag.find(".tag-label").text();
+        const languageValues = $tag.data("languagevalues");
+
+        // Volver a añadir al select
+        const optionHtml = `<option value="${id}" data-languagevalues='${languageValues}'>${text}</option>`;
+        $("select[name='cmbRoles']").append(optionHtml);
+
+        // Eliminar tag
+        $tag.remove();
+    },
+
+    getSelectedRoles: function () {
+        const that = this;
+        const roles = [];
+
+        that.currentModal.find('.tag-list .tag').each(function () {
+            roles.push($(this).data('id'));
+        })
+
+        return roles;
+    },
+
+    handleViewAssistantLanguageInfo: function () {
+        const that = this;
+        setTimeout(function () {
+            // Detectar el tab item activo para conocer el idioma en el que se desean mostrar las páginas
+            const tabLanguageActive = that.tabIdiomaItem.filter(".active");
+            // Obtener el idioma del tabLanguageActivo
+            const languageActive = tabLanguageActive.data("language");
+            // Ocultar todas las labels y mostrar únicamente las del idioma seleccionado
+            that.labelLanguageComponent.addClass("d-none");
+            // Mostrar sólo las labelsLanguageComponent del idioma seleccionado
+            that.labelLanguageComponent.filter(function () {
+                return $(this).data("languageitem") == languageActive;
+            }).removeClass("d-none");
+        }, 250);
+    },
+
+    handleSearchAssistantByName: function () {
+        const that = this;
+        let cadena = that.inputTxtBuscador.val();
+        // Eliminamos posibles tildes para búsqueda ampliada
+        cadena = cadena.normalize('NFD').replace(/[\u0300-\u036f]/g, "").toLowerCase();
+
+        // Cada una de las filas que muestran la página
+        const rowsAssistant = $("tbody").find("tr");
+
+        // Buscar dentro de cada fila       
+        $.each(rowsAssistant, function (index) {
+            const rowAssistant = $(this);
+            // Seleccionamos el nombre de la página y quitamos caracteres extraños, tiles para poder hacer bien la búsqueda
+            const assistantName = rowAssistant.find(".component-name").not('.d-none').html().trim().normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
+            //const urlPage = $(this).find(".component-url").not('.d-none').html().trim().normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
+            if (assistantName.includes(cadena)) {
+                // Mostrar fila resultado y sus respectivos padres
+                rowAssistant.removeClass("d-none");
+                rowAssistant.parents("li.component-wrap").removeClass("d-none");
+            } else {
+                // Ocultar fila resultado
+                rowAssistant.addClass("d-none");
+            }
+        });
+    },
 }

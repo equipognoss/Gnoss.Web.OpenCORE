@@ -1,4 +1,3 @@
-using System;
 using Es.Riam.AbstractsOpen;
 using Es.Riam.Gnoss.AD.EntityModel;
 using Es.Riam.Gnoss.AD.ServiciosGenerales;
@@ -8,9 +7,11 @@ using Es.Riam.Gnoss.CL.ServiciosGenerales;
 using Es.Riam.Gnoss.Util.Configuracion;
 using Es.Riam.Gnoss.Util.General;
 using Microsoft.AspNetCore.Hosting;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
+using System;
 
 namespace Gnoss.Web
 {
@@ -27,6 +28,11 @@ namespace Gnoss.Web
 
         public static IHostBuilder CreateHostBuilder(string[] args) =>
             Host.CreateDefaultBuilder(args)
+                .ConfigureAppConfiguration((hostContext, config) =>
+                {
+                    config.AddJsonFile("appsettings.json", optional: false, reloadOnChange: true);
+                    config.AddJsonFile($"appsettings.{hostContext.HostingEnvironment.EnvironmentName}.json", optional: true, reloadOnChange: true);
+                })
                 .ConfigureWebHostDefaults(webBuilder =>
                 {
                     webBuilder.UseStartup<Startup>();

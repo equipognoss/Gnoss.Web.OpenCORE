@@ -719,18 +719,22 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
 
         private void EliminarRedSocial(string nombreRedSocial)
         {
+            IdentidadCN identidadCN = new IdentidadCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<IdentidadCN>(), mLoggerFactory);
             Identidad IdentidadUsuario = IdentidadActual;
+            AD.EntityModel.Models.IdentidadDS.PerfilRedesSociales perfilRedSocial = null;
             if (RequestParams("organizacion") != null && RequestParams("organizacion") == "true")
             {
                 IdentidadUsuario = IdentidadActual.IdentidadOrganizacion;
+                perfilRedSocial = identidadCN.ObtenerRedesSocialesPorNombreYPerfil(IdentidadActual.IdentidadOrganizacion.PerfilID, nombreRedSocial);
             }
+            else
+            {
+                perfilRedSocial = IdentidadUsuario.GestorIdentidades.DataWrapperIdentidad.ListaPerfilRedesSociales.Find(item => item.PerfilID.Equals(IdentidadUsuario.FilaIdentidad.PerfilID) && item.NombreRedSocial.Equals(nombreRedSocial));
+                IdentidadUsuario.GestorIdentidades.DataWrapperIdentidad.ListaPerfilRedesSociales.Remove(perfilRedSocial);
+            }
+            
+            mEntityContext.EliminarElemento(perfilRedSocial);
 
-            AD.EntityModel.Models.IdentidadDS.PerfilRedesSociales perfil = IdentidadUsuario.GestorIdentidades.DataWrapperIdentidad.ListaPerfilRedesSociales.Find(item => item.PerfilID.Equals(IdentidadUsuario.FilaIdentidad.PerfilID) && item.NombreRedSocial.Equals(nombreRedSocial));
-
-            IdentidadUsuario.GestorIdentidades.DataWrapperIdentidad.ListaPerfilRedesSociales.Remove(perfil);
-            mEntityContext.EliminarElemento(perfil);
-
-            IdentidadCN identidadCN = new IdentidadCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<IdentidadCN>(), mLoggerFactory);
             identidadCN.ActualizaIdentidades();
             identidadCN.Dispose();
 
@@ -879,10 +883,17 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
             {
                 filaPerfilRedesSoc.NombreRedSocial = nombreRedSocial;
             }
-            if (!mEntityContext.PerfilRedesSociales.Any(redes => redes.PerfilID.Equals(filaPerfilRedesSoc.PerfilID) && redes.NombreRedSocial.Equals(nombreRedSocial)))
+
+            AD.EntityModel.Models.IdentidadDS.PerfilRedesSociales perfilRedSocialActivo = mEntityContext.PerfilRedesSociales.FirstOrDefault(redes => redes.PerfilID.Equals(filaPerfilRedesSoc.PerfilID) && redes.NombreRedSocial.Equals(nombreRedSocial));
+            if (perfilRedSocialActivo == null)
             {
                 IdentidadUsuario.GestorIdentidades.DataWrapperIdentidad.ListaPerfilRedesSociales.Add(filaPerfilRedesSoc);
                 mEntityContext.PerfilRedesSociales.Add(filaPerfilRedesSoc);
+            }
+            else
+            {
+                perfilRedSocialActivo.urlUsuario = filaPerfilRedesSoc.urlUsuario;
+                perfilRedSocialActivo.Usuario = filaPerfilRedesSoc.Usuario;
             }
 
             IdentidadCN identidadCN = new IdentidadCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<IdentidadCN>(), mLoggerFactory);
@@ -2713,6 +2724,11 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
             if (RequestParams("organizacion") != null && RequestParams("organizacion") == "true")
             {
                 ListaRedesSociales = IdentidadActual.IdentidadOrganizacion.ListaRedesSocialesOrganizacion;
+                if (ListaRedesSociales != null && !ListaRedesSociales.Any())
+                {
+                    using IdentidadCN identidadCN = new IdentidadCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<IdentidadCN>(), mLoggerFactory);
+                    ListaRedesSociales = identidadCN.ObtenerRedesSocialesPerfil(IdentidadActual.IdentidadOrganizacion.PerfilID);
+                }
             }
 
             foreach (AD.EntityModel.Models.IdentidadDS.PerfilRedesSociales filaPerfilRedesSoc in ListaRedesSociales.Values)

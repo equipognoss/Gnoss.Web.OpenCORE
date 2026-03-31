@@ -141,7 +141,7 @@ namespace Gnoss.Web.Open.Controllers.Administracion
 			}
 			catch (Exception ex)
 			{
-				mLoggingService.GuardarLogError(ex, mlogger);
+				mLoggingService.GuardarLogError(ex, mLogger);
 			}
 
 			return rolesAsignados;
@@ -227,7 +227,7 @@ namespace Gnoss.Web.Open.Controllers.Administracion
 					}
 					catch (Exception ex)
 					{
-						mLoggingService.GuardarLogError(ex, mlogger);
+						mLoggingService.GuardarLogError(ex, mLogger);
 					}					
 				}
 

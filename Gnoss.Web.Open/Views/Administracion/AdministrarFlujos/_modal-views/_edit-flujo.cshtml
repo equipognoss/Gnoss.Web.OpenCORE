@@ -319,7 +319,7 @@
                                 @foreach (Guid clave in Model.OntologiasProyecto.Keys)
                                 {
                                     string nombreOntologia = Html.ObtenerTextoDeIdioma(Model.OntologiasProyecto[clave]);
-                                    if (Model.OntologiasProyectoNombre.Contains(nombreOntologia))
+                                    if (Model.OntologiasFlujoNombre.Contains(nombreOntologia))
                                     {
                                         <div class="tag" data-id="@clave" data-onto-name="@Model.OntologiasProyecto[clave]" title="@nombreOntologia">
                                             <div class="tag-wrap">

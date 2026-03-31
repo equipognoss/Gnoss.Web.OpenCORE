@@ -421,6 +421,11 @@ body:not(.home) .con-panel-lateral > .wrapCol { margin-top: 20px; padding: 0 8px
 
 .modal .modal-body .formulario-edicion .panelBotonera { margin-top: 85px; }
 .modal .modal-body .formulario-edicion .panelBotonera .btn { font-size: 1rem; font-weight: 500; }
+.modal .modal-body .formulario-edicion .panelBotoneraDoble {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
 
 .modal .modal-body table .dropdown .dropdown-toggle { user-select: none; cursor: pointer; display: flex; align-items: center; justify-content: space-between; height: 45px; line-height: 38px; border: 1px solid var(--c-gris-borde); padding: 0 6px 0 6px; color: var(--c-texto-claro); text-decoration: none; font-size: 0.875rem; font-weight: 300; }
 .modal .modal-body table .dropdown .dropdown-toggle .material-icons { padding-right: 10px; }

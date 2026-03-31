@@ -201,7 +201,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
 
                             if (idRecurso.Equals(Guid.Empty))
                             {
-                                mLoggingService.GuardarLogError($"El proyecto {id} no existe.", mlogger);
+                                mLoggingService.GuardarLogError($"El proyecto {id} no existe.", mLogger);
                                 throw new ExcepcionWeb($"El proyecto {id} no existe.");
                             }
                         }
@@ -222,7 +222,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
                     catch (Exception)
                     {
                         error = errorNoExiste;
-                        mLoggingService.GuardarLogError($"{error}. ID: {id}", mlogger);
+                        mLoggingService.GuardarLogError($"{error}. ID: {id}", mLogger);
                     }
                 }
 
@@ -372,7 +372,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
             }
             catch (Exception ex)
             {
-                mLoggingService.GuardarLogError(ex, $"ERROR: ${ex.Message}\r\nStackTrace: {ex.StackTrace}", mlogger);
+                mLoggingService.GuardarLogError(ex, $"ERROR: ${ex.Message}\r\nStackTrace: {ex.StackTrace}", mLogger);
                 return GnossResultERROR(UtilIdiomas.GetText("DEVTOOLS", "ERRORELIMINARVERSIONCMS"));
             }
 
@@ -408,7 +408,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
             }
             catch(Exception ex)
             {
-                mLoggingService.GuardarLogError(ex, mlogger);
+                mLoggingService.GuardarLogError(ex, mLogger);
                 return GnossResultERROR(UtilIdiomas.GetText("FLUJOS", "HISTORIALERROR"));
             }
         }
@@ -428,7 +428,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
             }
             catch (Exception ex)
             {
-                mLoggingService.GuardarLogError(ex, mlogger);
+                mLoggingService.GuardarLogError(ex, mLogger);
                 return GnossResultERROR();
             }
 		}
@@ -479,7 +479,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
 			}
             catch (Exception ex)
             {
-                mLoggingService.GuardarLogError(ex, mlogger);
+                mLoggingService.GuardarLogError(ex, mLogger);
 				return GnossResultERROR(UtilIdiomas.GetText("FLUJOS", "TRANSICIONERROR"));
 			}
         }

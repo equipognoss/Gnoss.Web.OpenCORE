@@ -88,16 +88,16 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
         private string mUrlServicioWebDocumentacion;
 
 
-        private ILogger mlogger;
+        private ILogger mLogger;
         private ILoggerFactory mLoggerFactory;
 
         #endregion
 
         public EspacioPersonalController(LoggingService loggingService, ConfigService configService, EntityContext entityContext, RedisCacheWrapper redisCacheWrapper, GnossCache gnossCache, VirtuosoAD virtuosoAD, IHttpContextAccessor httpContextAccessor, ICompositeViewEngine viewEngine, EntityContextBASE entityContextBASE, Microsoft.AspNetCore.Hosting.IHostingEnvironment env, IActionContextAccessor actionContextAccessor, IUtilServicioIntegracionContinua utilServicioIntegracionContinua, IServicesUtilVirtuosoAndReplication servicesUtilVirtuosoAndReplication, IOAuth oAuth, IHostApplicationLifetime appLifetime, IAvailableServices availableServices, ILogger<EspacioPersonalController> logger, ILoggerFactory loggerFactory)
-            : base(loggingService, configService, entityContext, redisCacheWrapper, gnossCache, virtuosoAD, httpContextAccessor, viewEngine, entityContextBASE, env, actionContextAccessor, utilServicioIntegracionContinua, servicesUtilVirtuosoAndReplication, oAuth, appLifetime, availableServices,logger,loggerFactory)
+            : base(loggingService, configService, entityContext, redisCacheWrapper, gnossCache, virtuosoAD, httpContextAccessor, viewEngine, entityContextBASE, env, actionContextAccessor, utilServicioIntegracionContinua, servicesUtilVirtuosoAndReplication, oAuth, appLifetime, availableServices, logger, loggerFactory)
         {
 
-            mlogger = logger;
+            mLogger = logger;
             mLoggerFactory = loggerFactory;
         }
 
@@ -229,7 +229,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
             }
             catch (Exception ex)
             {
-                GuardarLogErrorAJAX(ex.Message);
+                mLoggingService.GuardarLogError(ex, mLogger);
             }
 
             return GnossResultERROR();
@@ -375,7 +375,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                     }
                     catch (Exception ex)
                     {
-                        GuardarLogErrorAJAX("Error al guardar directamente en virtuoso: " + ex.ToString());
+                        mLoggingService.GuardarLogError(ex, "Error al guardar directamente en virtuoso:", mLogger);
                     }
 
                     #endregion
@@ -387,7 +387,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
             }
             catch (Exception ex)
             {
-                GuardarLogErrorAJAX(ex.Message);
+                mLoggingService.GuardarLogError(ex, mLogger);
             }
 
             return GnossResultERROR();
@@ -577,7 +577,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                             facetadoCN = new FacetadoCN(UrlIntragnoss, mControladorBase.UsuarioActual.ProyectoID.ToString(), mEntityContext, mLoggingService, mConfigService, mVirtuosoAD, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<FacetadoCN>(), mLoggerFactory);
                             facetadoCN.BorrarRecurso(grafoBorrar, doc.VersionOriginalID);
                         }
-                        catch (Exception ex) { mLoggingService.GuardarLogError(ex, mlogger); }
+                        catch (Exception ex) { mLoggingService.GuardarLogError(ex, mLogger); }
                         finally
                         {
                             if (facetadoCN != null)
@@ -590,7 +590,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
             }
             catch (Exception ex)
             {
-                GuardarLogErrorAJAX(ex.Message);
+                mLoggingService.GuardarLogError(ex, mLogger);
             }
 
             return GnossResultERROR();

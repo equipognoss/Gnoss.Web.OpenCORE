@@ -57,6 +57,7 @@ Variables
     bool administrarEstadoSistemas = permisosAdministracion != null && permisosAdministracion.Contains(PermisoComunidad.AccederAlEstadoDeLosServicios);
     bool administrarOpcionesMetaAdmin = permisosAdministracion != null && permisosAdministracion.Contains(PermisoComunidad.GestionarOpcionesDelMetaadministrador);
     bool administrarEventos = permisosAdministracion != null && permisosAdministracion.Contains(PermisoComunidad.GestionarEventosExternos);
+    bool administrarAsistentes = permisosAdministracion != null && permisosAdministracion.Contains(PermisoComunidad.GestionarAsistentes);
 
     // Grafo de conocimiento
     bool administrarOC = permisosContenidos != null && (permisosContenidos.Contains(PermisoContenidos.ModificarValorEntidadSecundaria) || permisosContenidos.Contains(PermisoContenidos.EditarPagina) || permisosContenidos.Contains(PermisoContenidos.EliminarValorEntidadSecundaria) || permisosContenidos.Contains(PermisoContenidos.AnyadirValorEntidadSecundaria) || permisosContenidos.Contains(PermisoContenidos.GestionarOC));
@@ -323,6 +324,17 @@ Variables
                                         </li>
                                     }
 
+                                    @* Administrar Asistentes *@
+                                    @if (!isInEcosistemaPlatform && administrarAsistentes)
+                                    {
+                                        <li>
+                                            <a href="@Comunidad.Url/@Html.GetText("URLSEM", "ADMINISTRARASISTENTES")"
+                                               data-searchable="asistentes, configuracion asistentes, asistente" class="asistente-configuracion @((subSeccionDevTools == AdministracionSeccionesDevTools.SubSeccionesDevTools.Comunidad_Asistentes) ? "activo" : null)">
+                                                @Html.GetText("COMADMINCOMUNIDAD", "ADMINISTRARASISTENTES")
+                                            </a>
+                                        </li>
+                                    }
+
                                     @* Integración con redes sociales *@
                                     @*
                                     <li>
@@ -465,16 +477,26 @@ Variables
                                     }
                                 }
 
-                                @* Administrar traducciones (Comunidad) *@
+                                
                                 @if (!isInEcosistemaPlatform && administrarTraducciones)
                                 {
                                     @if (!string.IsNullOrEmpty(Comunidad.ShortName))
                                     {
+                                        @* Administrar traducciones (Comunidad) *@
                                         <li>
                                             <a href="@Comunidad.Url/@Html.GetText("URLSEM", "ADMINISTRARTRADUCCIONES")"
                                                data-searchable="traducciones, multilenguaje, traducción, idiomas"
                                                class="traducciones-configuracion @((subSeccionDevTools == AdministracionSeccionesDevTools.SubSeccionesDevTools.Configuracion_TraduccionesComunidad) ? "activo" : null)">
                                                 @Html.GetText("COMADMINCOMUNIDAD", "ADMINISTRARTRADUCCIONES")
+                                            </a>
+                                        </li>
+
+                                        @* Administrar traductor (Comunidad) *@
+                                        <li>
+                                            <a href="@Comunidad.Url/@Html.GetText("URLSEM", "ADMINISTRARTRADUCTOR")"
+                                               data-searchable="traducciones, multilenguaje, traducción, idiomas, traductor, scia"
+                                               class="traducciones-configuracion @((subSeccionDevTools == AdministracionSeccionesDevTools.SubSeccionesDevTools.Configuracion_Traductor) ? "activo" : null)">
+                                                @Html.GetText("COMADMINCOMUNIDAD", "ADMINISTRARTRADUCTOR")
                                             </a>
                                         </li>
                                     }
@@ -487,6 +509,14 @@ Variables
                                            data-searchable="traducciones, multilenguaje, traducción, idiomas"
                                            class="traducciones-configuracion @((subSeccionDevTools == AdministracionSeccionesDevTools.SubSeccionesDevTools.Configuracion_TraduccionesComunidad) ? "activo" : null)">
                                             @Html.GetText("COMADMINCOMUNIDAD", "ADMINISTRARTRADUCCIONES")
+                                        </a>
+                                    </li>
+                                    @* Administrar traductor (Ecosistema) *@
+                                    <li>
+                                        <a href="@Comunidad.Url/@Html.GetText("URLSEM", "ADMINISTRARTRADUCTORECOSISTEMA")"
+                                           data-searchable="traducciones, multilenguaje, traducción, idiomas, traductor, scia"
+                                           class="traducciones-configuracion @((subSeccionDevTools == AdministracionSeccionesDevTools.SubSeccionesDevTools.Configuracion_Traductor) ? "activo" : null)">
+                                            @Html.GetText("COMADMINCOMUNIDAD", "ADMINISTRARTRADUCTOR")
                                         </a>
                                     </li>
                                 }

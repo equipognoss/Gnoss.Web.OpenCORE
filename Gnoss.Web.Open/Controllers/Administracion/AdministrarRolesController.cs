@@ -15,6 +15,7 @@ using Es.Riam.Gnoss.CL.ParametrosAplicacion;
 using Es.Riam.Gnoss.Elementos.Identidad;
 using Es.Riam.Gnoss.Elementos.ParametroGeneralDSEspacio;
 using Es.Riam.Gnoss.Elementos.ServiciosGenerales;
+using Es.Riam.Gnoss.Logica.Asistentes;
 using Es.Riam.Gnoss.Logica.Documentacion;
 using Es.Riam.Gnoss.Logica.Facetado;
 using Es.Riam.Gnoss.Logica.Identidad;
@@ -225,7 +226,7 @@ namespace Gnoss.Web.Open.Controllers.Administracion
             }
             catch (Exception ex)
             {
-                mLoggingService.GuardarLogError(ex, $"Ha habido un error al guardar los datos del rol", mlogger);
+                mLoggingService.GuardarLogError(ex, $"Ha habido un error al guardar los datos del rol", mLogger);
                 return GnossResultERROR($"Ha habido un error al guardar los cambios");
             }
         }
@@ -239,7 +240,10 @@ namespace Gnoss.Web.Open.Controllers.Administracion
                 if (pRolID.Equals(ProyectoAD.RolAdministrador) || pRolID.Equals(ProyectoAD.RolAdministradorEcosistema))
                 {
                     return GnossResultERROR($"El rol de Administrador no puede ser eliminado");
-                }                
+                }
+
+                UtilAsistentes utilAsistentes = new UtilAsistentes(mEntityContext, mLoggingService, mConfigService, mLoggerFactory.CreateLogger<UtilAsistentes>(), mLoggerFactory);
+                utilAsistentes.EliminarRolAsistente(pRolID);
 
                 ProyectoCN proyectoCN = new ProyectoCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<ProyectoCN>(), mLoggerFactory);
 
@@ -261,7 +265,7 @@ namespace Gnoss.Web.Open.Controllers.Administracion
             }
             catch (Exception ex)
             {
-                mLoggingService.GuardarLogError(ex, $"Error al eliminar el rol {pRolID}", mlogger);
+                mLoggingService.GuardarLogError(ex, $"Error al eliminar el rol {pRolID}", mLogger);
                 return GnossResultERROR($"Error al intentar eliminar el rol {pRolID}");
             }
         }
@@ -301,7 +305,15 @@ namespace Gnoss.Web.Open.Controllers.Administracion
         {
             ViewBag.isInEcosistemaPlatform = EsAdministracionEcosistema ? "true" : "false";
 
-            return PartialView("_modal-views/_confirm-delete", pRolID);
+            AsistenteCN asistenteCN = new AsistenteCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<AsistenteCN>(), mLoggerFactory);
+
+            RolEliminar modelo = new RolEliminar();
+            modelo.RolId = pRolID;
+            modelo.Asistentes = asistenteCN.ObtenerAsistentesAfectadosPorRol(pRolID);
+
+            asistenteCN.Dispose();
+
+            return PartialView("_modal-views/_confirm-delete", modelo);
         }
 
         [TypeFilter(typeof(PermisosAdministracion), Arguments = new object[] { new ulong[] { (ulong)PermisoComunidad.GestionarRolesYPermisos } })]
@@ -323,7 +335,7 @@ namespace Gnoss.Web.Open.Controllers.Administracion
             }
             catch (Exception ex)
             {
-                mLoggingService.GuardarLogError(ex, mlogger);
+                mLoggingService.GuardarLogError(ex, mLogger);
             }
 
             return GnossResultERROR("Error al guardar la configuración");
@@ -403,7 +415,7 @@ namespace Gnoss.Web.Open.Controllers.Administracion
             }
             catch (Exception ex)
             {
-                mLoggingService.GuardarLogError(ex, mlogger);
+                mLoggingService.GuardarLogError(ex, mLogger);
             }
             return GnossResultERROR("Error al eliminar al miembro");
 
@@ -741,7 +753,7 @@ namespace Gnoss.Web.Open.Controllers.Administracion
                     }
                     catch (Exception ex)
                     {
-                        mLoggingService.GuardarLogError(ex, $"Error al cargar la página de roles", mlogger);
+                        mLoggingService.GuardarLogError(ex, $"Error al cargar la página de roles", mLogger);
                     }
                 }
 

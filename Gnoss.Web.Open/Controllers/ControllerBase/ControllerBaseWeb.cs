@@ -129,7 +129,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
         protected IOAuth mOAuth;
         private static object BLOQUEO_COMPROBACION_TRAZA = new object();
         private static DateTime HORA_COMPROBACION_TRAZA;
-        private ILogger mlogger;
+        private ILogger mLogger;
         private ILoggerFactory mLoggerFactory;
 
         /// <summary>
@@ -145,7 +145,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
             mEntityContextBASE = entityContextBASE;
             mServicesUtilVirtuosoAndReplication = servicesUtilVirtuosoAndReplication;
             mOAuth = oAuth;
-            mlogger = logger;
+            mLogger = logger;
             mLoggerFactory = loggerFactory;
             mRouteConfig = new RouteConfig(entityContext, loggingService, configService, servicesUtilVirtuosoAndReplication, redisCacheWrapper, virtuosoAD, mHttpContextAccessor, mLoggerFactory.CreateLogger<RouteConfig>(), mLoggerFactory);
             _appLifetime = appLifetime;
@@ -409,7 +409,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
 
             if (recalcularRutas)
             {
-                mLoggingService.GuardarLogError("recalculando rutas...", mlogger);
+                mLoggingService.GuardarLogError("recalculando rutas...", mLogger);
                 try
                 {
                     //MvcApplication.RecalculandoRutas = true;
@@ -1084,7 +1084,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
             }
             catch (Exception ex)
             {
-                mLoggingService.GuardarLogError(ex);
+                mLoggingService.GuardarLogError(ex, mLogger);
             }
 
             if ((string.IsNullOrEmpty(pathFisico) || (!System.IO.File.Exists(pathFisico))) && (ProyectoSeleccionado != null && Session.Get("Usuario") != null))
@@ -1461,14 +1461,14 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
 
                     if (string.IsNullOrEmpty(DominioPaginasAdministracion) || (!string.IsNullOrEmpty(DominioPaginasAdministracion) && !mControladorBase.DominoAplicacion.Equals(ObtenerDominioUrl(new Uri(DominioPaginasAdministracion), false))))
                     {
-                        mLoggingService.GuardarLogError($"mControladorBase.DominoAplicacion: {mControladorBase.DominoAplicacion} \n\t ControladorBase.ObtenerDominioUrl: {ControladorBase.ObtenerDominioUrl(new Uri(DominioPaginasAdministracion), false)} \n\t Comprobacion: {!string.IsNullOrEmpty(DominioPaginasAdministracion) && !mControladorBase.DominoAplicacion.Equals(ControladorBase.ObtenerDominioUrl(new Uri(DominioPaginasAdministracion), false))}", mlogger);
+                        mLoggingService.GuardarLogError($"mControladorBase.DominoAplicacion: {mControladorBase.DominoAplicacion} \n\t ControladorBase.ObtenerDominioUrl: {ControladorBase.ObtenerDominioUrl(new Uri(DominioPaginasAdministracion), false)} \n\t Comprobacion: {!string.IsNullOrEmpty(DominioPaginasAdministracion) && !mControladorBase.DominoAplicacion.Equals(ControladorBase.ObtenerDominioUrl(new Uri(DominioPaginasAdministracion), false))}", mLogger);
                         pFilterContext.Result = Redirect(ProyectoSeleccionado.UrlPropia(IdiomaUsuario) + Request.Path + Request.QueryString);
                     }
                 }
             }
             catch
             {
-                mLoggingService.GuardarLogError($"Url de intento uri {pUrlPropiaProyecto}", mlogger);
+                mLoggingService.GuardarLogError($"Url de intento uri {pUrlPropiaProyecto}", mLogger);
                 throw;
             }
         }
@@ -1486,7 +1486,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
             }
             catch (Exception ex)
             {
-                mLoggingService.GuardarLogError($"Error al comprobar la redirección a la configuracion inicial. {ex.Message}", mlogger);
+                mLoggingService.GuardarLogError($"Error al comprobar la redirección a la configuracion inicial. {ex.Message}", mLogger);
                 throw;
             }
         }
@@ -1770,7 +1770,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
             }
             catch (Exception ex)
             {
-                mLoggingService.GuardarLogError(ex, " 20160209 Error mal controlado.", mlogger);
+                mLoggingService.GuardarLogError(ex, " 20160209 Error mal controlado.", mLogger);
             }
 
             if (listaDatosExtra != null)
@@ -4270,14 +4270,14 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                         if ((!hostRedirect.Equals(hostProyecto) || !urlRedirectLimpio.Equals(pUrlRedirect)) && (!string.IsNullOrEmpty(DominioPaginasAdministracion) && !DominioPaginasAdministracion.Contains(hostRedirect)))
                         {
                             sbMessage.AppendLine($"\t1.4 UrlRedirect no valido: {urlRedirectLimpio}");
-                            mLoggingService.GuardarLog(sbMessage.ToString(), mlogger);
+                            mLoggingService.GuardarLog(sbMessage.ToString(), mLogger);
                             pUrlRedirect = "";
                         }
                     }
                 }
                 catch (Exception ex)
                 {
-                    mLoggingService.GuardarLogError(ex, sbMessage.ToString(), mlogger);
+                    mLoggingService.GuardarLogError(ex, sbMessage.ToString(), mLogger);
                     pUrlRedirect = "";
                 }
             }
@@ -5418,7 +5418,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                 clase = new FileInfo(pSourceFilePath).Name;
             }
 
-            mLoggingService.GuardarLog($"{UsuarioActual.UsuarioID} - {ProyectoSeleccionado.NombreCorto} - {clase} - {pMemberName} - ({Request.GetDisplayUrl()})", mlogger, $"admin-audit_{DateTime.Now.ToString("yyyy-MM-dd")}.log");
+            mLoggingService.GuardarLog($"{UsuarioActual.UsuarioID} - {ProyectoSeleccionado.NombreCorto} - {clase} - {pMemberName} - ({Request.GetDisplayUrl()})", mLogger);
         }
 
         /// <summary>

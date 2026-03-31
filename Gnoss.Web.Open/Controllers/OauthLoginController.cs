@@ -43,7 +43,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
         protected Proyecto mProyecto;
         protected string mIdiomaUsuario;
         protected IHttpContextAccessor mHttpContextAccessor;
-        private ILogger mlogger;
+        private ILogger mLogger;
         private ILoggerFactory mLoggerFactory;
 
         public OauthLoginController(IHttpContextAccessor httpContextAccessor, EntityContext entityContext, LoggingService loggingService, ConfigService configService, IServicesUtilVirtuosoAndReplication servicesUtilVirtuosoAndReplication, RedisCacheWrapper redisCacheWrapper, VirtuosoAD virtuosoAD, GnossCache gnossCache, EntityContextOauth entityContextOauth, ILogger<OauthLoginController> logger, ILoggerFactory loggerFactory)
@@ -56,7 +56,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
             mVirtuosoAD = virtuosoAD;
             mEntityContextOauth = entityContextOauth;
             mHttpContextAccessor = httpContextAccessor;
-            mlogger = logger;
+            mLogger = logger;
             mLoggerFactory = loggerFactory;
             mControladorBase = new ControladorBase(loggingService, configService, entityContext, redisCacheWrapper, gnossCache, virtuosoAD, httpContextAccessor, null, mLoggerFactory.CreateLogger<ControladorBase>(), mLoggerFactory);
         }
@@ -155,7 +155,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
             }
             catch (Exception ex)
             {
-                mLoggingService.GuardarLogError(ex.Message,mlogger);
+                mLoggingService.GuardarLogError(ex.Message,mLogger);
             }
 
             return valorParametro;
@@ -213,7 +213,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
             }
             catch (Exception ex)
             {
-                GuardarLogError(ex);
+                mLoggingService.GuardarLogError(ex, mLogger);
             }
 
             return new UnauthorizedResult();
@@ -264,7 +264,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
             }
             catch (Exception ex)
             {
-                GuardarLogError(ex);
+                mLoggingService.GuardarLogError(ex, mLogger);
             }
 
             return Content("401: Unauthorized");
@@ -297,7 +297,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
             }
             catch (Exception ex)
             {
-                GuardarLogError(ex);
+                mLoggingService.GuardarLogError(ex, mLogger);
             }
 
             return new UnauthorizedResult();
@@ -322,16 +322,11 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
             }
             catch (Exception ex)
             {
-                GuardarLogError(ex);
+                mLoggingService.GuardarLogError(ex,mLogger);
             }
 
             //return new HttpUnauthorizedResult();
             return Content("401: Unauthorized");
-        }
-
-        private void GuardarLogError(Exception ex)
-        {
-            mLoggingService.GuardarLogError(ex, mlogger);
         }
 
 

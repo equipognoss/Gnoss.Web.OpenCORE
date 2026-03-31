@@ -546,16 +546,21 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
 
             if (!string.IsNullOrEmpty(urlRedireccion))
             {
-                if (!urlRedireccion.StartsWith("/") && !urlRedireccion.StartsWith("http://") && !urlRedireccion.StartsWith("https://"))
+                if (!urlRedireccion.StartsWith('/') && !urlRedireccion.StartsWith("http://") && !urlRedireccion.StartsWith("https://"))
                 {
-                    urlRedireccion = "/" + urlRedireccion;
+                    urlRedireccion = $"/{urlRedireccion}";
+                }
+
+                if(!string.IsNullOrEmpty(filtrosOriginales) && filaRedireccion.RedireccionValorParametro != null && filaRedireccion.RedireccionValorParametro.Any() && filaRedireccion.RedireccionValorParametro.First().MantenerFiltros)
+                {
+                    urlRedireccion = urlRedireccion + filtrosOriginales;
                 }
 
                 return RedirectPermanent(urlRedireccion);
             }
             else if (!string.IsNullOrEmpty(NombreCortoProyectoConexion))
             {
-                return Redirect("/" + UtilIdiomas.GetText("URLSEM", "COMUNIDAD") + "/" + NombreCortoProyectoConexion);
+                return Redirect($"/{UtilIdiomas.GetText("URLSEM", "COMUNIDAD")}/{NombreCortoProyectoConexion}");
             }
             else
             {

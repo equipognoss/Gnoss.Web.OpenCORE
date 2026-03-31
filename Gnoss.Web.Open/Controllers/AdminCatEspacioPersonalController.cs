@@ -321,7 +321,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
             }
             catch (Exception ex)
             {
-                GuardarLogErrorAJAX(ex.ToString());
+                mLoggingService.GuardarLogError(ex, mlogger);
             }
 
             return GnossResultERROR(UtilIdiomas.GetText("COMMON", "CAMBIOSINCORRECTOS"));

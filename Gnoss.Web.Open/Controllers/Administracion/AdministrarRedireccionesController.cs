@@ -489,7 +489,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
                     redireccionDirecta = new RedireccionValorParametro();
                     redireccionDirecta.ValorParametro = string.Empty;
                     redireccionDirecta.OrdenPresentacion = 0;
-                    redireccionDirecta.MantenerFiltros = false;
+                    redireccionDirecta.MantenerFiltros = pRedireccionRegistroRuta.PreserveFilters;
                     redireccionDirecta.RedireccionID = pRedireccionRegistroRuta.Key;
                     redireccionDirecta.UrlRedireccion = pRedireccionRegistroRuta.DestinationUrl;
                     pProyectoCN.AniadirRedireccionValorParametro(redireccionDirecta);

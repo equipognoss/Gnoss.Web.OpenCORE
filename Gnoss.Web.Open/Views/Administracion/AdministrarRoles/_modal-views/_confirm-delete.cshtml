@@ -1,6 +1,7 @@
-﻿@model Guid
+﻿@model RolEliminar
 @{
-	Guid rolID = Model;
+	Guid rolID = Model.RolId;
+	string mensaje = Model.Asistentes.Count == 0 ? Html.GetText("DEVTOOLS", "DESEAELIMINARELROLSELECCIONADO") : Html.GetText("DEVTOOLS", "ELIMINARROLCONASISTENTESAFECTADOS");
 }
 <div class="modal-header">
 	<p class="modal-title">
@@ -11,9 +12,22 @@
 <div class="modal-body">
 	<div class="form-group">
 		<label class="control-label">
-			@Html.GetText("DEVTOOLS", "DESEAELIMINARELROLSELECCIONADO")
+			@Html.Raw(mensaje)
 		</label>
 	</div>
+	@if(Model.Asistentes.Count > 0)
+	{
+		<div class="form-group">
+			<ul>
+				@foreach (Guid asistenteId in Model.Asistentes.Keys)
+				{
+					string nombreAsistenteIdiomaUsuario = Html.ObtenerTextoIdiomaUsuario(Model.Asistentes[asistenteId]);
+					string nombreAsistenteIdiomaPorDefecto = Html.ObtenerTextoDeIdioma(Model.Asistentes[asistenteId]);
+					<li data-asistente-id="@asistenteId">@(string.IsNullOrEmpty(nombreAsistenteIdiomaUsuario) ? nombreAsistenteIdiomaPorDefecto : nombreAsistenteIdiomaUsuario)</li>
+				}
+			</ul>
+		</div>
+	}
 	<div class="form-actions">
 		<button data-dismiss="modal" class="btn btn-outline-primary btnNotConfirmDeleteRol">@Html.GetText("COMMON", "NO")</button>
 		<a class="btn btn-primary btnConfirmDeleteRol" id="confirmarEliminarRol_@rolID">@Html.GetText("COMMON", "SI")</a>
