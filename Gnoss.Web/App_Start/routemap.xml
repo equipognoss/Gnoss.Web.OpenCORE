@@ -1362,6 +1362,10 @@
 			<key>traza</key>
 			<value>Traza</value>
 		</pagina>
+		<pagina>
+			<key>@#@@URLSEM,|,ADMINISTRARTRADUCTORECOSISTEMA@@#@</key>
+			<value>UpgradeVersion/Index</value>
+		</pagina>
 	</seccion>
 	<seccion name="metaproyecto">
 		<!-- Esta ruta se registra antes que las demas, por lo tanto no hay que registrarla aqui.
@@ -3652,6 +3656,14 @@
 		</pagina>
 		<pagina>
 			<key>@#@@URLSEM,|,ADMINISTRARTRAZAS@@#@</key>
+			<value>UpgradeVersion/Index</value>
+		</pagina>
+		<pagina>
+			<key>@#@@URLSEM,|,ADMINISTRARTRADUCTOR@@#@</key>
+			<value>UpgradeVersion/Index</value>
+		</pagina>
+		<pagina>
+			<key>@#@@URLSEM,|,ADMINISTRARASISTENTES@@#@</key>
 			<value>UpgradeVersion/Index</value>
 		</pagina>
 	</seccion>
