@@ -4411,7 +4411,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
             {
                 // Si no tiene versiones, se crea una para evitar errores al cargar el historial
                 DocumentacionCN docCN = new DocumentacionCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<DocumentacionCN>(), mLoggerFactory);
-                if (!docCN.ComprobarDocumentoTieneVersiones(Documento.FilaDocumento.VersionDocumento.DocumentoOriginalID))
+                if (!docCN.ComprobarDocumentoTieneVersiones(Documento.FilaDocumento.DocumentoID))
                 {
                     GestorDocumental.CrearPrimeraVersionDocumento(Documento);
                     mEntityContext.SaveChanges();

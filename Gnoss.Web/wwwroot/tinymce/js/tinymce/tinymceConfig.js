@@ -538,49 +538,44 @@ const operativaTinyMceConfig = {
      * El sistema cachea las vistas 
      * Se utilizará el controller: AdministrarHead/GetHojaDeEstilosPersonalizado
      */  
-    getCustomCssForTinyMceEditorPreview: function() {        
+    getCustomCssForTinyMceEditorPreview: function () {
+        const self = this;
         let cssFilesValue = [];
 
-        const that = this;
+        this.cleanExpiredLocalStorageEntries();
 
-        // Eliminar posibles entradas antiguas del localStorage
-        this.cleanExpiredLocalStorageEntries();          
-            
-        // Comprobar si los estilos están en el LocalStorage y si son válidos para el dominio actual
-        const isCustomCssForTinyMceInCache = this.checkAndGetCustomCssForTinyMceInCache();
-    
-        // Si están en caché, no es necesario realizar la petición
-        if (isCustomCssForTinyMceInCache) {
-            return Promise.resolve();
+        const cachedCss = localStorage.getItem(`${this.CUSTOM_CSS_FOR_TINY_MCE_KEY}_${this.currentDomain}`);
+        const cachedCssTimestamp = localStorage.getItem(`${this.CUSTOM_CSS_FOR_TINY_MCE_TIMESTAMP_KEY}_${this.currentDomain}`);
+
+        if (cachedCss && cachedCssTimestamp) {
+            const cacheExpiration = this.CUSTOM_CSS_CACHE_EXPIRATION_TIME;
+            const currentTime = new Date().getTime();
+            if (currentTime - cachedCssTimestamp < cacheExpiration) {
+                cssFilesValue = JSON.parse(cachedCss);
+                return Promise.resolve(cssFilesValue);
+            }
         }
 
-        return new Promise(function(resolve, reject) {
-            // Realizar la petición
-            GnossPeticionAjax(                
-                that.urlGetHojaDeEstilosPersonalizado,
+        return new Promise(function (resolve, reject) {
+            GnossPeticionAjax(
+                self.urlGetHojaDeEstilosPersonalizado,
                 null,
                 true
-            ).done(function(data) {
-                // Crear un objeto jQuery a partir de la cadena HTML
-                const $html = $(data.trim());                
-                // Encontrar todos los elementos <link> dentro del objeto jQuery            
-                const linkElements = $html.filter("link");                        
-                // Añadir los estilos personalizados obtenidos
+            ).done(function (data) {
+                const $html = $(data.trim());
+                const linkElements = $html.filter("link");
+
                 if (linkElements.length > 0) {
-                    cssFilesValue = linkElements.map(function() {
+                    cssFilesValue = linkElements.map(function () {
                         return $(this).prop("href");
                     }).get();
-                    // Guardar los estilos en el LocalStorage con el nombre específico del dominio
-                    localStorage.setItem(`${that.CUSTOM_CSS_FOR_TINY_MCE_KEY}_${that.currentDomain}`, JSON.stringify(cssFilesValue));
-                    localStorage.setItem(`${that.CUSTOM_CSS_FOR_TINY_MCE_TIMESTAMP_KEY}_${that.currentDomain}`, new Date().getTime());
-                }              
-                // OK Asignación de los estilos personalizados
-                that.customCssListFiles = cssFilesValue;
-                resolve();
-            }).fail(function(data) {
-                // KO. Error en la petición.
+                    localStorage.setItem(`${self.CUSTOM_CSS_FOR_TINY_MCE_KEY}_${self.currentDomain}`, JSON.stringify(cssFilesValue));
+                    localStorage.setItem(`${self.CUSTOM_CSS_FOR_TINY_MCE_TIMESTAMP_KEY}_${self.currentDomain}`, new Date().getTime());
+                }
+                resolve(cssFilesValue);
+            }).fail(function (data) {
                 reject(data);
-            }); 
+            });
         });
     },
 

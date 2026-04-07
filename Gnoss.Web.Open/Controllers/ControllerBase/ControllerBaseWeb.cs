@@ -2120,31 +2120,16 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
 
         protected virtual void ObtenerUrlCanonica()
         {
-            string urlCanonicalTemp = "";
             if (ListaEnlacesMultiIdioma != null && ListaEnlacesMultiIdioma.ContainsKey(UtilIdiomas.LanguageCode))
             {
                 string urlPaginaActualMultiLingual = ListaEnlacesMultiIdioma[UtilIdiomas.LanguageCode].Value;
 
-                if (urlPaginaActualMultiLingual != UrlPaginaConParametros)
+                if (string.IsNullOrEmpty(urlPaginaActualMultiLingual))
                 {
-                    if (!string.IsNullOrEmpty(ParametrosGeneralesRow.IdiomaDefecto))
-                    {
-                        urlCanonicalTemp = ListaEnlacesMultiIdioma[ParametrosGeneralesRow.IdiomaDefecto].Value;
-                    }
-
-                    if (string.IsNullOrEmpty(urlCanonicalTemp))
-                    {
-                        foreach (string idioma in ListaEnlacesMultiIdioma.Keys)
-                        {
-                            if (ListaEnlacesMultiIdioma[idioma].Key)
-                            {
-                                urlCanonicalTemp = ListaEnlacesMultiIdioma[idioma].Value;
-                                break;
-                            }
-                        }
-                    }
-                    mUrlCanonical = urlCanonicalTemp;
+                    urlPaginaActualMultiLingual = ListaEnlacesMultiIdioma[ParametrosGeneralesRow.IdiomaDefecto].Value;
                 }
+
+                mUrlCanonical = urlPaginaActualMultiLingual;                
             }
         }
 
