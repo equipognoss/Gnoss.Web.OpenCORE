@@ -2817,15 +2817,20 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
             {
                 //Seguridad : si Tiene Permisos la Identidad para Desvincular estos Recursos
                 DocumentacionCN docCN = new DocumentacionCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<DocumentacionCN>(), mLoggerFactory);
+                IdentidadCN identidadCN = new IdentidadCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<IdentidadCN>(), mLoggerFactory);
                 Guid docVinculadoUltimaVersion = docCN.ObtenerUltimaVersionDeDocumento(pDocVinculadoID);
 
                 DataWrapperDocumentacion dwDocumentacion = new DataWrapperDocumentacion();
                 docCN.ObtenerDocumentoPorIDCargarTotal(docVinculadoUltimaVersion, dwDocumentacion, true, true, null);
                 dwDocumentacion.Merge(docCN.ObtenerVinculacionesRecurso(docVinculadoUltimaVersion));
 
-                GestorDocumental gesDoc = new GestorDocumental(dwDocumentacion, mLoggingService, mEntityContext, mLoggerFactory.CreateLogger<GestorDocumental>(), mLoggerFactory);
+                DataWrapperIdentidad identDW = identidadCN.ObtenerIdentidadesDeProyecto(ProyectoSeleccionado.Clave);
 
-                DocumentoWeb documentoVinc = gesDoc.ListaDocumentosWeb[docVinculadoUltimaVersion];
+                GestionIdentidades gestorIdentidades = new GestionIdentidades(identDW, mLoggingService, mEntityContext, mConfigService, mServicesUtilVirtuosoAndReplication);
+                identidadCN.Dispose();
+
+                GestorDocumental.GestorIdentidades = gestorIdentidades;
+                DocumentoWeb documentoVinc = GestorDocumental.ListaDocumentosWeb[pDocVinculadoID];
 
                 if (GestorDocumental.TienePermisosIdentidadDesvincularRecursos(documentoVinc, Documento, IdentidadActual, IdentidadOrganizacionBROrg, ProyectoSeleccionado, UsuarioActual.UsuarioID, EsIdentidadActualAdministradorOrganizacion))
                 {

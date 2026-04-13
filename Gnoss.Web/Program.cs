@@ -11,6 +11,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
+using Serilog;
 using System;
 
 namespace Gnoss.Web
@@ -19,11 +20,23 @@ namespace Gnoss.Web
     {
         public static void Main(string[] args)
         {
-            var host = CreateHostBuilder(args).Build();
+            LoggingService.ConfigurarBasicStartupSerilog().CreateBootstrapLogger();
+            try
+            {
+                var host = CreateHostBuilder(args).Build();
 
-            CargarClaveReinicioCache(host);
+                CargarClaveReinicioCache(host);
 
-            host.Run();
+                host.Run();
+            }
+            catch (Exception ex)
+            {
+                Log.Fatal(ex, "Error fatal durante el arranque");
+            }
+            finally
+            {
+                Log.CloseAndFlush(); // asegura que se escriben todos los logs pendientes
+            }
         }
 
         public static IHostBuilder CreateHostBuilder(string[] args) =>
@@ -33,6 +46,7 @@ namespace Gnoss.Web
                     config.AddJsonFile("appsettings.json", optional: false, reloadOnChange: true);
                     config.AddJsonFile($"appsettings.{hostContext.HostingEnvironment.EnvironmentName}.json", optional: true, reloadOnChange: true);
                 })
+                .UseSerilog((context, services, configuration) => LoggingService.ConfigurarSerilog(context.Configuration, services, configuration))
                 .ConfigureWebHostDefaults(webBuilder =>
                 {
                     webBuilder.UseStartup<Startup>();
@@ -42,7 +56,7 @@ namespace Gnoss.Web
 
         private static void CargarClaveReinicioCache(IHost pHost)
         {
-            using(var scope = pHost.Services.CreateScope())
+            using (var scope = pHost.Services.CreateScope())
             {
                 var entity = scope.ServiceProvider.GetRequiredService<EntityContext>();
                 var loggingService = scope.ServiceProvider.GetRequiredService<LoggingService>();
@@ -55,7 +69,8 @@ namespace Gnoss.Web
                     ProyectoCL proyectoCL = new ProyectoCL(entity, loggingService, redisCacheWrapper, configService, new VirtuosoAD(loggingService, entity, configService, servicesUtilVirtuosoAndReplication, loggerFactory.CreateLogger<VirtuosoAD>(), loggerFactory), servicesUtilVirtuosoAndReplication, loggerFactory.CreateLogger<ProyectoCL>(), loggerFactory);
                     proyectoCL.AgregarClaveReinicioAplicacion(ProyectoAD.MetaProyecto);
                 }
-                catch (Exception ex) { 
+                catch (Exception ex)
+                {
                     loggingService.GuardarLogError($"Ha habido un error al cargar la clave reinicio. ERROR: {ex}", loggerFactory.CreateLogger<Program>());
                     throw;
                 }

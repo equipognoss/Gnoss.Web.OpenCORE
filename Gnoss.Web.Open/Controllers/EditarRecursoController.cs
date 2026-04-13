@@ -7960,7 +7960,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
             }
             if (!propTitulo.EspecifPropiedad.PermitirScript)
             {
-                titulo = new StringBuilder(UtilCadenas.LimpiarInyeccionCodigo(titulo.ToString()));
+                titulo = new StringBuilder(UtilCadenas.LimpiarInyeccionCodigo(titulo.ToString(), true));
             }
             return titulo.ToString();
         }
