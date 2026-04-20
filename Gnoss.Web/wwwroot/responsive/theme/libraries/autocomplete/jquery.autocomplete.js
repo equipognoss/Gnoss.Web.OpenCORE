@@ -1151,8 +1151,14 @@ $.Autocompleter.Select = function (options, input, select, pintar, config) {
 				var formatted = options.formatItem(data[i].data, i+1, max, data[i].value, term);
 				if ( formatted === false )
 					continue;
-				var li = $("<li/>").html( options.highlight(formatted, term) ).addClass(i%2 == 0 ? "ac_even" : "ac_odd").appendTo(list)[0];
-				$.data(li, "ac_data", data[i]);							
+				if (i == 0) {
+					var li = $("<li/>").html(options.highlight(formatted, term)).addClass("buttons-search-wrap").appendTo(list)[0];
+				}
+				else {
+					var li = $("<li/>").html(options.highlight(formatted, term)).addClass(i % 2 == 0 ? "ac_even" : "ac_odd").appendTo(list)[0];
+					$.data(li, "ac_data", data[i]);	
+				}
+										
 			}			
 		}
 		listItems = list.find("li");

@@ -10055,7 +10055,8 @@ const operativaSolicitarCambiarContrasenia = {
             .done(function () {
                 // Ocultar posibles paneles de error
                 that.hideErrorPanels();
-
+                $("#btnCambiarPassword").remove();
+                $(".actionRegister").remove();
                 // Mostrar panel info con su clase
                 that.passwordRequestInfoPanel.addClass(that.okClass);
                 that.passwordRequestInfoPanel.removeClass(that.errorClass);
@@ -10082,8 +10083,6 @@ const operativaSolicitarCambiarContrasenia = {
                 OcultarUpdateProgress();
                 // Volver a habilitar el botón
                 that.btnCambiarPassword.prop('disabled', false);
-                $("#btnCambiarPassword").remove();
-                $(".actionRegister").remove();
             });
     },
 
@@ -10433,7 +10432,9 @@ const operativaPeticionCambiarContrasenia = {
                     location.href = transfer;
                 }
                 // Destruimos o eliminamos el panel de inputs para que no pueda volver a solicitar cambio de contraseña
-                that.panelCambioPassword.remove()
+                that.panelCambioPassword.remove();
+                $("#btnCambiarPassword").remove();
+                $(".actionRegister").remove();
             })
             .fail(function (html) {
                 // Mostrar panel info con su clase
@@ -10449,9 +10450,7 @@ const operativaPeticionCambiarContrasenia = {
                 that.emptyInputs();
                 // Ocultar el loading
                 OcultarUpdateProgress();
-                that.btnCambiarPassword.prop('disabled', false);
-                $("#btnCambiarPassword").remove();
-                $(".actionRegister").remove();
+                that.btnCambiarPassword.prop('disabled', false);                
             });
     },
 

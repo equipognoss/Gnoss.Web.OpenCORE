@@ -4414,13 +4414,16 @@ function AgregarArchivoComoPropiedad(pTxtHackID, pDocumentoID, pTxtHackImgPrinci
     
     DarValorControl(entProp[0] + ',' + entProp[1], txtIDs, txtCaracteristicas, valorProp);
 
-    if (entProp[0].indexOf('_bis') != -1) {
-        try
-        {
-            DarValorControl(entProp[0].substring(0, entProp[0].indexOf('_bis')) + ',' + entProp[1], txtIDs, txtCaracteristicas, valorProp);
-        }
-        catch (ex) { }
-    }
+    // Comentado ya que está modificando más propiedades con el mismo nombre (pueden pertenercer a otra entidad auxiliar) y
+    // solo se debería modificar la propiedad modificada inicialmente, se le da valor en la línea superior. Se deja el código comentado
+    // por si se quisiera recuperar esta funcionalidad u ocasiona problemas no contemplados.
+    //if (entProp[0].indexOf('_bis') != -1) {
+    //    try
+    //    {
+    //        DarValorControl(entProp[0].substring(0, entProp[0].indexOf('_bis')) + ',' + entProp[1], txtIDs, txtCaracteristicas, valorProp);
+    //    }
+    //    catch (ex) { }
+    //}
     
     $('#' + idCampoControl.replace('Campo_','divAgregarArchivo_')).css('display', 'none');
     $('#' + idCampoControl.replace('Campo_','divArchivoAgregado_')).css('display', '');

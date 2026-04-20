@@ -1276,7 +1276,7 @@ const operativaGestionObjetosConocimientoOntologias = {
         var valorProp = '';
     
         if (!pMultiple) {
-            valorProp = that.ObtenerValorEntidadProp(pEntidad + ',' + pPropiedad, TxtRegistroIDs, TxtCaracteristicasElem);
+            valorProp = that.ObtenerValorEntidadProp(pEntidad + ',' + pPropiedad, that.txtRegistroIDs, that.txtCaracteristicasElem);
         }
         else {            
             var valores = that.GetTodosValoresElementoGuardado(pEntidad, pPropiedad);
@@ -1305,7 +1305,7 @@ const operativaGestionObjetosConocimientoOntologias = {
             var selectores = data.split('[[|||]]');
             for (var i = 0; i < selectores.length - 1; i++) {
                 var datosSelector = selectores[i].split('[[|]]');
-                var idControl = that.ObtenerControlEntidadProp(datosSelector[1] + ',' + datosSelector[0], TxtRegistroIDs);
+                var idControl = that.ObtenerControlEntidadProp(datosSelector[1] + ',' + datosSelector[0], that.txtRegistroIDs);
                 var htmlCombo = '<option value="">' + $('#' + idControl)[0].options[0].innerText + '</option>';
                 
                 for (var j=2;j<datosSelector.length - 1;j=j+2)
@@ -1316,12 +1316,12 @@ const operativaGestionObjetosConocimientoOntologias = {
                 $('#' + idControl).html(htmlCombo);
                 $('#' + idControl).removeAttr('disabled');
     
-                if (that.GetCaracteristicaPropiedad(datosSelector[1], datosSelector[0], TxtCaracteristicasElem, 'propSelectEntDep') == 'true') {
+                if (that.GetCaracteristicaPropiedad(datosSelector[1], datosSelector[0], that.txtCaracteristicasElem, 'propSelectEntDep') == 'true') {
                     that.DeshabilitarSelectoresDependientes(datosSelector[0], datosSelector[1])
                 }
             }
         }).fail(function (data) {
-            MostrarErrorPropiedad(pEntidad, pPropiedad, data, TxtRegistroIDs);
+            MostrarErrorPropiedad(pEntidad, pPropiedad, data, that.txtRegistroIDs);
         }).always(function () {
             loadingOcultar();
         });
@@ -1329,20 +1329,20 @@ const operativaGestionObjetosConocimientoOntologias = {
     
     DeshabilitarSelectoresDependientes: function(pPropiedad, pEntidad) {
         const that = this;
-        var propsDepen = that.GetCaracteristicaPropiedad(pEntidad, pPropiedad, TxtCaracteristicasElem, 'propSelectEntDependiente');
+        var propsDepen = that.GetCaracteristicaPropiedad(pEntidad, pPropiedad, that.txtCaracteristicasElem, 'propSelectEntDependiente');
     
         if (propsDepen != null && propsDepen != '') {
             var props = propsDepen.split(';;');
             for (var i = 0; i < props.length - 1; i++) {
                 var entHija = props[i].split(';')[1];
                 var propHija = props[i].split(';')[0];
-                that.LimpiarControlesPropiedadDeEntidad(entHija, propHija, TxtValorRdf, TxtRegistroIDs, TxtCaracteristicasElem, TxtElemEditados);                
-                var idControl = that.ObtenerControlEntidadProp(entHija + ',' + propHija, TxtRegistroIDs);
+                that.LimpiarControlesPropiedadDeEntidad(entHija, propHija, TxtValorRdf, that.txtRegistroIDs, that.txtCaracteristicasElem, TxtElemEditados);                
+                var idControl = that.ObtenerControlEntidadProp(entHija + ',' + propHija, that.txtRegistroIDs);
                 if (idControl != '')
                 {
                     $('#' + idControl).attr('disabled', 'disabled');
                 }    
-                if (that.GetCaracteristicaPropiedad(entHija, propHija, TxtCaracteristicasElem, 'propSelectEntDep') == 'true') {
+                if (that.GetCaracteristicaPropiedad(entHija, propHija, that.txtCaracteristicasElem, 'propSelectEntDep') == 'true') {
                     that.DeshabilitarSelectoresDependientes(propHija, entHija);
                 }
             }
@@ -1750,7 +1750,7 @@ const operativaGestionObjetosConocimientoOntologias = {
             valorProp = that.GetValorDecode(valorProp);
             
             if (that.EsPropiedadMultiIdioma(pEntidad, pPropiedad)) {
-                var idControlCampoPes = that.ObtenerControlEntidadProp(pEntidad + ',' + pPropiedad, TxtRegistroIDs).replace('Campo_', 'divContPesIdioma_');
+                var idControlCampoPes = that.ObtenerControlEntidadProp(pEntidad + ',' + pPropiedad, that.txtRegistroIDs).replace('Campo_', 'divContPesIdioma_');
 
                 if (document.getElementById(idControlCampoPes) != null) {
                     var li = $('li.active', $('#' + idControlCampoPes));
@@ -2034,7 +2034,7 @@ const operativaGestionObjetosConocimientoOntologias = {
         }
 
         if (that.EsPropiedadMultiIdioma(pEntidad, pPropiedad)) {
-            var idControlCampoPes = that.ObtenerControlEntidadProp(pEntidad + ',' + pPropiedad, TxtRegistroIDs).replace('Campo_', 'divContPesIdioma_');
+            var idControlCampoPes = that.ObtenerControlEntidadProp(pEntidad + ',' + pPropiedad, pTxtIDs).replace('Campo_', 'divContPesIdioma_');
 
             if (document.getElementById(idControlCampoPes) != null) {
                 var li = $('li.active', $('#' + idControlCampoPes));
@@ -2070,7 +2070,7 @@ const operativaGestionObjetosConocimientoOntologias = {
         if (valor != '' && that.ComprobarValorCampoCorrecto(pEntidad, pPropiedad, valor, pTxtIDs, pTxtCaract))
         {
             if (that.EsPropiedadMultiIdioma(pEntidad, pPropiedad)) {
-                var idControlCampoPes = that.ObtenerControlEntidadProp(pEntidad + ',' + pPropiedad, TxtRegistroIDs).replace('Campo_', 'divContPesIdioma_');
+                var idControlCampoPes = that.ObtenerControlEntidadProp(pEntidad + ',' + pPropiedad, that.txtRegistroIDs).replace('Campo_', 'divContPesIdioma_');
     
                 if (document.getElementById(idControlCampoPes) != null) {
                     var li = $('li.active', $('#' + idControlCampoPes));
@@ -5216,7 +5216,7 @@ const operativaGestionObjetosConocimientoOntologias = {
     },
     
     GetUrlContent: function() {
-        var caract = that.TxtCaracteristicasElem.val(); // document.getElementById(TxtCaracteristicasElem).value;
+        var caract = that.txtCaracteristicasElem.val(); // document.getElementById(TxtCaracteristicasElem).value;
         caract = caract.substring(caract.indexOf('$baseUrlContent='));
         return caract.substring(0, caract.indexOf('|')).replace('$baseUrlContent=', '') + '/';
     },
@@ -6950,7 +6950,7 @@ const operativaGestionObjetosConocimientoOntologias = {
     EliminarValoresGrafoDependientes: function (pEntidad, pPropiedad, pDeshabilitar, pRecursivo) {
         const that = this;
         
-        const idControlCampo = that.ObtenerControlEntidadProp(pEntidad + ',' + pPropiedad, TxtRegistroIDs);
+        const idControlCampo = that.ObtenerControlEntidadProp(pEntidad + ',' + pPropiedad, that.txtRegistroIDs);
         //var valorBorrar = document.getElementById(idControlCampo).value;
         document.getElementById(idControlCampo).value = '';
     
@@ -6980,7 +6980,7 @@ const operativaGestionObjetosConocimientoOntologias = {
 
     GetEsPropiedadGrafoDependienteSinPadres: function(pEntidad, pPropiedad) {
         const that = this;        
-        return (that.GetCaracteristicaPropiedad(pEntidad, pPropiedad, TxtCaracteristicasElem, 'propGrafoDepSinPadres') != null);
+        return (that.GetCaracteristicaPropiedad(pEntidad, pPropiedad, that.txtCaracteristicasElem, 'propGrafoDepSinPadres') != null);
     },   
 
     HabilitarCamposGrafoDependientes: function(pEntidad, pPropiedad) {
@@ -6989,7 +6989,7 @@ const operativaGestionObjetosConocimientoOntologias = {
         const pronEntDep = that.GetPropiedadesDependientes(pEntidad, pPropiedad);
     
         if (pronEntDep != null) {
-            var idControlAuto = that.ObtenerControlEntidadProp(pronEntDep[1] + ',' + pronEntDep[0], TxtRegistroIDs).replace("Campo_", "hack_");
+            var idControlAuto = that.ObtenerControlEntidadProp(pronEntDep[1] + ',' + pronEntDep[0], that.txtRegistroIDs).replace("Campo_", "hack_");
             document.getElementById(idControlAuto).disabled = false;
         }
     },
@@ -6998,7 +6998,7 @@ const operativaGestionObjetosConocimientoOntologias = {
     GetPropiedadesDependientes: function(pEntidad, pPropiedad){
         const that = this;
 
-        var propEnt = that.GetCaracteristicaPropiedadMultiplesValores(pEntidad, pPropiedad, TxtCaracteristicasElem, 'propEntDependiente', 2);
+        var propEnt = that.GetCaracteristicaPropiedadMultiplesValores(pEntidad, pPropiedad, that.txtCaracteristicasElem, 'propEntDependiente', 2);
     
         if (propEnt != null) {
             var array = propEnt.split(',');
@@ -7089,7 +7089,7 @@ const operativaGestionObjetosConocimientoOntologias = {
         if (valor != '' && that.ComprobarValorCampoCorrecto(pEntidad, pPropiedad, valor, pTxtIDs, pTxtCaract))
         {            
             if (that.EsPropiedadMultiIdioma(pEntidad, pPropiedad)) {
-                var idControlCampoPes = that.ObtenerControlEntidadProp(pEntidad + ',' + pPropiedad, TxtRegistroIDs).replace('Campo_', 'divContPesIdioma_');
+                var idControlCampoPes = that.ObtenerControlEntidadProp(pEntidad + ',' + pPropiedad, that.txtRegistroIDs).replace('Campo_', 'divContPesIdioma_');
     
                 if (document.getElementById(idControlCampoPes) != null) {
                     var li = $('li.active', $('#' + idControlCampoPes));
@@ -7098,7 +7098,7 @@ const operativaGestionObjetosConocimientoOntologias = {
                     
                     valor = that.IncluirTextoIdiomaEnCadena(valorAntiguo, that.GetValorEncode(valor), idiomaActual);
                     
-                    if (!ComprobarMultiIdiomaCorrectoTexto(pEntidad, pPropiedad, valor)) {
+                    if (!that.ComprobarMultiIdiomaCorrectoTexto(pEntidad, pPropiedad, valor)) {
                         return;
                     }
     
@@ -7682,7 +7682,7 @@ const operativaGestionObjetosConocimientoOntologias = {
                 }
             }
             else if (that.EsPropiedadMultiIdioma(pEntidad, pPropiedad)) {//Con pestaña por eliminación
-                var controlPropMulti = that.ObtenerControlEntidadProp(pEntidad + ',' + pPropiedad, TxtRegistroIDs);
+                var controlPropMulti = that.ObtenerControlEntidadProp(pEntidad + ',' + pPropiedad, that.txtRegistroIDs);
             
                 if (controlPropMulti != null) {
                     var idControlCampoPes = controlPropMulti.replace('Campo_', 'divContPesIdioma_');
@@ -7869,7 +7869,7 @@ const operativaGestionObjetosConocimientoOntologias = {
             camposCorrectos = camposCorrectos && campoCorrecto;
     
             if (campoCorrecto && that.EsPropiedadMultiIdioma(pEntidad, pPropiedad)) {
-                var idControlCampoPes = that.ObtenerControlEntidadProp(pEntidad + ',' + pPropiedad, TxtRegistroIDs).replace('Campo_', 'divContPesIdioma_');
+                var idControlCampoPes = that.ObtenerControlEntidadProp(pEntidad + ',' + pPropiedad, that.txtRegistroIDs).replace('Campo_', 'divContPesIdioma_');
     
                 if (document.getElementById(idControlCampoPes) != null) {
                     var li = $('li.active', $('#' + idControlCampoPes));
@@ -8293,7 +8293,7 @@ const operativaGestionObjetosConocimientoOntologias = {
         const that = this;
         
         if (that.EsPropiedadMultiIdioma(pEntidad, pPropiedad)) {            
-            const idControlCampo = that.ObtenerControlEntidadProp(pEntidad + ',' + pPropiedad, TxtRegistroIDs);
+            const idControlCampo = that.ObtenerControlEntidadProp(pEntidad + ',' + pPropiedad, that.txtRegistroIDs);
         
             return (document.getElementById(idControlCampo.replace('Campo_', 'divContPesIdioma_')) == null);
         }
@@ -8302,10 +8302,10 @@ const operativaGestionObjetosConocimientoOntologias = {
     
     ComprobarMultiIdiomaCorrectoTexto: function(pEntidad, pPropiedad, pTexto){
         const that = this;
-        const tipoProp = that.GetTipoPropiedad(pEntidad, pPropiedad, TxtCaracteristicasElem);
+        const tipoProp = that.GetTipoPropiedad(pEntidad, pPropiedad, that.txtCaracteristicasElem);
         
-        if (pTexto != null && pTexto != '' && pTexto.indexOf('@' + IdiomaDefectoFormSem + '[|lang|]') == -1 && (tipoProp == 'FD' || that.CardinalidadElementoMayorOIgualUno(pEntidad, pPropiedad, TxtCaracteristicasElem))) {
-            that.MostrarErrorPropiedad(pEntidad, pPropiedad, textoFormSem.propSinIdiomaDefecto, TxtRegistroIDs);
+        if (pTexto != null && pTexto != '' && pTexto.indexOf('@' + IdiomaDefectoFormSem + '[|lang|]') == -1 && (tipoProp == 'FD' || that.CardinalidadElementoMayorOIgualUno(pEntidad, pPropiedad, that.txtCaracteristicasElem))) {
+            that.MostrarErrorPropiedad(pEntidad, pPropiedad, textoFormSem.propSinIdiomaDefecto, that.txtRegistroIDs);
             return false;
         }
         return true;    
