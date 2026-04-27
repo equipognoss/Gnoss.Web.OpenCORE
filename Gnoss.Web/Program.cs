@@ -12,6 +12,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.FileProviders;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Primitives;
 using Serilog;
 using System;
 using System.IO;
@@ -53,12 +54,12 @@ namespace Gnoss.Web
                 .ConfigureServices((context, services) =>
                 {
                     LoggingService.SuscribirCambios(context, _startupLogger);
-                    _startupLogger.Information("Suscripción a cambios de configuración registrada");
+                    _startupLogger.Information("SuscripciÃ³n a cambios de configuraciÃ³n registrada");
                 })
                 .ConfigureWebHostDefaults(webBuilder =>
                 {
                     webBuilder.UseStartup<Startup>();
-                    webBuilder.ConfigureKestrel(options => options.Limits.MaxRequestBodySize = 1000000000); // Maximo tamaño de subida ~ 1Gb
+                    webBuilder.ConfigureKestrel(options => options.Limits.MaxRequestBodySize = 1000000000); // Maximo tamaï¿½o de subida ~ 1Gb
                     AppContext.SetSwitch("Npgsql.EnableLegacyTimestampBehavior", true);
                 });
 

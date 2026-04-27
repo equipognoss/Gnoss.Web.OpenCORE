@@ -1,5 +1,6 @@
 ﻿using Es.Riam.AbstractsOpen;
 using Es.Riam.Gnoss.AD.BASE_BD;
+using Es.Riam.Gnoss.AD.EncapsuladoDatos;
 using Es.Riam.Gnoss.AD.EntityModel;
 using Es.Riam.Gnoss.AD.EntityModelBASE;
 using Es.Riam.Gnoss.AD.ServiciosGenerales;
@@ -7,10 +8,16 @@ using Es.Riam.Gnoss.AD.Virtuoso;
 using Es.Riam.Gnoss.CL;
 using Es.Riam.Gnoss.CL.ServiciosGenerales;
 using Es.Riam.Gnoss.Elementos.ParametroGeneralDSEspacio;
+using Es.Riam.Gnoss.Logica.ParametroAplicacion;
+using Es.Riam.Gnoss.Logica.Peticion;
 using Es.Riam.Gnoss.Logica.ServiciosGenerales;
+using Es.Riam.Gnoss.Logica.Usuarios;
 using Es.Riam.Gnoss.Util.Configuracion;
 using Es.Riam.Gnoss.Util.General;
+using Es.Riam.Gnoss.UtilServiciosWeb;
 using Es.Riam.Gnoss.Web.Controles.Proyectos;
+using Es.Riam.Gnoss.Web.Controles.ServiciosGenerales;
+using Es.Riam.Gnoss.Web.MVC.Models.Administracion;
 using Es.Riam.Interfaces.InterfacesOpen;
 using Es.Riam.InterfacesOpen;
 using Es.Riam.Util;
@@ -19,13 +26,9 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Infrastructure;
 using Microsoft.AspNetCore.Mvc.ViewEngines;
+using Microsoft.Extensions.Hosting;
 using System;
 using System.Collections.Generic;
-using System.Linq;
-using Es.Riam.Gnoss.Web.MVC.Models.Administracion;
-using Es.Riam.Gnoss.AD.EncapsuladoDatos;
-using Es.Riam.Gnoss.Logica.Peticion;
-using System.Net;
 using System.Diagnostics;
 using Es.Riam.Gnoss.UtilServiciosWeb;
 using Es.Riam.Gnoss.Web.Controles.ServiciosGenerales;
@@ -36,6 +39,10 @@ using Microsoft.Extensions.Logging;
 using Serilog.Core;
 using Es.Riam.Gnoss.Elementos.Amigos;
 using Es.Riam.Gnoss.Elementos.ServiciosGenerales;
+using System.Linq;
+using System.Net;
+using System.Text.RegularExpressions;
+
 
 namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
 {
@@ -95,15 +102,15 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
             GuardarLogAuditoria();
             if (!string.IsNullOrEmpty(Name) && !string.IsNullOrEmpty(ShortName) && !string.IsNullOrEmpty(UserName) && !string.IsNullOrEmpty(UserEmail) && !string.IsNullOrEmpty(UserPassword) && !string.IsNullOrEmpty(UrlProyectosPublicos))
             {
-                string error = ComprobarErroresConfiguracionInicial(UserName, ShortName);
+                string error = ComprobarErroresConfiguracionInicial(UserName, ShortName, UserEmail, UserPassword);
                 if (!string.IsNullOrEmpty(error))
                 {
                     return GnossResultERROR(error);
                 }
 
                 #region Actualizar los parámetros de UrlIntragnoss y UrlsPropiasProyecto
-                ParametroAplicacionCN parametroAplicacionCN = new ParametroAplicacionCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<ParametroAplicacionCN>(), mLoggerFactory);
 
+                ParametroAplicacionCN parametroAplicacionCN = new ParametroAplicacionCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<ParametroAplicacionCN>(), mLoggerFactory);
                 parametroAplicacionCN.ActualizarParametroAplicacion("UrlIntragnoss", UrlIntraGnoss);
 
                 string urlPropia = string.Empty;
@@ -120,16 +127,19 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
                 }
 
                 parametroAplicacionCN.ActualizarParametroAplicacion("UrlsPropiasProyecto", urlPropiasProyecto);
+
                 #endregion
 
                 #region Crear la comunidad
-                
+
                 CrearComunidad(Name, ShortName, Type, urlPropia);
-                
+
                 #endregion
 
                 #region Modificar los datos del administrador por defecto
+
                 EstablecerUsuarioAdministrador(UserName, UserEmail, UserPassword);
+
                 #endregion
             }
             else
@@ -142,7 +152,6 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
 
         private void EstablecerUsuarioAdministrador(string pNombreUsuario, string pEmail, string pPassword)
         {
-            string error = string.Empty;
             UsuarioCN usuarioCN = new UsuarioCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<UsuarioCN>(), mLoggerFactory);
 
             try
@@ -152,8 +161,6 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
                 usuarioCN.EstablecerLoginUsuario(usuarioID, pNombreUsuario);
                 EstablecerEmailUsuario(pEmail, usuarioID);
                 usuarioCN.EstablecerPasswordUsuario(usuarioID, pPassword);
-
-                mEntityContext.SaveChanges();
             }
             catch (Exception ex)
             {
@@ -166,16 +173,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
             PersonaCN personaCN = new PersonaCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<PersonaCN>(), mLoggerFactory);
             DataWrapperPersona dataWrapperPersona = personaCN.ObtenerPersonaPorUsuario(pUsuarioID);
             AD.EntityModel.Models.PersonaDS.Persona filaPersona = dataWrapperPersona?.ListaPersona.Find(persona => persona.UsuarioID.Equals(pUsuarioID));
-
-            if (UtilCadenas.ValidarEmail(pEmail))
-            {
-                personaCN.ModificarCorreoPersona(filaPersona.PersonaID, pEmail);
-            }
-            else
-            {
-                throw new BadHttpRequestException($"El email introducido no es válido: {pEmail}");
-            }
-
+            personaCN.ModificarCorreoPersona(filaPersona.PersonaID, pEmail);
             personaCN.Dispose();
         }
 
@@ -261,14 +259,41 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
         /// </summary>
         /// <param name="pUserShortName">Nombre corto del usuario administrador (Login)</param>
         /// <param name="pCommunityShortName">Nombre corto de la comunidad a crear</param>
+        /// <param name="pEmail">Email introducido por el usuario</param>
+        /// <param name="pPassword">Contraseña introducida por el usuario</param>
         /// <returns>Devuelve el error en caso de haberlo, si no lo hay devuelve una cadena vacía</returns>
-        private string ComprobarErroresConfiguracionInicial(string pUserShortName, string pCommunityShortName)
-        {            
-            if(pUserShortName.Length < 3 || pUserShortName.Length > 12)
+        private string ComprobarErroresConfiguracionInicial(string pUserShortName, string pCommunityShortName, string pEmail, string pPassword)
+        {
+            return ComprobarLongitudNombreCortoUsuario(pUserShortName)
+                ?? ComprobarNombreCortoComunidad(pCommunityShortName)
+                ?? ComprobarEmailCorrecto(pEmail)
+                ?? ComprobarPasswordCorrecta(pPassword)
+                ?? string.Empty;
+        }
+
+        /// <summary>
+        /// Se comprubea que el nombre corto del usuario tenga la longitud permitida (entre 3 y 12 caracteres).
+        /// </summary>
+        /// <param name="pUserShortName">Nombre corto del usuaio a comprobar</param>
+        /// <returns>El error detectado en caso de haberlo. Si no hay error devuelve null.</returns>
+        private string? ComprobarLongitudNombreCortoUsuario(string pUserShortName)
+        {
+            if (pUserShortName.Length < 3 || pUserShortName.Length > 12)
             {
                 return UtilIdiomas.GetText("DEVTOOLS", "CARACTERESMINIMOSMAXIMOSNOMBRECORTOUSUARIO");
             }
 
+            return null;
+        }
+
+        /// <summary>
+        /// Se comprueba que el nombre corto de la comunidad a crear no existe ya en la base de datos ni se ha solicitado una 
+        /// comunidad con el mismo nombre pendiente de ser aceptada.
+        /// </summary>
+        /// <param name="pCommunityShortName">Nombre corto de la comunidad a comprobar</param>
+        /// <returns>El error detectado en caso de haberlo. Si no hay error devuelve null.</returns>
+        private string? ComprobarNombreCortoComunidad(string pCommunityShortName)
+        {
             using (ProyectoCN proyectoCN = new ProyectoCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<ProyectoCN>(), mLoggerFactory))
             using (PeticionCN peticionCN = new PeticionCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<PeticionCN>(), mLoggerFactory))
             {
@@ -278,7 +303,45 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
                 }
             }
 
-            return string.Empty;
+            return null;
+        }
+
+        /// <summary>
+        /// Comprueba que el email introducido para el usuario administrador tiene un formato correcto.
+        /// </summary>
+        /// <param name="pEmail">Email introduccido por el usuario a comprobar</param>
+        /// <returns>El error detectado en caso de haberlo. Si no hay error devuelve null.</returns>
+        private string? ComprobarEmailCorrecto(string pEmail)
+        {
+            if (!UtilCadenas.ValidarEmail(pEmail))
+            {
+                return UtilIdiomas.GetText("DEVTOOLS", "EMAILNOVALIDO", pEmail);
+            }
+
+            return null;
+        }
+
+        /// <summary>
+        /// Comprueba que la contraseña introducida cumple los requisitos de seguridad (entre 6 y 12 caracteres, al menos una letra y un número, 
+        /// no puede contener espacios ni caracteres especiales excepto #_$*).
+        /// </summary>
+        /// <param name="pPassword">Contraseña introducida por el usuario a comprobar</param>
+        /// <returns>El error detectado en caso de haberlo. Si no hay error devuelve null.</returns>
+        private string? ComprobarPasswordCorrecta(string pPassword) 
+        {
+            Regex expresionRegular = new Regex(@"(?!^[0-9]*$)(?!^[a-zA-ZñÑüÜ]*$)^([a-zA-ZñÑüÜ0-9#_$*]{6,12})$");
+            //Password nula
+            if (pPassword == null)
+                return UtilIdiomas.GetText("DEVTOOLS", "CONTRASEÑANULANOVALIDA");
+
+            //Password con espacios
+            if (pPassword.Contains(" "))
+                return UtilIdiomas.GetText("DEVTOOLS", "CONTRASEÑANOVALIDAESPACIO");
+
+            if (!expresionRegular.IsMatch(pPassword))
+                return UtilIdiomas.GetText("DEVTOOLS", "CONTRASEÑACONFIGURACIONPERMITIDA");
+
+            return null;
         }
     }
 }
