@@ -4491,9 +4491,9 @@ function EliminarArchivoDePropiedad(pEntidad, pPropiedad, pTxtValores, pTxtIDs, 
 function ObtenerEntidadPropiedadSegunID(idCampoControl, pTxtIDs){
     var ids = $('#' + pTxtIDs).val();
     
-    if (ids.indexOf(idCampoControl) != -1)
+    if (ids.indexOf(idCampoControl+'|') != -1)
     {
-        ids = ids.substring(0, ids.indexOf(idCampoControl) - 1);
+        ids = ids.substring(0, ids.indexOf(idCampoControl + '|') - 1);
         ids = ids.substring(ids.lastIndexOf('|') + 1);
         return ids.split(',');
     }
