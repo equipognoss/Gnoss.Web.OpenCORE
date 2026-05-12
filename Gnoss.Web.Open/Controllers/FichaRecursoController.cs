@@ -4424,7 +4424,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                 docCN.Dispose();
                 Elementos.Documentacion.Documento docMejora = GestorDocumental.CrearNuevaVersionDocumento(Documento, IdentidadActual, pEsMejora: true);
 				ControladorDocumentacion controladorDocumentacion = new ControladorDocumentacion(mLoggingService, mEntityContext, mConfigService, mRedisCacheWrapper, mGnossCache, mEntityContextBASE, mVirtuosoAD, mHttpContextAccessor, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<ControladorDocumentacion>(), mLoggerFactory);
-                controladorDocumentacion.IniciarMejoraSobreDocumento(Documento, docMejora, UsuarioActual, IdentidadOrganizacionBROrg, ProyectoSeleccionado.Clave != ProyectoAD.MetaProyecto, GenPlantillasOWL.Ontologia);
+                controladorDocumentacion.IniciarMejoraSobreDocumento(Documento, docMejora, UsuarioActual, IdentidadOrganizacionBROrg, ProyectoSeleccionado.Clave != ProyectoAD.MetaProyecto, GenPlantillasOWL?.Ontologia);
                 string urlMejora = $"{mControladorBase.UrlsSemanticas.GetURLBaseRecursosFichaConIDs(BaseURLIdioma, UtilIdiomas, ProyectoSeleccionado.NombreCorto, UrlPerfil, UtilCadenas.EliminarCaracteresUrlSem(Documento.Titulo), Documento.VersionOriginalID, Documento.ElementoVinculadoID, false)}/{docMejora.Clave}";
                 ResourceEvent publicarModificarEliminarRecursoModel = new ResourceEvent(ProyectoSeleccionado.Clave, Documento.Clave, Documento.VersionOriginalID, mControladorBase.UsuarioActual.UsuarioID, Documento.Fecha);
                 publicarModificarEliminarRecursoModel.ImprovementLink = urlMejora;

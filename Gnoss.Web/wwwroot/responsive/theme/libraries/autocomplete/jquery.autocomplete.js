@@ -1122,6 +1122,24 @@ $.Autocompleter.Select = function (options, input, select, pintar, config) {
 			? options.max
 			: available;
 	}
+
+	function getAutocompleteType(options) {
+		if (options == null) {
+			return -1;
+		}
+
+		if (options.metodo == 'AutoCompletarTipado') {
+			// Autocompletar buscador
+			return 0;
+		}
+		else if (options.url != null && options.url.includes('AutoCompletarSeleccEntDocSem')) {
+			//Autocompletar selector de entidad
+			return 1;
+		}
+		else {
+			return -1;
+		}
+	}
 	
 	/**
 	 * Llena la lista de resultados de autocompletado con los datos proporcionados.
@@ -1130,6 +1148,7 @@ $.Autocompleter.Select = function (options, input, select, pintar, config) {
 	 */	
 	function fillList() {
 		list.empty();
+		var autocompleteType = getAutocompleteType(options)
 		var max = limitNumberOfItems(data.length);
 		for (var i=0; i < max; i++) {			
 			if (typeof autocompleteFillListItem === 'function' && options.useCustomFill){
@@ -1151,7 +1170,7 @@ $.Autocompleter.Select = function (options, input, select, pintar, config) {
 				var formatted = options.formatItem(data[i].data, i+1, max, data[i].value, term);
 				if ( formatted === false )
 					continue;
-				if (i == 0) {
+				if (i == 0 && autocompleteType == 0) {
 					var li = $("<li/>").html(options.highlight(formatted, term)).addClass("buttons-search-wrap").appendTo(list)[0];
 				}
 				else {

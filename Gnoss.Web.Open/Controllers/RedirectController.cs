@@ -551,9 +551,9 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                     urlRedireccion = $"/{urlRedireccion}";
                 }
 
-                if(!string.IsNullOrEmpty(filtrosOriginales) && filaRedireccion.RedireccionValorParametro != null && filaRedireccion.RedireccionValorParametro.Any() && filaRedireccion.RedireccionValorParametro.First().MantenerFiltros)
+                if(!string.IsNullOrEmpty(filtrosOriginales) && filaRedireccion != null && filaRedireccion.RedireccionValorParametro != null && filaRedireccion.RedireccionValorParametro.Any() && filaRedireccion.RedireccionValorParametro.First().MantenerFiltros)
                 {
-                    urlRedireccion = urlRedireccion + filtrosOriginales;
+                    urlRedireccion = ObtenerUrlRedireccionConFiltros(filtrosOriginales, urlRedireccion);
                 }
 
                 return RedirectPermanent(urlRedireccion);
@@ -667,6 +667,30 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
             }
 
             return listaParams;
+        }
+
+        /// <summary>
+        /// Obtiene los parámetros de la url original y los añade a la url de la redirección de haberlos configurado. En caso
+        /// de haber parámetros repetidos prevalecerán los configurados en la redirección.
+        /// </summary>
+        /// <param name="pFiltrosOriginales">Filtros de la url original buscada</param>
+        /// <param name="pUrlRedireccionFinal">Url configurada en la redirección.</param>
+        /// <returns>La url a redirigir con el conjunto de parámetros originales y configurados en la redirección</returns>
+        private static string ObtenerUrlRedireccionConFiltros(string pFiltrosOriginales, string pUrlRedireccionFinal)
+        {
+            string[] urlConParametros = pUrlRedireccionFinal.Split('?');
+            string url = urlConParametros[0];
+            string[] parametros = urlConParametros[1].Split('&');
+
+            string[] parametrosOriginales = pFiltrosOriginales.Trim('?').Split('&');
+
+            Dictionary<string, string> dicParametrosFinales = parametros.Select(parametro => parametro.Split('=')).ToDictionary(item => item[0], item => item[1]);
+            Dictionary<string, string> dicParametrosOriginales = parametrosOriginales.Select(parametros => parametros.Split('=')).Where(item => !dicParametrosFinales.ContainsKey(item[0])).ToDictionary(item => item[0], item => item[1]);
+
+            Dictionary<string, string> conjuntoParametros = dicParametrosFinales.Concat(dicParametrosOriginales).ToDictionary(item => item.Key, item => item.Value);
+
+            string urlFinal = $"{url}?{string.Join('&', conjuntoParametros.Select(item => $"{item.Key}={item.Value}"))}";
+            return urlFinal;
         }
     }
 }

@@ -231,35 +231,43 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
         [TypeFilter(typeof(UsuarioLogueadoAttribute), Arguments = new object[] { RolesUsuario.AdministradorOrganizacion })]
         public ActionResult LoadAsignCommunity(Guid personaID)
         {
-            ProyectoCN proyectoCN = new ProyectoCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<ProyectoCN>(), mLoggerFactory);
-
-            List<UsuarioAdministradorComunidad> lista = proyectoCN.CargarProyectosParticipaPersonaOrg(IdentidadActual.OrganizacionID.Value, personaID);
-
-            List<ProyectosUsuViewModel> proyectosParticipante = new List<ProyectosUsuViewModel>();
-
-            foreach (UsuarioAdministradorComunidad filaProyecto in lista)
+            if (IdentidadActual.OrganizacionID.HasValue)
             {
-                bool estaEnProyecto = filaProyecto.Tipo != null;
-                bool esAdmin = false;
-                short tipoParticipacion = -1;
-                if (estaEnProyecto)
+
+
+                ProyectoCN proyectoCN = new ProyectoCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<ProyectoCN>(), mLoggerFactory);
+
+                List<UsuarioAdministradorComunidad> lista = proyectoCN.CargarProyectosParticipaPersonaOrg(IdentidadActual.OrganizacionID.Value, personaID);
+
+                List<ProyectosUsuViewModel> proyectosParticipante = new List<ProyectosUsuViewModel>();
+
+                foreach (UsuarioAdministradorComunidad filaProyecto in lista)
                 {
-                    tipoParticipacion = (short)filaProyecto.Tipo;
-                    esAdmin = ((int)filaProyecto.Administrador).Equals(1);
+                    bool esAdmin = false;
+                    short tipoParticipacion = -1;
+                    if (filaProyecto.EstaEnProyecto && filaProyecto.Tipo.HasValue)
+                    {
+                        tipoParticipacion = filaProyecto.Tipo.Value;
+                        esAdmin = filaProyecto.Administrador;
+                    }
+
+                    ProyectosUsuViewModel proyParticipa = new ProyectosUsuViewModel();
+                    proyParticipa.Key = filaProyecto.ProyectoID;
+                    proyParticipa.Nombre = UtilCadenas.ObtenerTextoDeIdioma(filaProyecto.Nombre, IdiomaUsuario, IdiomaPorDefecto);
+                    proyParticipa.Participa = filaProyecto.EstaEnProyecto;
+                    proyParticipa.TipoParticipacion = tipoParticipacion;
+                    proyParticipa.Administra = esAdmin;
+
+                    proyectosParticipante.Add(proyParticipa);
                 }
 
-                ProyectosUsuViewModel proyParticipa = new ProyectosUsuViewModel();
-                proyParticipa.Key = filaProyecto.ProyectoID;
-                proyParticipa.Nombre = UtilCadenas.ObtenerTextoDeIdioma(filaProyecto.Nombre, IdiomaUsuario, IdiomaPorDefecto);
-                proyParticipa.Participa = estaEnProyecto;
-                proyParticipa.TipoParticipacion = tipoParticipacion;
-                proyParticipa.Administra = esAdmin;
 
-                proyectosParticipante.Add(proyParticipa);
+                return PartialView("_AccionesUsuOrg", proyectosParticipante);
             }
-
-
-            return PartialView("_AccionesUsuOrg", proyectosParticipante);
+            else
+            {
+                return PartialView("_AccionesUsuOrg", new List<ProyectosUsuViewModel>());
+            }
         }
 
         /// <summary>
@@ -279,14 +287,13 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
             foreach (UsuarioAdministradorComunidad filaProyecto in lista)
             {
                 Guid proyectoID = filaProyecto.ProyectoID;
-                bool estaEnProyecto = filaProyecto.Tipo != null;
+               
                 bool esAdmin = false;
                 short tipoParticipacion = -1;
-                if (estaEnProyecto)
+                if (filaProyecto.EstaEnProyecto && filaProyecto.Tipo.HasValue)
                 {
-                    tipoParticipacion = (short)filaProyecto.Tipo;
-                    esAdmin = ((int)filaProyecto.Administrador).Equals(1);
-
+                    tipoParticipacion = filaProyecto.Tipo.Value;
+                    esAdmin = filaProyecto.Administrador;
                     proyectosParticipa.Add(proyectoID, tipoParticipacion);
 
                     if (esAdmin)
@@ -295,7 +302,6 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                     }
                 }
             }
-
 
             PersonaCN personaCN = new PersonaCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<PersonaCN>(), mLoggerFactory);
             GestionPersonas gestPersonas = new GestionPersonas(personaCN.ObtenerPersonaPorID(personaID), mLoggingService, mEntityContext);
