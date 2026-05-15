@@ -1364,7 +1364,7 @@
 		</pagina>
 		<pagina>
 			<key>@#@@URLSEM,|,ADMINISTRARTRADUCTORECOSISTEMA@@#@</key>
-			<value>UpgradeVersion/Index</value>
+			<value>UpgradeVersion/Index?metodo=ADMINISTRARTRADUCTORECOSISTEMA?ecosistema=true</value>
 		</pagina>
 	</seccion>
 	<seccion name="metaproyecto">
@@ -1804,11 +1804,11 @@
 		</pagina>
 		<pagina>
 			<key>@#@@URLSEM,|,ADMINISTRAREVENTOSEXTERNOSECOSISTEMA@@#@</key>
-			<value>UpgradeVersion/Index</value>
+			<value>UpgradeVersion/Index?metodo=ADMINISTRAREVENTOSEXTERNOSECOSISTEMA?ecosistema=true</value>
 		</pagina>
 		<pagina>
 			<key>@#@@URLSEM,|,ADMINISTRARDESCARGARCONFIGURACIONECOSISTEMA@@#@</key>
-			<value>UpgradeVersion/Index</value>
+			<value>UpgradeVersion/Index?metodo=ADMINISTRARDESCARGARCONFIGURACIONECOSISTEMA?ecosistema=true</value>
 		</pagina>
 	</seccion>
 	<seccion name="acercaYaprende">
@@ -3564,63 +3564,63 @@
 		</pagina>
 		<pagina>
 			<key>@#@@URLSEM,|,ADMINISTRARCONFIGURACIONPESOBUSQUEDAS@@#@</key>
-			<value>UpgradeVersion/Index</value>
+			<value>UpgradeVersion/Index?metodo=ADMINISTRARCONFIGURACIONPESOBUSQUEDAS</value>
 		</pagina>
 		<pagina>
 			<key>@#@@URLSEM,|,ADMINISTRARESTADOSISTEMAS@@#@</key>
-			<value>UpgradeVersion/Index</value>
+			<value>UpgradeVersion/Index?metodo=ADMINISTRARESTADOSISTEMAS</value>
 		</pagina>
 		<pagina>
 			<key>@#@@URLSEM,|,ADMINISTRAREVENTOSEXTERNOS@@#@</key>
-			<value>UpgradeVersion/Index</value>
+			<value>UpgradeVersion/Index?metodo=ADMINISTRAREVENTOSEXTERNOS</value>
 		</pagina>
 		<pagina>
 			<key>@#@@URLSEM,|,ADMINISTRARMATOMO@@#@</key>
-			<value>UpgradeVersion/Index</value>
+			<value>UpgradeVersion/Index?metodo=ADMINISTRARMATOMO</value>
 		</pagina>
 		<pagina>
 			<key>@#@@URLSEM,|,CONSULTACARGAMASIVA@@#@</key>
-			<value>UpgradeVersion/Index</value>
+			<value>UpgradeVersion/Index?metodo=CONSULTACARGAMASIVA</value>
 		</pagina>
 		<pagina>
 			<key>@#@@URLSEM,|,ADMINISTRARINTEGRACIONCONTINUA@@#@</key>
-			<value>UpgradeVersion/Index</value>
+			<value>UpgradeVersion/Index?metodo=ADMINISTRARINTEGRACIONCONTINUA</value>
 		</pagina>
 		<pagina>
 			<key>@#@@URLSEM,|,CONFIGURARINTEGRACIONCONTINUAINCIAL@@#@</key>
-			<value>UpgradeVersion/Index</value>
+			<value>UpgradeVersion/Index?metodo=CONFIGURARINTEGRACIONCONTINUAINCIAL</value>
 		</pagina>
 		<pagina>
 			<key>@#@@URLSEM,|,CONFIGURARINTEGRACIONCONTINUAREPOSITORIO@@#@</key>
-			<value>UpgradeVersion/Index</value>
+			<value>UpgradeVersion/Index?metodo=CONFIGURARINTEGRACIONCONTINUAREPOSITORIO</value>
 		</pagina>
 		<pagina>
 			<key>@#@@URLSEM,|,DIAGNOSTICOPROBLEMAS@@#@</key>
-			<value>UpgradeVersion/Index</value>
+			<value>UpgradeVersion/Index?metodo=DIAGNOSTICOPROBLEMAS</value>
 		</pagina>
 		<pagina>
 			<key>@#@@URLSEM,|,REPROCESADORECURSOS@@#@</key>
-			<value>UpgradeVersion/Index</value>
+			<value>UpgradeVersion/Index?metodo=REPROCESADORECURSOS</value>
 		</pagina>
 		<pagina>
 			<key>@#@@URLSEM,|,TAREASFONDO@@#@</key>
-			<value>UpgradeVersion/Index</value>
+			<value>UpgradeVersion/Index?metodo=TAREASFONDO</value>
 		</pagina>
 		<pagina>
 			<key>administrar-aplicaciones-especificas</key>
-			<value>UpgradeVersion/Index</value>
+			<value>UpgradeVersion/Index?metodo=ADMINISTRARAPLICACIONESESPECIFICAS</value>
 		</pagina>
 		<pagina>
 			<key>@#@@URLSEM,|,ADMINISTRARCONSULTASPARQL@@#@</key>
-			<value>UpgradeVersion/Index</value>
+			<value>UpgradeVersion/Index?metodo=ADMINISTRARCONSULTASPARQL</value>
 		</pagina>
 		<pagina>
 			<key>@#@@URLSEM,|,CONFIGURAFTP@@#@</key>
-			<value>UpgradeVersion/Index</value>
+			<value>UpgradeVersion/Index?metodo=CONFIGURAFTP</value>
 		</pagina>
 		<pagina>
 			<key>@#@@URLSEM,|,ADMINISTRARCACHE@@#@</key>
-			<value>UpgradeVersion/Index</value>
+			<value>UpgradeVersion/Index?metodo=ADMINISTRARCACHE</value>
 		</pagina>
         <pagina>
 			<key>@#@@URLSEM,|,ADMINISTRARFLUJOS@@#@</key>
@@ -3652,19 +3652,19 @@
 		</pagina>
 		<pagina>
 			<key>@#@@URLSEM,|,ADMINISTRARDESCARGARCONFIGURACION@@#@</key>
-			<value>UpgradeVersion/Index</value>
+			<value>UpgradeVersion/Index?metodo=ADMINISTRARDESCARGARCONFIGURACION</value>
 		</pagina>
 		<pagina>
 			<key>@#@@URLSEM,|,ADMINISTRARTRAZAS@@#@</key>
-			<value>UpgradeVersion/Index</value>
+			<value>UpgradeVersion/Index?metodo=ADMINISTRARTRAZAS</value>
 		</pagina>
 		<pagina>
 			<key>@#@@URLSEM,|,ADMINISTRARTRADUCTOR@@#@</key>
-			<value>UpgradeVersion/Index</value>
+			<value>UpgradeVersion/Index?metodo=ADMINISTRARTRADUCTOR</value>
 		</pagina>
 		<pagina>
 			<key>@#@@URLSEM,|,ADMINISTRARASISTENTES@@#@</key>
-			<value>UpgradeVersion/Index</value>
+			<value>UpgradeVersion/Index?metodo=ADMINISTRARASISTENTES</value>
 		</pagina>
 	</seccion>
 	<seccion name="fichaRecurso">
