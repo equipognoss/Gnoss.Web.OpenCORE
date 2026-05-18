@@ -96,41 +96,42 @@ Variables
 				</a>
 			</div>
 			<div class="modal-body">
-				<div class="formulario-edicion no-min-height">									                             
-					@* Tabs para la configuración de páginas *@
-					<ul class="nav nav-tabs" id="myTab" role="tablist">
-						@* Configuración *@
-						<li class="nav-item">
-							<a
+				@if (!pestanya.Type.Equals(TipoPestanyaMenu.CMS)) {
+					<div class="formulario-edicion no-min-height">									                             
+						@* Tabs para la configuración de páginas *@
+						<ul class="nav nav-tabs" id="myTab" role="tablist">
+							@* Configuración *@
+							<li class="nav-item">
+								<a
 								class="nav-link nav-objetoConocimiento active tabConfigurtacionObjetoConocimiento"								
 								data-toggle="tab"
 								data-target="#@configPestanyaId"
 								role="tab"
 								aria-controls="@configPestanyaId"
-								aria-selected="true">@Html.GetText("DEVTOOLS","CONFIGURACION")</a>
-						</li>
-						@* Previsualización de facetas *@
-						<li class="nav-item content-load-@pestanya.Key.ToString().Substring(0,5)">
-							<a
+								aria-selected="true">@Html.GetText("DEVTOOLS", "CONFIGURACION")</a>
+							</li>
+							@* Previsualización de facetas *@
+							<li class="nav-item content-load-@pestanya.Key.ToString().Substring(0,5)">
+								<a
 								class="nav-link nav-objetoConocimiento tabConfiguracionPresentacionRecursos"								
 								data-toggle="tab"
-							   data-target="#@listadoFacetasId"
+								data-target="#@listadoFacetasId"
 								role="tab"
 								aria-controls="@listadoFacetasId"
-								aria-selected="false">@Html.GetText("DEVTOOLS","LISTADODEFACETAS")</a>
-						</li>
-						@* Resultados *@
-						<li class="nav-item content-load-@pestanya.Key.ToString().Substring(0,5)">
-							<a class="nav-link nav-objetoConocimiento tabConfiguracionPresentacionRecursos"
-							   data-toggle="tab"
-							   data-target="#@mostrarResultadosId"
-							   role="tab"
-							   aria-controls="@mostrarResultadosId"
-							   aria-selected="false">@Html.GetText("DEVTOOLS", "RESULTADOS")</a>
-						</li>
-					</ul>
-				</div>
-
+								aria-selected="false">@Html.GetText("DEVTOOLS", "LISTADODEFACETAS")</a>
+							</li>
+							@* Resultados *@
+							<li class="nav-item content-load-@pestanya.Key.ToString().Substring(0,5)">
+								<a class="nav-link nav-objetoConocimiento tabConfiguracionPresentacionRecursos"
+								data-toggle="tab"
+								data-target="#@mostrarResultadosId"
+								role="tab"
+								aria-controls="@mostrarResultadosId"
+								aria-selected="false">@Html.GetText("DEVTOOLS", "RESULTADOS")</a>
+							</li>
+						</ul>
+					</div>
+				}
 				<div class="tab-content container-@pestanya.Key.ToString().Substring(0,5)">		
 					@* Tab configuración *@
 					<div class="tab-pane fade active show" id="@configPestanyaId" role="tabpanel" aria-labelledby="@configPestanyaId">
