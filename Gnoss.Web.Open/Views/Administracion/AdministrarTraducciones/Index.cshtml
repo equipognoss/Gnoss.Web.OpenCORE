@@ -136,8 +136,8 @@ bool isInEcosistemaPlatform = !string.IsNullOrEmpty(ViewBag.isInEcosistemaPlatfo
 						</div>
 						@* Botón para crear item *@
 					<div class="acciones d-flex align-items-center">
-						<button @(!Model.traduccionesActivas ? "disabled" : "") href="@Comunidad.Url/@Html.GetText("URLSEM", "ADMINISTRARDESCARGARTRADUCCIONES")" class="btn btn-outline-primary dropdown-toggle no-flecha"
-								style="margin-right: 20px;"><span class="material-icons">download</span>Descargar Traducciones</button>
+						<a href="@Comunidad.Url/@Html.GetText("URLSEM", "ADMINISTRARDESCARGARTRADUCCIONES")" class="btn btn-outline-primary dropdown-toggle no-flecha @(Model.traduccionesActivas ? "" : "disabled pe-none")"
+								style="margin-right: 20px;"><span class="material-icons">download</span>Descargar Traducciones</a>
 							@Html.PartialView("../Shared/Layout/_partial-views/_layout-add-translation-admin", Model)							
 						</div>
 					</div>

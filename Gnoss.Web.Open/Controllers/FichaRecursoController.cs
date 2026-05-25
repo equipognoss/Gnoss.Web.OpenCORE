@@ -6368,6 +6368,9 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                     permisoEliminarVersion = utilPermisos.IdentidadTienePermiso((ulong)PermisoRecursos.EliminarVersionNota, IdentidadActual.Clave, IdentidadActual.IdentidadMyGNOSS.Clave, TipoDePermiso.Recursos);
                     break;
                 case TiposDocumentacion.FicheroServidor:
+                case TiposDocumentacion.Video:
+                case TiposDocumentacion.Imagen:
+                case TiposDocumentacion.Audio:
                     permisoEditar = utilPermisos.IdentidadTienePermiso((ulong)PermisoRecursos.EditarRecursoTipoAdjunto, IdentidadActual.Clave, IdentidadActual.IdentidadMyGNOSS.Clave, TipoDePermiso.Recursos);
                     permisoEliminar = utilPermisos.IdentidadTienePermiso((ulong)PermisoRecursos.EliminarRecursoTipoAdjunto, IdentidadActual.Clave, IdentidadActual.IdentidadMyGNOSS.Clave, TipoDePermiso.Recursos);
                     permisoRestaurarVersion = utilPermisos.IdentidadTienePermiso((ulong)PermisoRecursos.RestaurarVersionAdjunto, IdentidadActual.Clave, IdentidadActual.IdentidadMyGNOSS.Clave, TipoDePermiso.Recursos);
@@ -6423,12 +6426,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
 
             #region Compartir a BR Personal o a otra comunidad
 
-            if (Documento.EsBorrador || !Documento.CompartirPermitido || (ProyectoSeleccionado.Clave != ProyectoAD.MetaProyecto && !ParametrosGeneralesRow.CompartirRecursosPermitido) || (Documento.FilaDocumentoWebVinBR.PrivadoEditores && !ControladorDocumentacion.EsEditorPerfilDeDocumento(IdentidadActual.PerfilID, Documento, true, UsuarioActual.UsuarioID)) || !Documento.FilaDocumento.UltimaVersion)
-            {
-                fichaAcciones.AddToMyPersonalSpace = false;
-                fichaAcciones.Share = false;
-            }
-            else if (Documento.TipoDocumentacion == TiposDocumentacion.Debate || Documento.TipoDocumentacion == TiposDocumentacion.Pregunta || Documento.TipoDocumentacion == TiposDocumentacion.Encuesta || Documento.TipoDocumentacion == TiposDocumentacion.Newsletter)
+            if (Documento.EsBorrador || !Documento.CompartirPermitido || (ProyectoSeleccionado.Clave != ProyectoAD.MetaProyecto && !ParametrosGeneralesRow.CompartirRecursosPermitido) || (Documento.FilaDocumentoWebVinBR.PrivadoEditores && !ControladorDocumentacion.EsEditorPerfilDeDocumento(IdentidadActual.PerfilID, Documento, true, UsuarioActual.UsuarioID)) || !Documento.FilaDocumento.UltimaVersion || Documento.TipoDocumentacion == TiposDocumentacion.Debate || Documento.TipoDocumentacion == TiposDocumentacion.Pregunta || Documento.TipoDocumentacion == TiposDocumentacion.Encuesta || Documento.TipoDocumentacion == TiposDocumentacion.Newsletter)
             {
                 fichaAcciones.AddToMyPersonalSpace = false;
                 fichaAcciones.Share = false;
@@ -6522,6 +6520,12 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
 
                 #region Editar
                 fichaAcciones.Edit = permisoEditar && RecursoPuedeSerEditado(bloqueadoPorOtroUsuario);
+
+                // Si el usuario tiene un rol que no tiene permisos de edicion, miramos si es un editor del recurso
+                if(!fichaAcciones.Edit && Documento.TienePermisosEdicionIdentidad(IdentidadActual, IdentidadOrganizacionBROrg, ProyectoSeleccionado, UsuarioActual.UsuarioID, EsIdentidadActualAdministradorOrganizacion) && Documento.FilaDocumento.UltimaVersion)
+                {
+                    fichaAcciones.Edit = true;
+                }
 
                 string urlEditar = "";
 
@@ -6710,10 +6714,10 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                 }
             }
 
-            pFichaRecurso.AllowComments = ParametrosGeneralesRow.ComentariosDisponibles;
+            pFichaRecurso.AllowComments = ParametrosGeneralesRow.ComentariosDisponibles && Documento.FilaDocumento.UltimaVersion;
             if (Documento.FilaDocumentoWebVinBR != null)
             {
-                pFichaRecurso.AllowComments = (Documento.FilaDocumentoWebVinBR.PermiteComentarios && ParametrosGeneralesRow.ComentariosDisponibles);
+                pFichaRecurso.AllowComments = Documento.FilaDocumentoWebVinBR.PermiteComentarios && ParametrosGeneralesRow.ComentariosDisponibles && Documento.FilaDocumento.UltimaVersion;
             }
 
             #region Flujos
@@ -6730,40 +6734,20 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                     fichaAcciones.Edit = true;
                     fichaAcciones.AddCategories = true;
                     fichaAcciones.AddTags = true;
-                }
-                else
-                {
-                    fichaAcciones.Edit = false;
-                    fichaAcciones.AddCategories = false;
-                    fichaAcciones.AddTags = false;
-                    fichaAcciones.BlockComments = true;
-                    pFichaRecurso.AllowComments = false;
-                    fichaAcciones.Delete = false;
-                    fichaAcciones.AddToMyPersonalSpace = false;
-                    fichaAcciones.Share = false;
-                    fichaAcciones.Duplicate = false;
-                    fichaAcciones.ViewHistory = true;
+                    
                 }
 
+                fichaAcciones.ViewHistory = tienePermisoEdicionEstado;
                 fichaAcciones.EditImprovement = fichaAcciones.Edit;
-
-				bool esMejora = false;
-				using (DocumentacionCN documentacionCN = new DocumentacionCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<DocumentacionCN>(), mLoggerFactory))
-				{
-					esMejora = documentacionCN.ComprobarSiDocumentoEsUnaMejora(DocumentoVersionID);
-				}
-				if (esMejora)
-				{
-                    fichaAcciones.BlockComments = true;
-                    pFichaRecurso.AllowComments = false;
-                    fichaAcciones.Delete = false;
-                    fichaAcciones.AddToMyPersonalSpace = false;
-                    fichaAcciones.Share = false;                    
-                    fichaAcciones.Duplicate = false;
-                    fichaAcciones.ViewHistory = true;
-				}
-
                 fichaAcciones.Transition = true;
+
+                using (DocumentacionCN documentacionCN = new DocumentacionCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<DocumentacionCN>(), mLoggerFactory))
+				{
+                    if (documentacionCN.ComprobarSiDocumentoEsUnaMejora(DocumentoVersionID))
+                    {
+                        pFichaRecurso.AllowComments = false;
+                    }  
+                }
             }
 
             #endregion

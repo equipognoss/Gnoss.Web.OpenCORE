@@ -62,7 +62,6 @@ using Es.Riam.InterfacesOpen;
 using Es.Riam.Semantica.OWL;
 using Es.Riam.Util;
 using Es.Riam.Web.Util;
-using Gnoss.Web.App_Start;
 using Gnoss.Web.Open.Filters;
 using Gnoss.Web.Services;
 using Gnoss.Web.Services.VirtualPathProvider;
@@ -419,32 +418,19 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                 catch (Exception ex)
                 {
                     GuardarLogError(ex);
-                }
-                finally
-                {
-                    // TODO Javier 
-                    //MvcApplication.RecalculandoRutas = false;
-                }
+                }               
             }
-            else if (actualizarRutasPestanyas || !RouteConfig.ListaProyectosRutas.Contains(proyectoIDPadre))
+            else if (actualizarRutasPestanyas)
             {
                 ProyectoCL proyectoCL = new ProyectoCL(mEntityContext, mLoggingService, mRedisCacheWrapper, mConfigService, mVirtuosoAD, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<ProyectoCL>(), mLoggerFactory);
                 //invalidar rutas viejas y registrar nuevas
                 List<string> listaRutasPestanyasInvalidarDeCache = (List<string>)proyectoCL.ObtenerObjetoDeCache(ProyectoCL.CLAVE_CACHE_LISTA_RUTAPESTANYAS_INVALIDAR + /*ProyectoSeleccionado.Clave*/proyectoIDPadre, true, typeof(List<string>));
-
-                List<string> listaRutasPestanyasRegistrarDeCache = (List<string>)proyectoCL.ObtenerObjetoDeCache(ProyectoCL.CLAVE_CACHE_LISTA_RUTAPESTANYAS_REGISTRAR + /*ProyectoSeleccionado.Clave*/proyectoIDPadre, true, typeof(List<string>));
 
                 if (listaRutasPestanyasInvalidarDeCache != null)
                 {
                     RouteValueTransformer.EliminarRutasProyecto(ProyectoSeleccionado.NombreCorto);
                 }
 
-                if (listaRutasPestanyasRegistrarDeCache != null)
-                {
-                    CachedRouter<Guid>.RECALCULAR_RUTAS = true;
-                    //TODO Javi rutas comentar
-                    // mRouteConfig.RegistrarRutasPestanyas(RouteConfig.RouteBuilder, mConfigService.ObtenerListaIdiomasDictionary(), proyectoIDPadre, listaRutasPestanyasRegistrarDeCache);   
-                }
                 proyectoCL.Dispose();
             }
 
@@ -2787,7 +2773,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                         foreach (AD.EntityModel.Models.Documentacion.Documento filaDoc in filasDoc)
                         {                            
                             bool tienePermiso = utilPermisos.IdentidadTienePermisoRecursoSemantico(IdentidadActual.Clave, IdentidadActual.IdentidadMyGNOSS.Clave, TipoPermisoRecursosSemanticos.Crear, filaDoc.DocumentoID);
-							if (ComprobarPermisoEnOntologiaDeProyectoEIdentidad(filaDoc.DocumentoID) || tienePermiso)
+							if (tienePermiso || ComprobarPermisoEnOntologiaDeProyectoEIdentidad(filaDoc.DocumentoID))
                             {
                                 if (!permisosComunidad.DocumentPermissions.Contains(ResourceModel.DocumentType.Semantico))
                                 {

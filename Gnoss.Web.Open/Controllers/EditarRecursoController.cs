@@ -579,7 +579,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                 {
                     proyectoOntologiasID = new Guid(ParametroProyecto[ParametroAD.ProyectoIDPatronOntologias]);
                 }
-
+                UtilPermisos utilPermisos = new UtilPermisos(mEntityContext, mLoggingService, mConfigService, mLoggerFactory.CreateLogger<UtilPermisos>(), mLoggerFactory);
                 DocumentacionCL docCL = new DocumentacionCL(mEntityContext, mLoggingService, mRedisCacheWrapper, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<DocumentacionCL>(), mLoggerFactory);
                 DataWrapperDocumentacion docOntoDW = docCL.ObtenerOntologiasProyecto(proyectoOntologiasID, true);
 
@@ -591,7 +591,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                 mEditRecCont.CreateResourceModel.OntologyNameUrls = nombreUrlsOntologia;
 
                 //Simple
-                foreach (AD.EntityModel.Models.Documentacion.Documento filaDoc in filasDoc.Where(item => ComprobarPermisoEnOntologiaDeProyectoEIdentidad(item.DocumentoID)))
+                foreach (AD.EntityModel.Models.Documentacion.Documento filaDoc in filasDoc.Where(item => IdentidadTienePermisosRecurso(utilPermisos, item.DocumentoID)))
                 {
                     Dictionary<string, string> listaPropiedades = UtilCadenas.ObtenerPropiedadesDeTexto(filaDoc.NombreElementoVinculado);
                     bool documentoVirtual = false;
@@ -778,6 +778,17 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
             bool tienePermiso = utilPermisos.IdentidadTienePermiso((ulong)pTipoPermiso, mControladorBase.IdentidadActual.Clave, mControladorBase.IdentidadActual.IdentidadMyGNOSS.Clave, TipoDePermiso.Recursos);
 
             return tienePermiso;
+        }
+
+        /// <summary>
+        /// Se comprueba si la identidad actual tiene permisos para el tipo de recurso semántico proporcionado.
+        /// </summary>
+        /// <param name="pUtilPermisos">Clase UtilPermisos necesaria para realizar las comprobaciones de roles y permisos</param>
+        /// <param name="pDocumentoID">Documento del cual queremos comprobar si hay o no permisos</param>
+        /// <returns>True o False indicando si tiene o no permisos respectivamente</returns>
+        private bool IdentidadTienePermisosRecurso(UtilPermisos pUtilPermisos, Guid pDocumentoID)
+        {
+            return pUtilPermisos.IdentidadTienePermisoRecursoSemantico(IdentidadActual.Clave, IdentidadActual.IdentidadMyGNOSS.Clave, TipoPermisoRecursosSemanticos.Crear, pDocumentoID) || ComprobarPermisoEnOntologiaDeProyectoEIdentidad(pDocumentoID);
         }
 
         #region Nota
@@ -3208,6 +3219,9 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                 case TiposDocumentacion.Nota:
                     return ComprobarPermisosAccionRecurso(PermisoRecursos.EditarNota);
                 case TiposDocumentacion.FicheroServidor:
+                case TiposDocumentacion.Video:
+                case TiposDocumentacion.Imagen:
+                case TiposDocumentacion.Audio:
                     return ComprobarPermisosAccionRecurso(PermisoRecursos.EditarRecursoTipoAdjunto);
                 case TiposDocumentacion.ReferenciaADoc:
                     return ComprobarPermisosAccionRecurso(PermisoRecursos.EditarRecursoTipoReferenciaADocumentoFisico);

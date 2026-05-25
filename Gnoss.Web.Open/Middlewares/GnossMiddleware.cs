@@ -1,32 +1,18 @@
 ﻿using Es.Riam.AbstractsOpen;
 using Es.Riam.Gnoss.AD.EntityModel;
-using Es.Riam.Gnoss.AD.ServiciosGenerales;
 using Es.Riam.Gnoss.AD.Virtuoso;
 using Es.Riam.Gnoss.CL;
-using Es.Riam.Gnoss.CL.ParametrosAplicacion;
-using Es.Riam.Gnoss.CL.ServiciosGenerales;
-using Es.Riam.Gnoss.Elementos.ServiciosGenerales;
-using Es.Riam.Gnoss.Logica.ParametroAplicacion;
-using Es.Riam.Gnoss.Logica.ServiciosGenerales;
 using Es.Riam.Gnoss.Util.Configuracion;
 using Es.Riam.Gnoss.Util.General;
 using Es.Riam.Gnoss.Web.Controles;
 using Es.Riam.Gnoss.Web.MVC;
-using Es.Riam.Gnoss.Web.MVC.Controllers.Administracion;
-using Es.Riam.Semantica.OWL;
 using Es.Riam.Util;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
-using Newtonsoft.Json;
-using Serilog.Core;
 using System;
-using System.Collections.Concurrent;
-using System.Collections.Generic;
 using System.IO;
-using System.Linq;
-using System.Threading;
 using System.Threading.Tasks;
 
 namespace Gnoss.Web.Middlewares
@@ -37,7 +23,7 @@ namespace Gnoss.Web.Middlewares
         private readonly RequestDelegate _next;
         private ConfigService mConfigService;
         public static bool RecalculandoRutas { get; set; }
-        private static ConcurrentDictionary<string, Guid?> ProyectoIDPorNombreCorto = new ConcurrentDictionary<string, Guid?>();
+        
         private ILogger mlogger;
         private ILoggerFactory mLoggerFactory;
 
@@ -78,100 +64,6 @@ namespace Gnoss.Web.Middlewares
             }
         }
 
-        private void ComprobarTrazaHabilitada(Es.Riam.Gnoss.AD.EntityModel.EntityContext pEntityContext, LoggingService pLoggingService, RedisCacheWrapper pRedisCacheWrapper, HttpContext pHttpContext, bool pForzarComprobacion = false)
-        {
-            if (pForzarComprobacion || LoggingService.HoraComprobacionCache == null || LoggingService.HoraComprobacionCache.AddSeconds(LoggingService.TiempoDuracionComprobacion) < DateTime.Now)
-            {
-                GnossCacheCL gnossCacheCL = new GnossCacheCL(pEntityContext, pLoggingService, pRedisCacheWrapper, mConfigService, null, mLoggerFactory.CreateLogger<GnossCacheCL>(), mLoggerFactory);
-                bool? trazaHabilitada = gnossCacheCL.ObtenerDeCache($"traza_5.0.0_{pHttpContext.Request.Host}") as bool?;
-
-                if (trazaHabilitada.HasValue && trazaHabilitada.Value)
-                {
-                    LoggingService.TrazaHabilitada = true;
-                    //LoggingService.TiempoMinPeticion = (int)tiempoMin;
-                }
-                else
-                {
-                    LoggingService.TrazaHabilitada = false;
-                }
-
-                LoggingService.HoraComprobacionCache = DateTime.Now;
-            }
-        }
-        private void RegistrarRutas(Es.Riam.Gnoss.AD.EntityModel.EntityContext pEntityContext, HttpContext pHttpContextAccessor, RouteConfig pRouteConfig, LoggingService pLoggingService, IServicesUtilVirtuosoAndReplication pServicesUtilVirtuosoAndReplication)
-        {
-			ParametroAplicacionCL paramCL = new ParametroAplicacionCL(pEntityContext, pLoggingService, null, mConfigService, pServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<ParametroAplicacionCL>(), mLoggerFactory);
-            Dictionary<string, string> listaIdiomasPlataforma = paramCL.ObtenerListaIdiomasDictionary();
-            int indiceComunidad = 2;
-            string url = $"{pHttpContextAccessor.Request.Scheme}://{pHttpContextAccessor.Request.Host}{pHttpContextAccessor.Request.Path}";
-            pRouteConfig.RegisterRoutesIdioma(RouteConfig.RouteBuilder, paramCL.ObtenerListaIdiomas());
-            //if (new Uri(url).Segments.Length > 1 && new Uri(url).Segments[1].Length > 1)
-            //{
-            //    string idiomaPeticion = new Uri(url).Segments[1].Trim('/');
-
-            //    if (listaIdiomasPlataforma.ContainsKey(idiomaPeticion))
-            //    {
-            //        pRouteConfig.RegisterRoutesIdioma(RouteConfig.RouteBuilder, idiomaPeticion);
-            //        indiceComunidad = 3;
-            //    }
-            //}
-
-            Dictionary<string, string> listaIdiomasCargados = new Dictionary<string, string>();
-
-
-            foreach (string idioma in RouteConfig.IdiomasRegistrados)
-            {
-                listaIdiomasCargados.Add(idioma, listaIdiomasPlataforma[idioma]);
-            }
-
-            Guid? proyectoID = null;
-            if (new Uri(url).Segments.Length > indiceComunidad && new Uri(url).Segments[indiceComunidad].Length > 1)
-            {
-                ProyectoCN proyCN = new ProyectoCN(pEntityContext, pLoggingService, mConfigService, null, mLoggerFactory.CreateLogger<ProyectoCN>(), mLoggerFactory);
-                string nombreCortoComunidad = new Uri(url).Segments[indiceComunidad];
-
-                if (ProyectoIDPorNombreCorto.ContainsKey(nombreCortoComunidad))
-                {
-                    proyectoID = ProyectoIDPorNombreCorto[nombreCortoComunidad];
-                }
-                else
-                {
-
-                    proyectoID = proyCN.ObtenerProyectoIDPorNombreCorto(nombreCortoComunidad);
-                    if (proyectoID.Value.Equals(Guid.Empty))
-                    {
-                        proyectoID = null;
-                    }
-                    ProyectoIDPorNombreCorto.TryAdd(nombreCortoComunidad, proyectoID);
-                }
-
-                if (!proyectoID.HasValue)
-                {
-                    ParametroAplicacionCN paramCN = new ParametroAplicacionCN(pEntityContext, pLoggingService, mConfigService, pServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<ParametroAplicacionCN>(), mLoggerFactory);
-                    proyectoID = mConfigService.ObtenerProyectoConexion();
-                    if (proyectoID == null || proyectoID.Equals(Guid.Empty))
-                    {
-
-                        string valor = paramCN.ObtenerParametroAplicacionSeaContenidoParametro(url).FirstOrDefault();
-
-                        if (!string.IsNullOrEmpty(valor))
-                        {
-                            proyectoID = new Guid(valor);
-                        }
-
-                    }
-                }
-            }
-
-            if (proyectoID.HasValue)
-            {
-                if (!RouteConfig.ListaProyectosRutas.Contains(proyectoID.Value))
-                {
-                    //pRouteConfig.RegistrarRutasPestanyas(RouteConfig.RouteBuilder, listaIdiomasCargados, proyectoID.Value);
-                }
-            }
-        }
-
         protected void Application_PostRequestHandlerExecute(HttpContext pHttpContextAccessor, IServicesUtilVirtuosoAndReplication pServicesUtilVirtuosoAndReplication, GnossCache pGnossCache)
         {
             try
@@ -184,7 +76,7 @@ namespace Gnoss.Web.Middlewares
             }
             catch
             {
-
+                // Si no se puede guardar en caché no hace falta hacer nada
             }
         }
 

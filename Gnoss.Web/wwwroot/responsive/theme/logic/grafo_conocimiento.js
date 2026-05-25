@@ -2870,7 +2870,7 @@ const operativaGestionObjetosConocimientoOntologias = {
         // Verifica si se encontró el input antes de intentar obtener su valor
         if (inputWithOriginalValue.length) {
             // Obtiene el valor del input y asignala el valor al elemento `labelElementName`            
-            const inputValue = inputWithOriginalValue.data("original-value");
+            const inputValue = inputWithOriginalValue.data("original-value").toString();
             // Comprobar que hubiera valor previo. Si no lo hay, establecer el valor del input y actualizar el label y el previousValue
             if (inputValue.trim().length > 0){
                 labelElementName.html(inputValue);

@@ -56,7 +56,7 @@ CommunityModel Comunidad = Html.GetComunidad();
 
                         @* Panel de error o aviso de Mayúsculas activadas *@
                         <div id="passwordEmptyPanel" style="display: none;" class="alert alert-warning" role="alert">
-                            Es necesario que introduzcas la contraseña anterior y la nueva para solicar el cambio.
+                            @Html.Raw(Html.GetText("CAMBIARPASSWORD", "PANELERROR"))
                         </div>
 
                         @* Panel de error o aviso de Mayúsculas activadas *@

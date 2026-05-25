@@ -198,7 +198,6 @@ namespace Es.Riam.Gnoss.Web.MVC
                     else if (mHttpContextAccessor.HttpContext.Request.RouteValues.ContainsKey(pParametro))
                     {
                         valorParametro = mHttpContextAccessor.HttpContext.Request.RouteValues[pParametro] as string;
-
                     }
                     else if (mHttpContextAccessor.HttpContext.Request.HasFormContentType && mHttpContextAccessor.HttpContext.Request.Form != null && mHttpContextAccessor.HttpContext.Request.Form.ContainsKey(pParametro))
                     {
@@ -210,7 +209,7 @@ namespace Es.Riam.Gnoss.Web.MVC
             {
                 mLoggingService.GuardarLogError(ex.Message, mLogger);
             }
-
+            
             return valorParametro;
         }
 
@@ -282,13 +281,8 @@ namespace Es.Riam.Gnoss.Web.MVC
         /// <summary>
         /// Nombre del proyecto padre del ecosistema configurado en BD con el parametro ComunidadPadreEcosistemaID (comunidad/nombrecorto)
         /// </summary>
-        private static string mNombreProyectoPadreEcositema = null;
-
-        /// <summary>
-        /// Nombre del proyecto padre del ecosistema configurado en BD con el parametro NombreCortoProyectoPadreEcosistema (comunidad/nombrecorto)
-        /// </summary>
-        private static string mNombreCortoProyectoPadreEcosistema = null;
-
+        private static string mNombreProyectoPadreEcositema;
+        
         /// <summary>
         /// Nombre del proyecto padre del ecosistema configurado en BD con el parametro ComunidadPadreEcosistemaID (comunidad/nombrecorto)
         /// </summary>
@@ -414,18 +408,7 @@ namespace Es.Riam.Gnoss.Web.MVC
             }
         }
 
-
-        public static List<string> IdiomasRegistrados = new List<string>();
-
-        private static List<Guid> mListaProyectosRutas = new List<Guid>();
-
-        public static List<Guid> ListaProyectosRutas
-        {
-            get
-            {
-                return mListaProyectosRutas;
-            }
-        }
+        public static List<string> IdiomasRegistrados = new List<string>();        
 
         /// <summary>
         /// Registra las rutas de la aplicacion
@@ -509,15 +492,6 @@ namespace Es.Riam.Gnoss.Web.MVC
                         }
                     }
 
-                    //Obtener la comunidad Padre de Ecosistema.
-                    //if (!string.IsNullOrEmpty(NombreProyectoPadreEcositema))
-                    //{
-                    //    foreach (string idioma in listaIdiomas.Keys)
-                    //    {
-                    //        ProcesarURL(routes, "", "comunidad/{nombreCorto}/Redirect/Home", idioma);
-                    //    }
-                    //}
-
                     mLoggingService.AgregarEntrada("Mapeo rutas - Antes Cargar RouteMap");
                     XmlDocument xmlRoute = new XmlDocument();
                     xmlRoute.Load(new StringReader(Resources.routemap));
@@ -549,19 +523,7 @@ namespace Es.Riam.Gnoss.Web.MVC
                     xmlRoute = null;
 
                     mLoggingService.AgregarEntrada("Mapeo rutas - Antes Registrar Rutas Recursos");
-                    RegistrarRutasRecursos(routes, listaUrlsFichaRecursoCom, listaIdiomas, null);
-
-                    // Las rutas se iran registrando a medida que los usuarios entren en los proyectos
-                    //LoggingService.AgregarEntrada("Mapeo rutas - Antes Registrar Rutas Pestanyas");
-                    //RegistrarRutasPestanyas(routes, listaIdiomas, null);
-
-                    // Descomentar estas líneas para depurar CRFP. Sustituir a2952703-a9ed-4471-a7dd-5ebcab9607c1 por el ID del proyecto que se necesite depurar
-                    // RegistrarRutasPestanyas(routes, listaIdiomas, new Guid("e9fd8d5e-7e8b-4e7d-9782-b1f93a4583d6"));
-                    // RegistrarRutasPestanyas(routes, listaIdiomas, new Guid("a2952703-a9ed-4471-a7dd-5ebcab9607c1"));
-
-
-                    //Registrar los Proyectos que tienen padres
-                    //RegistrarRutasPestanyas(routes, listaIdiomas, null, null, PadreEcosistemaProyectoID.HasValue);
+                    RegistrarRutasRecursos(routes, listaUrlsFichaRecursoCom, listaIdiomas, null);                    
 
                     mLoggingService.AgregarEntrada("Mapeo rutas - Antes Registrar Rutas MetaAdministrador");
                     foreach (string url in listaUrlsMetaAdministrador.Keys)
@@ -671,7 +633,7 @@ namespace Es.Riam.Gnoss.Web.MVC
             try
             {
                 mLoggingService.GuardarLogError("RecalcularTablaRutas", mLogger);
-                recalcularRutas = true;
+                bool recalcularRutas = true;
                 lock (bloqueoRecalculoRutas)
                 {
                     if (recalcularRutas)
@@ -756,221 +718,14 @@ namespace Es.Riam.Gnoss.Web.MVC
             }
             mLoggingService.AgregarEntrada("RegistrarRutasRedireccionamientoModeloEF - FIN");
         }
-
-
-
-        private static readonly object registrPestanyaLock = new object();
-
-        /// <summary>
-        /// Obtiene las rutas de las pestañas de una o todas las comunidades
-        /// </summary>
-        /// <param name="routes">RouteCollection</param>
-        /// <param name="listaIdiomas">Lista de idiomas de la aplicacion para mapear las rutas en todos los idiomas</param>
-        /// <param name="pProyectoID">Proyecto del que vamos a obtener las rutas de las pestañas, si es null carga de todos los proyectos</param>
-        public void RegistrarRutasPestanyas(IRouteBuilder routes, Dictionary<string, string> listaIdiomas, Guid? pProyectoID, List<string> pRutasPestanyasRegistrar = null, bool pRegistroRutasEcosistema = false)
-        {
-            //Si cambiamos una pestaña en base de datos, entrar en la url ".../comunidad/.../administrar-comunidad-general?recalcularPestanyas=true" esto recalcula todas las pestañas de esta comunidad.
-            //Si se cambia una pestaña con el XML, se recalculan solas
-
-            //if (!pProyectoID.HasValue)
-            //{
-            //    return;
-            //}
-            //else if (!mListaProyectosRutas.Contains(pProyectoID.Value))
-            //{
-            //    mListaProyectosRutas.Add(pProyectoID.Value);
-            //}
-
-            lock (registrPestanyaLock)
-            {
-                ProyectoCL proyCL = new ProyectoCL(mEntityContext, mLoggingService, mRedisCacheWrapper, mConfigService, mVirtuosoAD, null, mLoggerFactory.CreateLogger<ProyectoCL>(), mLoggerFactory);
-                ////Posible cambio en las rutas: Comunidad padre
-                //Proyecto filaProyecto = proyCL.ObtenerFilaProyecto(pProyectoID.Value);
-                ////El valor de proyectoIDPadre sera el del padre si esta conigurado el parametro y es el mismo que tiene en la fila de proyecto, si no sera el valor del proyecto seleccionado.
-                //Guid proyectoIDPadre = filaProyecto.ProyectoSuperiorID.HasValue ? filaProyecto.ProyectoSuperiorID.Value : Guid.Empty;
-                //bool proyectoHijoEcosistema = EsHijoEcosistemaProyecto(proyectoIDPadre);
-                //try
-                //{
-                //    if (PadreEcosistemaProyectoID.HasValue)
-                //    {
-                //        if (!proyectoIDPadre.Equals(PadreEcosistemaProyectoID.Value))
-                //        {
-                //            proyectoIDPadre = pProyectoID.Value;
-                //        }
-                //    }
-                //}
-                //catch (Exception ex)
-                //{
-                //    proyectoIDPadre = pProyectoID.Value;
-                //}
-
-
-                ProyectoCN proyCN = new ProyectoCN(mEntityContext, mLoggingService, mConfigService, null, mLoggerFactory.CreateLogger<ProyectoCN>(), mLoggerFactory);
-                DataWrapperProyecto dataWrapperProyectoPestanyas = new DataWrapperProyecto();
-                //Obtener los proyecto que no tienen proyectoSuperiorID
-
-                if (pRegistroRutasEcosistema)
-                {
-                    proyCN.ObtenerPestanyasProyecto(PadreEcosistemaProyectoID.Value, dataWrapperProyectoPestanyas, true);
-                }
-                else
-                {
-                    proyCN.ObtenerPestanyasProyecto(pProyectoID, dataWrapperProyectoPestanyas, true);
-                }
-
-                proyCN.Dispose();
-
-                foreach (AD.EntityModel.Models.ProyectoDS.ProyectoPestanyaMenu filaPestanya in dataWrapperProyectoPestanyas.ListaProyectoPestanyaMenu)
-                {
-                    string nombreCorto = proyCL.ObtenerNombreCortoProyecto(filaPestanya.ProyectoID);
-
-                    if (!mListaProyectosRutas.Contains(filaPestanya.ProyectoID))
-                    {
-                        mListaProyectosRutas.Add(filaPestanya.ProyectoID);
-                    }
-
-                    TipoPestanyaMenu tipoPestanya = (TipoPestanyaMenu)filaPestanya.TipoPestanya;
-
-                    string nombreCortoProy = nombreCorto;
-                    string pagina = string.Empty;
-                    string ruta = filaPestanya.Ruta;
-                    /*if (!mListaProyectosRutas.Contains(filaPestanya.ProyectoID))
-                    {
-                        mListaProyectosRutas.Add(filaPestanya.ProyectoID);
-                    }*/
-
-                    if (ruta.Contains("?"))
-                    {
-                        ruta = ruta.Substring(0, ruta.IndexOf("?"));
-                    }
-                    string rutaAuxInt = ruta;
-
-                    if (filaPestanya.Activa && (pRutasPestanyasRegistrar == null || pRutasPestanyasRegistrar.Contains(rutaAuxInt)))
-                    {
-                        bool esPaginaBusqueda = false;
-                        switch (tipoPestanya)
-                        {
-                            case TipoPestanyaMenu.Home:
-                                pagina = "HomeComunidad?PestanyaID=" + filaPestanya.PestanyaID;
-                                break;
-                            case TipoPestanyaMenu.Indice:
-                                pagina = "Indice?PestanyaID=" + filaPestanya.PestanyaID;
-                                break;
-                            case TipoPestanyaMenu.Recursos:
-                                pagina = "Busqueda?Recursos=true?PestanyaID=" + filaPestanya.PestanyaID;
-                                esPaginaBusqueda = true;
-                                break;
-                            case TipoPestanyaMenu.Preguntas:
-                                pagina = "Busqueda?preguntas=true?PestanyaID=" + filaPestanya.PestanyaID;
-                                esPaginaBusqueda = true;
-                                break;
-                            case TipoPestanyaMenu.Debates:
-                                pagina = "Busqueda?debates=true?PestanyaID=" + filaPestanya.PestanyaID;
-                                esPaginaBusqueda = true;
-                                break;
-                            case TipoPestanyaMenu.Encuestas:
-                                pagina = "Busqueda?encuestas=true?PestanyaID=" + filaPestanya.PestanyaID;
-                                esPaginaBusqueda = true;
-                                break;
-                            case TipoPestanyaMenu.PersonasYOrganizaciones:
-                                pagina = "Busqueda?perorg=true?PestanyaID=" + filaPestanya.PestanyaID;
-                                esPaginaBusqueda = true;
-                                break;
-                            case TipoPestanyaMenu.AcercaDe:
-                                pagina = "AcercaDeComunidad?PestanyaID=" + filaPestanya.PestanyaID;
-                                break;
-                            case TipoPestanyaMenu.CMS:
-                                pagina = "CMSPagina?PestanyaID=" + filaPestanya.PestanyaID;
-                                break;
-                            case TipoPestanyaMenu.BusquedaSemantica:
-                                pagina = "Busqueda?semanticos=true?PestanyaID=" + filaPestanya.PestanyaID;
-                                esPaginaBusqueda = true;
-                                break;
-                            case TipoPestanyaMenu.BusquedaAvanzada:
-                                pagina = "Busqueda?Meta=true?PestanyaID=" + filaPestanya.PestanyaID;
-                                esPaginaBusqueda = true;
-                                break;
-                            case TipoPestanyaMenu.EnlaceInterno:
-                                break;
-                            case TipoPestanyaMenu.EnlaceExterno:
-                                break;
-                        }
-
-
-                        if (!string.IsNullOrEmpty(pagina))
-                        {
-                            pagina += "?nombreProy=" + nombreCortoProy;
-
-                            bool error = false;
-                            if (ruta.StartsWith("http://") || ruta.StartsWith("https://"))
-                            {
-                                error = true;
-                            }
-                            else
-                            {
-                                UtilIdiomasFactory utilIdiomasFactory = new UtilIdiomasFactory(mLoggingService, mEntityContext, mConfigService, mRedisCacheWrapper, mLoggerFactory.CreateLogger<UtilIdiomasFactory>(), mLoggerFactory);
-                                foreach (string idioma in listaIdiomas.Keys)
-                                {
-                                    UtilIdiomas utilIdiomasActual = utilIdiomasFactory.ObtenerUtilIdiomas(idioma);
-
-                                    try
-                                    {
-                                        string rutaAux = UtilCadenas.ObtenerTextoDeIdioma(ruta, idioma, null).Trim();
-
-                                        if (pRegistroRutasEcosistema)
-                                        {
-                                            rutaAux = "@#@$URLSEM,|,COMUNIDAD$@#@/{nombreProy}/" + rutaAux;
-                                        }
-                                        else if (string.IsNullOrEmpty(NombreProyectoSinNombreCorto) || NombreProyectoSinNombreCorto != nombreCortoProy)
-                                        {
-                                            rutaAux = "@#@$URLSEM,|,COMUNIDAD$@#@/" + nombreCortoProy + "/" + rutaAux;
-                                        }
-
-                                        if (esPaginaBusqueda)
-                                        {
-                                            rutaAux += "/{*searchInfo}";
-                                        }
-
-                                        ProcesarURL(routes, rutaAux, pagina, idioma);
-                                    }
-                                    catch (Exception)
-                                    {
-                                        //GuardarLogError(ex.StackTrace);
-                                        error = true;
-                                    }
-                                }
-                            }
-
-                            if (error)
-                            {
-                                mLoggingService.GuardarLogError($"La ruta '{nombreCortoProy}/{ruta}' NO es una ruta valida o no esta bien configurada", mLogger);
-                            }
-                        }
-                    }
-                }
-
-                //invalidamos caché
-                if (pProyectoID.HasValue)
-                {
-                    // ProyectoCL proyCL = new ProyectoCL(mEntityContext, mLoggingService, mRedisCacheWrapper, mConfigService, mVirtuosoAD);
-                    proyCL.InvalidarPestanyasProyecto(pProyectoID.Value);
-                    proyCL.InvalidarFilaProyecto(pProyectoID.Value);
-                    proyCL.Dispose();
-                }
-            }
-        }
-
+                
         private void RegistrarRutasRecursos(IRouteBuilder routes, Dictionary<string, string> listaUrlsFichaRecursoCom, Dictionary<string, string> listaIdiomas, Guid? pProyectoID)
         {
             ProyectoCN proyCN = new ProyectoCN(mEntityContext, mLoggingService, mConfigService, null, mLoggerFactory.CreateLogger<ProyectoCN>(), mLoggerFactory);
             Dictionary<string, Dictionary<Guid, string>> diccionarioProyectoOntologias = proyCN.ObtenerNombresCortosProyectosConNombresCortosOntologias(pProyectoID);
             proyCN.Dispose();
             string rutaEjecucionWeb = mConfigService.ObtenerRutaEjecucionWeb();
-            List<string> tiposRecursoFijos = new List<string>();
-            tiposRecursoFijos.Add("@#@$URLSEM,|,RECURSO$@#@");
-            tiposRecursoFijos.Add("@#@$URLSEM,|,PREGUNTA$@#@");
-            tiposRecursoFijos.Add("@#@$URLSEM,|,DEBATE$@#@");
-            tiposRecursoFijos.Add("@#@$URLSEM,|,ENCUESTA$@#@");
+            List<string> tiposRecursoFijos = new List<string>() { "@#@$URLSEM,|,RECURSO$@#@", "@#@$URLSEM,|,PREGUNTA$@#@", "@#@$URLSEM,|,DEBATE$@#@", "@#@$URLSEM,|,ENCUESTA$@#@" };
 
             foreach (string url in listaUrlsFichaRecursoCom.Keys)
             {
@@ -997,7 +752,7 @@ namespace Es.Riam.Gnoss.Web.MVC
                 {
                     foreach (string idioma in listaIdiomas.Keys)
                     {
-                        string urlProcesar = tipoRecurso + "/" + url;
+                        string urlProcesar = $"{tipoRecurso}/{url}";
 
                         if (!string.IsNullOrEmpty(NombreProyectoSinNombreCorto))
                         {
@@ -1200,16 +955,12 @@ namespace Es.Riam.Gnoss.Web.MVC
                 else
                 {
                     mListaRutasURLName.Add(urlMap, idioma + "/" + url);
-                }
-
-                //return routes.Routes.ElementAt(routes.Routes.Count - 1);
+                }              
             }
             catch (Exception ex)
             {
                 mLoggingService.GuardarLogError(ex, mLogger);
             }
-
-            //return routes.Routes.ElementAt(routes.Routes.Count - 1);
         }
 
         public bool EsHijoEcosistemaProyecto(Guid pProyectoIDPadre)
