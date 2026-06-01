@@ -48,6 +48,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
 		[TypeFilter(typeof(PermisosAdministracion), Arguments = new object[] { new ulong[] { (ulong)PermisoComunidad.GestionarSolicitudesDeAccesoAGrupo } })]
 		public ActionResult Index()
         {
+            ViewBag.HeaderTitle = UtilIdiomas.GetText("GRUPO", "GRUPOS");
             if (!string.IsNullOrEmpty(RequestParams("grupoOrg")) && RequestParams("grupoOrg") == "true")
             {
                 mEsGrupoOrganizacion = true;

@@ -636,15 +636,15 @@ aria-modal="true">
 							<div class="autocompletar-tags form-group">
 								<div class="input-wrap form-sticky-button autocompletar">
 									@* Input de Tags *@
-									<input type="text"
-									name="TabPrivacidadGrupos"
-									placeholder="@Html.GetText("COMMON","BUSCAUNPERFILYPULSAAÑADIR")"
-									id="privacidadGrupos_@idTemp"
-									class="form-control txtAutocomplete TabPrivacidadGrupos"
-									autocomplete="off" />
-									@* Botón de Añadir Privacidad Perfiles *@
-									<a id="btnAddPrivacidadPerfiles_@(idTemp)" class="btn btn-grey uppercase btnAddPrivacidadGrupos">@Html.GetText("ADMINISTRACIONBASICA", "AÑADIR")</a>
-
+									<input 
+										type="text"
+										name="TabPrivacidadGrupos"
+										placeholder="@Html.GetText("COMMON", "BUSCAUNGRUPOYSELECCIONADESEADO")"
+										id="privacidadGrupos_@idTemp"
+										class="form-control txtAutocomplete TabPrivacidadGrupos"
+										autocomplete="off"
+										data-avoid-autocomplete-with-enter-button="true" 
+									/>									
 									@* Campo oculto _hack *@
 									<input type="hidden" id="privacidadGrupos_@(idTemp)_Hack" class="valores TabValoresPrivacidadGrupos" name="TabValoresPrivacidadGrupos" value="@listaIDsGrupos" />
 								</div>

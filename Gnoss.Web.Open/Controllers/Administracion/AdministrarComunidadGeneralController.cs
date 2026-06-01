@@ -308,7 +308,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
             ViewBag.ActiveSection = AdministracionSeccionesDevTools.SeccionesDevTools.Comunidad;
             ViewBag.ActiveSubSection = AdministracionSeccionesDevTools.SubSeccionesDevTools.Comunidad_InformacionGeneral;
             // Establecer el título para el header de DevTools                       
-            ViewBag.HeaderParentTitle = UtilIdiomas.GetText("ADMINISTRACIONSEMANTICA", "COMUNIDAD");
+            ViewBag.HeaderParentTitle = UtilIdiomas.GetText("DEVTOOLS", "COMUNIDAD");
             ViewBag.HeaderTitle = UtilIdiomas.GetText("ADMINISTRACIONBASICA", "INFORMACIONGENERAL");
 
             // Activar la visualización del icono de la documentación de la sección

@@ -676,17 +676,17 @@ Variables
                                         </li>
                                     }
 
-                                    @if (administrarEstadoSistemas)
-                                    {
-                                        @* Estado sistemas *@
-                                        <li>
-                                            <a href="@Comunidad.Url/@Html.GetText("URLSEM", "ADMINISTRARESTADOSISTEMAS")"
-                                               data-searchable="estado sistemas, estado, sistemas, instalaciones, comprobar"
-                                               class="system-status @((subSeccionDevTools == AdministracionSeccionesDevTools.SubSeccionesDevTools.Configuracion_EstadoSistemas) ? "activo" : null)">
-                                                @Html.GetText("DEVTOOLS", "ADMINISTRARESTADOSISTEMAS")
-                                            </a>
-                                        </li>
-                                    }
+                                    // @if (administrarEstadoSistemas)
+                                    // {
+                                    //     @* Estado sistemas *@
+                                    //     <li>
+                                    //         <a href="@Comunidad.Url/@Html.GetText("URLSEM", "ADMINISTRARESTADOSISTEMAS")"
+                                    //            data-searchable="estado sistemas, estado, sistemas, instalaciones, comprobar"
+                                    //            class="system-status @((subSeccionDevTools == AdministracionSeccionesDevTools.SubSeccionesDevTools.Configuracion_EstadoSistemas) ? "activo" : null)">
+                                    //             @Html.GetText("DEVTOOLS", "ADMINISTRARESTADOSISTEMAS")
+                                    //         </a>
+                                    //     </li>
+                                    // }
 
                                 }
                                 else if (isInEcosistemaPlatform)

@@ -7266,7 +7266,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                 rdfAntiguo = mSemController.ResourceRDF;
             }
 
-            JsonExtServResponse respuesta = GuardarRdfEnServicioExterno(streamRDF, UrlServicio, mOntologiaID, mDocumentoID, EditandoFormSem, UtilIdiomas.LanguageCode, IdentidadActual, mModelSaveRec, ProyectoSeleccionado, rdfAntiguo);
+            JsonExtServResponse respuesta = GuardarRdfEnServicioExterno(streamRDF, UrlServicio, mOntologiaID, Documento.VersionOriginalID, EditandoFormSem, UtilIdiomas.LanguageCode, IdentidadActual, mModelSaveRec, ProyectoSeleccionado, rdfAntiguo);
             string directorio = Path.Combine(mEnv.WebRootPath, Request.Path, $"documentosvirtuales/{mOntologiaID}/{mDocumentoID}");
 
             if (respuesta.Status == 1)
@@ -7359,7 +7359,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                 string tokenAfinidadPeticion = Guid.NewGuid().ToString();
 
                 //lanzo la ejecución en un nuevo hilo                                
-                Task.Factory.StartNew(() => GuardarRdfEnServicioExterno(pStreamRDF, pUrlServicio, mOntologiaID, mDocumentoID, editandoForm, UtilIdiomas.LanguageCode, identidadActualUsuario, mModelSaveRec, proyActual, rdfAntiguo, conexionAfinidadVirtuoso, tokenAfinidadPeticion));
+                Task.Factory.StartNew(() => GuardarRdfEnServicioExterno(pStreamRDF, pUrlServicio, mOntologiaID, Documento.VersionOriginalID, editandoForm, UtilIdiomas.LanguageCode, identidadActualUsuario, mModelSaveRec, proyActual, rdfAntiguo, conexionAfinidadVirtuoso, tokenAfinidadPeticion));
             }
             catch (Exception ex)
             {

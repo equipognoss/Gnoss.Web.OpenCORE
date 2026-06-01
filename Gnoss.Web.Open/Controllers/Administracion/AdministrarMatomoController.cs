@@ -88,10 +88,26 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
 		[TypeFilter(typeof(PermisosAdministracion), Arguments = new object[] { new ulong[] { (ulong)PermisoComunidad.AccederAEstadisticasDeLaComunidad } })]
 		public ActionResult Graphic(MatomoGraphicsViewModel pModel)
         {
-            UtilMatomo utilMatomo = new UtilMatomo(mConfigService.ObtenerOAuthMatomo(), mConfigService.ObtenerUrlMatomo());
-            pModel = GetMatomoGraphicsViewModel(pModel);
-            string json = utilMatomo.GetGraphic(pModel);
-            return Content(json, "application/json");
+            try
+            {
+                if (ModelState.IsValid)
+                {
+                    UtilMatomo utilMatomo = new UtilMatomo(mConfigService.ObtenerOAuthMatomo(), mConfigService.ObtenerUrlMatomo());
+                    pModel = GetMatomoGraphicsViewModel(pModel);
+                    string json = utilMatomo.GetGraphic(pModel);
+                    return Content(json, "application/json");
+                }
+                else
+                {
+                    mLoggingService.GuardarLogError("El modelo MatomoGraphicsViewModel no es válido.", mlogger);
+                }              
+            }
+            catch (Exception ex)
+            {
+                mLoggingService.GuardarLogError(ex, mlogger);                
+            }
+
+            return Content("");
         }
 
         /// <summary>
@@ -103,54 +119,70 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
 		[TypeFilter(typeof(PermisosAdministracion), Arguments = new object[] { new ulong[] { (ulong)PermisoComunidad.AccederAEstadisticasDeLaComunidad } })]
 		public ActionResult TopUsersGraphic(MatomoGraphicsViewModel pModel)
         {
-            UtilMatomo utilMatomo = new UtilMatomo(mConfigService.ObtenerOAuthMatomo(), mConfigService.ObtenerUrlMatomo());
-            pModel = GetMatomoGraphicsViewModel(pModel);
-            string json = utilMatomo.GetGraphic(pModel);
-
-            var usersMatomo = UsersMatomo.FromJson(json);
-
-            List<Guid> usuariosID = new List<Guid>();
-            // Obtener lista de usuarios del objeto
-            foreach (var dias in usersMatomo)
+            try
             {
-                if (dias.Value.Count != 0)
+                if (ModelState.IsValid)
                 {
-                    foreach (var u in dias.Value)
+                    UtilMatomo utilMatomo = new UtilMatomo(mConfigService.ObtenerOAuthMatomo(), mConfigService.ObtenerUrlMatomo());
+                    pModel = GetMatomoGraphicsViewModel(pModel);
+                    string json = utilMatomo.GetGraphic(pModel);
+
+                    var usersMatomo = UsersMatomo.FromJson(json);
+
+                    List<Guid> usuariosID = new List<Guid>();
+                    // Obtener lista de usuarios del objeto
+                    foreach (var dias in usersMatomo)
                     {
-                        string[] id = u.Segment.Split("==");
-                        Guid guidUsuario = new Guid();
-                        if (Guid.TryParse(id[1], out guidUsuario) && !usuariosID.Contains(guidUsuario))
+                        if (dias.Value.Count != 0)
                         {
-                            usuariosID.Add(guidUsuario);
+                            foreach (var u in dias.Value)
+                            {
+                                string[] id = u.Segment.Split("==");
+                                Guid guidUsuario = new Guid();
+                                if (Guid.TryParse(id[1], out guidUsuario) && !usuariosID.Contains(guidUsuario))
+                                {
+                                    usuariosID.Add(guidUsuario);
+                                }
+                            }
                         }
                     }
-                }
-            }
 
-            PersonaCN persCN = new PersonaCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<PersonaCN>(), mLoggerFactory);
-            Dictionary<string, string[]> nombrePerfiles = persCN.ObtenerNombreCortoYNombresPerfilPorUsuariosID(usuariosID);
-            persCN.Dispose();
+                    PersonaCN persCN = new PersonaCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<PersonaCN>(), mLoggerFactory);
+                    Dictionary<string, string[]> nombrePerfiles = persCN.ObtenerNombreCortoYNombresPerfilPorUsuariosID(usuariosID);
+                    persCN.Dispose();
 
-            foreach (var dias in usersMatomo)
-            {
-                if (dias.Value.Count != 0)
-                {
-                    foreach (var u in dias.Value)
+                    foreach (var dias in usersMatomo)
                     {
-                        string[] id = u.Segment.Split("==");
-                        if (nombrePerfiles.ContainsKey(id[1]))
+                        if (dias.Value.Count != 0)
                         {
-                            string urlPerfil = GnossUrlsSemanticas.GetURLPerfilPersonaOOrgEnProyecto(BaseURL, UtilIdiomas, UrlPerfil, ProyectoSeleccionado.NombreCorto, nombrePerfiles[id[1]][0], null);
-                            u.nombrePerfil = nombrePerfiles[id[1]][1];
-                            u.urlPerfil = urlPerfil;
+                            foreach (var u in dias.Value)
+                            {
+                                string[] id = u.Segment.Split("==");
+                                if (nombrePerfiles.ContainsKey(id[1]))
+                                {
+                                    string urlPerfil = GnossUrlsSemanticas.GetURLPerfilPersonaOOrgEnProyecto(BaseURL, UtilIdiomas, UrlPerfil, ProyectoSeleccionado.NombreCorto, nombrePerfiles[id[1]][0], null);
+                                    u.nombrePerfil = nombrePerfiles[id[1]][1];
+                                    u.urlPerfil = urlPerfil;
+                                }
+                            }
                         }
                     }
+
+
+                    var jsonString = JsonConvert.SerializeObject(usersMatomo);
+                    return Content(jsonString, "application/json");
+                }
+                else
+                {
+                    mLoggingService.GuardarLogError("El modelo MatomoGraphicsViewModel no es válido.", mlogger);
                 }
             }
+            catch (Exception ex)
+            {
+                mLoggingService.GuardarLogError(ex, mlogger);
+            }
 
-
-            var jsonString = JsonConvert.SerializeObject(usersMatomo);
-            return Content(jsonString, "application/json");
+            return Content("");
         }
 
 
@@ -163,101 +195,117 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
 		[TypeFilter(typeof(PermisosAdministracion), Arguments = new object[] { new ulong[] { (ulong)PermisoComunidad.AccederAEstadisticasDeLaComunidad } })]
 		public ActionResult TopDownloadsGraphic(MatomoGraphicsViewModel pModel)
         {
-            UtilMatomo utilMatomo = new UtilMatomo(mConfigService.ObtenerOAuthMatomo(), mConfigService.ObtenerUrlMatomo());
-            pModel = GetMatomoGraphicsViewModel(pModel);
-            string json = utilMatomo.GetGraphic(pModel);
-            List<RootMatomo> myDeserializedClass = JsonConvert.DeserializeObject<List<RootMatomo>>(json);
-
-            List<Guid> documentos = new List<Guid>();
-
-            foreach (RootMatomo day in myDeserializedClass)
+            try
             {
-                if (day.actionDetails.Count != 0)
+                if (ModelState.IsValid)
                 {
-                    foreach (var a in day.actionDetails)
-                    {
-                        if (!string.IsNullOrEmpty(a.type) && a.type.Equals("download"))
-                        {
-                            Uri urlRecurso = new Uri(a.url);
-                            string param1 = HttpUtility.ParseQueryString(urlRecurso.Query).Get("doc");
-                            a.ResourceID = param1;
-                            Guid guidRecurso = new Guid();
-                            if (Guid.TryParse(param1, out guidRecurso) && !documentos.Contains(guidRecurso))
-                            {
-                                documentos.Add(guidRecurso);
-                            }
-                        }
+                    UtilMatomo utilMatomo = new UtilMatomo(mConfigService.ObtenerOAuthMatomo(), mConfigService.ObtenerUrlMatomo());
+                    pModel = GetMatomoGraphicsViewModel(pModel);
+                    string json = utilMatomo.GetGraphic(pModel);
+                    List<RootMatomo> myDeserializedClass = JsonConvert.DeserializeObject<List<RootMatomo>>(json);
 
-                        if (!string.IsNullOrEmpty(a.eventName) && a.eventName.Equals("Me gusta"))
+                    List<Guid> documentos = new List<Guid>();
+
+                    foreach (RootMatomo day in myDeserializedClass)
+                    {
+                        if (day.actionDetails.Count != 0)
                         {
-                            if (!string.IsNullOrEmpty(a.dimension4))
+                            foreach (var a in day.actionDetails)
                             {
-                                string param1 = a.dimension4.Split('/').Last();
-                                a.ResourceID = param1;
-                                Guid guidRecurso = new Guid();
-                                if (Guid.TryParse(param1, out guidRecurso))
+                                if (!string.IsNullOrEmpty(a.type) && a.type.Equals("download"))
                                 {
-                                    if (!documentos.Contains(guidRecurso))
+                                    Uri urlRecurso = new Uri(a.url);
+                                    string param1 = HttpUtility.ParseQueryString(urlRecurso.Query).Get("doc");
+                                    a.ResourceID = param1;
+                                    Guid guidRecurso = new Guid();
+                                    if (Guid.TryParse(param1, out guidRecurso) && !documentos.Contains(guidRecurso))
                                     {
                                         documentos.Add(guidRecurso);
                                     }
                                 }
-                            }
-                        }
 
-                        if (!string.IsNullOrEmpty(a.eventName) && a.eventName.Equals("Comentar"))
-                        {
-                            string urlWithoutQuery = a.url.Split('?')[0];
-                            string param1 = urlWithoutQuery.Split('/').Last();
-                            a.ResourceID = param1;
-                            Guid guidRecurso = Guid.Empty;
-                            if (Guid.TryParse(param1, out guidRecurso) && !documentos.Contains(guidRecurso))
-                            {
-                                documentos.Add(guidRecurso);
-                            }
+                                if (!string.IsNullOrEmpty(a.eventName) && a.eventName.Equals("Me gusta"))
+                                {
+                                    if (!string.IsNullOrEmpty(a.dimension4))
+                                    {
+                                        string param1 = a.dimension4.Split('/').Last();
+                                        a.ResourceID = param1;
+                                        Guid guidRecurso = new Guid();
+                                        if (Guid.TryParse(param1, out guidRecurso))
+                                        {
+                                            if (!documentos.Contains(guidRecurso))
+                                            {
+                                                documentos.Add(guidRecurso);
+                                            }
+                                        }
+                                    }
+                                }
 
+                                if (!string.IsNullOrEmpty(a.eventName) && a.eventName.Equals("Comentar"))
+                                {
+                                    string urlWithoutQuery = a.url.Split('?')[0];
+                                    string param1 = urlWithoutQuery.Split('/').Last();
+                                    a.ResourceID = param1;
+                                    Guid guidRecurso = Guid.Empty;
+                                    if (Guid.TryParse(param1, out guidRecurso) && !documentos.Contains(guidRecurso))
+                                    {
+                                        documentos.Add(guidRecurso);
+                                    }
+
+                                }
+                            }
                         }
                     }
-                }
-            }
 
-            var titulos = mEntityContext.Documento.Where(item => documentos.Contains(item.DocumentoID)).Select(item => new { item.DocumentoID, item.ElementoVinculadoID, item.Titulo });
+                    var titulos = mEntityContext.Documento.Where(item => documentos.Contains(item.DocumentoID)).Select(item => new { item.DocumentoID, item.ElementoVinculadoID, item.Titulo });
 
-            Dictionary<string, string> recursosUrlYNombre = titulos.ToDictionary(x => x.DocumentoID.ToString(), x => x.Titulo);
+                    Dictionary<string, string> recursosUrlYNombre = titulos.ToDictionary(x => x.DocumentoID.ToString(), x => x.Titulo);
 
 
-            foreach (var day in myDeserializedClass)
-            {
-                if (day.actionDetails.Count != 0)
-                {
-                    foreach (var act in day.actionDetails)
+                    foreach (var day in myDeserializedClass)
                     {
-                        if (act.type.Equals("download") && (act.ResourceID != null))
+                        if (day.actionDetails.Count != 0)
                         {
-                            act.ResourceName = recursosUrlYNombre[act.ResourceID];
-                            string url = GnossUrlsSemanticas.GetURLBaseRecursosFichaConIDs(BaseURL, UtilIdiomas, ProyectoSeleccionado.NombreCorto, UrlPerfil, recursosUrlYNombre[act.ResourceID], new Guid(act.ResourceID), Guid.Empty, false);
-                            act.ResourceURL = url;
-                        }
+                            foreach (var act in day.actionDetails)
+                            {
+                                if (act.type.Equals("download") && (act.ResourceID != null))
+                                {
+                                    act.ResourceName = recursosUrlYNombre[act.ResourceID];
+                                    string url = GnossUrlsSemanticas.GetURLBaseRecursosFichaConIDs(BaseURL, UtilIdiomas, ProyectoSeleccionado.NombreCorto, UrlPerfil, recursosUrlYNombre[act.ResourceID], new Guid(act.ResourceID), Guid.Empty, false);
+                                    act.ResourceURL = url;
+                                }
 
-                        if (!string.IsNullOrEmpty(act.eventName) && act.eventName.Equals("Me gusta") && act.ResourceID != null && recursosUrlYNombre.ContainsKey(act.ResourceID))
-                        {
-                            act.ResourceName = recursosUrlYNombre[act.ResourceID];
-                            string url = GnossUrlsSemanticas.GetURLBaseRecursosFichaConIDs(BaseURL, UtilIdiomas, ProyectoSeleccionado.NombreCorto, UrlPerfil, recursosUrlYNombre[act.ResourceID], new Guid(act.ResourceID), Guid.Empty, false);
-                            act.ResourceURL = url;
-                        }
+                                if (!string.IsNullOrEmpty(act.eventName) && act.eventName.Equals("Me gusta") && act.ResourceID != null && recursosUrlYNombre.ContainsKey(act.ResourceID))
+                                {
+                                    act.ResourceName = recursosUrlYNombre[act.ResourceID];
+                                    string url = GnossUrlsSemanticas.GetURLBaseRecursosFichaConIDs(BaseURL, UtilIdiomas, ProyectoSeleccionado.NombreCorto, UrlPerfil, recursosUrlYNombre[act.ResourceID], new Guid(act.ResourceID), Guid.Empty, false);
+                                    act.ResourceURL = url;
+                                }
 
-                        if (!string.IsNullOrEmpty(act.eventName) && act.eventName.Equals("Comentar") && act.ResourceID != null && recursosUrlYNombre.ContainsKey(act.ResourceID))
-                        {
-                            act.ResourceName = recursosUrlYNombre[act.ResourceID];
-                            string url = GnossUrlsSemanticas.GetURLBaseRecursosFichaConIDs(BaseURL, UtilIdiomas, ProyectoSeleccionado.NombreCorto, UrlPerfil, recursosUrlYNombre[act.ResourceID], new Guid(act.ResourceID), Guid.Empty, false);
-                            act.ResourceURL = url;
+                                if (!string.IsNullOrEmpty(act.eventName) && act.eventName.Equals("Comentar") && act.ResourceID != null && recursosUrlYNombre.ContainsKey(act.ResourceID))
+                                {
+                                    act.ResourceName = recursosUrlYNombre[act.ResourceID];
+                                    string url = GnossUrlsSemanticas.GetURLBaseRecursosFichaConIDs(BaseURL, UtilIdiomas, ProyectoSeleccionado.NombreCorto, UrlPerfil, recursosUrlYNombre[act.ResourceID], new Guid(act.ResourceID), Guid.Empty, false);
+                                    act.ResourceURL = url;
+                                }
+                            }
                         }
                     }
+
+                    var jsonString = JsonConvert.SerializeObject(myDeserializedClass);
+                    return Content(jsonString, "application/json");
+                }
+                else
+                {
+                    mLoggingService.GuardarLogError("El modelo MatomoGraphicsViewModel no es válido.", mlogger);
                 }
             }
+            catch (Exception ex)
+            {
+                mLoggingService.GuardarLogError(ex, mlogger);
+            }
 
-            var jsonString = JsonConvert.SerializeObject(myDeserializedClass);
-            return Content(jsonString, "application/json");
+            return Content("");
         }
 
         /// <summary>
@@ -269,31 +317,47 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
 		[TypeFilter(typeof(PermisosAdministracion), Arguments = new object[] { new ulong[] { (ulong)PermisoComunidad.AccederAEstadisticasDeLaComunidad } })]
 		public ActionResult TopResourcesGraphic(MatomoGraphicsViewModel pModel)
         {
-            UtilMatomo utilMatomo = new UtilMatomo(mConfigService.ObtenerOAuthMatomo(), mConfigService.ObtenerUrlMatomo());
-            pModel = GetMatomoGraphicsViewModel(pModel);
-            string json = utilMatomo.GetGraphic(pModel);
-            List<RootMatomo> myDeserializedClass = JsonConvert.DeserializeObject<List<RootMatomo>>(json);
-
-            foreach (RootMatomo day in myDeserializedClass)
+            try
             {
-                if (day.actionDetails.Count != 0)
+                if (ModelState.IsValid)
                 {
-                    foreach (var a in day.actionDetails)
+                    UtilMatomo utilMatomo = new UtilMatomo(mConfigService.ObtenerOAuthMatomo(), mConfigService.ObtenerUrlMatomo());
+                    pModel = GetMatomoGraphicsViewModel(pModel);
+                    string json = utilMatomo.GetGraphic(pModel);
+                    List<RootMatomo> myDeserializedClass = JsonConvert.DeserializeObject<List<RootMatomo>>(json);
+
+                    foreach (RootMatomo day in myDeserializedClass)
                     {
-                        if (a.url != null && a.url.Contains("/recurso/"))
+                        if (day.actionDetails.Count != 0)
                         {
-                            string datosRecurso = a.url.Split(new string[] { "/recurso/" }, StringSplitOptions.None)[1];
-                            if (datosRecurso.Split("/").Length == 2)
+                            foreach (var a in day.actionDetails)
                             {
-                                a.ResourceID = datosRecurso.Split("/")[1];
-                                a.ResourceName = datosRecurso.Split("/")[0];
+                                if (a.url != null && a.url.Contains("/recurso/"))
+                                {
+                                    string datosRecurso = a.url.Split(new string[] { "/recurso/" }, StringSplitOptions.None)[1];
+                                    if (datosRecurso.Split("/").Length == 2)
+                                    {
+                                        a.ResourceID = datosRecurso.Split("/")[1];
+                                        a.ResourceName = datosRecurso.Split("/")[0];
+                                    }
+                                }
                             }
                         }
                     }
+                    var jsonString = JsonConvert.SerializeObject(myDeserializedClass);
+                    return Content(jsonString, "application/json");
+                }
+                else
+                {
+                    mLoggingService.GuardarLogError("El modelo MatomoGraphicsViewModel no es válido.", mlogger);
                 }
             }
-            var jsonString = JsonConvert.SerializeObject(myDeserializedClass);
-            return Content(jsonString, "application/json");
+            catch (Exception ex)
+            {
+                mLoggingService.GuardarLogError(ex, mlogger);
+            }
+
+            return Content("");
         }
 
         /// <summary>
@@ -330,11 +394,27 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
 		[TypeFilter(typeof(PermisosAdministracion), Arguments = new object[] { new ulong[] { (ulong)PermisoComunidad.AccederAEstadisticasDeLaComunidad } })]
 		public ActionResult Widget(MatomoWidgetViewModel pModel)
         {
-            UtilMatomo utilMatomo = new UtilMatomo(mConfigService.ObtenerOAuthMatomo(), mConfigService.ObtenerUrlMatomo());
-            string content = utilMatomo.GetWidget(pModel);
-            content = content.Replace("index.php", $"{UtilIdiomas.GetText("URLSEM", "ADMINISTRARMATOMO")}/matomorequest/index.php");
+            try
+            {
+                if (ModelState.IsValid)
+                {
+                    UtilMatomo utilMatomo = new UtilMatomo(mConfigService.ObtenerOAuthMatomo(), mConfigService.ObtenerUrlMatomo());
+                    string content = utilMatomo.GetWidget(pModel);
+                    content = content.Replace("index.php", $"{UtilIdiomas.GetText("URLSEM", "ADMINISTRARMATOMO")}/matomorequest/index.php");
 
-            return Content(content, "text/html");
+                    return Content(content, "text/html");
+                }
+                else
+                {
+                    mLoggingService.GuardarLogError("El modelo MatomoWidgetViewModel no es válido.", mlogger);
+                }
+            }
+            catch (Exception ex)
+            {
+                mLoggingService.GuardarLogError(ex, mlogger);
+            }
+
+            return Content("");
         }
 
 
@@ -346,16 +426,32 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
 		[TypeFilter(typeof(PermisosAdministracion), Arguments = new object[] { new ulong[] { (ulong)PermisoComunidad.AccederAEstadisticasDeLaComunidad } })]
 		public ActionResult MatomoRequest(MatomoWidgetViewModel pModel)
         {
-            UtilMatomo utilMatomo = new UtilMatomo(mConfigService.ObtenerOAuthMatomo(), mConfigService.ObtenerUrlMatomo());
-            WebResponse response = utilMatomo.MatomoRequest(RequestParams("matomopage"), Request.QueryString.Value);
-
-            string content = null;
-            using (var stream = response.GetResponseStream())
+            try
             {
-                content = new StreamReader(stream).ReadToEnd();
+                if (ModelState.IsValid)
+                {
+                    UtilMatomo utilMatomo = new UtilMatomo(mConfigService.ObtenerOAuthMatomo(), mConfigService.ObtenerUrlMatomo());
+                    WebResponse response = utilMatomo.MatomoRequest(RequestParams("matomopage"), Request.QueryString.Value);
+
+                    string content = null;
+                    using (var stream = response.GetResponseStream())
+                    {
+                        content = new StreamReader(stream).ReadToEnd();
+                    }
+
+                    return Content(content, response.ContentType);
+                }
+                else
+                {
+                    mLoggingService.GuardarLogError("El modelo MatomoWidgetViewModel no es válido.", mlogger);
+                }
+            }
+            catch (Exception ex)
+            {
+                mLoggingService.GuardarLogError(ex, mlogger);
             }
 
-            return Content(content, response.ContentType);
+            return Content("");
         }
 
         /// <summary>

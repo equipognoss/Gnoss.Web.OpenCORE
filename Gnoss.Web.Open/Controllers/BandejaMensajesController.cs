@@ -53,6 +53,7 @@ using System.Data;
 using System.IO;
 using System.Linq;
 using System.Runtime.Serialization.Formatters.Binary;
+using System.Text;
 using System.Web;
 
 namespace Es.Riam.Gnoss.Web.MVC.Controllers
@@ -62,8 +63,8 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
         #region Miembros
 
         private MessageModel mMensaje = null;
-        private ILogger mlogger;
-        private ILoggerFactory mLoggerFactory;
+        private readonly ILogger mlogger;
+        private readonly ILoggerFactory mLoggerFactory;
         #endregion
 
         public BandejaMensajesController(LoggingService loggingService, ConfigService configService, EntityContext entityContext, RedisCacheWrapper redisCacheWrapper, GnossCache gnossCache, VirtuosoAD virtuosoAD, IHttpContextAccessor httpContextAccessor, ICompositeViewEngine viewEngine, EntityContextBASE entityContextBASE, Microsoft.AspNetCore.Hosting.IHostingEnvironment env, IActionContextAccessor actionContextAccessor, IUtilServicioIntegracionContinua utilServicioIntegracionContinua, IServicesUtilVirtuosoAndReplication servicesUtilVirtuosoAndReplication, IOAuth oAuth, IHostApplicationLifetime appLifetime, IAvailableServices availableServices, ILogger<BandejaMensajesController> logger, ILoggerFactory loggerFactory)
@@ -158,14 +159,11 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                 return new RedirectResult(BaseURLIdioma + UrlPerfil + "home");
             }
 
-            if (RequestParams("organizacion") != null && RequestParams("organizacion") == "true")
+            if (RequestParams("organizacion") != null && RequestParams("organizacion") == "true" && !EsIdentidadActualAdministradorOrganizacion)
             {
-                if (!EsIdentidadActualAdministradorOrganizacion)
-                {
-                    return RedireccionarAPaginaNoEncontrada();
-                }
+                return RedireccionarAPaginaNoEncontrada();
             }
-            //ViewBag.applicationServerKey = mConfigService.ObtenerVapidPublicKey();
+            
             ControladorCorreo.ResetearContadorNuevosMensajes(IdentidadActual.PerfilID);
             if (IdentidadActual.IdentidadOrganizacion != null && EsIdentidadActualAdministradorOrganizacion)
             {
@@ -173,7 +171,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
             }
 
             string grafo = mControladorBase.UsuarioActual.UsuarioID.ToString();
-            string parametrosAdicionales = null;
+            string parametrosAdicionales = string.Empty;
             Guid identidadBusqueda = mControladorBase.UsuarioActual.IdentidadID;
 
             if (RequestParams("organizacion") == "true")
@@ -215,7 +213,6 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                 {
                     tipoBandeja = "enviados";
                 }
-
 
                 /* URL de vuelta a Mensajes */
                 if (urlMensaje.Contains("&"))
@@ -286,7 +283,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                 string parametroadicional = "";
                 cargadorResultados.Url = mConfigService.ObtenerUrlServicioResultados();
                 ResultadoModel listaResultados = cargadorResultados.CargarResultadosJSON(ProyectoAD.MyGnoss, mControladorBase.UsuarioActual.IdentidadID, mControladorBase.UsuarioActual.EsUsuarioInvitado, mControladorBase.DominoAplicacionConHTTP + this.Request.Path, mControladorBase.UsuarioActual.UsarMasterParaLectura, AdministradorQuiereVerTodasLasPersonas, VariableTipoBusqueda, grafo, parametroadicional, "", true, UtilIdiomas.LanguageCode, -1, "");
-                //List<Correo> listaResultados = GestionCorreo.ListaCorreosEnviados;
+                
                 MemoryStream memStream = new MemoryStream();
 
                 System.Text.Json.JsonSerializer.Serialize(memStream, listaResultados);
@@ -361,12 +358,9 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
         [HttpPost]
         public ActionResult SelectView(string defaultView)
         {
-            if (RequestParams("organizacion") != null && RequestParams("organizacion") == "true")
+            if (RequestParams("organizacion") != null && RequestParams("organizacion") == "true" && !EsIdentidadActualAdministradorOrganizacion)
             {
-                if (!EsIdentidadActualAdministradorOrganizacion)
-                {
-                    return RedireccionarAPaginaNoEncontrada();
-                }
+                return RedireccionarAPaginaNoEncontrada();
             }
 
             if (mControladorBase.UsuarioActual.EsUsuarioInvitado)
@@ -382,12 +376,9 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
         [HttpPost]
         public ActionResult DeleteMessages(string listMessages, string profileBox)
         {
-            if (RequestParams("organizacion") != null && RequestParams("organizacion") == "true")
+            if (RequestParams("organizacion") != null && RequestParams("organizacion") == "true" && !EsIdentidadActualAdministradorOrganizacion)
             {
-                if (!EsIdentidadActualAdministradorOrganizacion)
-                {
-                    return RedireccionarAPaginaNoEncontrada();
-                }
+                return RedireccionarAPaginaNoEncontrada();
             }
 
             if (mControladorBase.UsuarioActual.EsUsuarioInvitado)
@@ -405,27 +396,18 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                 }
             }
 
-            string js = "";
             //Agregamos la lectura desde la Master para el usuario, pra que lo vea como leído la siguiente lectura que haga.
             mControladorBase.UsuarioActual.UsarMasterParaLectura = true;
-            js += "bool_usarMasterParaLectura = true;";
-
+            
             if (profileBox == "eliminados")
             {
-                js += EliminarDefinitivamenteCorreo(listaCorreosSeleccionados);
+                EliminarDefinitivamenteCorreo(listaCorreosSeleccionados);
             }
             else
             {
                 EliminarCorreo(listaCorreosSeleccionados, profileBox);
             }
 
-
-            //if (function == "EliminarCorreos")
-            //{
-            //    return UtilAJAX.AgregarJavaScripADevolucionCallBack("", js + "FiltrarPorFacetas(ObtenerHash2());");
-            //}
-            //else
-            //{
             string urlRedirect = "";
 
             if (!BandejaOrganizacion)
@@ -436,7 +418,6 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
             {
                 urlRedirect = BaseURLIdioma + UrlPerfil + UtilIdiomas.GetText("URLSEM", "MENSAJESORG") + "?" + profileBox;
             }
-            //}
 
             return GnossResultUrl(urlRedirect);
         }
@@ -569,7 +550,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
             //obtenemos el correo actual para marcarlo como parte de una conversacion
             CorreoCN correoCN = new CorreoCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<CorreoCN>(), mLoggerFactory);
 
-            if (IdentidadActual.IdentidadOrganizacion != null && IdentidadActual.IdentidadOrganizacion.Clave != null)
+            if (IdentidadActual.IdentidadOrganizacion != null && IdentidadActual.IdentidadOrganizacion.Clave != Guid.Empty)
             {
                 GestionCorreo.CorreoDS.Merge(correoCN.ObtenerCorreoPorID(correoOrigenID, IdentidadActual.Clave, IdentidadActual.IdentidadOrganizacion.Clave));
             }
@@ -589,7 +570,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                 string asuntoOrigenLimpio = "";
                 string asuntoNuevoLimpio = "";
 
-                if (correoOrigenID != null)
+                if (correoOrigenID != Guid.Empty)
                 {
                     //limpio los asuntos(RE: FWD:)
                     asuntoOrigenLimpio = UtilCadenas.LimpiarAsunto(asuntoOrigen);
@@ -620,11 +601,6 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                             }
                         }
                     }
-                    //else
-                    //{
-                    //    //si el asunto ha cambiado, inicio una nueva conversacion
-                    //    IniciarConversacion(nuevoCorreo);
-                    //}
                 }
             }
         }
@@ -679,25 +655,25 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
             CorreoCN actualizarCN = new CorreoCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<CorreoCN>(), mLoggerFactory);
             actualizarCN.ActualizarCorreo(GestionCorreo.CorreoDS);
 
-            string destinatarios = "";
+            StringBuilder destinatarios = new StringBuilder();
             foreach (Guid destinatario in pListaDestinatarios.Keys)
             {
                 if (pListaDestinatarios[destinatario])
                 {
-                    destinatarios += "|" + "g_" + destinatario.ToString();
+                    destinatarios.Append($"|g_{destinatario.ToString()}");
                 }
                 else
                 {
-                    destinatarios += "|" + destinatario.ToString();
+                    destinatarios.Append($"|{destinatario.ToString()}");
                 }
             }
-            if (destinatarios.StartsWith("|"))
+            if (destinatarios.Length > 0 && destinatarios[0] == '|')
             {
-                destinatarios = destinatarios.Substring(1);
+                destinatarios.Remove(0, 1);
             }
 
             //Añadimos una línea al base para que la procese:
-            ControladorDocumentacion.AgregarMensajeFacModeloBaseSimple(pNuevoCorreo, pDestinatarioCorreo, ProyectoSeleccionado.Clave, "base", destinatarios, pMensajeOrigenID, PrioridadBase.Alta, mAvailableServices);
+            ControladorDocumentacion.AgregarMensajeFacModeloBaseSimple(pNuevoCorreo, pDestinatarioCorreo, ProyectoSeleccionado.Clave, "base", destinatarios.ToString(), pMensajeOrigenID, PrioridadBase.Alta, mAvailableServices);
             NotificacionCN notificacionCN = new NotificacionCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<NotificacionCN>(), mLoggerFactory);
             notificacionCN.ActualizarNotificacion(mAvailableServices);
         }
@@ -708,12 +684,10 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
         /// <returns>Cadena de texto con el error si lo hay</returns>
         private Dictionary<Guid, bool> AceptarCorreo(string pDestinatarios, bool pEsCuentaOrg, bool pEsRespuesta, ref string pError)
         {
-
             Dictionary<Guid, bool> ListaDestinatarios = new Dictionary<Guid, bool>();
 
             CargarIdentidadesDeDestinatarios(pDestinatarios, pEsCuentaOrg);
 
-            //this.txtAsunto.Text = asunto;
             List<string> listaDescartados = new List<string>();
 
             List<Guid> listaPreferencias = new List<Guid>();
@@ -736,28 +710,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                         pError += destinatario + "<br/>";
                     }
                 }
-            }
-            else
-            {
-                IdentidadCN identidadCN = new IdentidadCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<IdentidadCN>(), mLoggerFactory);
-
-                Guid destinatarioID = Guid.Empty;
-
-                if (RequestParams("nombreCortoPerfil") != null)
-                {
-                    string nombreCortoOrg = "";
-                    if (RequestParams("nombreCortoOrganizacion") != null)
-                    {
-                        nombreCortoOrg = RequestParams("nombreCortoOrganizacion");
-                    }
-                    destinatarioID = identidadCN.ObtenerIdentidadIDDeUsuarioEnProyectoYOrg(RequestParams("nombreCortoPerfil"), ProyectoSeleccionado.Clave, nombreCortoOrg, false)[0];
-                }
-                else if (RequestParams("nombreCortoOrganizacion") != null)
-                {
-                    destinatarioID = identidadCN.ObtenerIdentidadIDDeOrganizacionEnProyecto(RequestParams("nombreCortoOrganizacion"), ProyectoSeleccionado.Clave);
-                }
-                identidadCN.Dispose();
-            }
+            }            
 
             return ListaDestinatarios;
         }
@@ -770,8 +723,6 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
             IdentidadCN identidadCN = new IdentidadCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<IdentidadCN>(), mLoggerFactory);
             DataWrapperIdentidad dataWrapperIdentidad = new DataWrapperIdentidad();
 
-
-            //LoggingService.AgregarEntrada("CargaIdentidades");
             if (GestionCorreo.GestorIdentidades != null && GestionCorreo.GestorIdentidades.DataWrapperIdentidad != null)
             {
                 dataWrapperIdentidad = GestionCorreo.GestorIdentidades.DataWrapperIdentidad;
@@ -789,7 +740,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
 
             dataWrapperIdentidad.Merge(identidadCN.ObtenerIdentidadPorID(IdentidadPagina.IdentidadMyGNOSS.Clave, true));
             identidadCN.Dispose();
-            //LoggingService.AgregarEntrada("fin CargaIdentidades");
+            
             List<Guid> listaIdentidadesCorreos = new List<Guid>();
             foreach (AD.EntityModel.Models.IdentidadDS.Identidad filaIdentidad in dataWrapperIdentidad.ListaIdentidad)
             {
@@ -846,8 +797,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
 
             foreach (string claveIdioma in idiomas.Keys)
             {
-                UtilIdiomas utilIdiomas = new UtilIdiomas(claveIdioma, mLoggingService, mEntityContext, mConfigService, mRedisCacheWrapper, mLoggerFactory.CreateLogger<UtilIdiomas>(), mLoggerFactory);
-                //UtilIdiomas utilIdiomas = new UtilIdiomas(System.AppDomain.CurrentDomain.SetupInformation.ApplicationBase + Path.DirectorySeparatorChar + "languages", new string[0], claveIdioma, ParametrosGeneralesRow, ParametrosAplicacionDS);
+                UtilIdiomas utilIdiomas = new UtilIdiomas(claveIdioma, mLoggingService, mEntityContext, mConfigService, mRedisCacheWrapper, mLoggerFactory.CreateLogger<UtilIdiomas>(), mLoggerFactory);                
                 listaProf.Add(utilIdiomas.GetText("SOLICITUDESNUEVOSPROFESORES", "PROFESOR") + " " + ConstantesDeSeparacion.SEPARACION_CONCATENADOR + " ");
                 listaProf.Add(utilIdiomas.GetText("SOLICITUDESNUEVOSPROFESORES", "PROFESORA") + " " + ConstantesDeSeparacion.SEPARACION_CONCATENADOR + " ");
             }
@@ -880,9 +830,8 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
         /// <param name="pListaCorreosSeleccionados"></param>
         private string EliminarDefinitivamenteCorreo(List<Guid> pListaCorreosSeleccionados)
         {
-            string javascriptDevolucion = "";
-            int numSeleccionados = pListaCorreosSeleccionados.Count;
-
+            StringBuilder javascriptDevolucion = new StringBuilder();
+            
             CorreoCN correoCN = new CorreoCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<CorreoCN>(), mLoggerFactory);
             Guid? identidadOrg = null;
 
@@ -916,16 +865,15 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                         ControladorCorreo.AgregarNotificacionCorreoLeidoAPerfil(IdentidadActual.PerfilID);
                     }
 
-                    javascriptDevolucion += "DisminuirContadorMensajeNoLeido(" + BandejaOrganizacion.ToString().ToLower() + ");";
+                    javascriptDevolucion.Append($"DisminuirContadorMensajeNoLeido({BandejaOrganizacion.ToString().ToLower()});");
                 }
 
                 //Clave de caché a borrar:
                 string clavecache = ObtenerClaveCacheBandejaMensajes(facCL, "eliminados");
 
-                FacetadoCN facetadoCN = null;
+                FacetadoCN facetadoCN = new FacetadoCN("acidHome_Master", UrlIntragnoss, "", ReplicacionAD.COLA_REPLICACION_MASTER_HOME, mEntityContext, mLoggingService, mConfigService, mVirtuosoAD, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<FacetadoCN>(), mLoggerFactory);
                 try
                 {
-                    facetadoCN = new FacetadoCN("acidHome_Master", UrlIntragnoss, "", ReplicacionAD.COLA_REPLICACION_MASTER_HOME, mEntityContext, mLoggingService, mConfigService, mVirtuosoAD, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<FacetadoCN>(), mLoggerFactory);
                     facetadoCN.BorrarRecurso(Grafo.ToString(), correo.Clave, 0);
                 }
                 catch (Exception ex) { mLoggingService.GuardarLogError(ex, mlogger); }
@@ -955,7 +903,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
             facCL.Dispose();
             correoCN.Dispose();
 
-            return javascriptDevolucion;
+            return javascriptDevolucion.ToString();
         }
 
         /// <summary>
@@ -965,8 +913,6 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
         /// <param name="e"></param>
         private void EliminarCorreo(List<Guid> pListaCorreosSeleccionados, string pTipoBandeja)
         {
-            int numSeleccionados = pListaCorreosSeleccionados.Count;
-
             CorreoCN correoCN = new CorreoCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<CorreoCN>(), mLoggerFactory);
             Guid? identidadOrg = null;
 
@@ -977,7 +923,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
 
             CorreoDS correoDS = new CorreoDS();
             correoCN.ObtenerCorreoPorListaIDs(pListaCorreosSeleccionados, IdentidadActual.IdentidadMyGNOSS.Clave, identidadOrg, ref correoDS);
-            GestionCorreo gestorCorreo = null;
+            GestionCorreo gestorCorreo;
 
             //Caché de mensajes
             FacetadoCL facCL = new FacetadoCL("acid", "bandeja", UrlIntragnoss, mEntityContext, mLoggingService, mRedisCacheWrapper, mConfigService, mVirtuosoAD, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<FacetadoCL>(), mLoggerFactory);
@@ -1066,10 +1012,8 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
 
         private string ObtenerClaveCacheBandejaMensajes(FacetadoCL pFacCL, string pTipoBandeja)
         {
-            // gnoss.com_facetado_facetado_11111111-1111-1111-1111-111111111111_mensaje_mvc_6c57d6cc-b750-4022-966f-f1d48d663143_1_pTipoBandeja
-
             string clavecache = string.Empty;
-            clavecache = pFacCL.ObtenerKeyBusquedaFacetadoMVC(ProyectoAD.MetaProyecto, FacetadoAD.TipoBusquedaToString(TipoBusqueda.Mensajes), false);
+            clavecache = pFacCL.ObtenerKeyBusquedaFacetadoMVC(ProyectoAD.MetaProyecto, FacetadoAD.TipoBusquedaToString(TipoBusqueda.Mensajes), IdentidadActual.PerfilID, false, false);
             clavecache += "_1_" + pTipoBandeja;
 
             return clavecache;
@@ -1088,7 +1032,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
             get
             {
                 Guid mGrafo = mControladorBase.UsuarioActual.UsuarioID;
-                if (BandejaOrganizacion)
+                if (BandejaOrganizacion && IdentidadActual.OrganizacionID.HasValue)
                 {
                     mGrafo = IdentidadActual.OrganizacionID.Value;
                 }

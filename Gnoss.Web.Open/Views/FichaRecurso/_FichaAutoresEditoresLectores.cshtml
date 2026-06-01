@@ -161,8 +161,19 @@ Variables
                             <a href="#" title="@RedSocial"
                                @foreach (string atributo in Model.SocialNetworks[RedSocial].Keys) { @Html.Raw(atributo.Replace("onclick", "clickJS") + "=\"" + Model.SocialNetworks[RedSocial][atributo] + "\" ") ; }>
 
-                                <i class="fab fa-@clase"></i>
-
+                               @if(clase.Equals("twitter"))
+                               {
+                                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 30 30" width="30" height="30">
+                                            <rect width="30" height="30" fill="#000000" />
+                                            <g transform="translate(5, 5) scale(0.833)">
+                                                <path fill="#FFFFFF" font-size="20px" d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
+                                            </g>
+                                        </svg>
+                               }
+                               else
+                               {
+                                        <i class="fab fa-@clase"></i>
+                               }
                             </a>
                         </li>
                         numRedSocial++;

@@ -734,7 +734,7 @@ main .container .row-content { min-height: calc(100vh - 165px); }
 .lista-redes-sociales > li a i { color: var(--c-blanco); font-size: 20px; }
 .lista-redes-sociales > li.whatsapp a { background-color: #25d366; }
 .lista-redes-sociales > li.facebook a { background-color: #1877f2; }
-.lista-redes-sociales > li.twitter a { background-color: #1da1f2; }
+.lista-redes-sociales > li.twitter a { background-color: #000000; }
 .lista-redes-sociales > li.linkedin a { background-color: #0a66c2; }
 .lista-redes-sociales > li.reddit a { background-color: #ff4500; }
 .lista-redes-sociales > li.blogger a { background-color: #ff8000; }
@@ -2722,7 +2722,7 @@ span.material-icons.expand[aria-expanded=true]::before {font-family: 'Material I
 .edicionPerfil .formulario-edicion .form-group.edit-etiquetas .form-control { padding-left: 55px; }
 .edicionPerfil .formulario-edicion .form-group.edit-red-social .input-wrap > .icono-social { position: absolute; top: 0; left: 0; height: 100%; width: 48px; }
 .edicionPerfil .form-group.edit-red-social .input-wrap > .icono-social > i { display: flex; align-items: center; justify-content: center; font-size: 25px; color: var(--c-blanco); height: 100%; }
-.edicionPerfil .formulario-edicion .form-group.edit-red-social .input-wrap > .icono-social.twitter { background-color: #1da1f2; }
+.edicionPerfil .formulario-edicion .form-group.edit-red-social .input-wrap > .icono-social.twitter { background-color: #000000; }
 .edicionPerfil .formulario-edicion .form-group.edit-red-social .input-wrap > .icono-social.facebook { background-color: #1877f2; }
 .edicionPerfil .formulario-edicion .form-group.edit-red-social .input-wrap > .icono-social.linkedin { background-color: #0a66c2; }
 .edicionPerfil .formulario-edicion .form-group.edit-red-social .form-control { padding-left: 72px; }

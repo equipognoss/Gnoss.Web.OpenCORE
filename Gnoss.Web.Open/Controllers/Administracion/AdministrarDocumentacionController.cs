@@ -109,7 +109,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
             CargarPermisosAdministracionComunidadEnViewBag();
             var seccionDevTools = RequestParams("section");
             ViewResult view = View();
-
+            ViewBag.HeaderTitle = UtilIdiomas.GetText("DEVTOOLS", "DOCUMENTACION");
             // SecciónDevTools de la que se desea la documentación            
             if (RequestParams("section") != null)
             {
@@ -124,7 +124,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
                             ViewBag.HeaderTitle = "Administración de Comunidad";
                             break;
                     }
-                }          
+                }
             }
             
             ViewBag.BodyClassPestanya = "meta-administrador documentationPage";

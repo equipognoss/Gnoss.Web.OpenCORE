@@ -3485,7 +3485,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
 
             List<Guid> listaProyectosActualizarNumRec = new List<Guid>();
 
-            if (GestorDocumental.ListaDocumentos[Documento.Clave].FilaDocumento.Borrador == false)
+            if (!GestorDocumental.ListaDocumentos[Documento.Clave].FilaDocumento.Borrador)
             {
                 listaProyectosActualizarNumRec.Add(proyectoID);
             }

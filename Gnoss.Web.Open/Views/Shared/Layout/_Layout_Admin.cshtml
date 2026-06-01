@@ -46,7 +46,8 @@ Variables
     }
 
 	@* Título de la página proporcionada desde el Controlador y Sección a la que pertenece *@
-	string headerTitle = Html.GetHeaderTitle();
+	string header = Html.GetHeaderTitle();
+	string headerTitle = !string.IsNullOrEmpty(header) ? header : Html.GetTituloPagina();
 	string headerParentTitle = Html.GetHeaderParentTitle();
 
 	@* Comprobar si la configuración inicial existe (Ocultar datos no necesarios para configuración inicial) *@
@@ -71,7 +72,7 @@ Variables
 
 	<head>
 		@* Título *@
-		<title>@Html.GetTituloPagina()</title>
+		<title>@headerTitle</title>
 
 		@* Carga de Metas *@
 		@Html.PartialView("../Shared/Head/_Metas_Admin")

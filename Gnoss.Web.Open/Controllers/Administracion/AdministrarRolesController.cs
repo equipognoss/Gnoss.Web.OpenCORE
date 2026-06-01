@@ -84,6 +84,8 @@ namespace Gnoss.Web.Open.Controllers.Administracion
         {
             ViewBag.isInEcosistemaPlatform = EsAdministracionEcosistema ? "true" : "false";
             ViewBag.BodyClassPestanya = "admin-roles edicion listado no-max-width-container";
+            ViewBag.HeaderParentTitle = UtilIdiomas.GetText("DEVTOOLS", "COMUNIDAD");
+            ViewBag.HeaderTitle = UtilIdiomas.GetText("DEVTOOLS", "ROLES");
             if (EsAdministracionEcosistema)
             {
                 ViewBag.ActiveSection = AdministracionSeccionesDevTools.SeccionesDevTools.Configuracion;
