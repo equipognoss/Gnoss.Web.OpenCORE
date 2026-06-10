@@ -7955,9 +7955,14 @@ $(document).ready(function () {
                     nombreSearch = "search";
                 }
 
-                window.location.href = urlPaginaActual + "?"+nombreSearch+"=" + encodeURIComponent(searchString); 
+                window.location.href = urlPaginaActual + "?"+nombreSearch+"=" + encodeURIComponent(searchString);
             });
         }
+
+        $('#formCajaBusqueda').on('submit', function (event) {
+            event.preventDefault();
+            $('#inputLupa').click();
+        });
 
         $('#finderSection').keydown(function (event) {
             if ($(this).val().indexOf('|') > -1) {

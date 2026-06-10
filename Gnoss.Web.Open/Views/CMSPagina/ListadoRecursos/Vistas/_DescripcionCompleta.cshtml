@@ -6,18 +6,18 @@
         <div class="box description">
             <div class="wrapDescription">                
 	            <div class="group title">
-	                <h2><a href="@Model.CompletCardLink">@Model.Title</a></h2>
-                    <p class="resourceType @(Model.TypeDocument == ResourceModel.DocumentType.Semantico?"semantico " + Model.RdfType:Model.NameImage)"><span>tipo de documento</span><a href="@Model.CompletCardLink">@Model.NameImage</a></p>
+                    <h2><a href="@Model.CompleteOriginalCardLink">@Model.Title</a></h2>
+                    <p class="resourceType @(Model.TypeDocument == ResourceModel.DocumentType.Semantico ? "semantico " + Model.RdfType : Model.NameImage)"><span>tipo de documento</span><a href="@Model.CompleteOriginalCardLink">@Model.NameImage</a></p>
 			    </div>	        
                 <div class="group content">
 		            <div class="descripcionResumida">
                         @if (!string.IsNullOrEmpty(Model.UrlPreview)){
-                            <p class="miniatura"><a href="@Model.CompletCardLink"><img src="@Model.UrlPreview" alt="@Model.Title" title="@Model.Title" /></a></p>
+                            <p class="miniatura"><a href="@Model.CompleteOriginalCardLink"><img src="@Model.UrlPreview" alt="@Model.Title" title="@Model.Title" /></a></p>
                         }
                         @Html.Raw(Model.Description)</div>
                     <div class="verMasRecurso">
                         <p>
-                            <a href="@Model.CompletCardLink">...</a>
+                            <a href="@Model.CompleteOriginalCardLink">...</a>
                         </p>
                     </div>
 		        </div>

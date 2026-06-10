@@ -9,16 +9,16 @@
                 {
                     <div class="group miniaturaListado">
                         <p class="miniatura">
-                            <a href="@Model.CompletCardLink">
-                                <img width="240px" title="@Model.Title" alt="@Model.Title" src="@Model.UrlPreview" />
+                            <a href="@Model.CompleteOriginalCardLink">
+                                <img width="240" title="@Model.Title" alt="@Model.Title" src="@Model.UrlPreview" />
                             </a>
                         </p>
                     </div>
                 }
                 <div class="wrapDescription">
                     <div class="group title">
-                        <h2><a href="@Model.CompletCardLink">@Model.Title</a></h2>
-                        <p class="resourceType @(Model.TypeDocument == ResourceModel.DocumentType.Semantico?"semantico " + Model.RdfType:Model.NameImage)"><span>tipo de documento</span><a href="@Model.CompletCardLink">@Model.NameImage</a></p>
+                        <h2><a href="@Model.CompleteOriginalCardLink">@Model.Title</a></h2>
+                        <p class="resourceType @(Model.TypeDocument == ResourceModel.DocumentType.Semantico ? "semantico " + Model.RdfType : Model.NameImage)"><span>tipo de documento</span><a href="@Model.CompleteOriginalCardLink">@Model.NameImage</a></p>
                     </div>
 
                     <div class="group content">
@@ -44,7 +44,7 @@
                             @if (!Html.GetComunidad().IsCatalog && !string.IsNullOrEmpty(Model.UrlPreview))
                             {
                                 <p class="miniatura">
-                                    <a href="@Model.CompletCardLink">
+                                    <a href="@Model.CompleteOriginalCardLink">
                                         <img title="@Model.Title" alt="@Model.Title" src="@Model.UrlPreview">
                                     </a>
                                 </p>
@@ -65,7 +65,7 @@
                         </div>
                         <div class="verMasRecurso">
                             <p>
-                                <a href="@Model.CompletCardLink">...</a>
+                                <a href="@Model.CompleteOriginalCardLink">...</a>
                             </p>
                         </div>
                         @if (Model.ViewSettings != null)

@@ -1,5 +1,4 @@
 ﻿using AngleSharp.Common;
-using Microsoft.AspNetCore;
 using DotNetOpenAuth.Messaging;
 using Es.Riam.AbstractsOpen;
 using Es.Riam.Gnoss.AD;
@@ -20,6 +19,7 @@ using Es.Riam.Gnoss.Logica.ParametroAplicacion;
 using Es.Riam.Gnoss.Recursos;
 using Es.Riam.Gnoss.Util.Configuracion;
 using Es.Riam.Gnoss.Util.General;
+using Es.Riam.Gnoss.UtilServiciosWeb;
 using Es.Riam.Gnoss.Web.Controles.Administracion;
 using Es.Riam.Gnoss.Web.Controles.GeneradorPlantillasOWL;
 using Es.Riam.Gnoss.Web.MVC.Filters;
@@ -31,29 +31,22 @@ using Es.Riam.InterfacesOpen;
 using Es.Riam.Semantica.OWL;
 using Es.Riam.Semantica.Plantillas;
 using Es.Riam.Util;
-using Microsoft.AspNetCore.Hosting;
+using Gnoss.Web.Open.Filters;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Infrastructure;
 using Microsoft.AspNetCore.Mvc.ViewEngines;
-using Microsoft.Exchange.WebServices.Data;
 using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
-using OntologiaAClase;
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net;
 using System.Net.Http;
 using System.Text;
-using Universal.Common;
 using Universal.Common.Extensions;
-using Microsoft.IdentityModel.Protocols.OpenIdConnect;
-using Microsoft.EntityFrameworkCore.Storage.ValueConversion.Internal;
-using Gnoss.Web.Open.Filters;
-using Es.Riam.Gnoss.UtilServiciosWeb;
-using Microsoft.Extensions.Logging;
-using Serilog.Core;
 
 namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
 {
@@ -76,6 +69,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
 
     public class AdministrarFacetasController : ControllerAdministrationWeb
     {
+        private static ConcurrentDictionary<Guid, Dictionary<Guid, FacetaModel>> mFacetasPropuestasCache = new ConcurrentDictionary<Guid, Dictionary<Guid, FacetaModel>>();
         private ILogger mlogger;
         private ILoggerFactory mLoggerFactory;
         public AdministrarFacetasController(LoggingService loggingService, ConfigService configService, EntityContext entityContext, RedisCacheWrapper redisCacheWrapper, GnossCache gnossCache, VirtuosoAD virtuosoAD, IHttpContextAccessor httpContextAccessor, ICompositeViewEngine viewEngine, EntityContextBASE entityContextBASE, Microsoft.AspNetCore.Hosting.IHostingEnvironment env, IActionContextAccessor actionContextAccessor, IUtilServicioIntegracionContinua utilServicioIntegracionContinua, IServicesUtilVirtuosoAndReplication servicesUtilVirtuosoAndReplication, IOAuth oAuth, IHostApplicationLifetime appLifetime, IAvailableServices availableServices, ILogger<AdministrarFacetasController> logger, ILoggerFactory loggerFactory)
@@ -93,7 +87,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
         private AdministrarFacetasViewModel mPaginaModel = null;
         private Dictionary<string, string> mListaOntologias = null;
         private List<OntologiaCompleta> mListaOntologiasCompletas = null;
-        private readonly List<FacetaModel> mListaFacetasPropuestas = new List<FacetaModel>();
+        private static readonly Dictionary<Guid, List<FacetaModel>> mListaFacetasPropuestas = new Dictionary<Guid, List<FacetaModel>>();
 
 
         #endregion
@@ -120,6 +114,16 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
             // Establecer en el ViewBag el idioma por defecto
             ViewBag.IdiomaPorDefecto = IdiomaPorDefecto;			
 
+            if(!string.IsNullOrEmpty(Request.QueryString.Value) && Request.QueryString.Value.Contains("clear"))
+            {
+                try
+                {
+                    mListaFacetasPropuestas[ProyectoSeleccionado.Clave].Clear();
+                    mFacetasPropuestasCache[ProyectoSeleccionado.Clave].Clear();
+                }
+                catch { }
+            }
+
 			EliminarPersonalizacionVistas();
             CargarPermisosAdministracionComunidadEnViewBag();
 			CargarPermisosFacetasEnViewBag();
@@ -138,14 +142,16 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
             EliminarPersonalizacionVistas();
             CargarPermisosFacetasEnViewBag();
             FacetaModel faceta = null;
-            if (!pestanyaPropuestaID.HasValue || (ListaFacetasPropuestasCache != null && !ListaFacetasPropuestasCache.ContainsKey(pestanyaPropuestaID.Value)) || ListaFacetasPropuestasCache == null)
+            if (!pestanyaPropuestaID.HasValue || (mFacetasPropuestasCache != null && mFacetasPropuestasCache[ProyectoSeleccionado.Clave] != null && !mFacetasPropuestasCache[ProyectoSeleccionado.Clave].ContainsKey(pestanyaPropuestaID.Value)) || mFacetasPropuestasCache == null)
             {
                 faceta = CargarFacetaNueva(TipoFaceta);
             }
             else
             {
                 //El diccionario se carga en el index al cargar la pagina, cuando se calcula el PaginaModel
-                faceta = ListaFacetasPropuestasCache[pestanyaPropuestaID.Value];
+                faceta = mFacetasPropuestasCache[ProyectoSeleccionado.Clave][pestanyaPropuestaID.Value];
+                mFacetasPropuestasCache[ProyectoSeleccionado.Clave].Remove(pestanyaPropuestaID.Value);
+                mListaFacetasPropuestas[ProyectoSeleccionado.Clave].Remove(faceta);
                 char[] separators = new char[2];
                 separators[0] = '-';
                 separators[1] = '|';
@@ -542,7 +548,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
                                     if ((xmlProp.SelectorEntidad == null && !mPaginaModel.ListaFacetas.Exists(faceta => faceta.ClaveFaceta.Equals(propiedad.NombreConNamespace) && faceta.ObjetosConocimiento.Contains(propiedad.Ontologia.ConfiguracionPlantilla.Namespace) && string.IsNullOrEmpty(faceta.ClaveFacetaYReprocidad))) || (xmlProp.SelectorEntidad != null && string.IsNullOrEmpty(xmlProp.SelectorEntidad.ConsultaReciproca)))
                                     {
                                         FacetaModel facetaPropuesta = CrearFacetaPropuesta(propiedad, xmlProp, ontologiaCompleta);
-                                        AniadirFacetaPropuestaListas(facetaPropuesta, xmlProp);
+                                        AniadirFacetaPropuestaListas(facetaPropuesta, xmlProp);                                
                                     }
                                 }
                             }
@@ -571,21 +577,22 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
                     }
                 }
             }
-            mPaginaModel.ListaFacetasPropuestas = mListaFacetasPropuestas;
+            mPaginaModel.ListaFacetasPropuestas = mListaFacetasPropuestas[ProyectoSeleccionado.Clave];
         }
 
         public void AniadirFacetaPropuestaListas(FacetaModel pFacetaPropuesta, EstiloPlantillaEspecifProp pXmlProp)
         {
-            bool aniadir = true;
+            bool aniadir  = !mListaFacetasPropuestas[ProyectoSeleccionado.Clave].Exists(faceta => faceta.ClaveFaceta.Equals(pFacetaPropuesta.ClaveFaceta) && faceta.ObjetosConocimiento.Contains(pFacetaPropuesta.ObjetosConocimiento[0]));
+            bool aniadirConExistentes = true;
             if (pXmlProp.SelectorEntidad != null)
             {
-                aniadir = !mPaginaModel.ListaFacetas.Exists(faceta => faceta.ClaveFaceta.Equals(pFacetaPropuesta.ClaveFaceta) && faceta.ObjetosConocimiento.Contains(pFacetaPropuesta.ObjetosConocimiento[0]));
+                aniadirConExistentes = !mPaginaModel.ListaFacetas.Exists(faceta => faceta.ClaveFaceta.Equals(pFacetaPropuesta.ClaveFaceta) && faceta.ObjetosConocimiento.Contains(pFacetaPropuesta.ObjetosConocimiento[0]));
 
             }
-            if (aniadir)
+            if (aniadir && aniadirConExistentes)
             {
-                mListaFacetasPropuestas.Add(pFacetaPropuesta);
-                ListaFacetasPropuestasCache.Add(pFacetaPropuesta.SuggestedID, pFacetaPropuesta);
+                mListaFacetasPropuestas[ProyectoSeleccionado.Clave].Add(pFacetaPropuesta);
+                mFacetasPropuestasCache[ProyectoSeleccionado.Clave].Add(pFacetaPropuesta.SuggestedID, pFacetaPropuesta);     
             }
         }
 
@@ -727,18 +734,6 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
             }
         }
 
-        private Dictionary<Guid, FacetaModel> ListaFacetasPropuestasCache
-        {
-            get
-            {
-                return mGnossCache.ObtenerDeCacheLocal($"{ProyectoSeleccionado.Clave}_facetas_propuestas") as Dictionary<Guid, FacetaModel>;
-            }
-            set
-            {
-                mGnossCache.AgregarObjetoCacheLocal(ProyectoSeleccionado.Clave, $"{ProyectoSeleccionado.Clave}_facetas_propuestas", value);
-            }
-        }
-
         private List<Propiedad> ListaPropiedadesCache
         {
             get
@@ -807,7 +802,14 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
             {
                 if (mPaginaModel == null)
                 {
-                    ListaFacetasPropuestasCache = new Dictionary<Guid, FacetaModel>();
+                    if(mFacetasPropuestasCache.ContainsKey(ProyectoSeleccionado.Clave) && mFacetasPropuestasCache[ProyectoSeleccionado.Clave] == null || !mFacetasPropuestasCache.ContainsKey(ProyectoSeleccionado.Clave))
+                    {
+                        mFacetasPropuestasCache.TryAdd(ProyectoSeleccionado.Clave, new Dictionary<Guid, FacetaModel>());
+                    }
+                    if(mListaFacetasPropuestas.ContainsKey(ProyectoSeleccionado.Clave) && mListaFacetasPropuestas[ProyectoSeleccionado.Clave] == null || !mListaFacetasPropuestas.ContainsKey(ProyectoSeleccionado.Clave))
+                    {
+                        mListaFacetasPropuestas.Add(ProyectoSeleccionado.Clave, new List<FacetaModel>());
+                    }
 
                     mPaginaModel = new AdministrarFacetasViewModel();
                     ParametroAplicacionCL paramCL = new ParametroAplicacionCL(mEntityContext, mLoggingService, mRedisCacheWrapper, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<ParametroAplicacionCL>(), mLoggerFactory);

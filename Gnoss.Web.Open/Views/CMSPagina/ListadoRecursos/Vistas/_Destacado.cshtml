@@ -9,15 +9,15 @@
             {
                 <div class="group miniaturaListado">
                     <p class="miniatura">
-                        <a href="@Model.CompletCardLink">
-                            <img width="240px" title="@Model.Title" alt="@Model.Title" src="@Model.UrlPreview"></a>
+                        <a href="@Model.CompleteOriginalCardLink">
+                            <img width="240" title="@Model.Title" alt="@Model.Title" src="@Model.UrlPreview"></a>
                     </p>
                 </div>
             }
             <div class="wrapDescription">
                 <div class="group title">
                     <h2>
-                        <a href="@Model.CompletCardLink">@Model.Title</a>
+                        <a href="@Model.CompleteOriginalCardLink">@Model.Title</a>
                     </h2>
                     @{
             string privado = "";
@@ -33,7 +33,7 @@
                         {
                             <span class="privado">documento privado</span>
                         }
-                        <a href="@Model.CompletCardLink">@Model.NameImage</a>
+                        <a href="@Model.CompleteOriginalCardLink">@Model.NameImage</a>
                     </p>
                 </div>
                 <div class="group content">
@@ -73,7 +73,7 @@
                     </div>
                     <div class="verMasRecurso">
                         <p>
-                            <a href="@Model.CompletCardLink">...</a>
+                            <a href="@Model.CompleteOriginalCardLink">...</a>
                         </p>
                     </div>
                     @if (Model.ViewSettings != null)

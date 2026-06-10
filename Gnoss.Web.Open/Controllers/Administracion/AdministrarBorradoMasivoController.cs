@@ -211,14 +211,14 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
 
             string nombreOnt = mEntityContext.OntologiaProyecto.Where(item => item.ProyectoID.Equals(ProyectoSeleccionado.Clave) && item.OntologiaProyecto1.ToLower().Equals(ontologiaSinExtension.ToLower())).Select(item => item.OntologiaProyecto1.ToLower()).FirstOrDefault();
 
-            string queryCopiaGrafo = $"dump_one_graph_distinto_de_tipo('{UrlIntragnoss}{ProyectoSeleccionado.Clave}','{nombreArchivos}',1000000,'{nombreOnt}')";
+            string queryCopiaGrafo = $"DB.DBA.dump_one_graph_distinto_de_tipo('{UrlIntragnoss}{ProyectoSeleccionado.Clave}','{nombreArchivos}',1000000,'{nombreOnt}')";
             string queryBorradoGrafo = $"sparql clear graph <{UrlIntragnoss}{ProyectoSeleccionado.Clave}>";
             string queryDeleteLoadList = "delete from DB.DBA.load_list";
-            string querySetLoadList = $"ld_dir ('./dumps/', '{nombreArchivos}*.gz', '{UrlIntragnoss}{ProyectoSeleccionado.Clave}')";
-            string queryLoaderRun = "rdf_loader_run()";
-            string queryEnableCheckpoint = "checkpoint_interval(60)";
-            string queryEnableRegenVirtuosoIndex = "DB.DBA.VT_BATCH_UPDATE('DB.DBA.RDF_OBJ', 'ON', 1)";
-            string queryEnableScheduler = "scheduler_interval(1)";
+            string querySetLoadList = $"DB.DBA.ld_dir ('./dumps/', '{nombreArchivos}*.gz', '{UrlIntragnoss}{ProyectoSeleccionado.Clave}')";
+            string queryLoaderRun = "DB.DBA.rdf_loader_run()";
+
+            // Este procedimiento ejecuta un checkpoint, habilita los checkpoints automáticos cada minuto, habilita la automatización de los índices de virtuoso y habilita que los procedimientos se ejecuten automáticamente
+            string queryPosBulkRestore = "DB.DBA.GNOSS_POST_BULK_RESTORE()"; 
 
             try
             {
@@ -269,14 +269,11 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
                 }
             }
             finally
-            {
+            {                
                 facetaCN.ActualizarVirtuoso(queryLoaderRun, ProyectoSeleccionado.Clave.ToString(), true, 0);
                 GuardarLogError($"INFO: EJECUTADA INSTRUCCIÓN {queryLoaderRun}");
-                facetaCN.ActualizarVirtuoso(queryEnableCheckpoint, ProyectoSeleccionado.Clave.ToString(), true, 0);
-                GuardarLogError($"INFO: EJECUTADA INSTRUCCIÓN {queryEnableCheckpoint}");
-                facetaCN.ActualizarVirtuoso(queryEnableRegenVirtuosoIndex, ProyectoSeleccionado.Clave.ToString(), true, 0);
-                facetaCN.ActualizarVirtuoso(queryEnableScheduler, ProyectoSeleccionado.Clave.ToString(), true, 0);
-                GuardarLogError($"INFO: EJECUTADA INSTRUCCIÓN {queryEnableRegenVirtuosoIndex}");
+                facetaCN.ActualizarVirtuoso(queryPosBulkRestore, ProyectoSeleccionado.Clave.ToString(), true, 0);
+                GuardarLogError($"INFO: EJECUTADA INSTRUCCIÓN {queryPosBulkRestore}");                
                 facetadoAD.UsarClienteTradicional = false;
             }
         }
