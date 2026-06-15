@@ -368,7 +368,7 @@ namespace Gnoss.Web.Services
                             }
                         }
 
-                        PestanyaRouteModel pestanyaRouteModel = null;
+                        PestanyaRouteModel? pestanyaRouteModel = null;
 
                         if (!string.IsNullOrEmpty(nombreCortoComunidad))
                         {
@@ -382,14 +382,12 @@ namespace Gnoss.Web.Services
 
                             if (parametroGeneral.IdiomasDisponibles)
                             {
-                                pestanyaRouteModel = DICTIONARY_PROJECT_TABS[nombreCortoComunidad].FirstOrDefault(item => item.RutaPestanya.Equals(rutaPedida) && item.Idioma.Equals(idioma));
+                                pestanyaRouteModel = DICTIONARY_PROJECT_TABS[nombreCortoComunidad].FirstOrDefault(item => item.RutaPestanya.Equals(rutaPedida) && item.Idioma.Equals(idioma)) ?? DICTIONARY_PROJECT_TABS[nombreCortoComunidad].FirstOrDefault(item => rutaPedida.StartsWith(item.RutaPestanya + "/") && item.Idioma.Equals(idioma));
                             }
                             else
                             {
-                                pestanyaRouteModel = DICTIONARY_PROJECT_TABS[nombreCortoComunidad].FirstOrDefault(item => item.RutaPestanya.Equals(rutaPedida));
+                                pestanyaRouteModel = DICTIONARY_PROJECT_TABS[nombreCortoComunidad].FirstOrDefault(item => item.RutaPestanya.Equals(rutaPedida)) ?? DICTIONARY_PROJECT_TABS[nombreCortoComunidad].FirstOrDefault(item => rutaPedida.StartsWith(item.RutaPestanya + "/"));
                             }
-
-                            
                         }
 
                         if (pestanyaRouteModel != null)

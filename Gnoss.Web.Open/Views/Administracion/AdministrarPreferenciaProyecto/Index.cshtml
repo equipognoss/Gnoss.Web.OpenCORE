@@ -63,13 +63,14 @@
                         bool primero = true;
                         foreach (KeyValuePair<string, string> idioma in cabecera.Languajes)
                         {
+                            string textoIdioma = Html.GetText("IDIOMAS", idioma.Value);
                             if (!primero)
                             {
                                 @Html.Raw("/");
                             }
                             <span>
-                                <a @Html.Raw(Model.IdiomaTesauro == idioma.Key ? "style=\"display:none\"" : "") rel="@idioma.Key" onclick="seleccionarIdioma('@idioma.Key')" class="enlaceIdioma" id="@("lbVer" + idioma.Key)">@Html.GetText("COMADMINCATEGORIAS", "VEREN_IDIOMA", idioma.Value)</a>
-                                <span @Html.Raw(Model.IdiomaTesauro != idioma.Key ? "style=\"display:none\"" : "") rel="@idioma.Key" class="litIdioma" id="@("litVer" + idioma.Key)">@Html.GetText("COMADMINCATEGORIAS", "VEREN_IDIOMA", idioma.Value)</span>
+                                <a @Html.Raw(Model.IdiomaTesauro == idioma.Key ? "style=\"display:none\"" : "") rel="@idioma.Key" onclick="seleccionarIdioma('@idioma.Key')" class="enlaceIdioma" id="@("lbVer" + idioma.Key)">@Html.GetText("COMADMINCATEGORIAS", "VEREN_IDIOMA", textoIdioma)</a>
+                                <span @Html.Raw(Model.IdiomaTesauro != idioma.Key ? "style=\"display:none\"" : "") rel="@idioma.Key" class="litIdioma" id="@("litVer" + idioma.Key)">@Html.GetText("COMADMINCATEGORIAS", "VEREN_IDIOMA", textoIdioma)</span>
                             </span>
                             primero = false;
                         }

@@ -66,12 +66,13 @@ Variables
             {
                 if (contNumPestañasVisibles < numMaxPestañasIdiomasVisibles)
                 {
+                    string textoIdioma = Html.GetText("IDIOMAS", idioma.Value);
                     <li class="nav-item" role="presentation">
                         <a class="tabIdiomaItem nav-link @( Model.IdiomaPorDefecto == idioma.Key ? "active" : null)"
                            id="@("ver_paginas_" + idioma.Key)" data-toggle="tab" href="#@("litVer" + idioma.Key)"
                            data-language="@idioma.Key"
                            role="tab"
-                           aria-selected="@(contNumPestañasVisibles == 0 ? "true" : "false")">@Html.GetText("COMADMINCATEGORIAS", "VEREN_IDIOMA", idioma.Value)</a>
+                           aria-selected="@(contNumPestañasVisibles == 0 ? "true" : "false")">@Html.GetText("COMADMINCATEGORIAS", "VEREN_IDIOMA", textoIdioma)</a>
                     </li>
                     contNumPestañasVisibles += 1;
                 }
@@ -97,7 +98,7 @@ Variables
                                 {
                                     var item = cabecera.Languajes.ElementAt(i);
                                     var itemKey = item.Key;
-                                    var itemValue = item.Value;
+                                    string textoIdioma = Html.GetText("IDIOMAS", item.Value);
 
                                     @* Cada item del dropdown *@
                                     <li>
@@ -106,7 +107,7 @@ Variables
                                            data-toggle="tab"
                                            href="#@("litVer" + itemKey)"
                                            data-language="@itemKey">
-                                            @Html.GetText("COMADMINCATEGORIAS", "VEREN_IDIOMA", itemValue)
+                                            @Html.GetText("COMADMINCATEGORIAS", "VEREN_IDIOMA", textoIdioma)
                                         </a>
                                     </li>
                                 }

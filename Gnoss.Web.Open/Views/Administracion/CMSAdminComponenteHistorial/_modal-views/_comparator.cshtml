@@ -81,7 +81,7 @@
                             {
                                 var item = cabecera.Languajes.ElementAt(i);
                                 var itemKey = item.Key;
-                                var itemValue = item.Value;
+                                string textoIdioma = Html.GetText("IDIOMAS", item.Value);
 
                                 @* Cada item del dropdown *@
                                 <a id="@("tab_" + itemKey)"
@@ -90,7 +90,7 @@
                                    role="tab"
                                    href="@($"versiones_{itemKey}_left")"
                                    data-language="@itemKey">
-                                    @Html.GetText("COMADMINCATEGORIAS", "VEREN_IDIOMA", itemValue)
+                                    @Html.GetText("COMADMINCATEGORIAS", "VEREN_IDIOMA", textoIdioma)
                                 </a>
                             }
                         </div>

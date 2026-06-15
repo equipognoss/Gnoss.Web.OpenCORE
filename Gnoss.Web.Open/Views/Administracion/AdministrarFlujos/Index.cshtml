@@ -49,12 +49,13 @@
             {
                 if (contNumPestañasVisibles < numMaxPestañasIdiomasVisibles)
                 {
+                    string textoIdioma = Html.GetText("IDIOMAS", idioma.Value);
                     <li class="nav-item" role="presentation">
                         <a class="tabIdiomaItem nav-link @( Model.IdiomaPorDefecto == idioma.Key ? "active" : null)"
                            id="@("ver_flujos_" + idioma.Key)" data-toggle="tab" href="#ver_flujos_@idioma.Key"
                            data-language="@idioma.Key"
                            role="tab"
-                           aria-selected="@(contNumPestañasVisibles == 0 ? "true" : "false")">@Html.GetText("COMADMINCATEGORIAS", "VEREN_IDIOMA", idioma.Value)</a>
+                           aria-selected="@(contNumPestañasVisibles == 0 ? "true" : "false")">@Html.GetText("COMADMINCATEGORIAS", "VEREN_IDIOMA", textoIdioma)</a>
                     </li>
                     contNumPestañasVisibles += 1;
                 }
@@ -76,11 +77,11 @@
                         <div class="dropdown-menu dropdown-menu-left basic-dropdown dropdown-idiomas">
                             <ul class="no-list-style">
                                 @* Pintado del resto de pestañas en Dropdown *@									
-                                                                                 @for (int i = contNumPestañasVisibles; i < cabecera.Languajes.Count; i++)
+                                @for (int i = contNumPestañasVisibles; i < cabecera.Languajes.Count; i++)
                                 {
                                     var item = cabecera.Languajes.ElementAt(i);
                                     var itemKey = item.Key;
-                                    var itemValue = item.Value;
+                                    string textoIdioma = Html.GetText("IDIOMAS", item.Value);
 
                                     @* Cada item del dropdown *@
                                     <li role="presentation">
@@ -89,7 +90,7 @@
                                            data-toggle="tab"
                                            href="#@("litVer" + itemKey)"
                                            data-language="@itemKey">
-                                            @Html.GetText("COMADMINCATEGORIAS", "VEREN_IDIOMA", itemValue)
+                                           @Html.GetText("COMADMINCATEGORIAS", "VEREN_IDIOMA", textoIdioma)
                                         </a>
                                     </li>
                                 }
