@@ -273,6 +273,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
         public ActionResult NuevaExportacion()
         {
             EliminarPersonalizacionVistas();
+            CargarPermisosAdministrarPaginas();
 
             TabModel.ExportacionSearchTabModel exportacion = new TabModel.ExportacionSearchTabModel();
             exportacion.Key = Guid.NewGuid();
@@ -336,6 +337,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
         public ActionResult NuevaPropiedadExportacion()
         {
             EliminarPersonalizacionVistas();
+            CargarPermisosAdministrarPaginas();
 
             TabModel.ExportacionSearchTabModel.PropiedadesExportacionSearchTabModel propiedadExportacion = new TabModel.ExportacionSearchTabModel.PropiedadesExportacionSearchTabModel();
             propiedadExportacion.Nombre = UtilIdiomas.GetText("COMADMINPESTANYAS", "NUEVAPROPIEDAD");

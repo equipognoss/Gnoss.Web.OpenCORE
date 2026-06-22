@@ -437,6 +437,7 @@ namespace Es.Riam.Gnoss.Web.MVC
                        name: "RedireccionComunitaItaliano",
                        template: "it/comunità/{*datosextra}",
                        defaults: new { controller = "Redirect", action = "RedireccionarComunitaItaliano" });
+            
 
             RegisterRoutesIdioma(RouteBuilder, paramCL.ObtenerListaIdiomas());
 
