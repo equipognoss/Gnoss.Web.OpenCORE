@@ -3463,7 +3463,6 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                 }
                 else if (ListaItemsBusqueda.Contains(FacetadoAD.BUSQUEDA_PERSONA) || ListaItemsBusqueda.Contains(FacetadoAD.BUSQUEDA_ORGANIZACION))
                 {
-                    //listaFiltrosOrden.Add(UtilIdiomas.GetText("PERFILRECURSOSCOMPARTIDOS", "POPULARIDAD"), "gnoss:hasPopularidad");
                     listaFiltrosOrden.Add(UtilIdiomas.GetText("INVITACIONES", "APELLIDOS"), "foaf:familyName");
                     listaFiltrosOrden.Add(UtilIdiomas.GetText("PERFILRECURSOSCOMPARTIDOS", "NOMBRE"), "foaf:firstName");
                 }
@@ -3474,30 +3473,25 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                         return;
                     }
                     listaFiltrosOrden.Add(UtilIdiomas.GetText("PERFILRECURSOSCOMPARTIDOS", "FECHA"), "gnoss:hasfechapublicacion");
-                    //listaFiltrosOrden.Add(UtilIdiomas.GetText("PERFILRECURSOSCOMPARTIDOS", "POPULARIDAD"), "gnoss:hasPopularidad");
                 }
                 else if (ListaItemsBusqueda.Contains(FacetadoAD.BUSQUEDA_CONTRIBUCIONES_RECURSOS) || ListaItemsBusqueda.Contains(FacetadoAD.BUSQUEDA_CONTRIBUCIONES_COMENTARIOS))
                 {
                     listaFiltrosOrden.Add(UtilIdiomas.GetText("PERFILRECURSOSCOMPARTIDOS", "FECHA"), "gnoss:hasfechapublicacion");
-                    //listaFiltrosOrden.Add(UtilIdiomas.GetText("PERFILRECURSOSCOMPARTIDOS", "POPULARIDAD"), "gnoss:hasPopularidad");
                     listaFiltrosOrden.Add(UtilIdiomas.GetText("PERFILRECURSOSCOMPARTIDOS", "NOMBRE"), "foaf:firstName");
                 }
 
                 if (ListaItemsBusqueda.Contains(FacetadoAD.BUSQUEDA_BLOGS))
                 {
-                    //listaFiltrosOrden.Add(UtilIdiomas.GetText("PERFILRECURSOSCOMPARTIDOS", "POPULARIDAD"), "gnoss:hasPopularidad");
                     listaFiltrosOrden.Add(UtilIdiomas.GetText("PERFILRECURSOSCOMPARTIDOS", "FECHA"), "gnoss:hasfechapublicacion");
                     listaFiltrosOrden.Add(UtilIdiomas.GetText("PERFILRECURSOSCOMPARTIDOS", "NOMBRE"), "foaf:firstName");
                 }
                 if (ListaItemsBusqueda.Contains(FacetadoAD.BUSQUEDA_ARTICULOSBLOG))
                 {
-                    //listaFiltrosOrden.Add(UtilIdiomas.GetText("PERFILRECURSOSCOMPARTIDOS", "POPULARIDAD"), "gnoss:hasPopularidad");
                     listaFiltrosOrden.Add(UtilIdiomas.GetText("PERFILRECURSOSCOMPARTIDOS", "FECHA"), "gnoss:hasfechapublicacion");
                     listaFiltrosOrden.Add(UtilIdiomas.GetText("PERFILRECURSOSCOMPARTIDOS", "NOMBRE"), "foaf:firstName");
                 }
                 if (ListaItemsBusqueda.Contains(FacetadoAD.BUSQUEDA_COMUNIDADES))
                 {
-                    //listaFiltrosOrden.Add(UtilIdiomas.GetText("PERFILRECURSOSCOMPARTIDOS", "POPULARIDAD"), "gnoss:hasPopularidad");
                     listaFiltrosOrden.Add(UtilIdiomas.GetText("PERFILRECURSOSCOMPARTIDOS", "NOMBRE"), "foaf:firstName");
                     listaFiltrosOrden.Add(UtilIdiomas.GetText("OBJETOGNOSS", "NUMRECURSOS"), "gnoss:hasnumerorecursos");
                     listaFiltrosOrden.Add(UtilIdiomas.GetText("COMMON", "FECHACREACION"), "gnoss:hasfechaAlta");
