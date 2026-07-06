@@ -11979,7 +11979,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                     //ProyectoSeleccionado.Clave, Documento.Clave, comentario.Clave, pComentarioPadre, IdentidadActual.Usuario.Clave, comentario.Fecha
                     if (redireccion != null)
                     {
-                        respuesta = redireccion;
+                        return redireccion;
                     }
 
                     traza.Append("Antes de GuardarRecurso_ModificarRecurso");
@@ -12022,7 +12022,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
 
                     if (redireccion != null)
                     {
-                        respuesta = redireccion;
+                        return redireccion;
                     }
 
                     traza.Append("Antes de GuardarRecurso_ModificarRecursoSemantico");

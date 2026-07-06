@@ -189,7 +189,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
                     }
                     else
                     {
-                        error = "No hay una plantilla personalizada para esta vista";
+                        error = "No hay una plantilla para esta vista";
                     }
                 }
                 else if (Request.Method.Equals("POST") && Accion == ManageViewsViewModel.Action.Upload)
@@ -1871,33 +1871,36 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
 
         private string DescargarPagina(string pagina, bool pOriginal, bool pEsRdfType)
         {
-            if (pOriginal)
+            string cshtml = null;
+            if (pagina.EndsWith(".cshtml"))
             {
-                return ObtenerFicheroDeRuta(pagina);
-            }
-            else
-            {
-                if (pEsRdfType)
+                if (pOriginal)
                 {
-                    List<VistaVirtualRecursos> filas = VistaVirtualDW.ListaVistaVirtualRecursos.Where(item => item.RdfType.Equals(pagina)).ToList();
-                    string cshtml = null;
-                    if (filas.Count > 0)
-                    {
-                        cshtml = filas.FirstOrDefault().HTML.ToString();
-                    }
-                    return cshtml;
+                    return ObtenerFicheroDeRuta(pagina);
                 }
                 else
                 {
-                    List<VistaVirtual> filas = VistaVirtualDW.ListaVistaVirtual.Where(item => item.TipoPagina.Equals(pagina)).ToList();
-                    string cshtml = null;
-                    if (filas.Count > 0)
+                    if (pEsRdfType)
                     {
-                        cshtml = filas.FirstOrDefault().HTML.ToString();
+                        List<VistaVirtualRecursos> filas = VistaVirtualDW.ListaVistaVirtualRecursos.Where(item => item.RdfType.Equals(pagina)).ToList();
+                        if (filas.Count > 0)
+                        {
+                            cshtml = filas.FirstOrDefault().HTML.ToString();
+                        }
+                        return cshtml;
                     }
-                    return cshtml;
+                    else
+                    {
+                        List<VistaVirtual> filas = VistaVirtualDW.ListaVistaVirtual.Where(item => item.TipoPagina.Equals(pagina)).ToList();
+                        if (filas.Count > 0)
+                        {
+                            cshtml = filas.FirstOrDefault().HTML.ToString();
+                        }
+                        return cshtml;
+                    }
                 }
             }
+            return cshtml;
         }
 
         private string DescargarComponenteCMS(string pagina, bool pOriginal, Guid pIdPersonalizacion)

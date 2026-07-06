@@ -382,11 +382,11 @@ namespace Gnoss.Web.Services
 
                             if (parametroGeneral.IdiomasDisponibles)
                             {
-                                pestanyaRouteModel = DICTIONARY_PROJECT_TABS[nombreCortoComunidad].FirstOrDefault(item => item.RutaPestanya.Equals(rutaPedida) && item.Idioma.Equals(idioma)) ?? DICTIONARY_PROJECT_TABS[nombreCortoComunidad].FirstOrDefault(item => rutaPedida.StartsWith(item.RutaPestanya + "/") && item.Idioma.Equals(idioma));
+                                pestanyaRouteModel = DICTIONARY_PROJECT_TABS[nombreCortoComunidad].FirstOrDefault(item => item.RutaPestanya.Equals(rutaPedida) && item.Idioma.Equals(idioma)) ?? ObtenerPosibleRutaTagOCategorias(rutaPedida, nombreCortoComunidad, utilIdiomas, idioma);
                             }
                             else
                             {
-                                pestanyaRouteModel = DICTIONARY_PROJECT_TABS[nombreCortoComunidad].FirstOrDefault(item => item.RutaPestanya.Equals(rutaPedida)) ?? DICTIONARY_PROJECT_TABS[nombreCortoComunidad].FirstOrDefault(item => rutaPedida.StartsWith(item.RutaPestanya + "/"));
+                                pestanyaRouteModel = DICTIONARY_PROJECT_TABS[nombreCortoComunidad].FirstOrDefault(item => item.RutaPestanya.Equals(rutaPedida)) ?? ObtenerPosibleRutaTagOCategorias(rutaPedida, nombreCortoComunidad, utilIdiomas);
                             }
                         }
 
@@ -621,52 +621,6 @@ namespace Gnoss.Web.Services
             }
         }
 
-        private void LeerRutas()
-        {
-            XmlDocument xmlRoute = new XmlDocument();
-            xmlRoute.Load(new StringReader(Resources.routemap));
-
-            //Lista de urls del metaproyecto, con identidad personal y de organización
-            Dictionary<string, string> listaUrlsMetaProyecto = new Dictionary<string, string>();
-            ObtenerListaRutas(xmlRoute, listaUrlsMetaProyecto, "metaproyecto");
-
-            Dictionary<string, string> listaUrlsMetaAdministrador = new Dictionary<string, string>();
-            ObtenerListaRutas(xmlRoute, listaUrlsMetaAdministrador, "metaAdministrador");
-
-            //Lista de urls del metaproyecto, solo con identidad de organización
-            Dictionary<string, string> listaUrlsSoloOrg = new Dictionary<string, string>();
-            ObtenerListaRutas(xmlRoute, listaUrlsSoloOrg, "organizacion");
-
-            //Lista de urls comunes a la comunidad y al metaproyecto, con identidad personal y de organización
-            Dictionary<string, string> listaUrls = new Dictionary<string, string>();
-            ObtenerListaRutas(xmlRoute, listaUrls, "comun");
-
-            //Lista de urls de una comunidad
-            Dictionary<string, string> listaUrlsCom = new Dictionary<string, string>();
-            ObtenerListaRutas(xmlRoute, listaUrlsCom, "comunidad");
-
-            //Lista de urls de ficha de recurso de una comunidad
-            Dictionary<string, string> listaUrlsFichaRecursoCom = new Dictionary<string, string>();
-            ObtenerListaRutas(xmlRoute, listaUrlsFichaRecursoCom, "fichaRecurso");
-        }
-
-        /// <summary>
-        /// Obtiene la lista de rutas de una seccion del fichero RouteMap.xml
-        /// </summary>
-        /// <param name="xmlRoute">Fichero RouteMap.xml</param>
-        /// <param name="listaUrls">Lista en la que vamos a guardar las urls leídas</param>
-        /// <param name="seccion">Sección de la que vamos a leer las rutas</param>
-        private static void ObtenerListaRutas(XmlDocument xmlRoute, Dictionary<string, string> listaUrls, string seccion)
-        {
-            XmlNodeList listaNodos = xmlRoute.SelectNodes("routeMap/seccion[@name='" + seccion + "']/pagina");
-            foreach (XmlNode nodo in listaNodos)
-            {
-                string urlMapeo = nodo["key"].InnerText.Replace("@#@@", "@#@$").Replace("@@#@", "$@#@");
-
-                listaUrls.Add(urlMapeo, nodo["value"].InnerText);
-            }
-        }
-
         /// <summary>
         /// Carga los parámetros si se ha realizado algún filtro por categoria o etiqueta
         /// </summary>
@@ -726,6 +680,34 @@ namespace Gnoss.Web.Services
                 string dominio = mConfigService.ObtenerDominio();
                 listaRedirecciones = proyCN.ObtenerRedireccionRegistroRutaPorDominio(dominio, false);
             }
+        }
+
+        /// <summary>
+        /// Si la página que se intenta obtener es una búsqueda de tags o categorías, se obtiene la página solicitada que comience por la ruta indicada mientras sea de tipo búsqueda semántica, recursos o búsqueda avanzada
+        /// </summary>
+        /// <param name="pRutaSolicitada">Ruta solicitada</param>
+        /// <param name="pNombreComunidad">Nombre corto de la comunidad</param>
+        /// <param name="pUtilIdiomas"> UtilIdiomas para obtener las traducciones de "tag" y "categoría"</param>
+        /// <param name="pIdioma"> Idioma de la ruta solicitada, si es multiidioma</param>
+        /// <returns> PestanyaRouteModel de la ruta solicitada si es una búsqueda de tags o categorías, null en caso contrario</returns>
+        private static PestanyaRouteModel? ObtenerPosibleRutaTagOCategorias(string pRutaSolicitada, string pNombreComunidad, UtilIdiomas pUtilIdiomas, string pIdioma = "")
+        {
+            string textoCategoria = pUtilIdiomas.GetText("URLSEM", "CATEGORIA");
+            string textoTag = pUtilIdiomas.GetText("URLSEM", "TAG");
+
+            if (!pRutaSolicitada.Contains(textoCategoria) && !pRutaSolicitada.Contains(textoTag))
+            {
+                return null;
+            }
+
+            bool filtrarPorIdioma = !string.IsNullOrEmpty(pIdioma);
+
+            return DICTIONARY_PROJECT_TABS[pNombreComunidad].FirstOrDefault(item =>
+                (item.TipoPestanya == (short)TipoPestanyaMenu.BusquedaSemantica ||
+                 item.TipoPestanya == (short)TipoPestanyaMenu.Recursos ||
+                 item.TipoPestanya == (short)TipoPestanyaMenu.BusquedaAvanzada) &&
+                pRutaSolicitada.StartsWith(item.RutaPestanya + "/") &&
+                (!filtrarPorIdioma || item.Idioma.Equals(pIdioma)));
         }
     }
 }

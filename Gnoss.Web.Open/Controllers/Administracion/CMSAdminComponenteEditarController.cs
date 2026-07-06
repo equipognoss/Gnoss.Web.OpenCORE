@@ -101,6 +101,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
         /// </summary>
         /// <returns></returns>
         [HttpPost]
+        [TypeFilter(typeof(PermisosContenidos), Arguments = new object[] { new ulong[] { (ulong)PermisoContenidos.VerComponenteCMS, (ulong)PermisoContenidos.EditarComponenteCMS } })]
         public ActionResult CargarModal()
         {
             EliminarPersonalizacionVistas();
@@ -119,6 +120,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
         /// </summary>
         /// <returns></returns>
         [HttpPost]
+        [TypeFilter(typeof(PermisosContenidos), Arguments = new object[] { new ulong[] { (ulong)PermisoContenidos.EliminarComponenteCMS } })]
         public ActionResult CargarEliminarComponenteItem()
         {
 			CargarPermisosCMSViewBag();
@@ -147,6 +149,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
         /// </summary>
         /// <returns></returns>
         [HttpPost]
+        [TypeFilter(typeof(PermisosContenidos), Arguments = new object[] { new ulong[] { (ulong)PermisoContenidos.VerComponenteCMS, (ulong)PermisoContenidos.EditarComponenteCMS } })]
         public ActionResult ComprobarLista(string[] listaIDs)
         {
             CargarPermisosCMSViewBag();
@@ -319,6 +322,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
         /// <param name="idComponente"></param>
         /// <returns></returns>
         [HttpPost]
+        [TypeFilter(typeof(PermisosContenidos), Arguments = new object[] { new ulong[] { (ulong)PermisoContenidos.VerComponenteCMS, (ulong)PermisoContenidos.EditarComponenteCMS } })]
         public ActionResult Select(string idComponente)
         {
             CargarPermisosCMSViewBag();
@@ -390,7 +394,8 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
             return GnossResultHtml("_modal-views/_add-version-comment", modelo);
         }
 
-		public ActionResult ObtenerHistorialTransiciones(Guid pComponenteID)
+        [TypeFilter(typeof(PermisosContenidos), Arguments = new object[] { new ulong[] { (ulong)PermisoContenidos.VerComponenteCMS, (ulong)PermisoContenidos.EditarComponenteCMS } })]
+        public ActionResult ObtenerHistorialTransiciones(Guid pComponenteID)
         {
             try
             {
@@ -413,7 +418,8 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
             }
         }
 
-		public ActionResult CargarModalRealizarTransicion(Guid pTransicionID, Guid pComponenteID)
+        [TypeFilter(typeof(PermisosContenidos), Arguments = new object[] { new ulong[] { (ulong)PermisoContenidos.EditarComponenteCMS } })]
+        public ActionResult CargarModalRealizarTransicion(Guid pTransicionID, Guid pComponenteID)
         {
             try
             {

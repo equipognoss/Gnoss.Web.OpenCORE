@@ -12,6 +12,7 @@ using Es.Riam.Gnoss.Logica.CMS;
 using Es.Riam.Gnoss.Recursos;
 using Es.Riam.Gnoss.Util.Configuracion;
 using Es.Riam.Gnoss.Util.General;
+using Es.Riam.Gnoss.UtilServiciosWeb;
 using Es.Riam.Gnoss.Web.Controles.ServicioImagenesWrapper;
 using Es.Riam.Gnoss.Web.Controles.ServicioImagenesWrapper.Model;
 using Es.Riam.Gnoss.Web.MVC.Filters;
@@ -34,6 +35,7 @@ using Serilog.Core;
 using System;
 using System.Collections.Generic;
 using System.Data;
+using System.Data.Entity.Core.Metadata.Edm;
 using System.IO;
 using System.Linq;
 using System.Web;
@@ -476,6 +478,12 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
 
             if (action.ToLower() == "eliminarcomponentemultimedia")
             {
+                UtilPermisos utilPermisos = new UtilPermisos(mEntityContext, mLoggingService, mConfigService, mLoggerFactory.CreateLogger<UtilPermisos>(), mLoggerFactory);
+                bool tienePermiso = utilPermisos.IdentidadTienePermiso((ulong)PermisoContenidos.GestionarMultimediaCMS, IdentidadActual.Clave, IdentidadActual.IdentidadMyGNOSS.Clave, TipoDePermiso.Contenidos);
+                if (!tienePermiso)
+                {
+                    return new UnauthorizedResult();
+                }
                 #region Eliminar componente multimedia
                 string nombreComponente = RequestParams("nombreComponente");
 

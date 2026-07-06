@@ -42,6 +42,7 @@ using Es.Riam.Gnoss.Util.Configuracion;
 using Es.Riam.Gnoss.Util.General;
 using Es.Riam.Gnoss.UtilServiciosWeb;
 using Es.Riam.Gnoss.Web.Controles.Exportaciones;
+using Es.Riam.Gnoss.Web.MVC.Controles;
 using Es.Riam.Gnoss.Web.MVC.Controllers.Administracion;
 using Es.Riam.Gnoss.Web.MVC.Filters;
 using Es.Riam.Gnoss.Web.MVC.Models;
@@ -457,6 +458,21 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                 return RedireccionarAPaginaNoEncontrada();
             }
 
+            bool tienePermiso = false;
+            if (RequestParams("admin") != null && RequestParams("admin").Equals("true"))
+            {
+                UtilPermisos utilPermisos = new UtilPermisos(mEntityContext, mLoggingService, mConfigService, mLoggerFactory.CreateLogger<UtilPermisos>(), mLoggerFactory);
+                
+                if (RequestParams("ecosistema") != null && RequestParams("ecosistema").Equals("true"))
+                {
+                    tienePermiso = utilPermisos.UsuarioTienePermisoAdministracionEcosistema((ulong)PermisoEcosistema.AdministrarMiembrosEcosistema, mControladorBase.UsuarioActual.UsuarioID);
+                }
+                else
+                {
+                    tienePermiso = utilPermisos.IdentidadTienePermiso((ulong)PermisoComunidad.GestionarMiembros, mControladorBase.IdentidadActual.Clave, mControladorBase.IdentidadActual.IdentidadMyGNOSS.Clave, TipoDePermiso.Comunidad);
+                } 
+            }
+
             SearchViewModel paginaModel = new SearchViewModel();
             Stopwatch sw = null;
 
@@ -786,7 +802,14 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
             }
             if (!string.IsNullOrEmpty(RequestParams("ExportarDatosUsuario")))
             {
-                return ExportacionDatosUsuario(proyectoID, rawUrl, grafo, RequestParams("ExportarDatosUsuario").Split("|", StringSplitOptions.RemoveEmptyEntries).ToList());
+                if (tienePermiso)
+                {
+                    return ExportacionDatosUsuario(proyectoID, rawUrl, grafo, RequestParams("ExportarDatosUsuario").Split("|", StringSplitOptions.RemoveEmptyEntries).ToList());
+                }
+                else
+                {
+                    return new UnauthorizedResult();
+                } 
             }
             else if (!string.IsNullOrEmpty(RequestParams("ParametrosExportacion")))
             {
@@ -961,16 +984,6 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
             // Mostrar la vista Administrar Miembros desde Administración"
             if (RequestParams("admin") != null && RequestParams("admin").Equals("true"))
             {
-                UtilPermisos utilPermisos = new UtilPermisos(mEntityContext, mLoggingService, mConfigService, mLoggerFactory.CreateLogger<UtilPermisos>(), mLoggerFactory);
-                bool tienePermiso = false;
-                if (RequestParams("ecosistema") != null && RequestParams("ecosistema").Equals("true"))
-                {
-                    tienePermiso = utilPermisos.UsuarioTienePermisoAdministracionEcosistema((ulong)PermisoEcosistema.AdministrarMiembrosEcosistema, mControladorBase.UsuarioActual.UsuarioID);
-                }
-                else
-                {
-					tienePermiso = utilPermisos.IdentidadTienePermiso((ulong)PermisoComunidad.GestionarMiembros, mControladorBase.IdentidadActual.Clave, mControladorBase.IdentidadActual.IdentidadMyGNOSS.Clave, TipoDePermiso.Comunidad);
-				}
                 if (!tienePermiso)
                 {
                     return Redirect(mControladorBase.UrlsSemanticas.ObtenerURLComunidad(UtilIdiomas, BaseURLIdioma, ProyectoSeleccionado.NombreCorto));

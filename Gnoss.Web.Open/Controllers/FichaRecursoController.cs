@@ -2166,52 +2166,61 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
         {
             try
             {
-                DocumentacionCN docCN = new DocumentacionCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<DocumentacionCN>(), mLoggerFactory);
-                List<AD.EntityModel.Models.Documentacion.VersionDocumento> listaVersionesDocumento = docCN.ObtenerVersionesPorDocumentoOriginalID(Documento.VersionOriginalID);
-                Dictionary<Guid,ResourceModel> recursos = ControladorProyectoMVC.ObtenerRecursosPorID(listaVersionesDocumento.Select(x => x.DocumentoID).ToList(), "", null, false);
-
-                docCN.Dispose();
-
-                List<VersionViewModel> versiones = new List<VersionViewModel>();
-                List<AD.EntityModel.Models.Documentacion.VersionDocumento> parentVersions = CalcularVersionesPadre(listaVersionesDocumento);
-                
-                foreach (AD.EntityModel.Models.Documentacion.VersionDocumento versionDocumento in parentVersions)
+                bool permisoVerHistorial = ComprobarPermisoVerHistorial();
+                if (permisoVerHistorial)
                 {
-                    
-                    VersionViewModel version = new VersionViewModel
+                    DocumentacionCN docCN = new DocumentacionCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<DocumentacionCN>(), mLoggerFactory);
+                    List<AD.EntityModel.Models.Documentacion.VersionDocumento> listaVersionesDocumento = docCN.ObtenerVersionesPorDocumentoOriginalID(Documento.VersionOriginalID);
+                    Dictionary<Guid, ResourceModel> recursos = ControladorProyectoMVC.ObtenerRecursosPorID(listaVersionesDocumento.Select(x => x.DocumentoID).ToList(), "", null, false);
+
+                    docCN.Dispose();
+
+                    List<VersionViewModel> versiones = new List<VersionViewModel>();
+                    List<AD.EntityModel.Models.Documentacion.VersionDocumento> parentVersions = CalcularVersionesPadre(listaVersionesDocumento);
+
+                    foreach (AD.EntityModel.Models.Documentacion.VersionDocumento versionDocumento in parentVersions)
                     {
-                        Number = versionDocumento.Version,
-                        Title = recursos[versionDocumento.DocumentoID].Title,
-                        Publisher = recursos[versionDocumento.DocumentoID].Publisher.NamePerson,
-                        PublishDate = recursos[versionDocumento.DocumentoID].PublishDate,
-                        VersionId = versionDocumento.DocumentoID,
-                        StatusId = versionDocumento.EstadoID,
-                        IsImprovement = versionDocumento.EsMejora,
-                        VersionStatus = (EstadoVersion)versionDocumento.EstadoVersion,
-                        Url = recursos[versionDocumento.DocumentoID].VersionCardLink,
-                        UrlPreview = recursos[versionDocumento.DocumentoID].UrlPreview,
-                        UrlLoadActionRestoreVersion = recursos[versionDocumento.DocumentoID].ListActions.UrlLoadActionRestoreVersion,
-                        UrlLoadActionDeleteVersion = recursos[versionDocumento.DocumentoID].ListActions.UrlLoadActionDeleteVersion,
-                        IsLastVersion = versionDocumento.EstadoVersion == (short)EstadoVersion.Vigente,
-                        IsSemantic = recursos[versionDocumento.DocumentoID].TypeDocument == DocumentType.Semantico,
-                        IsServerFile = recursos[versionDocumento.DocumentoID].TypeDocument == DocumentType.FicheroServidor,
-                        ImprovementSubversions = CalcularSubversiones(versionDocumento.MejoraID,listaVersionesDocumento, recursos)
-                    };
 
-                    versiones.Add(version);
+                        VersionViewModel version = new VersionViewModel
+                        {
+                            Number = versionDocumento.Version,
+                            Title = recursos[versionDocumento.DocumentoID].Title,
+                            Publisher = recursos[versionDocumento.DocumentoID].Publisher.NamePerson,
+                            PublishDate = recursos[versionDocumento.DocumentoID].PublishDate,
+                            VersionId = versionDocumento.DocumentoID,
+                            StatusId = versionDocumento.EstadoID,
+                            IsImprovement = versionDocumento.EsMejora,
+                            VersionStatus = (EstadoVersion)versionDocumento.EstadoVersion,
+                            Url = recursos[versionDocumento.DocumentoID].VersionCardLink,
+                            UrlPreview = recursos[versionDocumento.DocumentoID].UrlPreview,
+                            UrlLoadActionRestoreVersion = recursos[versionDocumento.DocumentoID].ListActions.UrlLoadActionRestoreVersion,
+                            UrlLoadActionDeleteVersion = recursos[versionDocumento.DocumentoID].ListActions.UrlLoadActionDeleteVersion,
+                            IsLastVersion = versionDocumento.EstadoVersion == (short)EstadoVersion.Vigente,
+                            IsSemantic = recursos[versionDocumento.DocumentoID].TypeDocument == DocumentType.Semantico,
+                            IsServerFile = recursos[versionDocumento.DocumentoID].TypeDocument == DocumentType.FicheroServidor,
+                            ImprovementSubversions = CalcularSubversiones(versionDocumento.MejoraID, listaVersionesDocumento, recursos)
+                        };
+
+                        versiones.Add(version);
+                    }
+
+
+                    HistoryViewModel model = new HistoryViewModel();
+                    model.Versions = versiones;
+                    model.LastVersionStatus = model.Versions.First(x => x.IsLastVersion).StatusId;
+                    model.ImprovementStatus = model.Versions.FirstOrDefault(x => x.IsImprovement && x.VersionStatus == EstadoVersion.Pendiente)?.StatusId;
+                    model.HasWorkflow = model.LastVersionStatus != null;
+                    model.HasActiveImprovement = model.Versions.Any(x => x.IsImprovement && x.VersionStatus == EstadoVersion.Pendiente);
+                    model.IsActiveImprovement = model.Versions.Any(x => x.VersionId == DocumentoVersionID && x.VersionStatus == EstadoVersion.Pendiente);
+
+
+                    return GnossResultHtml("../FichaRecurso/_modal-views/_history", model);
                 }
-
-
-                HistoryViewModel model = new HistoryViewModel();
-                model.Versions = versiones;
-                model.LastVersionStatus = model.Versions.First(x => x.IsLastVersion).StatusId;
-                model.ImprovementStatus = model.Versions.FirstOrDefault(x => x.IsImprovement && x.VersionStatus == EstadoVersion.Pendiente)?.StatusId;
-                model.HasWorkflow = model.LastVersionStatus != null;
-                model.HasActiveImprovement = model.Versions.Any(x => x.IsImprovement && x.VersionStatus == EstadoVersion.Pendiente);
-                model.IsActiveImprovement = model.Versions.Any(x => x.VersionId == DocumentoVersionID && x.VersionStatus == EstadoVersion.Pendiente);
-
-
-                return GnossResultHtml("../FichaRecurso/_modal-views/_history", model);
+                else
+                {
+                    return GnossResultERROR("No se pudo cargar el historial");
+                }
+                
             }
             catch (Exception ex)
             {
@@ -8708,6 +8717,54 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
             }
 
             return urlImagen;
+        }
+
+        private bool ComprobarPermisoVerHistorial()
+        {
+            UtilPermisos utilPermisos = new UtilPermisos(mEntityContext, mLoggingService, mConfigService, mLoggerFactory.CreateLogger<UtilPermisos>(), mLoggerFactory);
+            bool permisoRestaurarVersion = false;
+            bool permisoEliminarVersion = false;
+
+            switch (Documento.TipoDocumentacion)
+            {
+                case TiposDocumentacion.Hipervinculo:
+                    permisoRestaurarVersion = utilPermisos.IdentidadTienePermiso((ulong)PermisoRecursos.RestaurarVersionEnlace, IdentidadActual.Clave, IdentidadActual.IdentidadMyGNOSS.Clave, TipoDePermiso.Recursos);
+                    permisoEliminarVersion = utilPermisos.IdentidadTienePermiso((ulong)PermisoRecursos.EliminarVersionEnlace, IdentidadActual.Clave, IdentidadActual.IdentidadMyGNOSS.Clave, TipoDePermiso.Recursos);
+                    break;
+                case TiposDocumentacion.Nota:
+                    permisoRestaurarVersion = utilPermisos.IdentidadTienePermiso((ulong)PermisoRecursos.RestaurarVersionNota, IdentidadActual.Clave, IdentidadActual.IdentidadMyGNOSS.Clave, TipoDePermiso.Recursos);
+                    permisoEliminarVersion = utilPermisos.IdentidadTienePermiso((ulong)PermisoRecursos.EliminarVersionNota, IdentidadActual.Clave, IdentidadActual.IdentidadMyGNOSS.Clave, TipoDePermiso.Recursos);
+                    break;
+                case TiposDocumentacion.FicheroServidor:
+                case TiposDocumentacion.Video:
+                case TiposDocumentacion.Imagen:
+                case TiposDocumentacion.Audio:
+                    permisoRestaurarVersion = utilPermisos.IdentidadTienePermiso((ulong)PermisoRecursos.RestaurarVersionAdjunto, IdentidadActual.Clave, IdentidadActual.IdentidadMyGNOSS.Clave, TipoDePermiso.Recursos);
+                    permisoEliminarVersion = utilPermisos.IdentidadTienePermiso((ulong)PermisoRecursos.EliminarVersionAdjunto, IdentidadActual.Clave, IdentidadActual.IdentidadMyGNOSS.Clave, TipoDePermiso.Recursos);
+                    break;
+                case TiposDocumentacion.Encuesta:
+                    permisoRestaurarVersion = utilPermisos.IdentidadTienePermiso((ulong)PermisoRecursos.RestaurarVersionEncuesta, IdentidadActual.Clave, IdentidadActual.IdentidadMyGNOSS.Clave, TipoDePermiso.Recursos);
+                    permisoEliminarVersion = utilPermisos.IdentidadTienePermiso((ulong)PermisoRecursos.EliminarVersionEncuesta, IdentidadActual.Clave, IdentidadActual.IdentidadMyGNOSS.Clave, TipoDePermiso.Recursos);
+                    break;
+                case TiposDocumentacion.ReferenciaADoc:
+                    permisoRestaurarVersion = utilPermisos.IdentidadTienePermiso((ulong)PermisoRecursos.RestaurarVersionReferencia, IdentidadActual.Clave, IdentidadActual.IdentidadMyGNOSS.Clave, TipoDePermiso.Recursos);
+                    permisoEliminarVersion = utilPermisos.IdentidadTienePermiso((ulong)PermisoRecursos.EliminarVersionReferencia, IdentidadActual.Clave, IdentidadActual.IdentidadMyGNOSS.Clave, TipoDePermiso.Recursos);
+                    break;
+                case TiposDocumentacion.Pregunta:
+                    permisoRestaurarVersion = utilPermisos.IdentidadTienePermiso((ulong)PermisoRecursos.RestaurarVersionPregunta, IdentidadActual.Clave, IdentidadActual.IdentidadMyGNOSS.Clave, TipoDePermiso.Recursos);
+                    permisoEliminarVersion = utilPermisos.IdentidadTienePermiso((ulong)PermisoRecursos.EliminarVersionPregunta, IdentidadActual.Clave, IdentidadActual.IdentidadMyGNOSS.Clave, TipoDePermiso.Recursos);
+                    break;
+                case TiposDocumentacion.Debate:
+                    permisoRestaurarVersion = utilPermisos.IdentidadTienePermiso((ulong)PermisoRecursos.RestaurarVersionDebate, IdentidadActual.Clave, IdentidadActual.IdentidadMyGNOSS.Clave, TipoDePermiso.Recursos);
+                    permisoEliminarVersion = utilPermisos.IdentidadTienePermiso((ulong)PermisoRecursos.EliminarVersionDebate, IdentidadActual.Clave, IdentidadActual.IdentidadMyGNOSS.Clave, TipoDePermiso.Recursos);
+                    break;
+                case TiposDocumentacion.Semantico:
+                    permisoRestaurarVersion = utilPermisos.IdentidadTienePermisoRecursoSemantico(IdentidadActual.Clave, IdentidadActual.IdentidadMyGNOSS.Clave, TipoPermisoRecursosSemanticos.RestaurarVersion, Documento.ElementoVinculadoID);
+                    permisoEliminarVersion = utilPermisos.IdentidadTienePermisoRecursoSemantico(IdentidadActual.Clave, IdentidadActual.IdentidadMyGNOSS.Clave, TipoPermisoRecursosSemanticos.EliminarVersion, Documento.ElementoVinculadoID);
+                    break;
+            }
+
+            return Documento.TienePermisosEdicionIdentidad(IdentidadActual, IdentidadOrganizacionBROrg, ProyectoSeleccionado, UsuarioActual.UsuarioID, EsIdentidadActualAdministradorOrganizacion) || ControladorDocumentacion.EsEditorPerfilDeDocumento(IdentidadActual.PerfilID, Documento, true, UsuarioActual.UsuarioID) || permisoRestaurarVersion || permisoEliminarVersion;
         }
 
         private string CargarUrlVistaPrevia(Documento pDocumento)

@@ -122,11 +122,20 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                 }
             }
             #endregion
+            
 
             if (Request.Query.ContainsKey("ontologia"))
             {
-                mLoggingService.AgregarEntrada("Entra if ontologia");
-                DevolverOntologia();
+                mLoggingService.AgregarEntrada("Entra if ontologia");                
+                if (TienePermisoDescargarOntologia())
+                {
+                    DevolverOntologia();
+                }
+                else
+                {
+                    return new UnauthorizedResult();
+                }
+                                
                 return null;
             }
 
@@ -508,6 +517,10 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
             {
                 try
                 {
+                    if (!TienePermisoDescargarOntologia())
+                    {
+                        return new UnauthorizedResult();
+                    }
                     CallFileService servicioArch = new CallFileService(mConfigService, mLoggingService);
 
                     if (ext == ".xml")
@@ -975,6 +988,17 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
         private string ExtraerNombreFicheroSinExtension(string pNombreFichero)
         {
             return pNombreFichero.Substring(0, pNombreFichero.LastIndexOf('.'));
+        }
+
+        private bool TienePermisoDescargarOntologia()
+        {
+            if (IdentidadActual != null)
+            {
+                UtilPermisos utilPermisos = new UtilPermisos(mEntityContext, mLoggingService, mConfigService, mLoggerFactory.CreateLogger<UtilPermisos>(), mLoggerFactory);
+                return utilPermisos.IdentidadTienePermiso((ulong)PermisoContenidos.GestionarOC, IdentidadActual.Clave, IdentidadActual.Clave, TipoDePermiso.Contenidos) || utilPermisos.IdentidadTienePermiso((ulong)PermisoContenidos.ModificarValorEntidadSecundaria, IdentidadActual.Clave, IdentidadActual.Clave, TipoDePermiso.Contenidos) || utilPermisos.IdentidadTienePermiso((ulong)PermisoContenidos.AnyadirValorEntidadSecundaria, IdentidadActual.Clave, IdentidadActual.Clave, TipoDePermiso.Contenidos);
+            }
+
+            return false;
         }
 
         #endregion

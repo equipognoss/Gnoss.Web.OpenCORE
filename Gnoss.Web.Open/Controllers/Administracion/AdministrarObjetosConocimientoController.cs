@@ -624,8 +624,9 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
             }
         }
 
-		//Descargar todas las clases del ecosistema
-		public ActionResult DownloadClasses()
+        [TypeFilter(typeof(PermisosContenidos), Arguments = new object[] { new ulong[] { (ulong)PermisoContenidos.AnyadirValorEntidadSecundaria, (ulong)PermisoContenidos.ModificarValorEntidadSecundaria, (ulong)PermisoContenidos.GestionarOC } })]
+        //Descargar todas las clases del ecosistema
+        public ActionResult DownloadClasses()
         {
 			try
 			{
@@ -643,60 +644,61 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
 			}
 		}
 
-		//    [TypeFilter(typeof(PermisosPaginasUsuariosAttribute), Arguments = new object[] { TipoPaginaAdministracion.Semantica, "AdministracionSemanticaPermitido", true })]
-		//public ActionResult DownloadClasses_bckp()
-		//{
-		//    try
-		//    {
-		//        //Generar clases
-		//        //Comprimirlo
-		//        string directorio = Directorio();
-		//        DirectoryInfo directoryPrincipal = new DirectoryInfo(directorio);
-		//        DirectoryInfo[] directories = directoryPrincipal.GetDirectories();
+        //    [TypeFilter(typeof(PermisosPaginasUsuariosAttribute), Arguments = new object[] { TipoPaginaAdministracion.Semantica, "AdministracionSemanticaPermitido", true })]
+        //public ActionResult DownloadClasses_bckp()
+        //{
+        //    try
+        //    {
+        //        //Generar clases
+        //        //Comprimirlo
+        //        string directorio = Directorio();
+        //        DirectoryInfo directoryPrincipal = new DirectoryInfo(directorio);
+        //        DirectoryInfo[] directories = directoryPrincipal.GetDirectories();
 
-		//        string nombrefichero = string.Empty;
-		//        foreach (DirectoryInfo dir in directories)
-		//        {
-		//            if (dir.Name.Contains("ClasesYVistas_"))
-		//            {
-		//                nombrefichero = dir.Name;
-		//            }
-		//        }
+        //        string nombrefichero = string.Empty;
+        //        foreach (DirectoryInfo dir in directories)
+        //        {
+        //            if (dir.Name.Contains("ClasesYVistas_"))
+        //            {
+        //                nombrefichero = dir.Name;
+        //            }
+        //        }
 
-		//        string pZipPath = Path.Combine(directorio, "comprimido.zip");
-		//        string folderPath = Path.Combine(directorio, nombrefichero);
-		//        ZipFile.CreateFromDirectory(folderPath, pZipPath);
+        //        string pZipPath = Path.Combine(directorio, "comprimido.zip");
+        //        string folderPath = Path.Combine(directorio, nombrefichero);
+        //        ZipFile.CreateFromDirectory(folderPath, pZipPath);
 
-		//        byte[] bytes = System.IO.File.ReadAllBytes(pZipPath);
-		//        Thread.Sleep(1000);
+        //        byte[] bytes = System.IO.File.ReadAllBytes(pZipPath);
+        //        Thread.Sleep(1000);
 
-		//        try
-		//        {
-		//            Directory.Delete(directorio, true);
-		//        }
-		//        catch (Exception)
-		//        {
-		//            Thread.Sleep(1000);
-		//            try
-		//            {
-		//                Directory.Delete(directorio, true);
-		//            }
-		//            catch
-		//            {
-		//                GuardarLogError("Fallo al intentar borrra el fichero temporar de la carpeta: " + directorio);
-		//            }
-		//        }
-		//        return File(bytes, "application/zip", $"{ProyectoSeleccionado.NombreCorto}_ClassesAndViews.zip");
-		//    }
-		//    catch (Exception ex)
-		//    {
-		//        mLoggingService.GuardarLogError(ex.Message);
-		//        Response.StatusCode = 500;
-		//        return GnossResultERROR(ex.Message);
-		//    }
-		//}
+        //        try
+        //        {
+        //            Directory.Delete(directorio, true);
+        //        }
+        //        catch (Exception)
+        //        {
+        //            Thread.Sleep(1000);
+        //            try
+        //            {
+        //                Directory.Delete(directorio, true);
+        //            }
+        //            catch
+        //            {
+        //                GuardarLogError("Fallo al intentar borrra el fichero temporar de la carpeta: " + directorio);
+        //            }
+        //        }
+        //        return File(bytes, "application/zip", $"{ProyectoSeleccionado.NombreCorto}_ClassesAndViews.zip");
+        //    }
+        //    catch (Exception ex)
+        //    {
+        //        mLoggingService.GuardarLogError(ex.Message);
+        //        Response.StatusCode = 500;
+        //        return GnossResultERROR(ex.Message);
+        //    }
+        //}
 
-		public ActionResult DownloadClassesJava()
+        [TypeFilter(typeof(PermisosContenidos), Arguments = new object[] { new ulong[] { (ulong)PermisoContenidos.AnyadirValorEntidadSecundaria, (ulong)PermisoContenidos.ModificarValorEntidadSecundaria, (ulong)PermisoContenidos.GestionarOC } })]
+        public ActionResult DownloadClassesJava()
         {
             /*Dictionary<string, string> dicPref = new Dictionary<string, string>();
             Dictionary<string, KeyValuePair<Ontologia, byte[]>> diccionarioOntologias = new Dictionary<string, KeyValuePair<Ontologia, byte[]>>();
@@ -836,7 +838,8 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
         /// </summary>
         /// <returns>ActionResult</returns>
         [HttpPost]
-		public ActionResult NuevoSubTipo()
+        [TypeFilter(typeof(PermisosContenidos), Arguments = new object[] { new ulong[] { (ulong)PermisoContenidos.AnyadirValorEntidadSecundaria, (ulong)PermisoContenidos.ModificarValorEntidadSecundaria, (ulong)PermisoContenidos.GestionarOC } })]
+        public ActionResult NuevoSubTipo()
         {
 			CargarPermisosAdministrarOC();
 			EliminarPersonalizacionVistas();
@@ -849,7 +852,8 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
         /// </summary>
         /// <returns>ActionResult</returns>
         [HttpPost]
-		public ActionResult NuevaPropiedad()
+        [TypeFilter(typeof(PermisosContenidos), Arguments = new object[] { new ulong[] { (ulong)PermisoContenidos.AnyadirValorEntidadSecundaria, (ulong)PermisoContenidos.ModificarValorEntidadSecundaria, (ulong)PermisoContenidos.GestionarOC } })]
+        public ActionResult NuevaPropiedad()
         {
 			CargarPermisosAdministrarOC();
 			EliminarPersonalizacionVistas();
@@ -865,7 +869,8 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
         /// </summary>
         /// <returns>ActionResult</returns>
         [HttpPost]
-		public ActionResult NuevaPropiedadPersonalizada()
+        [TypeFilter(typeof(PermisosContenidos), Arguments = new object[] { new ulong[] { (ulong)PermisoContenidos.AnyadirValorEntidadSecundaria, (ulong)PermisoContenidos.ModificarValorEntidadSecundaria, (ulong)PermisoContenidos.GestionarOC } })]
+        public ActionResult NuevaPropiedadPersonalizada()
         {
 			CargarPermisosAdministrarOC();
 			EliminarPersonalizacionVistas();
@@ -876,12 +881,13 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
             return PartialView("_FichaPropiedadPersonalizado", propiedad);
         }
 
-		/// <summary>
-		/// Carga todos los elementos pertenecientes a la entidad secundaria indicada
-		/// </summary>
-		/// <param name="Grafo">Grafo de la entidad secundaria indicada</param>
-		/// <returns>Devuelve vista con todos los elementos pertenecientes a la entidad secundaria indicada<returns>
-		public ActionResult CargarElementosEntidadSecundaria(string Grafo)
+        /// <summary>
+        /// Carga todos los elementos pertenecientes a la entidad secundaria indicada
+        /// </summary>
+        /// <param name="Grafo">Grafo de la entidad secundaria indicada</param>
+        /// <returns>Devuelve vista con todos los elementos pertenecientes a la entidad secundaria indicada<returns>
+        [TypeFilter(typeof(PermisosContenidos), Arguments = new object[] { new ulong[] { (ulong)PermisoContenidos.AnyadirValorEntidadSecundaria, (ulong)PermisoContenidos.ModificarValorEntidadSecundaria, (ulong)PermisoContenidos.GestionarOC } })]
+        public ActionResult CargarElementosEntidadSecundaria(string Grafo)
         {
 			CargarPermisosAdministrarOC();
 			EliminarPersonalizacionVistas();
@@ -986,6 +992,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
         }
 
         [HttpPost]
+        [TypeFilter(typeof(PermisosContenidos), Arguments = new object[] { new ulong[] { (ulong)PermisoContenidos.AnyadirValorEntidadSecundaria, (ulong)PermisoContenidos.ModificarValorEntidadSecundaria, (ulong)PermisoContenidos.GestionarOC } })]
         public ActionResult HistorialFicheros(Guid ontoID)
         {
             OntologicalTemplatesAdministrationViewModel viewModel = new OntologicalTemplatesAdministrationViewModel() { OntologyID = ontoID };
@@ -2497,7 +2504,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
 
             DocumentacionCN docCN = new DocumentacionCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<DocumentacionCN>(), mLoggerFactory);
             mSecondaryEntityModel.SecondaryEntities.SecondaryOntologyNameSelected = docCN.ObtenerTituloDocumentoPorID(ontologiaID);
-            docCN.Dispose();
+            docCN.Dispose();                                                                     
 
             facCN.Dispose();
         }

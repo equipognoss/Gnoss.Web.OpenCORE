@@ -263,7 +263,6 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
             {
                 return RedireccionarAPaginaNoEncontrada();
             }
-
             // Permitir guardar Biografía sin información -> Eliminación de biografía o Tags por parte del usuario                       
             if (string.IsNullOrEmpty(pCurriculum.Description))
             {
@@ -274,6 +273,8 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                 pCurriculum.Tags = "";
             }
 
+            pCurriculum.Description = UtilCadenas.LimpiarInyeccionCodigo(pCurriculum.Description);
+            pCurriculum.Tags = UtilCadenas.LimpiarInyeccionCodigo(pCurriculum.Tags);
             GuardarCVRapido(pCurriculum.Description, pCurriculum.Tags, true);
             IdentidadCL identidadCL = new IdentidadCL(mEntityContext, mLoggingService, mRedisCacheWrapper, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<IdentidadCL>(), mLoggerFactory);
             identidadCL.EliminarCacheGestorIdentidad(IdentidadActual.Clave, IdentidadActual.PersonaID.Value);
