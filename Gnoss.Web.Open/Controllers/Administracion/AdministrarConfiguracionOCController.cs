@@ -48,8 +48,8 @@ using XMLModel = Es.Riam.Gnoss.Web.MVC.Models.ConfiguracionOC.XMLModel;
 
 namespace Gnoss.Web.Open.Controllers.Administracion
 {
-    
 
+    [CabecerasCsp]
     public class AdministrarConfiguracionOCController : AdministrarOCControllerBase
     {
         private Dictionary<string, Dictionary<string, List<string>>> listaOntologiasPropiedades;

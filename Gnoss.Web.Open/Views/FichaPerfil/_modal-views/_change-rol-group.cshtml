@@ -1,10 +1,10 @@
 ﻿@model CambiarRolGrupoViewModel
 @{
-    List<RolModel> rolesEcosistema = new List<RolModel>();
+    List<RolModel> rolesTransversales = new List<RolModel>();
     List<RolModel> rolesComunidad = new List<RolModel>();
     if (Model != null && Model.Roles != null)
     {
-        rolesEcosistema = Model.Roles.Where(x => x.Tipo.Equals((short)AmbitoRol.Ecosistema)).ToList();
+        rolesTransversales = Model.Roles.Where(x => x.Tipo.Equals((short)AmbitoRol.Transversal)).ToList();
         rolesComunidad = Model.Roles.Where(x => x.Tipo.Equals((short)AmbitoRol.Comunidad)).ToList();
     }
 }
@@ -17,15 +17,15 @@
     <div class="formulario-edicion formulario_@Model.GrupoID">
         <ul class="nav nav-tabs" id="myTab" role="tablist">
             <li class="nav-item">
-                <a class="nav-link active" id="ecosistema-tab" data-toggle="tab" href="#ecosistema" role="tab" aria-controls="ecosistema" aria-selected="true">Roles de Ecosistema</a>
+                <a class="nav-link active" id="transversal-tab" data-toggle="tab" href="#transversal" role="tab" aria-controls="transversal" aria-selected="true">Roles entre comunidades</a>
             </li>
             <li class="nav-item">
                 <a class="nav-link" id="comunidad-tab" data-toggle="tab" href="#comunidad" role="tab" aria-controls="comunidad" aria-selected="false">Roles de Comunidad</a>
             </li>
         </ul>
         <div class="tab-content">
-            <div class="tab-pane fade show active" id="ecosistema" role="tabpanel" aria-labelledby="ecosistema-tab">
-                @foreach (RolModel rol in rolesEcosistema)
+            <div class="tab-pane fade show active" id="transversal" role="tabpanel" aria-labelledby="transversal-tab">
+                @foreach (RolModel rol in rolesTransversales)
                 {
                     <div class="form-group">
                         <div class="custom-control custom-checkbox">

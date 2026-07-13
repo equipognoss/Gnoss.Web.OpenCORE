@@ -43,6 +43,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
     }
 
     [TypeFilter(typeof(NoTrackingEntityFilter))]
+    [CabecerasCsp]
     public class LogoutController : ControllerBaseWeb
     {
         private ILogger mlogger;

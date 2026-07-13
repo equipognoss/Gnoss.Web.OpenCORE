@@ -28,6 +28,7 @@ using Es.Riam.Gnoss.Web.MVC.Models.ViewModels;
 using Es.Riam.Interfaces.InterfacesOpen;
 using Es.Riam.InterfacesOpen;
 using Es.Riam.Util;
+using Gnoss.Web.Open.Filters;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -43,17 +44,18 @@ using System.Threading.Tasks;
 
 namespace Gnoss.Web.Controllers
 {
+    [CabecerasCsp]
     public class RegistroOrganizacionController : ControllerBaseWeb
     {
 
-        private ILogger mlogger;
-        private ILoggerFactory mLoggerFactory;
+        private readonly ILogger _logger;
+        private readonly ILoggerFactory mLoggerFactory;
 
         public RegistroOrganizacionController(LoggingService loggingService, ConfigService configService, EntityContext entityContext, RedisCacheWrapper redisCacheWrapper, GnossCache gnossCache, VirtuosoAD virtuosoAD, IHttpContextAccessor httpContextAccessor, ICompositeViewEngine viewEngine, EntityContextBASE entityContextBASE, Microsoft.AspNetCore.Hosting.IHostingEnvironment env, IActionContextAccessor actionContextAccessor, IUtilServicioIntegracionContinua utilServicioIntegracionContinua, IServicesUtilVirtuosoAndReplication servicesUtilVirtuosoAndReplication, IOAuth oAuth, IHostApplicationLifetime appLifetime, IAvailableServices availableServices, ILogger<RegistroOrganizacionController> logger, ILoggerFactory loggerFactory)
             : base(loggingService, configService, entityContext, redisCacheWrapper, gnossCache, virtuosoAD, httpContextAccessor, viewEngine, entityContextBASE, env, actionContextAccessor, utilServicioIntegracionContinua, servicesUtilVirtuosoAndReplication, oAuth, appLifetime, availableServices,logger,loggerFactory)
         {
 
-            mlogger = logger;
+            _logger = logger;
             mLoggerFactory = loggerFactory;
         }
 
@@ -97,6 +99,7 @@ namespace Gnoss.Web.Controllers
             }
             catch (Exception ex)
             {
+                mLoggingService.GuardarLogError(ex, _logger);
                 registrarOrg.Error = true;
             }
             return View("Index", registrarOrg); 

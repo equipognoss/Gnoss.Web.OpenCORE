@@ -5,6 +5,7 @@
     string verRolID = $"verRol_{Model.RolID}";
     string editarRolID = $"editarRol_{Model.RolID}";
     string eliminarRolID = $"eliminarRol_{Model.RolID}";
+    bool esEcosistema = !string.IsNullOrEmpty(ViewBag.isInEcosistemaPlatform) ? (bool.Parse(ViewBag.isInEcosistemaPlatform)) : false;
 
     // Diccionario para los campos multiidioma
     Dictionary<string, string> roleDescriptionDictionary = Html.GetDictionaryValuesFromMultiLanguageItem(Model.Descripcion);
@@ -70,9 +71,11 @@
                             }
                         </div>
                         @* Ámbito: *@
-                        <div class="component-tipo-wrap component-w-15">
-                            <span class="component-tipo">@(Model.Tipo == 0 ? Html.GetText("DEVTOOLS", "TIPOROLCOMUNIDAD") : Html.GetText("DEVTOOLS", "TIPOROLECOSISTEMA"))</span>
-                        </div>
+                        @if(!esEcosistema){
+                            <div class="component-tipo-wrap component-w-20">
+                                <span class="component-tipo">@(Model.Tipo == 0 ? Html.GetText("DEVTOOLS", "TIPOROLCOMUNIDAD") : Html.GetText("DEVTOOLS", "TIPOROLTODASCOMUNIDADES"))</span>
+                            </div>
+                        }
                         @* Fecha: *@
                         <div class="component-fecha-wrap component-w-15">
                             <span class="component-fecha">@Model.FechaModificacion</span>

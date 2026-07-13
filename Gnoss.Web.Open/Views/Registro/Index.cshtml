@@ -60,8 +60,17 @@
                     @Html.PartialView("_InvitacionUsada")                    
                 }
                 else
-                {                               
-                    <p class="text-center">Actualmente no tienes permisos para acceder a la comunidad. Si has sido recientemente añadido a la comunidad, por favor, cierra sesión y vuelve a logearte.</p>                                                                    
+                {
+                    <p class="text-center">
+                        @if (IdentidadActual.IsExpelled)
+                        {
+                            @Html.GetText("COMINICIOLOGIN", "EXPULSADOENCOM")
+                        }
+                        else
+                        {
+                            @Html.GetText("COMINICIOLOGIN", "SINPERMISOCOM")
+                        }
+                    </p>
                 }
                 @if (Model.TypePage != AutenticationModel.TypeAutenticationPage.InvitacionUsada && Model.TypePage != AutenticationModel.TypeAutenticationPage.RegistroConRedesSociales)
                 {      

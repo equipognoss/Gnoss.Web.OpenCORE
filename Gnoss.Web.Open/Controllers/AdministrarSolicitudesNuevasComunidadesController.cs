@@ -59,6 +59,7 @@ using System.Net;
 
 namespace Gnoss.Web.Controllers
 {
+    [CabecerasCsp]
     public class AdministrarSolicitudesNuevasComunidadesController : ControllerBaseWeb
     {
         private IAvailableServices mAvailableServices;

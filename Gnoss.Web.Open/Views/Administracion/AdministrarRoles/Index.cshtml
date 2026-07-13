@@ -197,9 +197,12 @@
                                                 <div class="component-descripcion component-w-60">
                                                     <span class="component-descripcion">@Html.GetText("DEVTOOLS", "DESCRIPCION")</span>
                                                 </div>
-                                                <div class="component-tipo component-w-15">
-                                                    <span class="component-tipo">@Html.GetText("DEVTOOLS", "AMBITO")</span>
-                                                </div>
+                                                @if (!esEcosistema)
+                                                {
+                                                    <div class="component-tipo component-w-20">
+                                                        <span class="component-tipo">@Html.GetText("DEVTOOLS", "AMBITO")</span>
+                                                    </div>
+                                                }                                                
                                                 <div class="component-fecha component-w-15">
                                                     <span class="component-fecha">@Html.GetText("COMMON", "FECHA")</span>
                                                 </div>

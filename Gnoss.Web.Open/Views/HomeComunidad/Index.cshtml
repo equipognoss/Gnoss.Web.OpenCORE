@@ -98,7 +98,7 @@
         @* Contenedor izquierda/central del Home *@
         <div class="col col-12 col-xl-8 col-contenido izquierda">
             <div class="wrapCol">
-                @if (showMessageRestrictedCommunityAccess)
+                @if (showMessageRestrictedCommunityAccess && !IdentidadActual.IsExpelled)
                 {
                     <div class="solicitar-acceso">
                         <div>

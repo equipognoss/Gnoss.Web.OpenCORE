@@ -47,6 +47,7 @@ using Es.Riam.Interfaces.InterfacesOpen;
 using Es.Riam.InterfacesOpen;
 using Es.Riam.Open.Model;
 using Es.Riam.Util;
+using Gnoss.Web.Open.Filters;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -66,6 +67,7 @@ using static Es.Riam.Gnoss.Web.MVC.Controllers.Administracion.ManageRedirections
 
 namespace Es.Riam.Gnoss.Web.MVC.Controllers
 {
+    [CabecerasCsp]
     public class RegistroController : ControllerBaseWeb
     {
         private ILogger mlogger;
@@ -129,7 +131,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                 }
             }
 
-            if ((ProyectoSeleccionado.Estado == (short)EstadoProyecto.Definicion && string.IsNullOrEmpty(RequestParams("mostrarLogin")) && Invitacion == null) || (!mControladorBase.UsuarioActual.EsUsuarioInvitado && ((UserIdentityModel)ViewBag.IdentidadActual).IsExpelled) || (!UsuarioActual.EsIdentidadInvitada && Invitacion == null) && string.IsNullOrEmpty(RequestParams("registroRedesSociales")))
+            if ((ProyectoSeleccionado.Estado == (short)EstadoProyecto.Definicion && string.IsNullOrEmpty(RequestParams("mostrarLogin")) && Invitacion == null) || (!mControladorBase.UsuarioActual.EsUsuarioInvitado && ((UserIdentityModel)ViewBag.IdentidadActual).IsExpelled && string.IsNullOrEmpty(RequestParams("mostrarLogin"))) || (!UsuarioActual.EsIdentidadInvitada && Invitacion == null && string.IsNullOrEmpty(RequestParams("mostrarLogin"))) && string.IsNullOrEmpty(RequestParams("registroRedesSociales")))
             {
                 
                 if (!string.IsNullOrEmpty(DominioPaginasAdministracion) && BaseURLIdioma.Contains(DominioPaginasAdministracion))
@@ -247,7 +249,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
             }
 
             if ((!mControladorBase.UsuarioActual.EsUsuarioInvitado && Invitacion is PeticionInvOrganizacion) || // Invitación a organización
-                (!mControladorBase.UsuarioActual.EsIdentidadInvitada || (ProyectoSeleccionado.EsPublico && !mControladorBase.UsuarioActual.EsUsuarioInvitado && !string.IsNullOrEmpty(RequestParams("mostrarLogin")))))
+                ((!mControladorBase.UsuarioActual.EsIdentidadInvitada && string.IsNullOrEmpty(RequestParams("mostrarLogin"))) || (ProyectoSeleccionado.EsPublico && !mControladorBase.UsuarioActual.EsUsuarioInvitado && !string.IsNullOrEmpty(RequestParams("mostrarLogin")))))
             {
                 if (mListaPerfilesAceptarInvitacion.Count == 0)
                 {
@@ -330,7 +332,8 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
             {
                 if (!mControladorBase.UsuarioActual.EsUsuarioInvitado)
                 {
-                    if (!IdentidadActual.EsIdentidadInvitada || ProyectoSeleccionado.EsPublico || RegistroAbiertoEnComunidadPrivada)
+                    bool estaExpulsado = ((UserIdentityModel)ViewBag.IdentidadActual).IsExpelled;
+                    if (!estaExpulsado && (!IdentidadActual.EsIdentidadInvitada || ProyectoSeleccionado.EsPublico || RegistroAbiertoEnComunidadPrivada))
                     {
                         return GnossResultUrl(Comunidad.Url);
                     }

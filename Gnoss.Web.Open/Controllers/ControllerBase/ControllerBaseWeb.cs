@@ -841,6 +841,10 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                 urlPropiaProyecto = ProyectoVirtual.UrlPropia(IdiomaUsuario);
             }
 
+            if (pFilterContext.Controller is AdministrarHeadController)
+            {
+                return;
+            }
             //Si ya se ha declarado una redirección, no seguimos comprobando, porque la vamos a sobreescribir.		
             if (pFilterContext.Result == null)
             {
@@ -856,6 +860,10 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
             {
                 //Comprueba si el usuario está intentando acceder a un proyecto con url propia, en cuyo caso le redirecciona a esa url
                 ComprobarRedireccionProyectoConUrlPropia(urlPropiaProyecto, pFilterContext);
+            }
+            if (pFilterContext.Result == null)
+            {
+                ComprobarUsuarioExpulsadoProyecto(pFilterContext);
             }
             if (pFilterContext.Result == null)
             {
@@ -1523,6 +1531,39 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                 url = $"{BaseURL}/{RouteConfig.ConvertirUrlAIdioma(UrlMultiIdiomaPaginaActual, IdiomaPorDefecto).Replace("{nombreProy}", ProyectoSeleccionado.NombreCorto).Replace("{nombreRecurso}", RequestParams("nombreRecurso")).Replace("{docID}", RequestParams("docID"))}";
             }
             return url;
+        }
+
+        /// <summary>
+        /// Comprueba, si el usuario actual ha sido expulsado del proyecto actual.
+        /// </summary>
+        /// <param name="pFilterContext"></param>
+        private void ComprobarUsuarioExpulsadoProyecto(ActionExecutingContext pFilterContext)
+        {
+            if (!ProyectoSeleccionado.TipoAcceso.Equals(TipoAcceso.Privado) || pFilterContext.Controller is RegistroController || pFilterContext.Controller is LogoutController)
+            {
+                return;
+            }
+
+            if (UsuarioEstaExpulsadoEnProyecto())
+            {
+                string urlComunidadLogin = BaseURLIdioma;
+                string url = pFilterContext.HttpContext.Request.Path.ToString();
+                string redirect = ObtenerUrlRedirect(ref url);
+
+                if (!ProyectoSeleccionado.Clave.Equals(ProyectoAD.MetaProyecto))
+                {
+                    urlComunidadLogin = mControladorBase.UrlsSemanticas.ObtenerURLComunidad(UtilIdiomas, BaseURLIdioma, ProyectoSeleccionado.NombreCorto);
+                }
+
+                urlComunidadLogin += "/" + UtilIdiomas.GetText("URLSEM", "LOGIN");
+
+                pFilterContext.Result = Redirect(urlComunidadLogin + redirect);
+            }
+        }
+
+        private bool UsuarioEstaExpulsadoEnProyecto()
+        {
+            return ViewBag.IdentidadActual != null && ((UserIdentityModel)ViewBag.IdentidadActual).IsExpelled;
         }
 
         /// <summary>

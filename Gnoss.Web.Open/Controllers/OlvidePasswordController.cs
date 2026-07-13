@@ -18,6 +18,7 @@ using Es.Riam.Gnoss.Web.MVC.Controllers.Administracion;
 using Es.Riam.Gnoss.Web.MVC.Models.ViewModels;
 using Es.Riam.Interfaces.InterfacesOpen;
 using Es.Riam.InterfacesOpen;
+using Gnoss.Web.Open.Filters;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -31,6 +32,7 @@ using System.Linq;
 
 namespace Es.Riam.Gnoss.Web.MVC.Controllers
 {
+    [CabecerasCsp]
     public class OlvidePasswordController : ControllerBaseWeb
     {
 

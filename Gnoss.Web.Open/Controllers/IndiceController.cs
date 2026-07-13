@@ -131,7 +131,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
             FacetadoDS facetadoDS = new FacetadoDS();
             FacetadoCN facetadoCN = new FacetadoCN(UrlIntragnoss, true, mEntityContext, mLoggingService, mConfigService, mVirtuosoAD, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<FacetadoCN>(), mLoggerFactory);
             facetadoCN.ListaItemsBusquedaExtra = mListaItemsBusquedaExtra;
-            facetadoCN.ObtenerFaceta(ProyectoSeleccionado.Clave.ToString(), facetadoDS, "skos:ConceptID", listaFiltros, mListaItemsBusquedaExtra, false, !mControladorBase.UsuarioActual.EsIdentidadInvitada, mControladorBase.UsuarioActual.EsUsuarioInvitado, IdentidadActual.Clave.ToString(), TipoDisenio.ListaOrdCantidad, 0, -1, mFormulariosSemanticos, null, ProyectoSeleccionado.TipoProyecto, false, null, true, false, false, ParametrosGeneralesRow.PermitirRecursosPrivados, true, 0, TipoPropiedadFaceta.NULL,null,false);
+            facetadoCN.ObtenerFaceta(ProyectoSeleccionado.Clave.ToString(), facetadoDS, "skos:ConceptID", listaFiltros, mListaItemsBusquedaExtra, false, !mControladorBase.UsuarioActual.EsIdentidadInvitada, mControladorBase.UsuarioActual.EsUsuarioInvitado, IdentidadActual.Clave.ToString(), TipoDisenio.ListaOrdCantidad, -1, mFormulariosSemanticos, null, ProyectoSeleccionado.TipoProyecto, false, null, true, false, false, ParametrosGeneralesRow.PermitirRecursosPrivados, true, 0, TipoPropiedadFaceta.NULL,null,false);
             facetadoCN.Dispose();
             
             Dictionary<Guid, int> NumElementosCategoria = new Dictionary<Guid, int>();

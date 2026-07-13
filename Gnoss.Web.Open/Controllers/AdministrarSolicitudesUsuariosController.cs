@@ -33,6 +33,7 @@ using Es.Riam.Gnoss.Web.MVC.Filters;
 using Es.Riam.Gnoss.Web.MVC.Models;
 using Es.Riam.Interfaces.InterfacesOpen;
 using Es.Riam.InterfacesOpen;
+using Gnoss.Web.Open.Filters;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -48,6 +49,7 @@ using System.Linq;
 
 namespace Gnoss.Web.Controllers
 {
+    [CabecerasCsp]
     public class AdministrarSolicitudesUsuariosController : ControllerBaseWeb
     {
         private ILogger mlogger;

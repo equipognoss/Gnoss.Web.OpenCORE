@@ -612,7 +612,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
 						rolModel.Nombre = UtilCadenas.ObtenerTextoDeIdioma(rol.Nombre, UtilIdiomas.LanguageCode, null);
 						rolModel.RolID = rol.RolID;
 						rolModel.Descripcion = HttpUtility.HtmlDecode(UtilCadenas.ObtenerTextoDeIdioma(rol.Descripcion, UtilIdiomas.LanguageCode, null));
-                        rolModel.Tipo = (short)AmbitoRol.Ecosistema;
+                        rolModel.Tipo = (short)AmbitoRol.Transversal;
 						model.Roles.Add(rolModel);
 
                         if (rolesUsuario.Contains(rol))
@@ -975,6 +975,15 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
             AmigosCL amigosCL = new AmigosCL(mEntityContext, mLoggingService, mRedisCacheWrapper, mConfigService,mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<AmigosCL>(), mLoggerFactory);
             amigosCL.InvalidarAmigosPertenecenProyecto(ProyectoSeleccionado.Clave);
             amigosCL.Dispose();
+
+            //Invalida la cache de usuario bloqueado
+            if (IdentidadPagina.Persona.FilaPersona.UsuarioID.HasValue)
+            {
+                using (ProyectoCL proyCL = new ProyectoCL(mEntityContext, mLoggingService, mRedisCacheWrapper, mConfigService, mVirtuosoAD, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<ProyectoCL>(), mLoggerFactory))
+                {
+                    proyCL.InvalidarUsuarioBloqueadoProyecto(IdentidadPagina.FilaIdentidad.ProyectoID, IdentidadPagina.Persona.FilaPersona.UsuarioID.Value);
+                }
+            }
 
             ControladorPersonas controladorPers = new ControladorPersonas(mLoggingService, mEntityContext, mConfigService, mRedisCacheWrapper, mGnossCache, mEntityContextBASE, mVirtuosoAD, mHttpContextAccessor, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<ControladorPersonas>(), mLoggerFactory);
             // Lo paso a true para marcarla como privada, así sólo se le muestra al administrador para que pueda readmitirlo

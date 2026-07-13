@@ -465,34 +465,34 @@ const operativaGestionPaginas = {
     configEvents: function (pParams) {
         const that = this;
 
-        this.modalContainer.on('show.bs.modal', (e) => {
+        this.modalContainer.off('show.bs.modal').on('show.bs.modal', (e) => {
             // Aparición del modal
             that.triggerModalContainer = $(e.relatedTarget);
         })
-            .on('hide.bs.modal', (e) => {
+            .off('hide.bs.modal').on('hide.bs.modal', (e) => {
                 // Acción de ocultar el modal
                 that.txtHackCheckSeleccionados.val("");
             })
-            .on('hidden.bs.modal', (e) => {
+            .off('hidden.bs.modal').on('hidden.bs.modal', (e) => {
                 // Vaciar el modal
                 resetearModalContainer();
             });
         // Comportamientos del modal que son individuales para la edición de páginas
-        $(`.${this.modalPageClassName}`).on('show.bs.modal', (e) => {
+        $(`.${this.modalPageClassName}`).off('show.bs.modal').on('show.bs.modal', (e) => {
             // Aparición del modal
             that.triggerModalContainer = $(e.relatedTarget);
         })
-            .on('hide.bs.modal', (e) => {
+            .off('hide.bs.modal').on('hide.bs.modal', (e) => {
                 // Acción de ocultar el modal
                 // El modal que se va a ocultar/cerrar
                 const currentModal = $(e.currentTarget);
                 that.handleClosePageModal(currentModal, e);
             });
         // Comportamientos del modal que son individuales para el borrado de páginas
-        $(`.${this.modalDeletePageClassName}`).on('show.bs.modal', (e) => {
+        $(`.${this.modalDeletePageClassName}`).off('show.bs.modal').on('show.bs.modal', (e) => {
             // Aparición del modal
         })
-            .on('hide.bs.modal', (e) => {
+            .off('hide.bs.modal').on('hide.bs.modal', (e) => {
                 // Acción de ocultar el modal
                 // Si el modal se cierra sin confirmar borrado, desactiva el borrado
                 if (that.confirmDeletePage == false) {

@@ -79,6 +79,7 @@ using static Es.Riam.Gnoss.Web.Controles.ControladorBase;
 namespace Es.Riam.Gnoss.Web.MVC.Controllers
 {
     [TypeFilter(typeof(NoTrackingEntityFilter))]
+    [CabecerasCsp("admin", "true")]
     public class BusquedaController : ControllerPestanyaBase
     {
         #region Miembros

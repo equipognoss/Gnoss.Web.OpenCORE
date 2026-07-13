@@ -16,7 +16,7 @@ UserIdentityModel IdentidadActual = Html.GetIdentidadActual();
 -------------------- Gestión de mensajes acerca del estado de la comunidad --------------------*@
 
 
-@if (Comunidad != null && string.IsNullOrEmpty(Context.Request.Query["new-community-wizard"]) && (IdentidadActual.IsExpelled || Comunidad.ProjectState == CommunityModel.StateProject.Close || Comunidad.ProjectState == CommunityModel.StateProject.CloseTemporaly || Comunidad.ProjectState == CommunityModel.StateProject.Definition))
+@if (Comunidad != null && string.IsNullOrEmpty(Context.Request.Query["new-community-wizard"]) && (IdentidadActual.IsExpelled && !Comunidad.AccessType.Equals(CommunityModel.TypeAccessProject.Private) || Comunidad.ProjectState == CommunityModel.StateProject.Close || Comunidad.ProjectState == CommunityModel.StateProject.CloseTemporaly || Comunidad.ProjectState == CommunityModel.StateProject.Definition))
 {
     <div id="info" 
          role="alert" 

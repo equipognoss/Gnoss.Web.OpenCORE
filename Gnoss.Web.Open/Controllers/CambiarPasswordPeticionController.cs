@@ -21,6 +21,7 @@ using Es.Riam.Gnoss.Web.Controles.ServiciosGenerales;
 using Es.Riam.Gnoss.Web.MVC.Controllers.Administracion;
 using Es.Riam.Interfaces.InterfacesOpen;
 using Es.Riam.InterfacesOpen;
+using Gnoss.Web.Open.Filters;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -50,7 +51,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
         public string UrlRechazar { get; set; }
 
     }
-
+    [CabecerasCsp]
     public class CambiarPasswordPeticionController : ControllerBaseWeb
     {
         private ILogger mlogger;

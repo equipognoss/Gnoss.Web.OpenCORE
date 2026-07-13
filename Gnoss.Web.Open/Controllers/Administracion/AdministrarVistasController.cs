@@ -50,6 +50,7 @@ using System.Linq;
 using System.Net;
 using System.Net.Http;
 using System.Text.RegularExpressions;
+using Es.Riam.Util;
 
 namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
 {
@@ -82,7 +83,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
             mlogger = logger;
             mLoggerFactory = loggerFactory;
         }
-
+ 
         /// <summary>
         /// Index
         /// </summary>
@@ -202,35 +203,41 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
                         sr.Close();
 
                         string lineaSeguridad = $"@*[security|||{pagina.Replace($"/{VIEWS_DIRECTORY}/", "").ToLower()}|||{ProyectoSeleccionado.NombreCorto.ToLower()}]*@";
-
-                        if (security.StartsWith("@*[security|||") && security.EndsWith("]*@"))
+                        if (UtilCadenas.ValidarUsings(texto))
                         {
-                            string seguridadNombrePagina = security.Split(new string[] { "|||" }, StringSplitOptions.RemoveEmptyEntries)[1];
-                            string seguridadNombreProy = security.Split(new string[] { "|||" }, StringSplitOptions.RemoveEmptyEntries)[2].Replace("]*@", "");
-
-                            if (seguridadNombrePagina == pagina.Replace($"/{VIEWS_DIRECTORY}/", "").ToLower() && seguridadNombreProy == ProyectoSeleccionado.NombreCorto.ToLower() && lineaSeguridad == security)
+                            if (security.StartsWith("@*[security|||") && security.EndsWith("]*@"))
                             {
-                                string errorCompilando = CompilarVista(texto);
-                                if (string.IsNullOrEmpty(errorCompilando))
+                                string seguridadNombrePagina = security.Split(new string[] { "|||" }, StringSplitOptions.RemoveEmptyEntries)[1];
+                                string seguridadNombreProy = security.Split(new string[] { "|||" }, StringSplitOptions.RemoveEmptyEntries)[2].Replace("]*@", "");
+
+                                if (seguridadNombrePagina == pagina.Replace($"/{VIEWS_DIRECTORY}/", "").ToLower() && seguridadNombreProy == ProyectoSeleccionado.NombreCorto.ToLower() && lineaSeguridad == security)
                                 {
-                                    if (!GuardarPagina(pagina, texto, esRdfType))
+                                    string errorCompilando = CompilarVista(texto);
+                                    if (string.IsNullOrEmpty(errorCompilando))
                                     {
-                                        error = "Error al guardar los datos, intentalo de nuevo";
+                                        if (!GuardarPagina(pagina, texto, esRdfType))
+                                        {
+                                            error = "Error al guardar los datos, intentalo de nuevo";
+                                        }
+                                    }
+                                    else
+                                    {
+                                        error = errorCompilando;
                                     }
                                 }
                                 else
                                 {
-                                    error = errorCompilando;
+                                    error = $"La linea de seguridad no concuerda con lo esperado,<br />por la seguirdad de la plataforma, debes añadir la siguiente linea al inicio de la vista:<br />{lineaSeguridad}";
                                 }
                             }
                             else
                             {
-                                error = $"La linea de seguridad no concuerda con lo esperado,<br />por la seguirdad de la plataforma, debes añadir la siguiente linea al inicio de la vista:<br />{lineaSeguridad}";
+                                error = $"Por la seguiridad de la plataforma, debes añadir la siguiente linea al inicio de la vista:<br />{lineaSeguridad}";
                             }
                         }
                         else
                         {
-                            error = $"Por la seguiridad de la plataforma, debes añadir la siguiente linea al inicio de la vista:<br />{lineaSeguridad}";
+                            error = $"Por la seguiridad de la plataforma no se puede hacer uso de alguno de los using de la vista";
                         }
                     }
                     else
@@ -260,7 +267,6 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
                 return GnossResultHtml("_Web", paginaModel);
             }
         }
-
         /// <summary>
         /// Método para gestionar las vistas del servicio de resultados
         /// </summary>
@@ -1871,8 +1877,8 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
 
         private string DescargarPagina(string pagina, bool pOriginal, bool pEsRdfType)
         {
-            string cshtml = null;
-            if (pagina.EndsWith(".cshtml"))
+            string cshtml = string.Empty;
+            if (pagina.EndsWith(".cshtml") || pEsRdfType)
             {
                 if (pOriginal)
                 {

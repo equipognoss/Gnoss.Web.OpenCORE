@@ -32,6 +32,7 @@ using System.Linq;
 
 namespace Es.Riam.Gnoss.Web.MVC.Controllers
 {
+    [CabecerasCsp]
     public class AdminSolicitudGrupoController : ControllerBaseWeb
     {
         const int NUM_RESULTADOS_PAGINA = 10;

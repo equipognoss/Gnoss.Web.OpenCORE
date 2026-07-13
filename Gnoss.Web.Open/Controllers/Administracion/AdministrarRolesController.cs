@@ -151,7 +151,7 @@ namespace Gnoss.Web.Open.Controllers.Administracion
                 else
                 {
                     Rol rol = new Rol();
-                    if (pAmbito.Equals((short)AmbitoRol.Ecosistema))
+                    if (pAmbito.Equals((short)AmbitoRol.Transversal))
                     {
                         rol.ProyectoID = ProyectoAD.MetaProyecto;
                     }
@@ -198,7 +198,7 @@ namespace Gnoss.Web.Open.Controllers.Administracion
                                 permisos += (ulong)TipoPermisoRecursosSemanticos.EliminarVersion;
                             }
 
-                            if (pAmbito.Equals((short)AmbitoRol.Ecosistema) && permisos > 0)
+                            if (pAmbito.Equals((short)AmbitoRol.Transversal) && permisos > 0)
                             {
                                 return GnossResultERROR($"No se puede crear un rol con ámbito de Ecosistema si tiene permisos relacionados con los recursos semánticos");
                             }
