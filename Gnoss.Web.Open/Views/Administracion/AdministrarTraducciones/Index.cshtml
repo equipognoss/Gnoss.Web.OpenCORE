@@ -27,6 +27,7 @@ string idiomaPorDefecto = ViewBag.IdiomaPorDefecto;
 ViewBag.AdministrarTraduccionesViewModel = Model;
 // Controlar si se está en Administración del Ecosistema
 bool isInEcosistemaPlatform = !string.IsNullOrEmpty(ViewBag.isInEcosistemaPlatform) ? (bool.Parse(ViewBag.isInEcosistemaPlatform)) : false;
+string endpointDescargarTraducciones = isInEcosistemaPlatform ? Html.GetText("URLSEM", "ADMINISTRARDESCARGARTRADUCCIONESECOSISTEMA") : Html.GetText("URLSEM", "ADMINISTRARDESCARGARTRADUCCIONES");
 }
 
 
@@ -138,7 +139,7 @@ bool isInEcosistemaPlatform = !string.IsNullOrEmpty(ViewBag.isInEcosistemaPlatfo
 						</div>
 						@* Botón para crear item *@
 					<div class="acciones d-flex align-items-center">
-						<a href="@Comunidad.Url/@Html.GetText("URLSEM", "ADMINISTRARDESCARGARTRADUCCIONES")" class="btn btn-outline-primary dropdown-toggle no-flecha @(Model.traduccionesActivas ? "" : "disabled pe-none")"
+						<a href="@Comunidad.Url/@endpointDescargarTraducciones" class="btn btn-outline-primary dropdown-toggle no-flecha @(Model.traduccionesActivas ? "" : "disabled pe-none")"
 								style="margin-right: 20px;"><span class="material-icons">download</span>Descargar Traducciones</a>
 							@Html.PartialView("../Shared/Layout/_partial-views/_layout-add-translation-admin", Model)							
 						</div>

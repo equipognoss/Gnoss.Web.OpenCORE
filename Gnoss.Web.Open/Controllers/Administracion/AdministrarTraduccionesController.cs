@@ -80,13 +80,22 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
 
             // Controlar si es o no del ecosistema            
             bool isInEcosistemaPlatform = !string.IsNullOrEmpty(RequestParams("ecosistema")) ? (bool.Parse(RequestParams("ecosistema"))) : false;
+
+            AdministrarTraduccionesViewModel modelo = new AdministrarTraduccionesViewModel();
+
             if (isInEcosistemaPlatform)
             {
                 ViewBag.isInEcosistemaPlatform = "true";
+                modelo.traduccionesActivas = true;
             }
+            else
+            {
+                VistaVirtualCN vistaVirtualCN = new VistaVirtualCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<VistaVirtualCN>(), mLoggerFactory);
 
+                modelo.traduccionesActivas = vistaVirtualCN.VistasPersonalizadasActivadoPorProyectoID(ProyectoSeleccionado.Clave);
 
-            AdministrarTraduccionesViewModel modelo = new AdministrarTraduccionesViewModel();
+                vistaVirtualCN.Dispose();
+            }
 
             string baseUrl = $"{BaseURLIdioma}/{UtilIdiomas.GetText("URLSEM", "ADMINISTRARTRADUCCIONESECOSISTEMA")}/";
             if (!EsAdministracionEcosistema)
@@ -98,10 +107,6 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
             modelo.URLActionEditarTexto = $"{baseUrl}editar";
             modelo.URLActionCrearEntradas = $"{baseUrl}crearentradas";
             modelo.URLActionEliminarEntradas = $"{baseUrl}eliminarentradas";
-
-            VistaVirtualCN vistaVirtualCN = new VistaVirtualCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<VistaVirtualCN>(), mLoggerFactory);
-
-            modelo.traduccionesActivas = vistaVirtualCN.VistasPersonalizadasActivadoPorProyectoID(ProyectoSeleccionado.Clave);
 
             ParametroGeneralCN paramGeneralCN = new ParametroGeneralCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<ParametroGeneralCN>(), mLoggerFactory);
             ParametroAplicacionCL paramCL = new ParametroAplicacionCL(mEntityContext, mLoggingService, mRedisCacheWrapper, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<ParametroAplicacionCL>(), mLoggerFactory);

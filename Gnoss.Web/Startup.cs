@@ -343,7 +343,7 @@ namespace Gnoss.Web
             CargarConfiguracionReplicado(entity);
 
             Conexion.CargarMimeType();
-
+            UtilServicios.CargarDominiosPermitidosCORS(entity);
             // Resolve the services from the service provider
             mRouteConfig = sp.GetService<RouteConfig>();
             RouteConfig.IdiomaPrincipalDominio = IdiomaPrincipalDominio;

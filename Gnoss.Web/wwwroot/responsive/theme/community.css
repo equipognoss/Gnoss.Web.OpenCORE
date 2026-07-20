@@ -543,6 +543,8 @@ table.table.mosaicView > tbody > tr > td.td-titulo img { height: 100%; width: 10
 .component-name-wrap { display: flex; align-items: center; flex: 1; min-width: 0; padding-right: 15px; }
 .component-name { font-size: 1rem; color: var(--c-texto-medio); white-space: nowrap; max-width: 100%; text-overflow: ellipsis; overflow: hidden; }
 .component-error .component-name { color: var(--c-error) !important; }
+.component-url-wrap { display: flex; align-items: center; flex: 1; min-width: 0; padding-right: 15px; }
+.component-url { font-size: 1rem; color: var(--c-texto-medio); white-space: nowrap; max-width: 100%; text-overflow: ellipsis; overflow: hidden; }
 .component-content { padding-left: 0; }
 .component-content > .component-list { padding-left: 30px; margin-top: 5px;}
 .component-actions { display: flex; }

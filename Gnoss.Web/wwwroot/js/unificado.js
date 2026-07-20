@@ -2674,7 +2674,7 @@ function AgregarTagsPropuestosAutomaticos(pListaTagsNuevos, pListaTagsViejos, pT
  * @param {string} str - La subcadena con la que se verifica si la cadena de texto termina.
  * @returns {boolean} - Devuelve `true` si la cadena de texto termina con la subcadena especificada, `false` en caso contrario.
  */
-String.prototype.endsWith = function (str) { return (this.match(str + "$") == str) };
+String.prototype.endsWith = function (str) { return this.slice(this.length - str.length) === str; };
 
 
 /**
@@ -2685,8 +2685,7 @@ String.prototype.endsWith = function (str) { return (this.match(str + "$") == st
  * @param {string} str - La subcadena con la que se verifica si la cadena de texto empieza.
  * @returns {boolean} - Devuelve `true` si la cadena de texto empieza con la subcadena especificada, `false` en caso contrario.
  */
-String.prototype.startsWith = function (str)
-{ return (this.match("^" + str) == str) };
+String.prototype.startsWith = function (str) { return this.slice(0, str.length) === str; };
 
 
 let timeoutUpdateProgress;

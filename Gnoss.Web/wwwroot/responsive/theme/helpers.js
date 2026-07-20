@@ -617,6 +617,38 @@ const comportamientoInicial = {
 /*****************************************************************************************************************/
 
 /**
+ * Utilidad genérica para las filas de tipo "component-list" (usada por la mayoría de las
+ * páginas de administración): muestra un tooltip con el valor completo cuando el contenido
+ * de un elemento queda cortado por CSS (ellipsis) al no caber en su columna.
+ * Los elementos deben tener la clase "truncable" y un atributo "data-tooltip-full" con el valor
+ * completo a mostrar. Es seguro llamarla varias veces sobre el mismo contenedor (p.ej. tras
+ * añadir o editar una fila): solo monta el tooltip la primera vez que detecta que el contenido
+ * está realmente cortado, y actualiza su contenido si ya estaba montado.
+ * @param {jqueryElement|Element} contenedor Contenedor (o el propio elemento) donde buscar elementos truncables
+ */
+function iniciarTooltipsTruncados(contenedor) {
+    $(contenedor).find(".truncable").addBack(".truncable").each(function () {
+        const elemento = $(this);
+        const valorCompleto = elemento.attr("data-tooltip-full");
+        const estaTruncado = this.scrollWidth > this.clientWidth;
+
+        if (!estaTruncado) {
+            return;
+        }
+
+        if (elemento.data("tooltipTruncadoMontado")) {
+            // Ya montado: actualizar el contenido por si el valor ha cambiado
+            elemento.attr("data-original-title", valorCompleto);
+        } else {
+            elemento.attr("data-toggle", "tooltip");
+            elemento.attr("title", valorCompleto);
+            elemento.tooltip();
+            elemento.data("tooltipTruncadoMontado", true);
+        }
+    });
+}
+
+/**
  * Método para escapar caracteres extraños para evitar inyección de código
  * @param {*} text Texto a escapar
  * @returns Devuelve el texto limpio para evitar inyección de código, por ejemplo, en buscadores

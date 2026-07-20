@@ -10643,6 +10643,7 @@ const operativaGestionRedirecciones = {
         this.configEvents();
         this.configRutas();
         this.triggerEvents();
+        iniciarTooltipsTruncados(this.redirectionListContainer);
     },
 
     /**
@@ -11035,7 +11036,10 @@ const operativaGestionRedirecciones = {
         // Label donde se mostrará el destino actualizado (Siempre que sea de tipo directo)
         const urlDestinoRowValue = that.filaRedireccion.find(that.componentUrlDestino);
         // Establecer el valor
-        urlDestinoRowValue.html(input.val().trim());
+        const valorUrlDestino = input.val().trim();
+        urlDestinoRowValue.html(valorUrlDestino);
+        urlDestinoRowValue.attr("data-tooltip-full", valorUrlDestino);
+        iniciarTooltipsTruncados(urlDestinoRowValue);
 
         // Controlar el tipo de redirección
         if (selectUrlType.children("option:selected").val() != "Direct") {
@@ -11056,7 +11060,10 @@ const operativaGestionRedirecciones = {
         // Label donde se mostrará el destino actualizado (Siempre que sea de tipo directo)
         const urlOrigenRowValue = that.filaRedireccion.find(that.componentUrlOrigen);
         // Establecer el valor
-        urlOrigenRowValue.html(input.val().trim());
+        const valorUrlOrigen = input.val().trim();
+        urlOrigenRowValue.html(valorUrlOrigen);
+        urlOrigenRowValue.attr("data-tooltip-full", valorUrlOrigen);
+        iniciarTooltipsTruncados(urlOrigenRowValue);
     },
 
     /**
