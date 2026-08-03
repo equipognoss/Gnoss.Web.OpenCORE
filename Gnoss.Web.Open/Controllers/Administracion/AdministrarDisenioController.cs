@@ -48,6 +48,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
         /// Método principal
         /// </summary>
         /// <returns></returns>
+        [TypeFilter(typeof(UsuarioLogueadoAttribute), Arguments = new object[] { RolesUsuario.AdministradorComunidad })]
         public ActionResult Index()
         {
             // Añadir clase para el body del Layout

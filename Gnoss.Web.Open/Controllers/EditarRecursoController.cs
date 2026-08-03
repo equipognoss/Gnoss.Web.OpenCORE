@@ -1611,6 +1611,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
 
             mEditRecCont.ModifyResourceModel.DocumentEditionModel.ActualIdentityIsCreator = true;
             mEditRecCont.ModifyResourceModel.DocumentEditionModel.AllowsLicense = (mTipoDocumento == TiposDocumentacion.Nota || mTipoDocumento == TiposDocumentacion.FicheroServidor || mTipoDocumento == TiposDocumentacion.Semantico || mTipoDocumento == TiposDocumentacion.Newsletter || mTipoDocumento == TiposDocumentacion.VideoBrightcove || mTipoDocumento == TiposDocumentacion.AudioBrightcove || mTipoDocumento == TiposDocumentacion.VideoTOP || mTipoDocumento == TiposDocumentacion.AudioTOP || mTipoDocumento == TiposDocumentacion.Imagen);
+            mEditRecCont.ModifyResourceModel.DocumentEditionModel.SharedDocumentJustInPrivateProject = ((Documento == null || Documento.BaseRecursos.Count == 1) && (ProyectoSeleccionado.TipoAcceso == TipoAcceso.Privado || ProyectoSeleccionado.TipoAcceso == TipoAcceso.Reservado || ProyectoSeleccionado.TipoAcceso == TipoAcceso.Restringido));
 
             if (mEditRecCont.ModifyResourceModel.DocumentEditionModel.AllowsLicense)
             {
@@ -5129,7 +5130,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                 }
             }
 
-            pDocEditModel.SharedDocumentJustInPrivateProject = ((Documento == null || Documento.BaseRecursos.Count == 1) && (ProyectoSeleccionado.TipoAcceso == TipoAcceso.Privado || ProyectoSeleccionado.TipoAcceso == TipoAcceso.Reservado));
+            pDocEditModel.SharedDocumentJustInPrivateProject = ((Documento == null || Documento.BaseRecursos.Count == 1) && (ProyectoSeleccionado.TipoAcceso == TipoAcceso.Privado || ProyectoSeleccionado.TipoAcceso == TipoAcceso.Reservado || ProyectoSeleccionado.TipoAcceso == TipoAcceso.Restringido));
 
         }
 
@@ -5267,7 +5268,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
             mEditRecCont.ModifyResourceModel.DocumentEditionModel.ModificationProtectionAvailable = true;//Para que no se pinte en este caso.
 
 
-            mEditRecCont.ModifyResourceModel.DocumentEditionModel.SharedDocumentJustInPrivateProject = ((Documento == null || Documento.BaseRecursos.Count == 1) && (ProyectoSeleccionado.TipoAcceso == TipoAcceso.Privado || ProyectoSeleccionado.TipoAcceso == TipoAcceso.Reservado));
+            mEditRecCont.ModifyResourceModel.DocumentEditionModel.SharedDocumentJustInPrivateProject = ((Documento == null || Documento.BaseRecursos.Count == 1) && (ProyectoSeleccionado.TipoAcceso == TipoAcceso.Privado || ProyectoSeleccionado.TipoAcceso == TipoAcceso.Reservado || ProyectoSeleccionado.TipoAcceso == TipoAcceso.Restringido));
 
             mEditRecCont.ModifyResourceModel.SemanticResourceModel = new SemanticResourceModel();
             mEditRecCont.ModifyResourceModel.SemanticResourceModel.MassiveResourceLoad = CargaMasivaFormSem;
@@ -5486,7 +5487,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                 }
             }
 
-            docEditModel.SharedDocumentJustInPrivateProject = ((Documento == null || Documento.BaseRecursos.Count == 1) && (ProyectoSeleccionado.TipoAcceso == TipoAcceso.Privado || ProyectoSeleccionado.TipoAcceso == TipoAcceso.Reservado));
+            docEditModel.SharedDocumentJustInPrivateProject = ((Documento == null || Documento.BaseRecursos.Count == 1) && (ProyectoSeleccionado.TipoAcceso == TipoAcceso.Privado || ProyectoSeleccionado.TipoAcceso == TipoAcceso.Reservado || ProyectoSeleccionado.TipoAcceso == TipoAcceso.Restringido));
 
             if (!string.IsNullOrEmpty(mDatosRecursoEditadoCargaMasiva[13]))
             {

@@ -3058,6 +3058,14 @@ const autocompletarWorkflows = {
             });
         }
 
+        // limpiar los usuarios de la tag anterior antes de rellenar con los de la tag actual
+        formOculto.find('.editores .tag-list').empty();
+        formOculto.find('.lectores .tag-list').empty();
+        formOculto.find('.responsables .tag-list').empty();
+        formOculto.find('input#txtEditores_Hack').val('');
+        formOculto.find('input#txtLectores_Hack').val('');
+        formOculto.find('input#txtResponsables_Hack').val('');
+
         tag.find('.users span:not(.user-label)').each((i, elem) => {
             const editors = $(elem).parent().hasClass('editors');
             const editorsList = formOculto.find('.editores .tag-list');

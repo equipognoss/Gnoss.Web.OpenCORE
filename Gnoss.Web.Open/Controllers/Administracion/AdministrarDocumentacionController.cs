@@ -105,40 +105,46 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
         [HttpGet]
         public ActionResult Index()
         {
-            EliminarPersonalizacionVistas();
-            CargarPermisosAdministracionComunidadEnViewBag();
-            var seccionDevTools = RequestParams("section");
-            ViewResult view = View();
-            ViewBag.HeaderTitle = UtilIdiomas.GetText("DEVTOOLS", "DOCUMENTACION");
-            // SecciónDevTools de la que se desea la documentación            
-            if (RequestParams("section") != null)
+            if (ViewBag.IdentidadTienePermisoAdministracion != null && ViewBag.IdentidadTienePermisoAdministracion)
             {
-                AdministracionSeccionesDevTools.SeccionesDevTools currentSection;
-                if (Enum.TryParse(RequestParams("section"), out currentSection))
+                EliminarPersonalizacionVistas();
+                CargarPermisosAdministracionComunidadEnViewBag();
+                var seccionDevTools = RequestParams("section");
+                ViewResult view = View();
+                ViewBag.HeaderTitle = UtilIdiomas.GetText("DEVTOOLS", "DOCUMENTACION");
+                // SecciónDevTools de la que se desea la documentación            
+                if (RequestParams("section") != null)
                 {
-                    switch (currentSection) {
-                        case AdministracionSeccionesDevTools.SeccionesDevTools.Comunidad:
-                            // Documentación padre de Información General de la Comunidad
-                            view = View("Index_InformacionGeneral.cshtml");
-                            // Establecer el título según el parámetro pasado vía URL
-                            ViewBag.HeaderTitle = "Administración de Comunidad";
-                            break;
+                    AdministracionSeccionesDevTools.SeccionesDevTools currentSection;
+                    if (Enum.TryParse(RequestParams("section"), out currentSection))
+                    {
+                        switch (currentSection)
+                        {
+                            case AdministracionSeccionesDevTools.SeccionesDevTools.Comunidad:
+                                // Documentación padre de Información General de la Comunidad
+                                view = View("Index_InformacionGeneral.cshtml");
+                                // Establecer el título según el parámetro pasado vía URL
+                                ViewBag.HeaderTitle = "Administración de Comunidad";
+                                break;
+                        }
                     }
                 }
+
+                ViewBag.BodyClassPestanya = "meta-administrador documentationPage";
+                ViewBag.ActiveSection = AdministracionSeccionesDevTools.SeccionesDevTools.Documentacion;
+                // Tener en cuenta el parámetro pasado vía URL
+                ViewBag.ActiveSubSection = AdministracionSeccionesDevTools.SubSeccionesDevTools.Documentacion_Comunidad;
+                // Establecer el título para el header de DevTools
+                ViewBag.HeaderParentTitle = UtilIdiomas.GetText("DEVTOOLS", "DOCUMENTACION");
+
+
+                // Activar la visualización del icono de la documentación de la sección
+                ViewBag.showDocumentationByDefault = "true";
+
+                return View();
             }
-            
-            ViewBag.BodyClassPestanya = "meta-administrador documentationPage";
-            ViewBag.ActiveSection = AdministracionSeccionesDevTools.SeccionesDevTools.Documentacion;
-            // Tener en cuenta el parámetro pasado vía URL
-            ViewBag.ActiveSubSection = AdministracionSeccionesDevTools.SubSeccionesDevTools.Documentacion_Comunidad;
-            // Establecer el título para el header de DevTools
-            ViewBag.HeaderParentTitle = UtilIdiomas.GetText("DEVTOOLS", "DOCUMENTACION");
-            
 
-            // Activar la visualización del icono de la documentación de la sección
-            ViewBag.showDocumentationByDefault = "true";
-
-            return View();
+            return Redirect(mControladorBase.UrlsSemanticas.ObtenerURLComunidad(mControladorBase.UtilIdiomas, mControladorBase.BaseURLIdioma, mControladorBase.ProyectoSeleccionado.NombreCorto));            
         }
     }
 }

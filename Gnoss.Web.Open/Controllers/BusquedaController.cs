@@ -599,12 +599,10 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                 ordenPorDefecto = filtroLimpio;
             }
 
-            if (!string.IsNullOrEmpty(Request.GetDisplayUrl()))
+            if (!string.IsNullOrEmpty(rawUrl))
             {
-                rawUrl = Request.GetDisplayUrl();
-
                 //bug7595
-                rawUrl = rawUrl.Replace("+", "%2B").Replace("%26", "---AMPERSAND---");
+                rawUrl = rawUrl.Replace("+", "%2B").Replace("%26", "---AMPERSAND---").Replace("&amp;", "---AMPERSAND---", StringComparison.OrdinalIgnoreCase);
                 rawUrl = rawUrl.Replace("%7C", "---TUBERIA---");
                 rawUrl = rawUrl.Replace("%7c", "---TUBERIA---");
                 rawUrl = HttpUtility.UrlDecode(rawUrl);
@@ -620,7 +618,6 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
 
             if (!string.IsNullOrEmpty(rawUrl) && rawUrl.Contains("?"))
             {
-                Uri uri = new Uri(rawUrl);
                 string[] partesUrl = rawUrl.Split("?");
 
                 string urlLimpio = $"{UtilCadenas.LimpiarInyeccionCodigo(partesUrl[0])}?";
@@ -630,7 +627,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                 {
                     urlLimpio += $"{UtilCadenas.LimpiarInyeccionCodigo(filtro)}&";
 
-                    argumentos += separadorArgumentos + UtilCadenas.LimpiarInyeccionCodigo(filtro);
+                    argumentos += separadorArgumentos + UtilCadenas.LimpiarInyeccionCodigo(filtro,true);
 
                     separadorArgumentos = "|";
                     hayParametrosBusqueda = true;
@@ -870,7 +867,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                 }
 
                 // AQUI
-                int numResultados = CargarResultadosYFacetas(paginaModel, proyectoID, ProyectoSeleccionado.Clave.Equals(ProyectoAD.MetaProyecto), !mControladorBase.UsuarioActual.EsIdentidadInvitada, mControladorBase.UsuarioActual.EsUsuarioInvitado, idetidadID, argumentos.Replace("\"", "%2522"), primeraCarga, verTodasPersonas, VariableTipoBusqueda, rawUrl, grafo, parametroadicional, hayParametrosBusqueda, UbicacionBusqueda, UtilIdiomas.LanguageCode, mControladorBase.UsuarioActual.UsarMasterParaLectura, tokenAfinidad);
+                int numResultados = CargarResultadosYFacetas(paginaModel, proyectoID, ProyectoSeleccionado.Clave.Equals(ProyectoAD.MetaProyecto), !mControladorBase.UsuarioActual.EsIdentidadInvitada, mControladorBase.UsuarioActual.EsUsuarioInvitado, idetidadID, argumentos, primeraCarga, verTodasPersonas, VariableTipoBusqueda, rawUrl, grafo, parametroadicional, hayParametrosBusqueda, UbicacionBusqueda, UtilIdiomas.LanguageCode, mControladorBase.UsuarioActual.UsarMasterParaLectura, tokenAfinidad);
 
                 string tituloPaginaBusquedaDescripcion = "";
                 string metaTagDescription = "";

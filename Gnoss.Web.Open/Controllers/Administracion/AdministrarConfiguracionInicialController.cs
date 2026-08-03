@@ -17,28 +17,20 @@ using Es.Riam.Gnoss.Util.General;
 using Es.Riam.Gnoss.UtilServiciosWeb;
 using Es.Riam.Gnoss.Web.Controles.Proyectos;
 using Es.Riam.Gnoss.Web.Controles.ServiciosGenerales;
+using Es.Riam.Gnoss.Web.MVC.Filters;
 using Es.Riam.Gnoss.Web.MVC.Models.Administracion;
 using Es.Riam.Interfaces.InterfacesOpen;
 using Es.Riam.InterfacesOpen;
 using Es.Riam.Util;
-using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Infrastructure;
 using Microsoft.AspNetCore.Mvc.ViewEngines;
 using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
-using Es.Riam.Gnoss.UtilServiciosWeb;
-using Es.Riam.Gnoss.Web.Controles.ServiciosGenerales;
-using Es.Riam.Gnoss.Logica.Usuarios;
-using Es.Riam.Gnoss.Logica.ParametroAplicacion;
-using Microsoft.Extensions.Hosting;
-using Microsoft.Extensions.Logging;
-using Serilog.Core;
-using Es.Riam.Gnoss.Elementos.Amigos;
-using Es.Riam.Gnoss.Elementos.ServiciosGenerales;
 using System.Linq;
 using System.Net;
 using System.Text.RegularExpressions;
@@ -46,12 +38,6 @@ using System.Text.RegularExpressions;
 
 namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
 {
-    /// <summary>
-    /// Modelo de la página de administrar comunidad Home
-    /// </summary>
-    public class AdministrarConfiguracionInicialModel
-    { }
-
     /// <summary>
     /// Controller de administrar configuración inicial del proyecto.
     /// </summary>
@@ -72,6 +58,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
         /// </summary>
         /// <returns></returns>
         [HttpGet]
+        [TypeFilter(typeof(UsuarioLogueadoAttribute), Arguments = new object[] { RolesUsuario.AdministradorComunidad })]
         public ActionResult Index()
         {
             EliminarPersonalizacionVistas();
@@ -97,6 +84,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
         /// </summary>
         /// <returns></returns>
         [HttpPost]
+        [TypeFilter(typeof(UsuarioLogueadoAttribute), Arguments = new object[] { RolesUsuario.AdministradorComunidad })]
         public ActionResult Guardar(string UserName, string UserEmail, string UserPassword, string UrlProyectosPublicos, string UrlProyectosPrivados, bool UseSameUrlForPrivateProjects, string UrlIntraGnoss, string Name, string ShortName, short Type)
         {
             GuardarLogAuditoria();

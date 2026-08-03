@@ -139,6 +139,17 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                 return new RedirectResult(Comunidad.Url);
             }
 
+            UtilPermisos utilPermisos = new UtilPermisos(mEntityContext, mLoggingService, mConfigService, mLoggerFactory.CreateLogger<UtilPermisos>(), mLoggerFactory);
+            bool tienePermiso = false;
+            if (ProyectoSeleccionado.Clave.Equals(ProyectoAD.MetaProyecto))
+            {
+                tienePermiso = utilPermisos.UsuarioTienePermisoAdministracionEcosistema((ulong)PermisoEcosistema.AdministrarMiembrosEcosistema, UsuarioActual.UsuarioID);
+            }
+            else
+            {
+                tienePermiso = utilPermisos.IdentidadTienePermiso((ulong)PermisoComunidad.GestionarMiembros, IdentidadActual.Clave, IdentidadActual.IdentidadMyGNOSS.Clave, TipoDePermiso.Comunidad);
+            }
+
             if (RequestParams("nombreCortoPerfil") != null && (IdentidadPagina == null || IdentidadPagina.Tipo == TiposIdentidad.ProfesionalCorporativo))
             {
                 if (!string.IsNullOrEmpty(RequestParams("nombreCortoOrganizacion")))
@@ -283,7 +294,14 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                 }
                 else if (RequestParams("callback").ToLower() == "Accion_EliminarPersona".ToLower())
                 {
-                    EliminarPersona();
+                    if (tienePermiso)
+                    {
+                        EliminarPersona();
+                    }
+                    else
+                    {
+                        return new UnauthorizedResult();
+                    }                    
                 }
                 else if (RequestParams("callback").ToLower() == "CargarListaAccionesRecursos".ToLower())
                 {
@@ -291,11 +309,19 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                 }
                 else if (RequestParams("callback").ToLower() == "accion_expulsar")
                 {
-                    ExpulsarUsuarioDeComunidad();
+                    if (tienePermiso)
+                    {
+                        ExpulsarUsuarioDeComunidad();
+                    }
+                    else
+                    {
+                        return new UnauthorizedResult();
+                    }
+                    
                 }
                 else if (RequestParams("callback").ToLower() == "accion_readmitir")
                 {
-                    if (ProyectoSeleccionado.EsAdministradorUsuario(mControladorBase.UsuarioActual.UsuarioID))
+                    if (tienePermiso)
                     {
                         ReadmitirUsuarioEnComunidad();
                     }
@@ -306,7 +332,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                 }
                 else if (RequestParams("callback").ToLower() == "accion_bloquear")
                 {
-                    if (ProyectoSeleccionado.EsAdministradorUsuario(mControladorBase.UsuarioActual.UsuarioID))
+                    if (tienePermiso)
                     {
                         ModificarBloqueoUsuarioEnComunidad(true);
                     }
@@ -317,7 +343,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                 }
                 else if (RequestParams("callback").ToLower() == "accion_desbloquear")
                 {
-                    if (ProyectoSeleccionado.EsAdministradorUsuario(mControladorBase.UsuarioActual.UsuarioID))
+                    if (tienePermiso)
                     {
                         ModificarBloqueoUsuarioEnComunidad(false);
                     }
@@ -328,7 +354,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                 }
                 else if (RequestParams("callback").ToLower() == "accion_enviarnewsletter")
                 {
-                    if (ProyectoSeleccionado.EsAdministradorUsuario(mControladorBase.UsuarioActual.UsuarioID))
+                    if (tienePermiso)
                     {
                         ModificarEnviarNewsletterAUsuario(true);
                     }
@@ -339,7 +365,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                 }
                 else if (RequestParams("callback").ToLower() == "accion_noenviarnewsletter")
                 {
-                    if (ProyectoSeleccionado.EsAdministradorUsuario(mControladorBase.UsuarioActual.UsuarioID))
+                    if (tienePermiso)
                     {
                         ModificarEnviarNewsletterAUsuario(false);
                     }
@@ -350,7 +376,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                 }
                 else if (RequestParams("callback").ToLower() == "accion_cambiarrol")
                 {
-                    if (ProyectoSeleccionado.EsAdministradorUsuario(mControladorBase.UsuarioActual.UsuarioID))
+                    if (tienePermiso)
                     {
                         if (!IdentidadPagina.Clave.Equals(IdentidadActual.Clave) || ProyectoSeleccionado.ListaAdministradoresIDs.Count > 1)
                         {
@@ -566,7 +592,9 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
             }
         }
 
-		public ActionResult CargarModalCambiarRolUsuario(Guid pIdentidadID)
+        [TypeFilter(typeof(PermisosAdministracion), Arguments = new object[] { new ulong[] { (ulong)PermisoComunidad.GestionarMiembros } })]
+        [TypeFilter(typeof(PermisosAdministracionEcosistema), Arguments = new object[] { new ulong[] { (ulong)PermisoEcosistema.AdministrarMiembrosEcosistema } })]
+        public ActionResult CargarModalCambiarRolUsuario(Guid pIdentidadID)
 		{
             try 
             {
@@ -575,8 +603,8 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
 				model.Roles = new List<RolModel>();
 				model.RolesYaTiene = new List<Guid>();
                 model.RolesHeredados = new List<RolHeredado>();
-				ProyectoCN proyectoCN = new ProyectoCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<ProyectoCN>(), mLoggerFactory);
-                UsuarioCN usuarioCN = new UsuarioCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<UsuarioCN>(), mLoggerFactory);
+				using ProyectoCN proyectoCN = new ProyectoCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<ProyectoCN>(), mLoggerFactory);
+                using UsuarioCN usuarioCN = new UsuarioCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<UsuarioCN>(), mLoggerFactory);
                 bool esEcosistema = false;
                 
                 List<GrupoUsuarioConRoles> grupos = usuarioCN.ObtenerGruposDeUsuario(pIdentidadID);
@@ -623,7 +651,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                 }
                 else
                 {
-                    IdentidadCN identidadCN = new IdentidadCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<IdentidadCN>(), mLoggerFactory);
+                    using IdentidadCN identidadCN = new IdentidadCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<IdentidadCN>(), mLoggerFactory);
                     List<Rol> rolesIdentidad = identidadCN.ObtenerRolesDeIdentidad(pIdentidadID);
 					List<Rol> rolesProyecto = proyectoCN.ObtenerRolesDeProyecto(ProyectoSeleccionado.Clave);
 
@@ -643,11 +671,12 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
 						}
 					}
 
-					identidadCN.Dispose();					
+                    Guid rolUsuarioDefecto = proyectoCN.ObtenerRolUsuario(ProyectoSeleccionado.Clave).RolID;
+                    if (!model.RolesYaTiene.Contains(rolUsuarioDefecto))
+                    {
+                        model.RolesYaTiene.Add(rolUsuarioDefecto);
+                    }				
 				}
-
-				proyectoCN.Dispose();
-                usuarioCN.Dispose();
 
 				return PartialView("_modal-views/_change-rol", model);
 		    }
@@ -658,7 +687,9 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
             }
 		}
 
-		public ActionResult CargarModalCambiarRolGrupo(Guid pGrupoID)
+        [TypeFilter(typeof(PermisosAdministracion), Arguments = new object[] { new ulong[] { (ulong)PermisoComunidad.GestionarMiembros } })]
+        [TypeFilter(typeof(PermisosAdministracionEcosistema), Arguments = new object[] { new ulong[] { (ulong)PermisoEcosistema.AdministrarMiembrosEcosistema } })]
+        public ActionResult CargarModalCambiarRolGrupo(Guid pGrupoID)
 		{
             try
             {
@@ -702,6 +733,8 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
             }
 		}
 
+        [TypeFilter(typeof(PermisosAdministracion), Arguments = new object[] { new ulong[] { (ulong)PermisoComunidad.GestionarMiembros } })]
+        [TypeFilter(typeof(PermisosAdministracionEcosistema), Arguments = new object[] { new ulong[] { (ulong)PermisoEcosistema.AdministrarMiembrosEcosistema } })]
         public ActionResult CambiarRolesGrupo(Guid pGrupoID, string pListaRoles)
         {
 			try
@@ -761,7 +794,9 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
 			}
         }
 
-		public ActionResult CambiarRolesUsuario(Guid pIdentidadID, string pListaRoles)
+        [TypeFilter(typeof(PermisosAdministracion), Arguments = new object[] { new ulong[] { (ulong)PermisoComunidad.GestionarMiembros } })]
+        [TypeFilter(typeof(PermisosAdministracionEcosistema), Arguments = new object[] { new ulong[] { (ulong)PermisoEcosistema.AdministrarMiembrosEcosistema } })]
+        public ActionResult CambiarRolesUsuario(Guid pIdentidadID, string pListaRoles)
 		{
 			try
 			{

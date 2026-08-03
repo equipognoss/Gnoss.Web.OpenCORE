@@ -48,9 +48,9 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
         #endregion
 
         // GET: AdministrarUtilidades
-        [HttpGet]        
-		//[TypeFilter(typeof(PermisosAdministracion), Arguments = new object[] { new ulong[] { (ulong)PermisoComunidad.GestionarTiposDeContenidosYPermisos } })]
-		public ActionResult Index()
+        [HttpGet]
+        [TypeFilter(typeof(UsuarioLogueadoAttribute), Arguments = new object[] { RolesUsuario.AdministradorComunidad })]
+        public ActionResult Index()
         {
             EliminarPersonalizacionVistas();
             CargarPermisosAdministracionComunidadEnViewBag();
@@ -76,7 +76,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
         /// </summary>
         /// <returns></returns>
         [HttpGet]
-		//[TypeFilter(typeof(PermisosAdministracion), Arguments = new object[] { new ulong[] { (ulong)PermisoComunidad.GestionarNivelesDeCertificacion } })]
+		[TypeFilter(typeof(PermisosAdministracion), Arguments = new object[] { new ulong[] { (ulong)PermisoComunidad.GestionarNivelesDeCertificacion } })]
 		public ActionResult IndexGestionCertificados()
         {
             EliminarPersonalizacionVistas();
@@ -105,6 +105,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
         /// </summary>
         /// <returns></returns>
         [HttpPost]
+        [TypeFilter(typeof(UsuarioLogueadoAttribute), Arguments = new object[] { RolesUsuario.AdministradorComunidad })]
         public ActionResult LoadAddGroup()
         {
             // Devolver la sección de la home correspondiente
@@ -116,6 +117,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
         /// </summary>
         /// <returns></returns>
         [HttpPost]
+        [TypeFilter(typeof(PermisosAdministracion), Arguments = new object[] { new ulong[] { (ulong)PermisoComunidad.GestionarNivelesDeCertificacion } })]
         public ActionResult LoadCreateEditCertification(AdministrarUtilidadesCertificationModel pModel)
         {
             // Devolver la vista modal
@@ -127,6 +129,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
         /// </summary>
         /// <returns></returns>
         [HttpPost]
+        [TypeFilter(typeof(PermisosAdministracion), Arguments = new object[] { new ulong[] { (ulong)PermisoComunidad.GestionarNivelesDeCertificacion } })]
         public ActionResult LoadConfirmDeleteCertification(AdministrarUtilidadesCertificationModel pModel)
         {
             // Devolver la vista modal
@@ -135,7 +138,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
 
         // POST: Guardar AdministrarUtilidades
         [HttpPost]		
-		//[TypeFilter(typeof(PermisosAdministracion), Arguments = new object[] { new ulong[] { (ulong)PermisoComunidad.GestionarTiposDeContenidosYPermisos, (ulong)PermisoComunidad.GestionarNivelesDeCertificacion } })]
+		[TypeFilter(typeof(PermisosAdministracion), Arguments = new object[] { new ulong[] { (ulong)PermisoComunidad.GestionarNivelesDeCertificacion } })]
 		[TypeFilter(typeof(AccesoIntegracionAttribute))]
 		public ActionResult Guardar(AdministrarComunidadUtilidades DatosGuardado)
         {

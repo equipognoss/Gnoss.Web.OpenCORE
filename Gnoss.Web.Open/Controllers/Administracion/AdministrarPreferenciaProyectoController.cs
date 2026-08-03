@@ -77,6 +77,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
         /// </summary>
         /// <returns>ActionResult</returns>
         [HttpGet]
+        [TypeFilter(typeof(UsuarioLogueadoAttribute), Arguments = new object[] { RolesUsuario.AdministradorComunidad })]
         public ActionResult Index()
         {
             EliminarPersonalizacionVistas();
@@ -118,8 +119,9 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
         /// <summary>
         /// Muestra el panel para realizar la acción solicitada
         /// </summary>
-        /// <returns>ActionResult</returns>
-		public ActionResult MostrarAccion(string typeAction)
+        /// <returns>ActionResult</returns>        
+        [TypeFilter(typeof(UsuarioLogueadoAttribute), Arguments = new object[] { RolesUsuario.AdministradorComunidad })]
+        public ActionResult MostrarAccion(string typeAction)
         {
             typeAction = typeAction.Replace('-', '_');
 
@@ -271,6 +273,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
         /// Ejecuta la acción solicitada
         /// </summary>
         /// <returns>ActionResult</returns>
+        [TypeFilter(typeof(UsuarioLogueadoAttribute), Arguments = new object[] { RolesUsuario.AdministradorComunidad })]
         public ActionResult EjecutarAccion(string typeAction)
         {
             PaginaModel.Action = typeAction;
@@ -291,6 +294,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
         /// Guardar los cambios
         /// </summary>
         /// <returns>ActionResult</returns>
+        [TypeFilter(typeof(UsuarioLogueadoAttribute), Arguments = new object[] { RolesUsuario.AdministradorComunidad })]
         public ActionResult Guardar()
         {
             GuardarLogAuditoria();

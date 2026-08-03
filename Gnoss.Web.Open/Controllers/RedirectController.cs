@@ -680,7 +680,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
         {
             string[] urlConParametros = pUrlRedireccionFinal.Split('?');
             string url = urlConParametros[0];
-            string[] parametros = urlConParametros[1].Split('&');
+            string[] parametros = urlConParametros.Length > 1 ? urlConParametros[1].Split('&') : [];
 
             string[] parametrosOriginales = pFiltrosOriginales.Trim('?').Split('&');
 

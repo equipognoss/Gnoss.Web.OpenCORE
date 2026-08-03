@@ -241,6 +241,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
             return GnossResultUrl(mControladorBase.UrlsSemanticas.ObtenerURLAdministracionComunidad(UtilIdiomas, BaseURLIdioma, ProyectoSeleccionado.NombreCorto, "COMADMINCOMEVENTOS"));
         }
 
+        [TypeFilter(typeof(UsuarioLogueadoAttribute), Arguments = new object[] { RolesUsuario.AdministradorComunidad })]
         public ActionResult Delete(Guid eventoID)
         {
             GuardarLogAuditoria();
