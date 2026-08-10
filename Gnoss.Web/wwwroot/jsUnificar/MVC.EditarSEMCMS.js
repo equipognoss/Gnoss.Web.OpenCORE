@@ -2975,9 +2975,9 @@ function ObtenerFilaValorContenedorGrupoPaneles(pControlCont, pEntidadHija, pNum
     }
     else
     {
-        let propiedades=GetPropiedadesEntidad(pEntidadHija, pTxtCaract);
+        let propiedades = GetPropiedadesEntidad(pEntidadHija, pTxtCaract);
 
-        let pValor=GetValorElementoGuardado(pEntidadHija, propiedades[0], pTxtValores, pTxtElemEditados, 0)
+        let pValor = ObtenerPrimerValorElementoGuardado(pEntidadHija, propiedades, pTxtValores, pTxtElemEditados)
 				
 		if (pValor.length!=0)
 		{
@@ -3074,6 +3074,19 @@ function ObtenerFilaValorContenedorGrupoPaneles(pControlCont, pEntidadHija, pNum
     }
     
     return fila;
+}
+
+function ObtenerPrimerValorElementoGuardado(pEntidadHija, propiedades, pTxtValores, pTxtElemEditados) {
+
+    for (var propiedad of propiedades) {
+        let valor = GetValorElementoGuardado(pEntidadHija, propiedad, pTxtValores, pTxtElemEditados, 0)
+
+        if (valor != '') {
+            return valor;
+        }
+    }
+
+    return "";
 }
 
 function LimpiarContenedorGrupoPaneles(pEntidad, pPropiedad, pTxtValores, pTxtIDs, pTxtCaract, pTxtElemEditados){
@@ -3345,7 +3358,7 @@ function GetPropiedadesEntidad(pEntidad, pTxtCaract){
         indiceProp = caract.indexOf(idEnti);
     }
     
-    return propiedades.split(',');
+    return propiedades.split(',').filter(Boolean);
 }
 
 function GetTipoPropiedad(pEntidad, pPropiedad, pTxtCaract){
