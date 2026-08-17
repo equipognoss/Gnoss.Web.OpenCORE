@@ -263,7 +263,6 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
             mPaginaModel.UsarSoloCategoriasPrivadasEnEspacioPersonal = ControladorProyecto.ObtenerParametroBooleano(ListaParametrosAplicacion, TiposParametrosAplicacion.UsarSoloCategoriasPrivadasEnEspacioPersonal);
             mPaginaModel.NotificacionesAgrupadas = ControladorProyecto.ObtenerParametroBooleano(ListaParametrosAplicacion, TiposParametrosAplicacion.NotificacionesAgrupadas);
             mPaginaModel.RecibirNewsletterDefecto = ControladorProyecto.ObtenerParametroBooleano(ListaParametrosAplicacion, TiposParametrosAplicacion.RecibirNewsletterDefecto);
-            mPaginaModel.PerfilPersonalDisponible = ControladorProyecto.ObtenerParametroBooleano(ListaParametrosAplicacion, TiposParametrosAplicacion.PerfilPersonalDisponible, true);
             mPaginaModel.GenerarGrafoContribuciones = ControladorProyecto.ObtenerParametroBooleano(ListaParametrosAplicacion, TiposParametrosAplicacion.GenerarGrafoContribuciones, true);
             mPaginaModel.MantenerSesionActiva = ControladorProyecto.ObtenerParametroBooleano(ListaParametrosAplicacion, TiposParametrosAplicacion.MantenerSesionActiva, true);
             mPaginaModel.NoEnviarCorreoSeguirPerfil = ControladorProyecto.ObtenerParametroBooleano(ListaParametrosAplicacion, TiposParametrosAplicacion.NoEnviarCorreoSeguirPerfil, false);
@@ -457,7 +456,6 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
             GuardarParametroBooleano(TiposParametrosAplicacion.EcosistemaSinHomeUsuario, pOptions.EcosistemaSinHomeUsuario, true);
             GuardarParametroBooleano(TiposParametrosAplicacion.NotificacionesAgrupadas, pOptions.NotificacionesAgrupadas);
             GuardarParametroBooleano(TiposParametrosAplicacion.RecibirNewsletterDefecto, pOptions.RecibirNewsletterDefecto);
-            GuardarParametroBooleano(TiposParametrosAplicacion.PerfilPersonalDisponible, pOptions.PerfilPersonalDisponible, true);
             GuardarParametroBooleano(TiposParametrosAplicacion.GenerarGrafoContribuciones, pOptions.GenerarGrafoContribuciones, true);
             GuardarParametroBooleano(TiposParametrosAplicacion.MantenerSesionActiva, pOptions.MantenerSesionActiva, true);
             GuardarParametroBooleano(TiposParametrosAplicacion.NoEnviarCorreoSeguirPerfil, pOptions.NoEnviarCorreoSeguirPerfil, false);

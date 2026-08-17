@@ -176,9 +176,8 @@ const operativaTinyMceConfig = {
             // Licencia Libre: 
             this.useSingleLineToolbars
             ? toolbar += " formula"
-            : toolbar.push('formula');        
-
-            this.additionalPlugins = this.handleMathJaxExternalPlugin(useMathPlugin);
+            : toolbar.push('formula');
+            
             // Requerido para el plugin de MathType
             this.validElements = "*[.*]";
         }
@@ -416,19 +415,6 @@ const operativaTinyMceConfig = {
           return match ? match[1] : '';
         }
     },      
-
-    /**
-     * Método para devolver el plugin de wiris de MathType. Se ha de cargar en external_plugins
-     * @returns Objeto con la configuración de TinyMCE de Wiris
-     */
-    handleMathJaxExternalPlugin: function(addMathTypePlugin = false){        
-        if (addMathTypePlugin){
-            return {
-                'tiny_mce_wiris': `plugins/wiris/mathtype-tinymce6/plugin.min.js`,
-            };       
-        }        
-        return {};
-    },
 
     /**
      * Método que construye un array con los lenguajes disponibles a usar en el plugin de CodeSample

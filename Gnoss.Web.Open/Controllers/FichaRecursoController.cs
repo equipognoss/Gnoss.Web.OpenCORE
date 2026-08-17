@@ -2839,7 +2839,10 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                 identidadCN.Dispose();
 
                 GestorDocumental.GestorIdentidades = gestorIdentidades;
-                DocumentoWeb documentoVinc = GestorDocumental.ListaDocumentosWeb[pDocVinculadoID];
+                //DocumentoWeb documentoVinc = GestorDocumental.ListaDocumentosWeb[pDocVinculadoID];
+                GestorDocumental gesDoc = new GestorDocumental(dwDocumentacion, mLoggingService, mEntityContext, mLoggerFactory.CreateLogger<GestorDocumental>(), mLoggerFactory);
+
+                DocumentoWeb documentoVinc = gesDoc.ListaDocumentosWeb[docVinculadoUltimaVersion];
 
                 if (GestorDocumental.TienePermisosIdentidadDesvincularRecursos(documentoVinc, Documento, IdentidadActual, IdentidadOrganizacionBROrg, ProyectoSeleccionado, UsuarioActual.UsuarioID, EsIdentidadActualAdministradorOrganizacion))
                 {

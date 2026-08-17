@@ -6536,17 +6536,20 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
 
                 return resultadoCargaMasiva;
             }
-            
-            Dictionary<string, TipoCampoOntologia> nombresArchivosYTipos = ControladorDocumentacion.ObtenerNombresArchivosDeRdf(ficheroRDF, mOntologia);
 
-            foreach (string nombreArchivoYTipo in nombresArchivosYTipos.Keys)
+            if (!CreandoFormSem && !CargaMasivaFormSem) 
             {
-                bool correcto = ControladorDocumentacion.CopiarAdjuntoDocumentoSemantico(nombreArchivoYTipo, nombresArchivosYTipos[nombreArchivoYTipo], mModelSaveRec.Key, DocumentoVersionID);
+                Dictionary<string, TipoCampoOntologia> nombresArchivosYTipos = ControladorDocumentacion.ObtenerNombresArchivosDeRdf(ficheroRDF, mOntologia);
 
-                if (!correcto)
+                foreach (string nombreArchivoYTipo in nombresArchivosYTipos.Keys)
                 {
-                    throw new ExcepcionWeb($"No se han podido duplicar los archivos para el nuevo documento.\n DocumentoID original: {mModelSaveRec.Key}\n DocumentoID Version: {DocumentoVersionID}");
-                }
+                    bool correcto = ControladorDocumentacion.CopiarAdjuntoDocumentoSemantico(nombreArchivoYTipo, nombresArchivosYTipos[nombreArchivoYTipo], mModelSaveRec.Key, DocumentoVersionID);
+
+                    if (!correcto)
+                    {
+                        throw new ExcepcionWeb($"No se han podido duplicar los archivos para el nuevo documento.\n DocumentoID original: {mModelSaveRec.Key}\n DocumentoID Version: {DocumentoVersionID}");
+                    }
+                } 
             }
 
             bool servicioExterno = (PropiedadesTextoOntologia.ContainsKey(PropiedadesOntologia.urlserviciocomplementario.ToString()) || PropiedadesTextoOntologia.ContainsKey(PropiedadesOntologia.urlserviciocomplementarioSincrono.ToString())) && !mModelSaveRec.Draft;

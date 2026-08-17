@@ -20,6 +20,24 @@
         window.getData = function(callback) {
           EditorObj.getEquationPng(callback);
         };
+
+        // Soporte cross-origin: la ventana padre de TinyMCE (otro dominio)
+        // no puede llamar a getData() directamente, así que respondemos por postMessage.
+        window.addEventListener("message", function(event) {
+          var data = event.data;
+          if (!data || data.type !== "tinymceFormula:getData") {
+            return;
+          }
+          EditorObj.getEquationPng(function(png, mlang, equation) {
+            event.source.postMessage({
+              type: "tinymceFormula:data",
+              requestId: data.requestId,
+              png: png,
+              mlang: mlang,
+              equation: equation
+            }, event.origin);
+          });
+        });
       };
     </script>
     <link rel="stylesheet" type="text/css" href="css/formula.min.css" />

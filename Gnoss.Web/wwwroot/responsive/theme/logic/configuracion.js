@@ -7058,9 +7058,8 @@ operativaGestionConfiguracionPlataforma = {
         this.RegistroAutomaticoEcosistema = $("#RegistroAutomaticoEcosistema");
         this.SeguirEnTodaLaActividad = $("#SeguirEnTodaLaActividad");
         this.EcosistemaSinHomeUsuario = $("#EcosistemaSinHomeUsuario");
-        this.RecibirNewsletterDefecto = $("#RecibirNewsletterDefecto"); 
-        this.PerfilPersonalDisponible = $("#PerfilPersonalDisponible");
-        this.MostrarGruposIDEnHtml = $("#MostrarGruposIDEnHtml");                        
+        this.RecibirNewsletterDefecto = $("#RecibirNewsletterDefecto");
+        this.MostrarGruposIDEnHtml = $("#MostrarGruposIDEnHtml");
         this.GenerarGrafoContribuciones = $("#GenerarGrafoContribuciones");
         this.ReiniciarAplicacion = $("#ReiniciarAplicacion");
         this.MantenerSesionActiva = $("#MantenerSesionActiva");
@@ -7118,8 +7117,7 @@ operativaGestionConfiguracionPlataforma = {
         /* Login */        
         this.LoginUnicoPorUsuario = $("#LoginUnicoPorUsuario");
         this.LoginUnicoUsuariosExcluidos = $("#LoginUnicoUsuariosExcluidos");
-        this.PerfilPersonalDisponible = $("#PerfilPersonalDisponible");                                        
-        /* Comunidad */ 
+        /* Comunidad */
         this.EnviarNotificacionesDeSuscripciones = $("#EnviarNotificacionesDeSuscripciones"); 
         this.AceptacionComunidadesAutomatica = $("#AceptacionComunidadesAutomaticas");       
         this.CargarIdentidadesDeProyectosPrivadosComoAmigos = $("#CargarIdentidadesDeProyectosPrivadosComoAmigos"); 
@@ -7501,7 +7499,6 @@ operativaGestionConfiguracionPlataforma = {
         that.Options['EcosistemaSinHomeUsuario'] = that.EcosistemaSinHomeUsuario.is(':checked');
         // Desaparece that.Options['NotificacionesAgrupadas'] = that.NotificacionesAgrupadas.is(':checked');
         that.Options['RecibirNewsletterDefecto'] = that.RecibirNewsletterDefecto.is(':checked');
-        that.Options['PerfilPersonalDisponible'] = that.PerfilPersonalDisponible.is(':checked');
         that.Options['MostrarGruposIDEnHtml'] = that.MostrarGruposIDEnHtml.is(':checked');
         that.Options['GenerarGrafoContribuciones'] = that.GenerarGrafoContribuciones.is(':checked');
         that.Options['ReiniciarAplicacion'] = that.ReiniciarAplicacion.is(':checked');
