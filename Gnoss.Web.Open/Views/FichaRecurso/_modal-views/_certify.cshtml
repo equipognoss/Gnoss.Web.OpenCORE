@@ -13,6 +13,7 @@ Variables
     string idioma = Html.GetUtilIdiomas().LanguageCode;
     @* Función de aceptar certificación al pulsar en "Aceptar" *@
     string funcionCertificarAceptar = "AccionRecurso_Certificar_Aceptar('" + fichaRecurso.ListActions.UrlCertify + "', '" + fichaRecurso.Key + "', '" + Html.GetText("PERFILBASERECURSOSFICHA", "RECURSOCERTIFICADO") + "')";
+    bool existeCertificado = Comunidad.ListaCertificaciones.Keys.Count > 0;
 }
 
 @*
@@ -36,6 +37,11 @@ Variables
         <div class="formulario-edicion">
           <div class="form-group">
             <label class="control-label">@Html.GetText("PERFILBASERECURSOSFICHA", "CERTIFICARDOC")</label>
+            @if (!existeCertificado)
+            {
+                <br />
+                <label class="control-label">@Html.GetText("PERFILBASERECURSOSFICHA", "NOCERTIFICADISP")</label>
+            }
           </div>
           <div class="form-group">
               @* Valoración: No valorado *@
@@ -79,7 +85,9 @@ Variables
             </div>
 
           <div class="form-actions">
-              <a class="btn btn-primary" onclick="@funcionCertificarAceptar">@Html.GetText("PERFILBASERECURSOSFICHA", "CERTIFICAR")</a>              
+            @if (existeCertificado){
+              <a class="btn btn-primary" onclick="@funcionCertificarAceptar">@Html.GetText("PERFILBASERECURSOSFICHA", "CERTIFICAR")</a>    
+            }
           </div>
         </div>
       </div>

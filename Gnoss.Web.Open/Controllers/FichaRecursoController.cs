@@ -6013,7 +6013,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
         {
             Dictionary<Guid, string> ListaCertificaciones = new Dictionary<Guid, string>();
 
-            if (NivelesCertificacionProyecto.ListaNivelCertificacion.Count > 0)
+            if (NivelesCertificacionProyecto !=null && NivelesCertificacionProyecto.ListaNivelCertificacion != null && NivelesCertificacionProyecto.ListaNivelCertificacion.Count > 0)
             {
                 foreach (NivelCertificacion fila in NivelesCertificacionProyecto.ListaNivelCertificacion.OrderBy(nivelCert => nivelCert.Orden).ToList())
                 {
