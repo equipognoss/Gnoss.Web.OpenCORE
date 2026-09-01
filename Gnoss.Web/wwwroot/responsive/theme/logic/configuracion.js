@@ -4299,13 +4299,11 @@ const operativaSubirConfiguracion = {
             var dataPost = new FormData();
             dataPost.append("pFicheroZip", inputFichero.files[0]);
             // Envío del zip mediante una petición ajax
-            $.ajax({
-                url: that.urlUploadConfig,
-                type: "POST",
-                processData: false,
-                contentType: false,
-                data: dataPost
-            }).done(function (data) {
+            GnossPeticionAjax(
+                that.urlUploadConfig,
+                dataPost,
+                true
+            ).done(function (data) {
                 mostrarNotificacion("success", data);
             }).fail(function (data) {
                 mostrarNotificacion("error", data);
