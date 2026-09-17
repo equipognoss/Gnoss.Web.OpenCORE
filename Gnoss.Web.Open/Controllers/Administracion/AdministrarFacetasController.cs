@@ -1,10 +1,6 @@
-﻿using AngleSharp.Common;
-using DotNetOpenAuth.Messaging;
-using Es.Riam.AbstractsOpen;
-using Es.Riam.Gnoss.AD;
+﻿using Es.Riam.AbstractsOpen;
 using Es.Riam.Gnoss.AD.EncapsuladoDatos;
 using Es.Riam.Gnoss.AD.EntityModel;
-using Es.Riam.Gnoss.AD.EntityModel.Models;
 using Es.Riam.Gnoss.AD.EntityModel.Models.Documentacion;
 using Es.Riam.Gnoss.AD.EntityModel.Models.Faceta;
 using Es.Riam.Gnoss.AD.EntityModelBASE;
@@ -13,40 +9,35 @@ using Es.Riam.Gnoss.AD.ServiciosGenerales;
 using Es.Riam.Gnoss.AD.Virtuoso;
 using Es.Riam.Gnoss.CL;
 using Es.Riam.Gnoss.CL.ParametrosAplicacion;
-using Es.Riam.Gnoss.Elementos.Facetado;
 using Es.Riam.Gnoss.Logica.Documentacion;
-using Es.Riam.Gnoss.Logica.ParametroAplicacion;
 using Es.Riam.Gnoss.Recursos;
 using Es.Riam.Gnoss.Util.Configuracion;
 using Es.Riam.Gnoss.Util.General;
-using Es.Riam.Gnoss.UtilServiciosWeb;
 using Es.Riam.Gnoss.Web.Controles.Administracion;
 using Es.Riam.Gnoss.Web.Controles.GeneradorPlantillasOWL;
 using Es.Riam.Gnoss.Web.MVC.Filters;
-using Es.Riam.Gnoss.Web.MVC.Models;
 using Es.Riam.Gnoss.Web.MVC.Models.Administracion;
-using Es.Riam.Gnoss.Web.MVC.Models.ViewModels;
 using Es.Riam.Interfaces.InterfacesOpen;
 using Es.Riam.InterfacesOpen;
 using Es.Riam.Semantica.OWL;
 using Es.Riam.Semantica.Plantillas;
 using Es.Riam.Util;
-using Gnoss.Web.Open.Filters;
+using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Mvc.Infrastructure;
 using Microsoft.AspNetCore.Mvc.ViewEngines;
 using Microsoft.Extensions.Hosting;
-using Microsoft.Extensions.Logging;
-using Newtonsoft.Json;
 using System;
-using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net;
 using System.Net.Http;
 using System.Text;
-using Universal.Common.Extensions;
+using Gnoss.Web.Open.Filters;
+using Es.Riam.Gnoss.UtilServiciosWeb;
+using Microsoft.Extensions.Logging;
+using System.Text.Json;
+using System.Collections.Concurrent;
 
 namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
 {
@@ -72,8 +63,8 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
         private static ConcurrentDictionary<Guid, Dictionary<Guid, FacetaModel>> mFacetasPropuestasCache = new ConcurrentDictionary<Guid, Dictionary<Guid, FacetaModel>>();
         private ILogger mlogger;
         private ILoggerFactory mLoggerFactory;
-        public AdministrarFacetasController(LoggingService loggingService, ConfigService configService, EntityContext entityContext, RedisCacheWrapper redisCacheWrapper, GnossCache gnossCache, VirtuosoAD virtuosoAD, IHttpContextAccessor httpContextAccessor, ICompositeViewEngine viewEngine, EntityContextBASE entityContextBASE, Microsoft.AspNetCore.Hosting.IHostingEnvironment env, IActionContextAccessor actionContextAccessor, IUtilServicioIntegracionContinua utilServicioIntegracionContinua, IServicesUtilVirtuosoAndReplication servicesUtilVirtuosoAndReplication, IOAuth oAuth, IHostApplicationLifetime appLifetime, IAvailableServices availableServices, ILogger<AdministrarFacetasController> logger, ILoggerFactory loggerFactory)
-            : base(loggingService, configService, entityContext, redisCacheWrapper, gnossCache, virtuosoAD, httpContextAccessor, viewEngine, entityContextBASE, env, actionContextAccessor, utilServicioIntegracionContinua, servicesUtilVirtuosoAndReplication, oAuth, appLifetime, availableServices, logger, loggerFactory)
+        public AdministrarFacetasController(LoggingService loggingService, ConfigService configService, EntityContext entityContext, RedisCacheWrapper redisCacheWrapper, GnossCache gnossCache, VirtuosoAD virtuosoAD, IHttpContextAccessor httpContextAccessor, ICompositeViewEngine viewEngine, EntityContextBASE entityContextBASE, IWebHostEnvironment env, IUtilServicioIntegracionContinua utilServicioIntegracionContinua, IServicesUtilVirtuosoAndReplication servicesUtilVirtuosoAndReplication, IOAuth oAuth, IHostApplicationLifetime appLifetime, IAvailableServices availableServices, ILogger<AdministrarFacetasController> logger, ILoggerFactory loggerFactory)
+            : base(loggingService, configService, entityContext, redisCacheWrapper, gnossCache, virtuosoAD, httpContextAccessor, viewEngine, entityContextBASE, env, utilServicioIntegracionContinua, servicesUtilVirtuosoAndReplication, oAuth, appLifetime, availableServices, logger, loggerFactory)
         {
             mlogger = logger;
             mLoggerFactory = loggerFactory;
@@ -137,7 +128,8 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
         /// <returns>ActionResult</returns>
         [HttpPost]
 		[TypeFilter(typeof(PermisosContenidos), Arguments = new object[] { new ulong[] { (ulong)PermisoContenidos.CrearFaceta } })]
-		public ActionResult NuevaFaceta(TipoFaceta TipoFaceta, Guid? pestanyaPropuestaID = null)
+        [TypeFilter(typeof(LimitarPeticionesAdministracion), Arguments = new object[] { 30, 120, 15 })]
+        public ActionResult NuevaFaceta(TipoFaceta TipoFaceta, Guid? pestanyaPropuestaID = null)
         {
             EliminarPersonalizacionVistas();
             CargarPermisosFacetasEnViewBag();
@@ -199,6 +191,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
         [HttpPost]
 		[TypeFilter(typeof(PermisosContenidos), Arguments = new object[] { new ulong[] { (ulong)PermisoContenidos.CrearFaceta, (ulong)PermisoContenidos.ModificarFaceta, (ulong)PermisoContenidos.EliminarFaceta } })]
 		[TypeFilter(typeof(AccesoIntegracionAttribute))]
+        [TypeFilter(typeof(LimitarPeticionesAdministracion), Arguments = new object[] { 30, 120, 15 })]
         public ActionResult Guardar(List<FacetaModel> ListaFacetas)
         {
             GuardarLogAuditoria();
@@ -229,7 +222,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
                     if (iniciado)
                     {
                         ListaFacetas = ModificarOrdenFacetas(facetaModel, ListaFacetas);
-                        HttpResponseMessage resultado = InformarCambioAdministracion("Facetas", JsonConvert.SerializeObject(ListaFacetas, Formatting.Indented));
+                        HttpResponseMessage resultado = InformarCambioAdministracion("Facetas", JsonSerializer.Serialize(ListaFacetas, new JsonSerializerOptions { WriteIndented = true }));
 
                         if (!resultado.StatusCode.Equals(HttpStatusCode.OK))
                         {
@@ -252,11 +245,11 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
                     return GnossResultERROR(ex.Message);
                 }
 
-                contrFacetas.InvalidarCaches(UrlIntragnoss);
+                contrFacetas.InvalidarCaches(UrlIntragnoss, IdentidadActual.Clave);
 
                 contrFacetas.CrearFilasPropiedadesIntegracionContinua(ListaFacetas);
 
-                if (EntornoActualEsPruebas && iniciado)
+                if (iniciado && EntornoActualEsPruebas)
                 {
                     contrFacetas.ModificarFilasIntegracionContinuaEntornoSiguiente(ListaFacetas, UrlApiEntornoSeleccionado("pre"), UsuarioActual.UsuarioID);
                     contrFacetas.ModificarFilasIntegracionContinuaEntornoSiguiente(ListaFacetas, UrlApiEntornoSeleccionado("pro"), UsuarioActual.UsuarioID);

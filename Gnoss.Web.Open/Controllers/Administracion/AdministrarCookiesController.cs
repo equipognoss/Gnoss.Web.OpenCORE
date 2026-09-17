@@ -10,33 +10,27 @@ using Es.Riam.Gnoss.Logica.Cookie;
 using Es.Riam.Gnoss.Logica.ServiciosGenerales;
 using Es.Riam.Gnoss.Util.Configuracion;
 using Es.Riam.Gnoss.Util.General;
-using Es.Riam.Gnoss.Web.MVC.Filters;
 using Es.Riam.Gnoss.Web.MVC.Models.ViewModels;
 using Es.Riam.Interfaces.InterfacesOpen;
 using Es.Riam.InterfacesOpen;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
 using Es.Riam.Gnoss.Web.MVC.Models.Administracion;
-using Newtonsoft.Json;
 using System.Net;
 using System.Net.Http;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Mvc.Infrastructure;
 using Microsoft.AspNetCore.Mvc.ViewEngines;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using Es.Riam.Gnoss.Web.MVC.Models.Administracion;
 using Es.Riam.Gnoss.Recursos;
 using Es.Riam.Gnoss.CL.Cookie;
-using Es.Riam.Gnoss.Logica.ParametroAplicacion;
 using Es.Riam.Gnoss.CL.ParametrosAplicacion;
 using Microsoft.Extensions.Hosting;
-using Es.Riam.Gnoss.AD.Cookie;
 using Gnoss.Web.Open.Filters;
 using Microsoft.Extensions.Logging;
-using Es.Riam.Gnoss.Elementos.Amigos;
 using Es.Riam.Util;
+using System.Text.Json;
 
 namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
 {
@@ -176,8 +170,8 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
         private ILogger mlogger;
         private ILoggerFactory mLoggerFactory;
 
-        public AdministrarCookiesController(LoggingService loggingService, ConfigService configService, EntityContext entityContext, RedisCacheWrapper redisCacheWrapper, GnossCache gnossCache, VirtuosoAD virtuosoAD, IHttpContextAccessor httpContextAccessor, ICompositeViewEngine viewEngine, EntityContextBASE entityContextBASE, Microsoft.AspNetCore.Hosting.IHostingEnvironment env, IActionContextAccessor actionContextAccessor, IUtilServicioIntegracionContinua utilServicioIntegracionContinua, IServicesUtilVirtuosoAndReplication servicesUtilVirtuosoAndReplication, IOAuth oAuth, IHostApplicationLifetime appLifetime, IAvailableServices availableServices, ILogger<AdministrarCookiesController> logger, ILoggerFactory loggerFactory)
-             : base(loggingService, configService, entityContext, redisCacheWrapper, gnossCache, virtuosoAD, httpContextAccessor, viewEngine, entityContextBASE, env, actionContextAccessor, utilServicioIntegracionContinua, servicesUtilVirtuosoAndReplication, oAuth, appLifetime, availableServices, logger, loggerFactory)
+        public AdministrarCookiesController(LoggingService loggingService, ConfigService configService, EntityContext entityContext, RedisCacheWrapper redisCacheWrapper, GnossCache gnossCache, VirtuosoAD virtuosoAD, IHttpContextAccessor httpContextAccessor, ICompositeViewEngine viewEngine, EntityContextBASE entityContextBASE, IWebHostEnvironment env, IUtilServicioIntegracionContinua utilServicioIntegracionContinua, IServicesUtilVirtuosoAndReplication servicesUtilVirtuosoAndReplication, IOAuth oAuth, IHostApplicationLifetime appLifetime, IAvailableServices availableServices, ILogger<AdministrarCookiesController> logger, ILoggerFactory loggerFactory)
+             : base(loggingService, configService, entityContext, redisCacheWrapper, gnossCache, virtuosoAD, httpContextAccessor, viewEngine, entityContextBASE, env, utilServicioIntegracionContinua, servicesUtilVirtuosoAndReplication, oAuth, appLifetime, availableServices, logger, loggerFactory)
         {
             mlogger = logger;
             mLoggerFactory = loggerFactory;
@@ -223,7 +217,8 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
         /// <returns>ActionResult</returns>
         [HttpPost]
 		[TypeFilter(typeof(PermisosAdministracion), Arguments = new object[] { new ulong[] { (ulong)PermisoComunidad.GestionarCookies } })]
-		public bool CrearCookiesTecnicasDelProyecto()
+        [TypeFilter(typeof(LimitarPeticionesAdministracion), Arguments = new object[] { 30, 120, 15 })]
+        public bool CrearCookiesTecnicasDelProyecto()
         {
             try
             {
@@ -290,7 +285,8 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
         /// <returns></returns>
         [HttpPost]
 		[TypeFilter(typeof(PermisosAdministracion), Arguments = new object[] { new ulong[] { (ulong)PermisoComunidad.GestionarCookies } })]
-		public ActionResult AddCookie(string Categoria)
+        [TypeFilter(typeof(LimitarPeticionesAdministracion), Arguments = new object[] { 30, 120, 15 })]
+        public ActionResult AddCookie(string Categoria)
         {
             ProyectoCN proyectoCN = new ProyectoCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<ProyectoCN>(), mLoggerFactory);
             ProyectoCookie cookie = new ProyectoCookie();
@@ -393,7 +389,8 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
         /// <param name="ListaCookies"></param>
         [HttpPost]
 		[TypeFilter(typeof(PermisosAdministracion), Arguments = new object[] { new ulong[] { (ulong)PermisoComunidad.GestionarCookies } })]
-		public void SaveCookies(CookieEditModel[] ListaCookies)
+        [TypeFilter(typeof(LimitarPeticionesAdministracion), Arguments = new object[] { 30, 120, 15 })]
+        public void SaveCookies(CookieEditModel[] ListaCookies)
         {
             ProyectoCN proyectoCN = new ProyectoCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<ProyectoCN>(), mLoggerFactory);
             CookieCN cookieCN = new CookieCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<CookieCN>(), mLoggerFactory);
@@ -537,7 +534,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
                     }
                 }
 
-                HttpResponseMessage resultado = InformarCambioAdministracion("Cookies", JsonConvert.SerializeObject(categoriasYCookies, Formatting.Indented));
+                HttpResponseMessage resultado = InformarCambioAdministracion("Cookies", JsonSerializer.Serialize(categoriasYCookies, new JsonSerializerOptions { WriteIndented = true }));
                 if (!resultado.StatusCode.Equals(HttpStatusCode.OK))
                 {
                     throw new Exception("Contacte con el administrador del Proyecto, no es posible atender la petición.");
@@ -551,7 +548,8 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
         /// <param name="ListaCategorias">Lista de categorías a guardar en base de datos</param>
         [HttpPost]
 		[TypeFilter(typeof(PermisosAdministracion), Arguments = new object[] { new ulong[] { (ulong)PermisoComunidad.GestionarCookies } })]
-		public void SaveCategories(CategoryEditModel[] ListaCategorias)
+        [TypeFilter(typeof(LimitarPeticionesAdministracion), Arguments = new object[] { 30, 120, 15 })]
+        public void SaveCategories(CategoryEditModel[] ListaCategorias)
         {
             ProyectoCN proyectoCN = new ProyectoCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<ProyectoCN>(), mLoggerFactory);
             CookieCN cookieCN = new CookieCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<CookieCN>(), mLoggerFactory);
@@ -681,7 +679,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
                     }
                 }
 
-                HttpResponseMessage response = InformarCambioAdministracion("Cookies", JsonConvert.SerializeObject(categoriasYCookies, Formatting.Indented));
+                HttpResponseMessage response = InformarCambioAdministracion("Cookies", JsonSerializer.Serialize(categoriasYCookies, new JsonSerializerOptions { WriteIndented = true }));
                 if (!response.StatusCode.Equals(HttpStatusCode.OK))
                 {
                     throw new Exception("Contacte con el administrador del Proyecto, no es posible atender la petición.");
@@ -695,7 +693,8 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
         /// <returns></returns>
         [HttpPost]
 		[TypeFilter(typeof(PermisosAdministracion), Arguments = new object[] { new ulong[] { (ulong)PermisoComunidad.GestionarCookies } })]
-		public ActionResult AddCategory() 
+        [TypeFilter(typeof(LimitarPeticionesAdministracion), Arguments = new object[] { 30, 120, 15 })]
+        public ActionResult AddCategory() 
         {
             ProyectoCN proyectoCN = new ProyectoCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<ProyectoCN>(), mLoggerFactory);
             CategoriaProyectoCookie categoriaProyectoCookie = new CategoriaProyectoCookie();

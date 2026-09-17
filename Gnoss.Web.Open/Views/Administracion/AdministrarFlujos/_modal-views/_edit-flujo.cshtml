@@ -210,10 +210,19 @@
                     @* Formulario que se va a clonar por JS y se rellenará*@
                     <div class="formulario-oculto d-none">
                         <div class="form-group mb-4">
-                            @foreach (string key in cabecera.Languajes.Select(kvp => kvp.Key))
+                            @if (Html.ObtenerEdicionMultiIidoma())
                             {
-                                string clase = $"nombre-form-oculto-{key}";
-                                <input class="form-control nombre-form-oculto @clase" type="text" placeholder="Nombre transición" lang="@key" />
+                                foreach (string key in cabecera.Languajes.Select(kvp => kvp.Key))
+                                {
+                                    string clase = $"nombre-form-oculto-{key}";
+                                    <input class="form-control nombre-form-oculto @clase" type="text" placeholder="Nombre transición" lang="@key" />
+                                }
+                            }
+                            else
+                            {
+                                string clase = $"nombre-form-oculto-";
+                                <input class="form-control nombre-form-oculto @clase" type="text" placeholder="Nombre transición"/>
+                                
                             }
                         </div>
                         <div class="form-group mb-4">

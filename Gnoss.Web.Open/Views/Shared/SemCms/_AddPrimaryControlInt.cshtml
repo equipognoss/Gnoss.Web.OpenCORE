@@ -185,6 +185,10 @@
                 {
                     tipoArchivo = "archivoLinkfileUpLoad";
                 }
+                else if (@HtmlHelpers.EsTipoOpenSD(Model.semanticPropertyModel.OntologyPropInfo.FieldType))
+                {
+                    tipoArchivo = "openSDfileUpLoad";
+                }
                 else
                 {
                     tipoArchivo = "archivofileUpLoad";
@@ -549,17 +553,17 @@
                     }
 
                     <a href="@hrefFoto">
-                        <img class="@classControl" src="@valor" alt="@alternative" @Html.Raw(aboutRDFa) @Html.Raw(relRDFa) @Html.Raw(resourceRDFa) @Html.Raw(microDatos) @Html.Raw(microFormatos) />
+                        <img class="@classControl" src="@valor" alt="@alternative" onerror="this.onerror=null; this.src='@(valor.Replace(".jpg", ".webp"))';" @Html.Raw(aboutRDFa) @Html.Raw(relRDFa) @Html.Raw(resourceRDFa) @Html.Raw(microDatos) @Html.Raw(microFormatos) />
                     </a>
                 }
                 else
                 {
-                    <img class="@classControl" src="@valor" alt="@alternative" @Html.Raw(aboutRDFa) @Html.Raw(relRDFa) @Html.Raw(resourceRDFa) @Html.Raw(microDatos) @Html.Raw(microFormatos) />
+                    <img class="@classControl" src="@valor" alt="@alternative" onerror="this.onerror=null; this.src='@(valor.Replace(".jpg", ".webp"))';" @Html.Raw(aboutRDFa) @Html.Raw(relRDFa) @Html.Raw(resourceRDFa) @Html.Raw(microDatos) @Html.Raw(microFormatos) />
                 }
             }
             else
             {
-                <img class="@classControl" src="@valor" alt="@alternative" @Html.Raw(aboutRDFa) @Html.Raw(relRDFa) @Html.Raw(resourceRDFa) @Html.Raw(microDatos) @Html.Raw(microFormatos) />
+                <img class="@classControl" src="@valor" alt="@alternative" onerror="this.onerror=null; this.src='@(valor.Replace(".jpg", ".webp"))';" @Html.Raw(aboutRDFa) @Html.Raw(relRDFa) @Html.Raw(resourceRDFa) @Html.Raw(microDatos) @Html.Raw(microFormatos) />
             }
         }
         else if (Model.semanticPropertyModel.OntologyPropInfo.FieldType == Es.Riam.Semantica.Plantillas.TipoCampoOntologia.ImagenExterna)
@@ -572,6 +576,35 @@
             }
 
             <img class="@classControl" src="@valorPropTexto" @Html.Raw(aboutRDFa) @Html.Raw(relRDFa) @Html.Raw(resourceRDFa) @Html.Raw(microDatos) @Html.Raw(microFormatos) />
+        }
+        else if (HtmlHelpers.EsTipoOpenSD(Model.semanticPropertyModel.OntologyPropInfo.FieldType))
+        {
+            var baseUrl = Html.GetBaseUrlContent().TrimEnd('/');
+
+            var valores = Model.semanticPropertyModel.OntologyPropInfo.PropertyValues;
+
+            var valoresConBase = valores
+                .Where(v => v != null && !string.IsNullOrEmpty(v.Value))
+                .Select(v => baseUrl + "/" + v.Value.TrimStart('/'))
+                .ToList();
+
+            bool esPrimerValor = valores.FirstOrDefault() == Model.propertyValue;
+
+            if (esPrimerValor)
+            {
+                var viewModel = new OpenSeadragonViewModel
+                        {
+                            IdControl = idControl,
+
+                            Modo = Model.semanticPropertyModel.OntologyPropInfo.FieldType
+                                                .ToString()
+                                                .Replace("ImagenOpenSD", "")
+                                                .ToLowerInvariant(),
+                            Urls = valoresConBase
+                        };
+
+                @Html.PartialView("SemCms/_OpenSeadragonViewer", viewModel)
+            }
         }
         else if (Model.semanticPropertyModel.OntologyPropInfo.FieldType == Es.Riam.Semantica.Plantillas.TipoCampoOntologia.Archivo)
         {//archivo
@@ -587,7 +620,7 @@
 
             if (archivo.Contains("##idgoogle##"))
             {
-                string extension = System.IO.Path.GetExtension(valorPropTexto).ToLower();
+                string extension = UtilVistas.GetExtension(valorPropTexto).ToLower();
                 title = archivo.Substring(0, archivo.IndexOf("##idgoogle##")) + extension;
             }
             else

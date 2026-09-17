@@ -1,5 +1,4 @@
-﻿using DocumentFormat.OpenXml.Bibliography;
-using Es.Riam.AbstractsOpen;
+﻿using Es.Riam.AbstractsOpen;
 using Es.Riam.Gnoss.AD.BASE_BD;
 using Es.Riam.Gnoss.AD.Documentacion;
 using Es.Riam.Gnoss.AD.EncapsuladoDatos;
@@ -26,7 +25,6 @@ using Es.Riam.Gnoss.Util.General;
 using Es.Riam.Gnoss.UtilServiciosWeb;
 using Es.Riam.Gnoss.Web.Controles.Documentacion;
 using Es.Riam.Gnoss.Web.Controles.ServicioImagenesWrapper;
-using Es.Riam.Gnoss.Web.MVC.Controllers.Administracion;
 using Es.Riam.Gnoss.Web.MVC.Filters;
 using Es.Riam.Gnoss.Web.MVC.Models;
 using Es.Riam.Gnoss.Web.MVC.Models.ViewModels;
@@ -37,13 +35,10 @@ using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Http.Extensions;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Mvc.Infrastructure;
 using Microsoft.AspNetCore.Mvc.ViewEngines;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
-using Newtonsoft.Json;
-using Serilog.Core;
 using System;
 using System.Collections.Generic;
 using System.Data;
@@ -51,7 +46,9 @@ using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Text;
+using System.Text.Json;
 using System.Threading;
+using System.Threading.Tasks;
 using System.Web;
 using static Es.Riam.Gnoss.Web.Controles.ControladorBase;
 
@@ -93,8 +90,8 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
 
         #endregion
 
-        public EspacioPersonalController(LoggingService loggingService, ConfigService configService, EntityContext entityContext, RedisCacheWrapper redisCacheWrapper, GnossCache gnossCache, VirtuosoAD virtuosoAD, IHttpContextAccessor httpContextAccessor, ICompositeViewEngine viewEngine, EntityContextBASE entityContextBASE, Microsoft.AspNetCore.Hosting.IHostingEnvironment env, IActionContextAccessor actionContextAccessor, IUtilServicioIntegracionContinua utilServicioIntegracionContinua, IServicesUtilVirtuosoAndReplication servicesUtilVirtuosoAndReplication, IOAuth oAuth, IHostApplicationLifetime appLifetime, IAvailableServices availableServices, ILogger<EspacioPersonalController> logger, ILoggerFactory loggerFactory)
-            : base(loggingService, configService, entityContext, redisCacheWrapper, gnossCache, virtuosoAD, httpContextAccessor, viewEngine, entityContextBASE, env, actionContextAccessor, utilServicioIntegracionContinua, servicesUtilVirtuosoAndReplication, oAuth, appLifetime, availableServices, logger, loggerFactory)
+        public EspacioPersonalController(LoggingService loggingService, ConfigService configService, EntityContext entityContext, RedisCacheWrapper redisCacheWrapper, GnossCache gnossCache, VirtuosoAD virtuosoAD, IHttpContextAccessor httpContextAccessor, ICompositeViewEngine viewEngine, EntityContextBASE entityContextBASE, IWebHostEnvironment env, IUtilServicioIntegracionContinua utilServicioIntegracionContinua, IServicesUtilVirtuosoAndReplication servicesUtilVirtuosoAndReplication, IOAuth oAuth, IHostApplicationLifetime appLifetime, IAvailableServices availableServices, ILogger<EspacioPersonalController> logger, ILoggerFactory loggerFactory)
+            : base(loggingService, configService, entityContext, redisCacheWrapper, gnossCache, virtuosoAD, httpContextAccessor, viewEngine, entityContextBASE, env, utilServicioIntegracionContinua, servicesUtilVirtuosoAndReplication, oAuth, appLifetime, availableServices, logger, loggerFactory)
         {
 
             mLogger = logger;
@@ -799,7 +796,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
             CargadorFacetas cargadorFacetas = new CargadorFacetas();
             cargadorFacetas.Url = mConfigService.ObtenerUrlServicioFacetas();
 
-            Thread hiloResultados = new Thread(() =>
+            Task tareaResultados = Task.Run(() =>
             {
                 try
                 {
@@ -808,7 +805,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                     mLoggingService.AgregarEntradaDependencia("Llamar al servicio de resultados", false, "EspacioPersonalController.CargarResultadosYFacetas", sw, true);
                     try
                     {
-                        KeyValuePair<int, string> respuestaResultados = JsonConvert.DeserializeObject<KeyValuePair<int, string>>(jsonResultados);
+                        KeyValuePair<int, string> respuestaResultados = JsonSerializer.Deserialize<KeyValuePair<int, string>>(jsonResultados);
 
                         //numResultados = respuestaResultados.Key;
                         pModelo.HTMLResourceList = respuestaResultados.Value;
@@ -829,7 +826,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                 }
             });
 
-            Thread hiloFacetas = new Thread(() =>
+            Task tareaFacetas = Task.Run(() =>
             {
                 try
                 {
@@ -849,17 +846,8 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
             });
 
             mLoggingService.AgregarEntrada("Llamada a los servicios de resultados y facetas");
-            //Lanzamos y esperamos a las facetas y los resultados
-            if (hiloResultados != null)
-            {
-                hiloResultados.Start();
-            }
-            hiloFacetas.Start();
-            if (hiloResultados != null)
-            {
-                hiloResultados.Join();
-            }
-            hiloFacetas.Join();
+            //Lanzamos y esperamos a las facetas y los resultados (ya en marcha desde Task.Run)
+            Task.WaitAll(tareaResultados, tareaFacetas);
             mLoggingService.AgregarEntrada("Fin llamada a los servicios de resultados y facetas");
         }
 

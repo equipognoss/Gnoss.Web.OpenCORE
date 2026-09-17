@@ -2647,7 +2647,11 @@ const autocompletarWorkflows = {
         const formOculto = parent.find('.formulario-oculto');
         const modalID = parent.parents('.modal-flujo').attr('id')
         if (!parent.hasClass('active')) {
-            const lang = $('#panContenidoMultiIdioma .nav-tabs a[aria-selected="true"]').attr('id').split('_')[1];
+            let lang = "";
+            const id = $('#panContenidoMultiIdioma .nav-tabs a[aria-selected="true"]').attr('id');
+            if(id != undefined) {
+                    lang = id.split('_')[1];
+            }
             const titleInputs = formOculto.find('.nombre-form-oculto');
             titleInputs.hide();
             const titleInputActive = formOculto.find(`.nombre-form-oculto-${lang}`);

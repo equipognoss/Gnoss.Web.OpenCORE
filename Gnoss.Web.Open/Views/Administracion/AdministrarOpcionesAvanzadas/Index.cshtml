@@ -1,10 +1,9 @@
 ﻿@model Es.Riam.Gnoss.Web.MVC.Models.Administracion.AdministrarOpcionesAvanzadasViewModel
 @{
-    Html.GetListaCSS().Add(Html.GetBaseUrlStatic() + "/cssNuevo/administracion.css?v=" + Html.GetVersion());
+    CommunityModel Comunidad = Html.GetComunidad();
+    Html.GetListaCSS().Add(Html.GetBaseUrlStatic() + "/cssNuevo/administracion.css?v=" + Comunidad.VersionCSSEcosistema);
 
     Layout = "~/Views/Shared/Layout/_Layout_Admin.cshtml";
-
-    CommunityModel Comunidad = Html.GetComunidad();
 }
 
 <div class="content">

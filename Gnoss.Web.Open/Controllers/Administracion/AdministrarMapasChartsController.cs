@@ -1,5 +1,4 @@
-﻿using DocumentFormat.OpenXml.Vml.Spreadsheet;
-using Es.Riam.AbstractsOpen;
+﻿using Es.Riam.AbstractsOpen;
 using Es.Riam.Gnoss.AD.EncapsuladoDatos;
 using Es.Riam.Gnoss.AD.EntityModel;
 using Es.Riam.Gnoss.AD.EntityModel.Models.Faceta;
@@ -9,23 +8,18 @@ using Es.Riam.Gnoss.AD.Virtuoso;
 using Es.Riam.Gnoss.CL;
 using Es.Riam.Gnoss.CL.ParametrosAplicacion;
 using Es.Riam.Gnoss.Logica.Facetado;
-using Es.Riam.Gnoss.Logica.ParametroAplicacion;
 using Es.Riam.Gnoss.Util.Configuracion;
 using Es.Riam.Gnoss.Util.General;
 using Es.Riam.Gnoss.Web.MVC.Controles;
 using Es.Riam.Gnoss.Web.MVC.Controles.Controladores;
-using Es.Riam.Gnoss.Web.MVC.Filters;
 using Es.Riam.Gnoss.Web.MVC.Models.Administracion;
-using Es.Riam.Gnoss.Web.MVC.Models.ViewModels;
 using Es.Riam.Interfaces.InterfacesOpen;
 using Es.Riam.InterfacesOpen;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Mvc.Infrastructure;
 using Microsoft.AspNetCore.Mvc.ViewEngines;
 using Microsoft.Extensions.Hosting;
-using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -33,7 +27,7 @@ using System.Net.Http;
 using System.Net;
 using Gnoss.Web.Open.Filters;
 using Microsoft.Extensions.Logging;
-using Serilog.Core;
+using System.Text.Json;
 
 namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
 {
@@ -41,8 +35,8 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
 	{
         private ILogger mlogger;
         private ILoggerFactory mLoggerFactory;
-        public AdministrarMapasChartsController(LoggingService loggingService, ConfigService configService, EntityContext entityContext, RedisCacheWrapper redisCacheWrapper, GnossCache gnossCache, VirtuosoAD virtuosoAD, IHttpContextAccessor httpContextAccessor, ICompositeViewEngine viewEngine, EntityContextBASE entityContextBASE, Microsoft.AspNetCore.Hosting.IHostingEnvironment env, IActionContextAccessor actionContextAccessor, IUtilServicioIntegracionContinua utilServicioIntegracionContinua, IServicesUtilVirtuosoAndReplication servicesUtilVirtuosoAndReplication, IOAuth oAuth, IHostApplicationLifetime appLifetime, IAvailableServices availableServices, ILogger<AdministrarMapasChartsController> logger, ILoggerFactory loggerFactory)
-            : base(loggingService, configService, entityContext, redisCacheWrapper, gnossCache, virtuosoAD, httpContextAccessor, viewEngine, entityContextBASE, env, actionContextAccessor, utilServicioIntegracionContinua, servicesUtilVirtuosoAndReplication, oAuth, appLifetime, availableServices, logger, loggerFactory)
+        public AdministrarMapasChartsController(LoggingService loggingService, ConfigService configService, EntityContext entityContext, RedisCacheWrapper redisCacheWrapper, GnossCache gnossCache, VirtuosoAD virtuosoAD, IHttpContextAccessor httpContextAccessor, ICompositeViewEngine viewEngine, EntityContextBASE entityContextBASE, IWebHostEnvironment env,IUtilServicioIntegracionContinua utilServicioIntegracionContinua, IServicesUtilVirtuosoAndReplication servicesUtilVirtuosoAndReplication, IOAuth oAuth, IHostApplicationLifetime appLifetime, IAvailableServices availableServices, ILogger<AdministrarMapasChartsController> logger, ILoggerFactory loggerFactory)
+            : base(loggingService, configService, entityContext, redisCacheWrapper, gnossCache, virtuosoAD, httpContextAccessor, viewEngine, entityContextBASE, env,utilServicioIntegracionContinua, servicesUtilVirtuosoAndReplication, oAuth, appLifetime, availableServices, logger, loggerFactory)
         {
             mlogger = logger;
             mLoggerFactory = loggerFactory;
@@ -112,7 +106,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
                 ControladorMapasCharts.SaveMap(pMapa);
                 if (iniciado)
                 {
-                    HttpResponseMessage respuesta = InformarCambioAdministracion("Mapa", JsonConvert.SerializeObject(pMapa, Formatting.Indented));
+                    HttpResponseMessage respuesta = InformarCambioAdministracion("Mapa", JsonSerializer.Serialize(pMapa, new JsonSerializerOptions { WriteIndented = true }));
                     if (!respuesta.StatusCode.Equals(HttpStatusCode.OK))
                     {
                         throw new Exception("Contacte con el administrador del Proyecto, no es posible atender la petición.");
@@ -165,7 +159,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
                         }
                     }
 
-                    HttpResponseMessage response = InformarCambioAdministracion("Graficos", JsonConvert.SerializeObject(graficos, Formatting.Indented));
+                    HttpResponseMessage response = InformarCambioAdministracion("Graficos", JsonSerializer.Serialize(graficos, new JsonSerializerOptions { WriteIndented = true }));
                     if (!response.StatusCode.Equals(HttpStatusCode.OK))
                     {
                         throw new Exception("Contacte con el administrador del Proyecto, no es posible atender la petición.");
@@ -242,7 +236,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
                     grafico.Eliminada = true;
                 }              
                 
-                HttpResponseMessage response = InformarCambioAdministracion("Graficos", JsonConvert.SerializeObject(graficos, Formatting.Indented));
+                HttpResponseMessage response = InformarCambioAdministracion("Graficos", JsonSerializer.Serialize(graficos, new JsonSerializerOptions { WriteIndented = true }));
                 if (!response.StatusCode.Equals(HttpStatusCode.OK))
                 {
                     throw new Exception("Contacte con el administrador del Proyecto, no es posible atender la petición.");

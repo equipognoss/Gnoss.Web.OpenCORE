@@ -35,7 +35,6 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Infrastructure;
 using Microsoft.AspNetCore.Mvc.ViewEngines;
-using SixLabors.ImageSharp;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -50,6 +49,8 @@ using Es.Riam.Gnoss.Web.MVC.Models.ViewModels;
 using Gnoss.Web.Open.Filters;
 using Microsoft.Extensions.Logging;
 using Es.Riam.Gnoss.Elementos.Amigos;
+using NetVips;
+using Microsoft.AspNetCore.Hosting;
 
 namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
 {
@@ -250,8 +251,8 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
     {
         private ILogger mlogger;
         private ILoggerFactory mLoggerFactory;
-        public AdministrarComunidadGeneralController(LoggingService loggingService, ConfigService configService, EntityContext entityContext, RedisCacheWrapper redisCacheWrapper, GnossCache gnossCache, VirtuosoAD virtuosoAD, IHttpContextAccessor httpContextAccessor, ICompositeViewEngine viewEngine, EntityContextBASE entityContextBASE, Microsoft.AspNetCore.Hosting.IHostingEnvironment env, IActionContextAccessor actionContextAccessor, IUtilServicioIntegracionContinua utilServicioIntegracionContinua, IServicesUtilVirtuosoAndReplication servicesUtilVirtuosoAndReplication, IOAuth oAuth, IHostApplicationLifetime appLifetime, IAvailableServices availableServices, ILogger<AdministrarComunidadGeneralController> logger, ILoggerFactory loggerFactory)
-            : base(loggingService, configService, entityContext, redisCacheWrapper, gnossCache, virtuosoAD, httpContextAccessor, viewEngine, entityContextBASE, env, actionContextAccessor, utilServicioIntegracionContinua, servicesUtilVirtuosoAndReplication, oAuth, appLifetime, availableServices, logger, loggerFactory)
+        public AdministrarComunidadGeneralController(LoggingService loggingService, ConfigService configService, EntityContext entityContext, RedisCacheWrapper redisCacheWrapper, GnossCache gnossCache, VirtuosoAD virtuosoAD, IHttpContextAccessor httpContextAccessor, ICompositeViewEngine viewEngine, EntityContextBASE entityContextBASE, IWebHostEnvironment env, IUtilServicioIntegracionContinua utilServicioIntegracionContinua, IServicesUtilVirtuosoAndReplication servicesUtilVirtuosoAndReplication, IOAuth oAuth, IHostApplicationLifetime appLifetime, IAvailableServices availableServices, ILogger<AdministrarComunidadGeneralController> logger, ILoggerFactory loggerFactory)
+            : base(loggingService, configService, entityContext, redisCacheWrapper, gnossCache, virtuosoAD, httpContextAccessor, viewEngine, entityContextBASE, env, utilServicioIntegracionContinua, servicesUtilVirtuosoAndReplication, oAuth, appLifetime, availableServices, logger, loggerFactory)
         {
 
             mlogger = logger;
@@ -327,7 +328,8 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
         /// <returns></returns>
         [HttpPost]
 		[TypeFilter(typeof(PermisosAdministracion), Arguments = new object[] { new ulong[] { (ulong)PermisoComunidad.GestionarInformacionGeneral } })]
-		public ActionResult SaveNewCommunityShortName(GuardarNuevoNombreCortoComunidadModel pModel)
+        [TypeFilter(typeof(LimitarPeticionesAdministracion), Arguments = new object[] { 30, 120, 15 })]
+        public ActionResult SaveNewCommunityShortName(GuardarNuevoNombreCortoComunidadModel pModel)
         {
             GuardarLogAuditoria();
             ProyectoCN proyectoCN = new ProyectoCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<ProyectoCN>(), mLoggerFactory);
@@ -358,7 +360,8 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
         /// <returns></returns>
         [HttpPost]
 		[TypeFilter(typeof(PermisosAdministracion), Arguments = new object[] { new ulong[] { (ulong)PermisoComunidad.GestionarInformacionGeneral } })]
-		public ActionResult SaveNewCommunityType(GuardarTipoAccesoComunidadModel pModel)
+        [TypeFilter(typeof(LimitarPeticionesAdministracion), Arguments = new object[] { 30, 120, 15 })]
+        public ActionResult SaveNewCommunityType(GuardarTipoAccesoComunidadModel pModel)
         {
             GuardarLogAuditoria();
             ProyectoCN proyectoCN = new ProyectoCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<ProyectoCN>(), mLoggerFactory);
@@ -382,7 +385,8 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
         /// <returns></returns>
         [HttpPost]
 		[TypeFilter(typeof(PermisosAdministracion), Arguments = new object[] { new ulong[] { (ulong)PermisoComunidad.GestionarInformacionGeneral } })]
-		public ActionResult SaveNewDomainUrl(GuardarNuevaUrlDominioModel pModel)
+        [TypeFilter(typeof(LimitarPeticionesAdministracion), Arguments = new object[] { 30, 120, 15 })]
+        public ActionResult SaveNewDomainUrl(GuardarNuevaUrlDominioModel pModel)
         {
             GuardarLogAuditoria();
             ProyectoCN proyectoCN = new ProyectoCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<ProyectoCN>(), mLoggerFactory);
@@ -414,7 +418,8 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
         /// <returns></returns>
         [HttpPost]
 		[TypeFilter(typeof(PermisosAdministracion), Arguments = new object[] { new ulong[] { (ulong)PermisoComunidad.GestionarInformacionGeneral } })]
-		public ActionResult AbrirComunidad()
+        [TypeFilter(typeof(LimitarPeticionesAdministracion), Arguments = new object[] { 30, 120, 15 })]
+        public ActionResult AbrirComunidad()
         {
             EliminarPersonalizacionVistas();
             if (ProyectoSeleccionado.Estado.Equals((short)EstadoProyecto.Definicion))
@@ -450,6 +455,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
         }
         [HttpPost]
 		[TypeFilter(typeof(PermisosAdministracion), Arguments = new object[] { new ulong[] { (ulong)PermisoComunidad.GestionarInformacionGeneral } })]
+        [TypeFilter(typeof(LimitarPeticionesAdministracion), Arguments = new object[] { 30, 120, 15 })]
 		public ActionResult CloseCommunity()
         {
             try
@@ -478,7 +484,8 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
         /// <returns></returns>
         [HttpPost]
 		[TypeFilter(typeof(PermisosAdministracion), Arguments = new object[] { new ulong[] { (ulong)PermisoComunidad.GestionarInformacionGeneral } })]
-		public ActionResult Guardar(AdministrarComunidadGeneralModel Options)
+        [TypeFilter(typeof(LimitarPeticionesAdministracion), Arguments = new object[] { 30, 120, 15 })]
+        public ActionResult Guardar(AdministrarComunidadGeneralModel Options)
         {
             GuardarLogAuditoria();
             string error = ComprobarErrores(Options);
@@ -525,8 +532,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
             }
 
             // No funcionaba el guardado de Tags de Comunidad
-            // Proy.Tags = Options.Tags;
-            Proy.FilaProyecto.Tags = Options.Tags;
+            Proy.FilaProyecto.Tags = UtilCadenas.LimpiarInyeccionCodigo(Options.Tags);
 
             GuardarCategorizacion(Proy, Options.SelectedCategories);
 
@@ -816,18 +822,14 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
                     // Guardar imagen redimensionada
                     byte[] bytesFicheroTemp = pServicioImagenes.ObtenerImagen(rutaTemp, ".png");
 
-                    SixLabors.ImageSharp.Image imagenCortada = UtilImages.CropImage(bytesFicheroTemp, pImagenCabecera.Pos_X_1, pImagenCabecera.Pos_Y_1, pImagenCabecera.Pos_X_0, pImagenCabecera.Pos_Y_0);
+                    using var imagenCortada = UtilImages.CropImage(bytesFicheroTemp, pImagenCabecera.Pos_X_1, pImagenCabecera.Pos_Y_1, pImagenCabecera.Pos_X_0, pImagenCabecera.Pos_Y_0);
 
                     float anchura = pImagenCabecera.Ancho;
                     float altura = pImagenCabecera.Alto;
 
-                    imagenCortada = UtilImages.AjustarImagen(imagenCortada, anchura, altura, false);
+                    using var imagenAjustada = UtilImages.AjustarImagen(imagenCortada, anchura, altura);
 
-                    MemoryStream ms = new MemoryStream();
-                    imagenCortada.SaveAsPng(ms);
-
-                    //Guardo la miniatura en el servicio de imagen
-                    pServicioImagenes.AgregarImagen(ms.ToArray(), ruta, ".png");
+                    pServicioImagenes.AgregarImagen(imagenAjustada.PngsaveBuffer(), ruta, ".png");
 
                     // Guardar coordenadas
                     FilaParametrosGenerales.CoordenadasSup = $"[ {pImagenCabecera.Pos_X_0}, {pImagenCabecera.Pos_Y_0}, {pImagenCabecera.Pos_X_1}, {pImagenCabecera.Pos_Y_1} ]";
@@ -889,15 +891,13 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
                     // Guardar imagen redimensionada
                     byte[] bytesFicheroTemp = pServicioImagenes.ObtenerImagen(rutaTemp, ".png");
 
-                    SixLabors.ImageSharp.Image imagenCortada = UtilImages.CropImage(bytesFicheroTemp, pImagenLogo.Pos_X_1, pImagenLogo.Pos_Y_1, pImagenLogo.Pos_X_0, pImagenLogo.Pos_Y_0);
+                    Image imagenCortada = UtilImages.CropImage(bytesFicheroTemp, pImagenLogo.Pos_X_1, pImagenLogo.Pos_Y_1, pImagenLogo.Pos_X_0, pImagenLogo.Pos_Y_0);
 
-                    imagenCortada = UtilImages.AjustarImagen(imagenCortada, 120, 120, false);
+                    Image imagenAjustada = UtilImages.AjustarImagen(imagenCortada, 120, 120);
 
-                    MemoryStream ms = new MemoryStream();
-                    imagenCortada.SaveAsPng(ms);
-
+                    
                     //Guardo la miniatura en el servicio de imagen
-                    pServicioImagenes.AgregarImagen(ms.ToArray(), ruta, ".png");
+                    pServicioImagenes.AgregarImagen(imagenAjustada.PngsaveBuffer(), ruta, ".png");
 
                     // Guardar coordenadas
                     FilaParametrosGenerales.CoordenadasMosaico = $"[ {pImagenLogo.Pos_X_0}, {pImagenLogo.Pos_Y_0}, {pImagenLogo.Pos_X_1}, {pImagenLogo.Pos_Y_1} ]";
@@ -1020,7 +1020,8 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
 		/// <param name="fileUpload"></param>
 		/// <returns></returns>
 		[TypeFilter(typeof(PermisosAdministracion), Arguments = new object[] { new ulong[] { (ulong)PermisoComunidad.GestionarInformacionGeneral } })]
-		public ActionResult SubirImagenLogo(IFormFile fileUpload)
+        [TypeFilter(typeof(LimitarPeticionesAdministracion), Arguments = new object[] { 30, 120, 15 })]
+        public ActionResult SubirImagenLogo(IFormFile fileUpload)
         {
             AdministrarComunidadGeneralModel.ImageCoordenadas ImageHead = new AdministrarComunidadGeneralModel.ImageCoordenadas();
 

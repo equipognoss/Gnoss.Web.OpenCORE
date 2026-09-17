@@ -1,0 +1,249 @@
+﻿@model OpenSeadragonViewModel
+
+@{
+    bool tieneVarias = Model.Urls != null && Model.Urls.Count > 1;
+
+    string tilesJson = System.Text.Json.JsonSerializer.Serialize(Model.Urls ?? new List<string>());
+
+    string idVisor = "openSDVisor_" + Model.IdControl;
+    string idWrapper = "openSDWrapper_" + Model.IdControl;
+    string idControls = "openSDControls_" + Model.IdControl;
+
+    string idBtnZoomIn = "btnZoomIn_" + Model.IdControl;
+    string idBtnZoomOut = "btnZoomOut_" + Model.IdControl;
+    string idBtnHome = "btnHome_" + Model.IdControl;
+    string idBtnFull = "btnFull_" + Model.IdControl;
+    string idBtnPrev = "btnPrev_" + Model.IdControl;
+    string idBtnNext = "btnNext_" + Model.IdControl;
+
+    string btnStyle = "width:28px; height:28px; border:none; border-radius:4px;" +
+                      "background:rgba(120,120,120,0.35); color:#fff; font-size:16px;" +
+                      "line-height:28px; text-align:center; cursor:pointer; padding:0;";
+}
+
+<div id="@idWrapper" style="position:relative; width:100%; height:600px;">
+
+    <!-- VISOR -->
+    <div id="@idVisor" style="width:100%; height:100%;"></div>
+
+    <!-- CONTROLES -->
+    <div id="@idControls"
+         style="position:absolute; top:8px; left:8px; z-index:1000; display:flex; gap:4px;
+                background:rgba(40,40,40,0.25);
+                backdrop-filter: blur(6px);
+                padding:4px;
+                border-radius:8px;
+                opacity:0;
+                pointer-events:none;
+                transition: opacity 0.3s ease;">
+
+        <button id="@idBtnZoomIn" title="Acercar" style="@btnStyle">+</button>
+        <button id="@idBtnZoomOut" title="Alejar" style="@btnStyle">−</button>
+        <button id="@idBtnHome" title="Restablecer" style="@btnStyle">⌂</button>
+        <button id="@idBtnFull" title="Pantalla completa" style="@btnStyle">⛶</button>
+
+        @if (tieneVarias)
+        {
+            <button id="@idBtnPrev" title="Imagen anterior" style="@btnStyle">‹</button>
+            <button id="@idBtnNext" title="Imagen siguiente" style="@btnStyle">›</button>
+        }
+
+    </div>
+
+</div>
+
+<script type="text/javascript">
+    (function () {
+
+        // Hover botones
+        var btnIds = ['@idBtnZoomIn', '@idBtnZoomOut', '@idBtnHome', '@idBtnFull'
+    @if (tieneVarias)
+    {
+        @:,'@idBtnPrev','@idBtnNext'
+    }
+        ];
+
+        var bgNormal    = 'rgba(120,120,120,0.35)';
+        var colorNormal = '#fff';
+        var bgHover     = 'rgba(20,20,20,0.80)';
+        var colorHover  = '#ccc';
+
+        btnIds.forEach(function (id) {
+            var btn = document.getElementById(id);
+            if (!btn) return;
+
+            btn.addEventListener('mouseenter', function () {
+                this.style.background = bgHover;
+                this.style.color      = colorHover;
+            });
+
+            btn.addEventListener('mouseleave', function () {
+                this.style.background = bgNormal;
+                this.style.color      = colorNormal;
+            });
+        });
+
+        function initOpenSD() {
+
+            var tileSources = @Html.Raw(tilesJson);
+
+            var options = {
+                id:                    '@idVisor',
+                prefixUrl:             'https://cdnjs.cloudflare.com/ajax/libs/openseadragon/4.1.0/images/',
+                tileSources:           tileSources,
+                showSequenceControl:   false,
+                showNavigationControl: false,
+                constrainDuringPan:    true
+            };
+
+            var modo = '@Model.Modo';
+
+            if (modo === 'sequence' || (modo === '' && tileSources.length > 1)) {
+                options.sequenceMode  = true;
+                options.showNavigator = true;
+            } else if (modo === 'referencehorizontal') {
+                options.sequenceMode         = true;
+                options.showReferenceStrip   = true;
+                options.referenceStripScroll = 'horizontal';
+            } else if (modo === 'referencevertical') {
+                options.sequenceMode         = true;
+                options.showReferenceStrip   = true;
+                options.referenceStripScroll = 'vertical';
+            } else if (modo === 'collectionhorizontal') {
+                options.collectionMode = true;
+                options.collectionRows = 1;
+            } else if (modo === 'collectionrows') {
+                options.collectionMode = true;
+                options.collectionRows = 3;
+            }
+
+            var viewer              = OpenSeadragon(options);
+            var wrapper             = document.getElementById('@idWrapper');
+            var controls            = document.getElementById('@idControls');
+            var hideTimeout         = null;
+            var tiempoInactividad   = 6000;
+            var ratonSobreControles = false;
+
+            function mostrarControles() {
+                controls.style.opacity       = '1';
+                controls.style.pointerEvents = 'auto';
+                if (hideTimeout) clearTimeout(hideTimeout);
+                if (!ratonSobreControles) {
+                    hideTimeout = setTimeout(ocultarControles, tiempoInactividad);
+                }
+            }
+
+            function ocultarControles() {
+                if (ratonSobreControles) return;
+                controls.style.opacity       = '0';
+                controls.style.pointerEvents = 'none';
+            }
+
+            // Bloquear scroll
+            viewer.addHandler('canvas-scroll', function (event) {
+                event.preventDefaultAction = true;
+            });
+
+            // Zoom
+            document.getElementById('@idBtnZoomIn').addEventListener('click', function () {
+                viewer.viewport.zoomBy(1.5);
+                viewer.viewport.applyConstraints();
+            });
+
+            document.getElementById('@idBtnZoomOut').addEventListener('click', function () {
+                viewer.viewport.zoomBy(0.67);
+                viewer.viewport.applyConstraints();
+            });
+
+            // Home
+            document.getElementById('@idBtnHome').addEventListener('click', function () {
+                viewer.viewport.goHome();
+                viewer.viewport.applyConstraints();
+            });
+
+            // Fullscreen
+            document.getElementById('@idBtnFull').addEventListener('click', function () {
+                viewer.setFullPage(!viewer.isFullPage());
+                viewer.viewport.applyConstraints();
+            });
+
+            viewer.addHandler('full-page', function (event) {
+                if (event.fullPage) {
+                    viewer.container.appendChild(controls);
+                    controls.style.position = 'absolute';
+                    controls.style.top      = '8px';
+                    controls.style.left     = '8px';
+                    controls.style.zIndex   = '9999';
+                } else {
+                    wrapper.appendChild(controls);
+                    controls.style.zIndex = '1000';
+                }
+            });
+
+            // ESC
+            document.addEventListener('keydown', function (e) {
+                if ((e.key === 'Escape' || e.keyCode === 27) && viewer.isFullPage()) {
+                    viewer.setFullPage(false);
+                }
+            });
+
+            // Mostrar controles solo en los bordes
+            wrapper.addEventListener('mousemove', function (e) {
+                var rect       = wrapper.getBoundingClientRect();
+                var x          = e.clientX - rect.left;
+                var margen     = 80;
+                var cercaBorde = x < margen || x > (rect.width - margen);
+
+                if (cercaBorde || ratonSobreControles) {
+                    mostrarControles();
+                } else {
+                    ocultarControles();
+                }
+            });
+
+            wrapper.addEventListener('touchstart', mostrarControles);
+
+            // Navegación entre imágenes
+            if (tileSources.length > 1) {
+                document.getElementById('@idBtnPrev').addEventListener('click', function () {
+                    if (viewer.currentPage() > 0) {
+                        viewer.goToPage(viewer.currentPage() - 1);
+                    }
+                });
+
+                document.getElementById('@idBtnNext').addEventListener('click', function () {
+                    var last = tileSources.length - 1;
+                    if (viewer.currentPage() < last) {
+                        viewer.goToPage(viewer.currentPage() + 1);
+                    }
+                });
+            }
+
+            // Gestión del estado ratonSobreControles
+            controls.addEventListener('mouseenter', function () {
+                ratonSobreControles = true;
+                if (hideTimeout) clearTimeout(hideTimeout);
+                controls.style.opacity       = '1';
+                controls.style.pointerEvents = 'auto';
+            });
+
+            controls.addEventListener('mouseleave', function () {
+                ratonSobreControles = false;
+                hideTimeout = setTimeout(ocultarControles, tiempoInactividad);
+            });
+
+            ocultarControles();
+        }
+
+        // Carga librería
+        if (typeof OpenSeadragon !== 'undefined') {
+            initOpenSD();
+        } else {
+            var script    = document.createElement('script');
+            script.src    = 'https://cdnjs.cloudflare.com/ajax/libs/openseadragon/4.1.0/openseadragon.min.js';
+            script.onload = function () { initOpenSD(); };
+            document.head.appendChild(script);
+        }
+
+    })();
+</script>

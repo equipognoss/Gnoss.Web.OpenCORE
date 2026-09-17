@@ -37,8 +37,8 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
         private IAvailableServices mAvailableServices;
         private ILogger mlogger;
         private ILoggerFactory mLoggerFactory;
-        public AccionesPersonaController(LoggingService loggingService, ConfigService configService, EntityContext entityContext, RedisCacheWrapper redisCacheWrapper, GnossCache gnossCache, VirtuosoAD virtuosoAD, IHttpContextAccessor httpContextAccessor, ICompositeViewEngine viewEngine, EntityContextBASE entityContextBASE, Microsoft.AspNetCore.Hosting.IHostingEnvironment env, IActionContextAccessor actionContextAccessor, IUtilServicioIntegracionContinua utilServicioIntegracionContinua, IServicesUtilVirtuosoAndReplication servicesUtilVirtuosoAndReplication, IOAuth oAuth, IHostApplicationLifetime appLifetime, IAvailableServices availableServices, ILogger<AccionesPersonaController> logger, ILoggerFactory loggerFactory)
-            : base(loggingService, configService, entityContext, redisCacheWrapper, gnossCache, virtuosoAD, httpContextAccessor, viewEngine, entityContextBASE, env, actionContextAccessor, utilServicioIntegracionContinua, servicesUtilVirtuosoAndReplication, oAuth, appLifetime, availableServices,logger, loggerFactory)
+        public AccionesPersonaController(LoggingService loggingService, ConfigService configService, EntityContext entityContext, RedisCacheWrapper redisCacheWrapper, GnossCache gnossCache, VirtuosoAD virtuosoAD, IHttpContextAccessor httpContextAccessor, ICompositeViewEngine viewEngine, EntityContextBASE entityContextBASE, IWebHostEnvironment env, IUtilServicioIntegracionContinua utilServicioIntegracionContinua, IServicesUtilVirtuosoAndReplication servicesUtilVirtuosoAndReplication, IOAuth oAuth, IHostApplicationLifetime appLifetime, IAvailableServices availableServices, ILogger<AccionesPersonaController> logger, ILoggerFactory loggerFactory)
+            : base(loggingService, configService, entityContext, redisCacheWrapper, gnossCache, virtuosoAD, httpContextAccessor, viewEngine, entityContextBASE, env, utilServicioIntegracionContinua, servicesUtilVirtuosoAndReplication, oAuth, appLifetime, availableServices,logger, loggerFactory)
         {
             mAvailableServices = availableServices;
             mlogger = logger;
@@ -158,7 +158,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                 gestorIdentidades.GestorOrganizaciones = new GestionOrganizaciones(orgCN.ObtenerOrganizacionesDeIdentidadesCargadas(gestorIdentidades.DataWrapperIdentidad), mLoggingService, mEntityContext);
             }
 
-            FichaPerfilController fichaPerfilController = new FichaPerfilController(mLoggingService, mConfigService, mEntityContext, mRedisCacheWrapper, mGnossCache, mVirtuosoAD, mHttpContextAccessor, mViewEngine, mEntityContextBASE, mEnv, mActionContextAccessor, mUtilServicioIntegracionContinua, mServicesUtilVirtuosoAndReplication, mOAuth, _appLifetime, mAvailableServices, mLoggerFactory.CreateLogger<FichaPerfilController>(), mLoggerFactory);
+            FichaPerfilController fichaPerfilController = new FichaPerfilController(mLoggingService, mConfigService, mEntityContext, mRedisCacheWrapper, mGnossCache, mVirtuosoAD, mHttpContextAccessor, mViewEngine, mEntityContextBASE, mEnv, mUtilServicioIntegracionContinua, mServicesUtilVirtuosoAndReplication, mOAuth, _appLifetime, mAvailableServices, mLoggerFactory.CreateLogger<FichaPerfilController>(), mLoggerFactory);
             foreach (Guid identidadID in gestorIdentidades.ListaIdentidades.Keys)
             {
                 ProfileModel perfil = fichaPerfilController.ObtenerFichaIdentidadModelDeIdentidad(gestorIdentidades.ListaIdentidades[identidadID]);

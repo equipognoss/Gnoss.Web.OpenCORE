@@ -37,10 +37,10 @@ string urlCancelar = @Html.GetComunidad().Url;
 
 Html.SetBodyClass("layout03 comGnoss edicionRecurso page-modal no-clonarMenuUsuario");
 
-//Html.GetListaJS().Add(Html.GetBaseUrlStatic() + "/ckeditor/ckeditor.js?v=" + Html.GetVersion());
-//Html.GetListaJS().Add(Html.GetBaseUrlStatic() + "/ckeditor/adapters/jquery.js?v=" + Html.GetVersion());
+//Html.GetListaJS().Add(Html.GetBaseUrlStatic() + "/ckeditor/ckeditor.js?v=" + Comunidad.VersionJSEcosistema);
+//Html.GetListaJS().Add(Html.GetBaseUrlStatic() + "/ckeditor/adapters/jquery.js?v=" + Comunidad.VersionJSEcosistema);
 // Añadir funciones de EditarRecurso (Cuando se haga click en un resultado de Usuarios Grupo)
-Html.GetListaJS().Add(Html.GetBaseUrlStatic() + "/jsUnificar/MVC.EditarRecurso.js?v=" + Html.GetVersion());
+Html.GetListaJS().Add(Html.GetBaseUrlStatic() + "/jsUnificar/MVC.EditarRecurso.js?v=" + Comunidad.VersionJSEcosistema);
 
 
 @* Control de nombre del grupo y título que tendrá la página *@

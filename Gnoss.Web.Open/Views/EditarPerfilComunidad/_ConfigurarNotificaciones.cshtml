@@ -1,0 +1,84 @@
+@model EditProfileViewModel
+
+@*
+Descripción
+-----------------------------------------------
+Vista que se utiliza para que el usuario configure de qué quiere recibir aviso en su correo electrónico.
+Cada check se corresponde con una propiedad de la tabla ConfiguracionGnossPersona:
+- Solicitudes de contacto  -> SolicitudesContacto
+- Mensajes de la comunidad -> MensajesGnoss
+- Comentarios a recursos   -> ComentariosRecursos
+
+Variables
+----------------------------------------------------------------
+*@
+@{
+EditProfileViewModel.NotificationSettingsViewModel Notificaciones = Model.NotificationSettings;
+
+@* Identificadores de elementos HTML para lógica JS *@
+@* ID del check de solicitudes de contacto *@
+string idContactRequests = "NotificationSettings_ContactRequests";
+string inputContactRequests = "NotificationSettings.ContactRequests";
+@* ID del check de mensajes recibidos en la comunidad *@
+string idInternalMessages = "NotificationSettings_InternalMessages";
+string inputInternalMessages = "NotificationSettings.InternalMessages";
+@* ID del check de comentarios a los recursos del usuario *@
+string idResourceComments = "NotificationSettings_ResourceComments";
+string inputResourceComments = "NotificationSettings.ResourceComments";
+@* ID del check de nuevos seguidores del perfil *@
+string idNewFollowers = "NotificationSettings_NewFollowers";
+string inputNewFollowers = "NotificationSettings.NewFollowers";
+}
+
+@*
+----------------------------------------------------------------
+-------------------- Editar sección Configurar notificaciones del usuario --------------------
+*@
+
+@if (Notificaciones != null)
+{
+    <div class="form-group mb-5 edit-notificaciones">
+        @* Descripción de la sección (estilo .formulario-edicion p) *@
+        <p class="mb-4">@Html.GetText("CONFIGURACIONGNOSS", "INTRONOTIFICACIONES")</p>
+
+        @* Aviso de las solicitudes de contacto *@
+        <div class="custom-control custom-checkbox mb-4">
+            <input type="checkbox"
+                   name="@inputContactRequests"
+                   class="custom-control-input"
+                   id="@idContactRequests"
+                   @(Notificaciones.ContactRequests ? "checked" : "") />
+            <label class="custom-control-label" for="@idContactRequests">@Html.GetText("CONFIGURACIONGNOSS", "SOLICITUDCONTACTO")</label>
+        </div>
+
+        @* Aviso de los mensajes recibidos en la comunidad *@
+        <div class="custom-control custom-checkbox mb-4">
+            <input type="checkbox"
+                   name="@inputInternalMessages"
+                   class="custom-control-input"
+                   id="@idInternalMessages"
+                   @(Notificaciones.InternalMessages ? "checked" : "") />
+            <label class="custom-control-label" for="@idInternalMessages">@Html.GetText("CONFIGURACIONGNOSS", "MENSAJESGNOSS")</label>
+        </div>
+
+        @* Aviso de los comentarios a los recursos del usuario *@
+        <div class="custom-control custom-checkbox mb-4">
+            <input type="checkbox"
+                   name="@inputResourceComments"
+                   class="custom-control-input"
+                   id="@idResourceComments"
+                   @(Notificaciones.ResourceComments ? "checked" : "") />
+            <label class="custom-control-label" for="@idResourceComments">@Html.GetText("CONFIGURACIONGNOSS", "COMENTARIOSRECURSOS")</label>
+        </div>
+
+        @* Aviso cuando alguien empieza a seguir el perfil del usuario *@
+        <div class="custom-control custom-checkbox mb-4">
+            <input type="checkbox"
+                   name="@inputNewFollowers"
+                   class="custom-control-input"
+                   id="@idNewFollowers"
+                   @(Notificaciones.NewFollowers ? "checked" : "") />
+            <label class="custom-control-label" for="@idNewFollowers">@Html.GetText("CONFIGURACIONGNOSS", "NUEVOSSEGUIDORES")</label>
+        </div>
+    </div>
+}

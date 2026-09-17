@@ -8475,6 +8475,215 @@ const operativaGestionObjetosConocimientoOntologias = {
         return null;
     },
 }
+/**
+ * Operativa para la traducción de recursos
+ */
+
+const operativaGestionTraducirRecursos = {
+
+    init: function () {
+        this.config();
+        this.configEvents();
+        this.configRutas();
+    },
+
+    config: function () {
+        this.btnTraducir = $("#btnTraducir");
+        this.btnTraducirTodo = $("#btnTraducirTodo");
+        this.cmbTargetLanguageClassName = 'cmbIdiomaDestino';
+        this.cmbOriginLanguageClassName = 'cmbIdiomaOrigen';
+        this.deleteTargetLanguageClassName = 'tag-remove';
+        this.optionTargetLanguage = '';
+    },
+
+    configRutas: function () {
+        this.urlBase = refineURL();
+        this.urlTraducir = `${this.urlBase}/translate`;
+        this.urlTraducirTodo = `${this.urlBase}/translate-all`;
+    },
+
+    configEvents: function () {
+        const that = this;
+
+        this.btnTraducirTodo.on("click", function () {
+            that.handleTranslateAllResources();
+        });
+
+        this.btnTraducir.on("click", function () {
+            that.handleTranslateResources();
+        });
+
+        configEventByClassName(that.cmbTargetLanguageClassName, function (element) {
+            const $jqueyryElement = $(element);
+            $jqueyryElement.on("change", (e) => {
+                that.handleAddTargetLanguage(e.target);
+            });
+        });
+        configEventByClassName(that.cmbOriginLanguageClassName, function (element) {
+            const $jqueyryElement = $(element);
+            $jqueyryElement.on("change", (e) => {
+                that.handleManageLanguages(e.target);
+            });
+        });
+
+        configEventByClassName(that.deleteTargetLanguageClassName, function (element) {
+            const $jqueyryElement = $(element);
+            $jqueyryElement.on("click", (e) => {
+                that.handleDeleteTargetLanguage(e.target);
+            });
+        });
+
+        window.addEventListener('load', function () {
+            const idiomaOrigenInicial = $("select[name='cmbIdiomaOrigen']");
+            that.handleManageLanguages(idiomaOrigenInicial);
+        });
+    },
+
+    handleTranslateResources: function () {
+        const that = this;
+
+        loadingMostrar();
+
+        const selectTipoRecurso = document.getElementById('tiposRecursos');
+        const tipoRecurso = {
+            TipoRecurso: Number.parseInt(selectTipoRecurso.value),
+            OntologiaID: selectTipoRecurso.selectedOptions[0].dataset.ontoId ?? '00000000-0000-0000-0000-000000000000'
+        };
+
+        const idiomasDestino = Array.from(document.querySelectorAll('.tag')).map(tag => tag.dataset.id);
+
+        const dataPost = {
+            TipoRecurso: tipoRecurso,
+            IdiomaOrigen: $('#cmbIdiomaOrigen').val(),
+            IdiomasTraducir: idiomasDestino
+        };
+
+        GnossPeticionAjax(
+            that.urlTraducir,
+            dataPost,
+            true
+        ).done(function (data) {
+            mostrarNotificacion("success", data);
+        }).fail(function (data) {
+            mostrarNotificacion("error", data);
+        }).always(function () {
+            loadingOcultar();
+        });
+    },
+
+    handleTranslateAllResources: function () {
+        const that = this;
+
+        loadingMostrar();
+
+        const selectTipoRecurso = document.getElementById('tiposRecursos');
+        const tipoRecurso = {
+            TipoRecurso: Number.parseInt(selectTipoRecurso.value),
+            OntologiaID: selectTipoRecurso.selectedOptions[0].dataset.ontoId ?? '00000000-0000-0000-0000-000000000000'
+        };
+
+        const idiomasDestino = Array.from(document.querySelectorAll('.tag')).map(tag => tag.dataset.id);
+        const dataPost = {
+            TipoRecurso: tipoRecurso,
+            IdiomaOrigen: $('#cmbIdiomaOrigen').val(),
+            IdiomasTraducir: idiomasDestino
+        };
+
+        GnossPeticionAjax(
+            that.urlTraducirTodo,
+            dataPost,
+            true
+        ).done(function (data) {
+            mostrarNotificacion("success", data);
+        }).fail(function (data) {
+            mostrarNotificacion("error", data);
+        }).always(function () {
+            loadingOcultar();
+        });
+    },
+
+    handleAddTargetLanguage: function (select) {
+        const $select = $(select);
+        const selectedOption = $select.find("option:selected");
+
+        const id = selectedOption.val();
+        const text = selectedOption.text();
+
+        if (!id) return;
+
+        // Crear tag
+        const tagHtml = `
+        <div class="tag" data-id="${id}" title="${text}">
+            <div class="tag-wrap">
+                <span class="tag-text">
+                    <span class="tag-label">${text}</span>
+                </span>
+                <span class="tag-remove custom material-icons">delete</span>
+            </div>
+        </div>
+    `;
+
+        $(".tag-list").append(tagHtml);
+
+        // Eliminar opción del select
+        selectedOption.remove();
+
+        // Resetear select
+        $select.val("");
+    },
+
+    handleDeleteTargetLanguage: function (tag) {
+        const that = this;
+        const $tag = $(tag).closest(".tag");
+
+        const id = $tag.data("id");
+        const text = $tag.find(".tag-label").text();
+        const languageValues = $tag.data("languagevalues");
+
+        // Volver a añadir al select
+        const optionHtml = `<option value="${id}">${text}</option>`;
+        $("select[name='cmbIdiomaDestino']").append(optionHtml);
+
+        // Eliminar tag
+        $tag.remove();
+    },
+
+    handleManageLanguages: function (select) {
+        const $select = $(select);
+        const selectedOption = $select.find("option:selected");
+
+        const id = selectedOption.val();
+        const text = selectedOption.text();
+
+        if (!id) return;
+
+        // Volver a añadir al select
+        $("select[name='cmbIdiomaDestino']").append(this.optionTargetLanguage);
+
+        //Guardar el borrado
+        const optionHtml = `<option value="${id}">${text}</option>`;
+        this.optionTargetLanguage = optionHtml;
+
+        
+        // Eliminar opción del select
+        $("select[name='cmbIdiomaDestino']").find(`option[value="${id}"]`).remove();
+
+        //Eliminar opcion de tag list
+        $(".tag-list").find(`.tag[data-id="${id}"]`).remove();
+        
+    },
+
+    getSelectedTargetLanguage: function () {
+        const that = this;
+        const idiomas = [];
+
+        that.currentModal.find('.tag-list .tag').each(function () {
+            idiomas.push($(this).data('id'));
+        })
+
+        return idiomas;
+    }
+}
 
 /**
   * Operativa para la gestión/configuración de Sparql

@@ -1,5 +1,4 @@
 ﻿using Es.Riam.AbstractsOpen;
-using Es.Riam.Gnoss.AD;
 using Es.Riam.Gnoss.AD.EntityModel;
 using Es.Riam.Gnoss.AD.EntityModel.Models;
 using Es.Riam.Gnoss.AD.EntityModel.Models.ParametroGeneralDS;
@@ -8,11 +7,9 @@ using Es.Riam.Gnoss.AD.Parametro;
 using Es.Riam.Gnoss.AD.ServiciosGenerales;
 using Es.Riam.Gnoss.AD.Virtuoso;
 using Es.Riam.Gnoss.CL;
-using Es.Riam.Gnoss.Elementos.Amigos;
 using Es.Riam.Gnoss.Logica.Parametro;
 using Es.Riam.Gnoss.Logica.ParametrosProyecto;
 using Es.Riam.Gnoss.Logica.ServiciosGenerales;
-using Es.Riam.Gnoss.Logica.Usuarios;
 using Es.Riam.Gnoss.Util.Configuracion;
 using Es.Riam.Gnoss.Util.General;
 using Es.Riam.Gnoss.Web.Controles.Administracion;
@@ -25,18 +22,17 @@ using Gnoss.Web.Open.Filters;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Mvc.Infrastructure;
 using Microsoft.AspNetCore.Mvc.ViewEngines;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
-using Newtonsoft.Json;
-using Serilog.Core;
 using System;
 using System.Collections.Generic;
 using System.Net;
 using System.Net.Http;
-using System.Web;
-using System.Xml;
+using System.Net.Mail;
+using System.Net.Sockets;
+using System.Security.Authentication;
+using System.Text.Json;
 
 namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
 {
@@ -47,8 +43,8 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
 	{
         private ILogger mlogger;
         private ILoggerFactory mLoggerFactory;
-        public AdministrarOpcionesAvanzadasController(LoggingService loggingService, ConfigService configService, EntityContext entityContext, RedisCacheWrapper redisCacheWrapper, GnossCache gnossCache, VirtuosoAD virtuosoAD, IHttpContextAccessor httpContextAccessor, ICompositeViewEngine viewEngine, EntityContextBASE entityContextBASE, Microsoft.AspNetCore.Hosting.IHostingEnvironment env, IActionContextAccessor actionContextAccessor, IUtilServicioIntegracionContinua utilServicioIntegracionContinua, IServicesUtilVirtuosoAndReplication servicesUtilVirtuosoAndReplication, IOAuth oAuth, IHostApplicationLifetime appLifetime, IAvailableServices availableServices, ILogger<AdministrarOpcionesAvanzadasController> logger, ILoggerFactory loggerFactory)
-            : base(loggingService, configService, entityContext, redisCacheWrapper, gnossCache, virtuosoAD, httpContextAccessor, viewEngine, entityContextBASE, env, actionContextAccessor, utilServicioIntegracionContinua, servicesUtilVirtuosoAndReplication, oAuth, appLifetime, availableServices, logger, loggerFactory)
+        public AdministrarOpcionesAvanzadasController(LoggingService loggingService, ConfigService configService, EntityContext entityContext, RedisCacheWrapper redisCacheWrapper, GnossCache gnossCache, VirtuosoAD virtuosoAD, IHttpContextAccessor httpContextAccessor, ICompositeViewEngine viewEngine, EntityContextBASE entityContextBASE, IWebHostEnvironment env,IUtilServicioIntegracionContinua utilServicioIntegracionContinua, IServicesUtilVirtuosoAndReplication servicesUtilVirtuosoAndReplication, IOAuth oAuth, IHostApplicationLifetime appLifetime, IAvailableServices availableServices, ILogger<AdministrarOpcionesAvanzadasController> logger, ILoggerFactory loggerFactory)
+            : base(loggingService, configService, entityContext, redisCacheWrapper, gnossCache, virtuosoAD, httpContextAccessor, viewEngine, entityContextBASE, env,utilServicioIntegracionContinua, servicesUtilVirtuosoAndReplication, oAuth, appLifetime, availableServices, logger, loggerFactory)
         {
             mlogger = logger;
             mLoggerFactory = loggerFactory;
@@ -150,6 +146,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
         [HttpPost]
         [TypeFilter(typeof(UsuarioLogueadoAttribute), Arguments = new object[] { RolesUsuario.AdministradorComunidad })]
         [TypeFilter(typeof(AccesoIntegracionAttribute))]
+        [TypeFilter(typeof(LimitarPeticionesAdministracion), Arguments = new object[] { 30, 120, 15 })]
         public ActionResult Guardar(AdministrarOpcionesAvanzadasViewModel Options)
         {
             GuardarLogAuditoria();
@@ -183,7 +180,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
 
                     if (Options.PestanyasSeleccionadas.Value.Equals(Guid.Empty)) { Options.PestanyasSeleccionadas = null; }
 
-                    HttpResponseMessage resultado = InformarCambioAdministracion("OpcionesAvanzadas", JsonConvert.SerializeObject(Options, Newtonsoft.Json.Formatting.Indented));
+                    HttpResponseMessage resultado = InformarCambioAdministracion("OpcionesAvanzadas", JsonSerializer.Serialize(Options, new JsonSerializerOptions { WriteIndented = true }));
 
                     if (!resultado.StatusCode.Equals(HttpStatusCode.OK))
                     {
@@ -218,6 +215,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
         [HttpPost]
 		[TypeFilter(typeof(PermisosAdministracion), Arguments = new object[] { new ulong[] { (ulong)PermisoComunidad.GestionarInteraccionesSociales } })]
 		[TypeFilter(typeof(AccesoIntegracionAttribute))]
+        [TypeFilter(typeof(LimitarPeticionesAdministracion), Arguments = new object[] { 30, 120, 15 })]
         public ActionResult GuardarIntegracionSocial(AdministrarOpcionesAvanzadasViewModel Options)
         {
             GuardarLogAuditoria();
@@ -266,7 +264,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
             {
                 ControladorOpcionesAvanzadas contrOpcionesAvanzadas = new ControladorOpcionesAvanzadas(ProyectoSeleccionado, mLoggingService, mEntityContext, mConfigService, mRedisCacheWrapper, mEntityContextBASE, mVirtuosoAD, mHttpContextAccessor, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<ControladorOpcionesAvanzadas>(), mLoggerFactory);
                 contrOpcionesAvanzadas.CargarBuzonCorreo(Options);
-                HttpResponseMessage resultado = InformarCambioAdministracion("OpcionesAvanzadas", JsonConvert.SerializeObject(Options, Newtonsoft.Json.Formatting.Indented));
+                HttpResponseMessage resultado = InformarCambioAdministracion("OpcionesAvanzadas", JsonSerializer.Serialize(Options, new JsonSerializerOptions { WriteIndented = true }));
                 if (!resultado.StatusCode.Equals(HttpStatusCode.OK))
                 {
                     throw new ExcepcionWeb("Contacte con el administrador del Proyecto, no es posible atender la petición.");
@@ -277,7 +275,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
         }
 
 		/// <summary>
-		/// Validar el correo electrónico del usuario
+		/// Comprueba la configuración del buzón de correo enviando un correo de prueba y, si el envío funciona, la guarda
 		/// </summary>
 		/// <returns>ActionResult</returns>
 		[HttpPost]
@@ -285,32 +283,245 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
 		[TypeFilter(typeof(PermisosAdministracionEcosistema), Arguments = new object[] { new ulong[] { (ulong)PermisoEcosistema.GestionarBuzonDeCorreoEcosistema } })]
 		public ActionResult ValidarCorreo(AdministrarOpcionesAvanzadasViewModel Options)
 		{
-           
+			ConfiguradorCorreo configuracionCorreo = Options?.ConfiguracionCorreo;
+
+			// Comprobar que todos los campos del formulario llegan completos y con un valor válido
+			string errorValidacion = ValidarDatosConfiguracionCorreo(configuracionCorreo);
+			if (!string.IsNullOrEmpty(errorValidacion))
+			{
+				return GnossResultERROR(errorValidacion);
+			}
+
 			try
 			{
+				// Verificar que el correo configurado funciona enviando un correo de prueba al destinatario indicado
+				UtilCorreo gestorCorreo = new UtilCorreo(configuracionCorreo.SMTP.Trim(), configuracionCorreo.Port, configuracionCorreo.User.Trim(), configuracionCorreo.Password, configuracionCorreo.SSL);
+				gestorCorreo.EnviarCorreo(configuracionCorreo.Destinatario.Trim(), configuracionCorreo.Email.Trim(), null, null, null, UtilIdiomas.GetText("DEVTOOLS", "ASUNTOCORREOPRUEBA"), UtilIdiomas.GetText("DEVTOOLS", "CUERPOCORREOPRUEBA"), false, Guid.NewGuid());
+			}
+			catch (Exception ex)
+			{
+				GuardarLogError(ex, $"Error al enviar el correo de prueba del buzón del proyecto {ProyectoSeleccionado.Clave} a través del servidor {configuracionCorreo.SMTP}:{configuracionCorreo.Port}.");
+				return GnossResultERROR(ObtenerMensajeErrorEnvioCorreo(ex, configuracionCorreo));
+			}
 
-				if (Options.ConfiguracionCorreo.Email == null || Options.ConfiguracionCorreo.SMTP == null || Options.ConfiguracionCorreo.User == null || Options.ConfiguracionCorreo.Destinatario == null)//validar todos los campos
+			try
+			{
+				// El correo de prueba se ha enviado, guardar los datos del buzón
+				GuardarLogAuditoria();
+				GuardarDatosConfiguracionCorreo(Options);
+			}
+			catch (Exception ex)
+			{
+				GuardarLogError(ex, $"Error al guardar la configuración del buzón de correo del proyecto {ProyectoSeleccionado.Clave}.");
+				return GnossResultERROR(UtilIdiomas.GetText("DEVTOOLS", "ERRORGUARDARCONFIGURACIONCORREO"));
+			}
+
+			return GnossResultOK(UtilIdiomas.GetText("DEVTOOLS", "CORREOCONFIGURADOCONEXITO"));
+		}
+
+		/// <summary>
+		/// Comprueba que todos los campos de la configuración del buzón de correo están rellenos y son válidos
+		/// </summary>
+		/// <param name="pConfiguracionCorreo">Configuración del buzón recibida desde el formulario</param>
+		/// <returns>El mensaje del primer error encontrado, o una cadena vacía si la configuración es válida</returns>
+		private string ValidarDatosConfiguracionCorreo(ConfiguradorCorreo pConfiguracionCorreo)
+		{
+			if (pConfiguracionCorreo == null)
+			{
+				return UtilIdiomas.GetText("DEVTOOLS", "CORREOBUZONOBLIGATORIO");
+			}
+
+			// Correo electrónico de la comunidad, que actúa como remitente de los correos
+			if (string.IsNullOrWhiteSpace(pConfiguracionCorreo.Email))
+			{
+				return UtilIdiomas.GetText("DEVTOOLS", "CORREOBUZONOBLIGATORIO");
+			}
+			if (!EsDireccionCorreoValida(pConfiguracionCorreo.Email))
+			{
+				return UtilIdiomas.GetText("DEVTOOLS", "CORREOBUZONNOVALIDO");
+			}
+
+			// Servidor SMTP
+			if (string.IsNullOrWhiteSpace(pConfiguracionCorreo.SMTP))
+			{
+				return UtilIdiomas.GetText("DEVTOOLS", "SMTPOBLIGATORIO");
+			}
+
+			// Puerto del servidor. Se almacena como short, así que un valor fuera de 1-32767 llega aquí como 0
+			if (pConfiguracionCorreo.Port <= 0)
+			{
+				return UtilIdiomas.GetText("DEVTOOLS", "PUERTONOVALIDO");
+			}
+
+			// Usuario y contraseña de la cuenta. La contraseña es necesaria para poder enviar el correo de prueba
+			if (string.IsNullOrWhiteSpace(pConfiguracionCorreo.User))
+			{
+				return UtilIdiomas.GetText("DEVTOOLS", "USUARIOCORREOOBLIGATORIO");
+			}
+			if (string.IsNullOrEmpty(pConfiguracionCorreo.Password))
+			{
+				return UtilIdiomas.GetText("DEVTOOLS", "CONTRASENYACORREOOBLIGATORIA");
+			}
+
+			// Tipo de servidor de envío
+			if (string.IsNullOrWhiteSpace(pConfiguracionCorreo.Type))
+			{
+				return UtilIdiomas.GetText("DEVTOOLS", "TIPOSERVIDOROBLIGATORIO");
+			}
+
+			// Email de sugerencias
+			if (string.IsNullOrWhiteSpace(pConfiguracionCorreo.SuggestEmail))
+			{
+				return UtilIdiomas.GetText("DEVTOOLS", "EMAILSUGERENCIASOBLIGATORIO");
+			}
+			if (!EsDireccionCorreoValida(pConfiguracionCorreo.SuggestEmail))
+			{
+				return UtilIdiomas.GetText("DEVTOOLS", "EMAILSUGERENCIASNOVALIDO");
+			}
+
+			// Destinatario del correo de prueba, que se pide en el modal de validación
+			if (string.IsNullOrWhiteSpace(pConfiguracionCorreo.Destinatario))
+			{
+				return UtilIdiomas.GetText("DEVTOOLS", "EMAILPRUEBAOBLIGATORIO");
+			}
+			if (!EsDireccionCorreoValida(pConfiguracionCorreo.Destinatario))
+			{
+				return UtilIdiomas.GetText("DEVTOOLS", "EMAILPRUEBANOVALIDO");
+			}
+
+			return string.Empty;
+		}
+
+		/// <summary>
+		/// Comprueba que una dirección de correo tiene un formato válido y que es una única dirección
+		/// </summary>
+		/// <param name="pDireccion">Dirección de correo a comprobar</param>
+		/// <returns>TRUE si la dirección es válida</returns>
+		private static bool EsDireccionCorreoValida(string pDireccion)
+		{
+			pDireccion = pDireccion.Trim();
+
+			// MailAddress admite formatos como "Nombre <buzon@dominio.com>" o listas de direcciones, que aquí no son válidos
+			if (pDireccion.Contains(',') || pDireccion.Contains(';') || pDireccion.Contains(' ') || pDireccion.Contains('<') || pDireccion.Contains('>'))
+			{
+				return false;
+			}
+
+			return MailAddress.TryCreate(pDireccion, out MailAddress direccion) && direccion.Host.Contains('.');
+		}
+
+		/// <summary>
+		/// Traduce el error producido al enviar el correo de prueba a un mensaje que indique al administrador qué debe revisar.
+		/// UtilCorreo envuelve el error real en una GnossSmtpException cuyo mensaje incluye el asunto y el cuerpo del correo,
+		/// así que no se puede mostrar tal cual al usuario
+		/// </summary>
+		/// <param name="pExcepcion">Excepción producida durante el envío</param>
+		/// <param name="pConfiguracionCorreo">Configuración del buzón que se estaba probando</param>
+		/// <returns>Mensaje de error para el administrador</returns>
+		private string ObtenerMensajeErrorEnvioCorreo(Exception pExcepcion, ConfiguradorCorreo pConfiguracionCorreo)
+		{
+			string smtp = pConfiguracionCorreo.SMTP.Trim();
+			string puerto = pConfiguracionCorreo.Port.ToString();
+
+			// Quedarse con el error original que envuelve UtilCorreo
+			Exception excepcion = pExcepcion;
+			if (excepcion is GnossSmtpException && excepcion.InnerException != null)
+			{
+				excepcion = excepcion.InnerException;
+			}
+
+			string detalle = excepcion.Message;
+
+			// El servidor rechaza el destinatario del correo de prueba
+			if (excepcion is SmtpFailedRecipientsException excepcionDestinatarios)
+			{
+				string destinatarioFallido = excepcionDestinatarios.InnerExceptions.Length > 0 ? excepcionDestinatarios.InnerExceptions[0].FailedRecipient : pConfiguracionCorreo.Destinatario;
+				return ComponerTexto(UtilIdiomas.GetText("DEVTOOLS", "ERRORSMTPDESTINATARIO"), destinatarioFallido, detalle);
+			}
+			if (excepcion is SmtpFailedRecipientException excepcionDestinatario)
+			{
+				return ComponerTexto(UtilIdiomas.GetText("DEVTOOLS", "ERRORSMTPDESTINATARIO"), excepcionDestinatario.FailedRecipient ?? pConfiguracionCorreo.Destinatario, detalle);
+			}
+
+			if (excepcion is SmtpException excepcionSmtp)
+			{
+				// No se ha llegado a hablar con el servidor: el nombre, el puerto o la red no son correctos
+				if (excepcionSmtp.InnerException is SocketException || excepcionSmtp.InnerException is TimeoutException)
 				{
-					string error = UtilIdiomas.GetText("COMADMININFOGENERAL", "GADGETSINRELLENAR");
-					return GnossResultERROR(error);
+					return ComponerTexto(UtilIdiomas.GetText("DEVTOOLS", "ERRORSMTPCONEXION"), smtp, puerto, excepcionSmtp.InnerException.Message);
 				}
-				else
-				{
-                    //Verificar que el correo configurado funciona
-                    UtilCorreo gestorCorreo = new UtilCorreo(Options.ConfiguracionCorreo.SMTP, Options.ConfiguracionCorreo.Port, Options.ConfiguracionCorreo.User, Options.ConfiguracionCorreo.Password, Options.ConfiguracionCorreo.SSL);
-                    Guid notifId = new Guid(new byte[16]);
-                    gestorCorreo.EnviarCorreo(Options.ConfiguracionCorreo.Destinatario, Options.ConfiguracionCorreo.Email, null, null, null, "Prueba", "El correo electrónico configurado funciona", false, notifId);
 
-                    //guardar los datos del buzon
-                    GuardarBuzonCorreo(Options);
-                    return GnossResultOK("El correo electrónico se ha configurado con éxito");
-                }
-            }
-            catch (Exception ex)
-            {
-                return GnossResultERROR(ex.Message);
-            }
-        }
+				switch (excepcionSmtp.StatusCode)
+				{
+					case SmtpStatusCode.MustIssueStartTlsFirst:
+						// El servidor exige conexión segura y no se ha marcado "Usar servidor seguro"
+						return ComponerTexto(UtilIdiomas.GetText("DEVTOOLS", "ERRORSMTPSSL"), smtp, detalle);
+
+					case SmtpStatusCode.ClientNotPermitted:
+					case SmtpStatusCode.TransactionFailed:
+						// Credenciales rechazadas o cuenta sin permiso para enviar
+						return ComponerTexto(UtilIdiomas.GetText("DEVTOOLS", "ERRORSMTPAUTENTICACION"), smtp, pConfiguracionCorreo.User.Trim(), detalle);
+
+					case SmtpStatusCode.MailboxNameNotAllowed:
+					case SmtpStatusCode.MailboxUnavailable:
+					case SmtpStatusCode.MailboxBusy:
+						// El servidor no acepta la dirección desde la que se envía
+						return ComponerTexto(UtilIdiomas.GetText("DEVTOOLS", "ERRORSMTPREMITENTE"), pConfiguracionCorreo.Email.Trim(), pConfiguracionCorreo.User.Trim(), detalle);
+
+					case SmtpStatusCode.ServiceNotAvailable:
+					case SmtpStatusCode.ServiceClosingTransmissionChannel:
+						return ComponerTexto(UtilIdiomas.GetText("DEVTOOLS", "ERRORSMTPSERVICIONODISPONIBLE"), smtp, detalle);
+
+					case SmtpStatusCode.GeneralFailure:
+						return ComponerTexto(UtilIdiomas.GetText("DEVTOOLS", "ERRORSMTPCONEXION"), smtp, puerto, detalle);
+				}
+
+				return ComponerTexto(UtilIdiomas.GetText("DEVTOOLS", "ERRORENVIOCORREOPRUEBA"), detalle);
+			}
+
+			// No se ha podido abrir la conexión con el servidor
+			if (excepcion is SocketException || excepcion is TimeoutException)
+			{
+				return ComponerTexto(UtilIdiomas.GetText("DEVTOOLS", "ERRORSMTPCONEXION"), smtp, puerto, detalle);
+			}
+
+			// El certificado del servidor no se ha podido validar, normalmente por usar SSL donde no corresponde
+			if (excepcion is AuthenticationException)
+			{
+				return ComponerTexto(UtilIdiomas.GetText("DEVTOOLS", "ERRORSMTPSSL"), smtp, detalle);
+			}
+
+			// MailAddress rechaza alguna de las direcciones indicadas
+			if (excepcion is FormatException || excepcion is ArgumentException)
+			{
+				return ComponerTexto(UtilIdiomas.GetText("DEVTOOLS", "ERRORSMTPDIRECCIONNOVALIDA"), detalle);
+			}
+
+			return ComponerTexto(UtilIdiomas.GetText("DEVTOOLS", "ERRORENVIOCORREOPRUEBA"), detalle);
+		}
+
+		/// <summary>
+		/// Sustituye los parámetros (@1@, @2@...) de un texto de recursos.
+		/// No se usa la sobrecarga de GetText con parámetros porque resuelve cada valor como un texto multiidioma,
+		/// lo que altera valores como direcciones de correo o mensajes devueltos por el servidor
+		/// </summary>
+		/// <param name="pTexto">Texto de recursos con los parámetros sin sustituir</param>
+		/// <param name="pParametros">Valores a sustituir, en orden</param>
+		/// <returns>Texto con los parámetros sustituidos</returns>
+		private static string ComponerTexto(string pTexto, params string[] pParametros)
+		{
+			if (string.IsNullOrEmpty(pTexto))
+			{
+				return pTexto;
+			}
+
+			for (int i = 0; i < pParametros.Length; i++)
+			{
+				pTexto = pTexto.Replace($"@{i + 1}@", pParametros[i]);
+			}
+
+			return pTexto;
+		}
 
 		/// <summary>
 		/// Guardar solo la información relativa a la configuráción del buzón del usuario. Se realiza desde "Configuración -> Buzón de correo

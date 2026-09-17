@@ -188,7 +188,7 @@ var form = {
     tagsPropuestos: 'Vorgeschlagene Bezeichnung:',
     cargando: 'Hochladen...',
     selectImg: 'Bild auswählen',
-    validExtensions: 'zulässige Endungen: .jpg, .jpeg, .gif, .png',
+    validExtensions: 'zulässige Endungen: .jpg, .jpeg, .gif, .png .webp',
     cargando: 'Hochladen',
     htmlincrustado: 'Html angelegt',
     html: 'Html',

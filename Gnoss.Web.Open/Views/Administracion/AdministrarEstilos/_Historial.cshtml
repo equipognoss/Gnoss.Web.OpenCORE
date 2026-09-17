@@ -26,15 +26,15 @@
                 <td>@nombreVersion</td>
                 @for (int i = 1; i < version.Length; i++)
                 {
-                    if (System.IO.Path.GetExtension(version[i]).Equals(".js"))
+                    if (UtilVistas.GetExtension(version[i]).Equals(".js"))
                     {
                         urlJS = version[i];
                     }
-                    else if (System.IO.Path.GetExtension(version[i]).Equals(".css"))
+                    else if (UtilVistas.GetExtension(version[i]).Equals(".css"))
                     {
                         urlCSS = version[i];
                     }
-                    else if (System.IO.Path.GetExtension(version[i]).Equals(".zip"))
+                    else if (UtilVistas.GetExtension(version[i]).Equals(".zip"))
                     {
                         urlZIP = version[i];
                     }

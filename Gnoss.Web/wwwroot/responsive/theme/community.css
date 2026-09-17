@@ -1341,6 +1341,7 @@ body:has(#modal-eliminar-miembro.show) #modal-ver-roles .modal-content:after {
 .meta-administrador #accordion .card-header { background: none; padding: 12px 0; }
 .meta-administrador #accordion .card-header h3,
 .meta-administrador #accordion .card-header button { font-size: 1.133rem; font-weight: 500; padding: 0; color: var(--c-texto); }
+.meta-administrador #accordion .card-header a { font-size: 1.133rem; font-weight: 500; padding: 0; color: var(--c-texto); }
 .meta-administrador #accordion .card-body .custom-checkbox { margin-bottom: 15px; }
 .meta-administrador #accordion .card-body .custom-checkbox .custom-control-input:not(:checked) ~ .custom-control-label { color: var(--c-texto-claro); }
 

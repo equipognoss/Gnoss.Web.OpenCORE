@@ -53,6 +53,7 @@ using Es.Riam.Interfaces.InterfacesOpen;
 using Es.Riam.InterfacesOpen;
 using Es.Riam.Util;
 using Gnoss.Web.Open.Filters;
+using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Http.Extensions;
 using Microsoft.AspNetCore.Mvc;
@@ -70,9 +71,11 @@ using System.IO;
 using System.IO.Compression;
 using System.Linq;
 using System.Net;
+using System.Net.Http;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading;
+using System.Threading.Tasks;
 using System.Web;
 using static Es.Riam.Gnoss.Web.Controles.ControladorBase;
 
@@ -80,6 +83,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
 {
     [TypeFilter(typeof(NoTrackingEntityFilter))]
     [CabecerasCsp("admin", "true")]
+    [CabecerasNoCache("admin", "true")]
     public class BusquedaController : ControllerPestanyaBase
     {
         #region Miembros
@@ -119,8 +123,8 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
 
         #endregion
 
-        public BusquedaController(LoggingService loggingService, ConfigService configService, EntityContext entityContext, RedisCacheWrapper redisCacheWrapper, GnossCache gnossCache, VirtuosoAD virtuosoAD, IHttpContextAccessor httpContextAccessor, ICompositeViewEngine viewEngine, EntityContextBASE entityContextBASE, Microsoft.AspNetCore.Hosting.IHostingEnvironment env, IActionContextAccessor actionContextAccessor, IUtilServicioIntegracionContinua utilServicioIntegracionContinua, IServicesUtilVirtuosoAndReplication servicesUtilVirtuosoAndReplication, IRDFSearch rDFSearch, IOAuth oAuth, IHostApplicationLifetime appLifetime, IAvailableServices availableServices, ILogger<BusquedaController> logger, ILoggerFactory loggerFactory)
-            : base(loggingService, configService, entityContext, redisCacheWrapper, gnossCache, virtuosoAD, httpContextAccessor, viewEngine, entityContextBASE, env, actionContextAccessor, utilServicioIntegracionContinua, servicesUtilVirtuosoAndReplication, oAuth, appLifetime, availableServices, logger, loggerFactory)
+        public BusquedaController(LoggingService loggingService, ConfigService configService, EntityContext entityContext, RedisCacheWrapper redisCacheWrapper, GnossCache gnossCache, VirtuosoAD virtuosoAD, IHttpContextAccessor httpContextAccessor, ICompositeViewEngine viewEngine, EntityContextBASE entityContextBASE, IWebHostEnvironment env, IUtilServicioIntegracionContinua utilServicioIntegracionContinua, IServicesUtilVirtuosoAndReplication servicesUtilVirtuosoAndReplication, IRDFSearch rDFSearch, IOAuth oAuth, IHostApplicationLifetime appLifetime, IAvailableServices availableServices, ILogger<BusquedaController> logger, ILoggerFactory loggerFactory)
+            : base(loggingService, configService, entityContext, redisCacheWrapper, gnossCache, virtuosoAD, httpContextAccessor, viewEngine, entityContextBASE, env,utilServicioIntegracionContinua, servicesUtilVirtuosoAndReplication, oAuth, appLifetime, availableServices, logger, loggerFactory)
         {
             mUtilWeb = new UtilWeb(httpContextAccessor);
             mRDFSearch = rDFSearch;
@@ -1365,11 +1369,11 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
 
                 Dictionary<string, string> parametros = ObtenerDiccionarioDeParametrosParaServicioExterno(pProyectoID, pOrgIDProyBusquedaExcelCom, pExportacionID, pRespuestaServicioResultados, pListaItemsBusqueda, pTipoBusqueda, pFormato);
                 string urlServicioxterno = exporBusDW.ListaProyectoPestanyaBusquedaExportacionExterna.FirstOrDefault(item => item.ExportacionID.Equals(pExportacionID)).UrlServicioExterno;
-                WebResponse respuesta = UtilWeb.HacerPeticionPostDevolviendoWebResponse(urlServicioxterno, parametros);
+                HttpResponseMessage respuesta = UtilWeb.HacerPeticionPostDevolviendoHttpResponseMessage(urlServicioxterno, parametros);
 
                 mLoggingService.AgregarEntradaDependencia("Llamar servicio externo", false, "MontarCSVExcelComunidad", sw, true);
 
-                Stream stream = respuesta.GetResponseStream();
+                Stream stream = respuesta.Content.ReadAsStreamAsync().GetAwaiter().GetResult();
 
                 string tempFileName = UtilCadenas.ObtenerTextoDeIdioma(pNombreExportacion, UtilIdiomas.LanguageCode, null);
 
@@ -1419,7 +1423,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
             parametros.Add("pExportacionID", pExportacionID.ToString());
 
             parametros.Add("pRespuestaServicioResultados", pRespuestaServicioResultados);
-            parametros.Add("pListaItemsBusqueda", JsonConvert.SerializeObject(pListaItemsBusqueda));
+            parametros.Add("pListaItemsBusqueda", System.Text.Json.JsonSerializer.Serialize(pListaItemsBusqueda));
 
             parametros.Add("pTipoBusqueda", pTipoBusqueda.ToString());
             parametros.Add("pFormato", pFormato);
@@ -4096,7 +4100,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                 }
                 else
                 {
-                    Thread hiloResultados = new Thread(() =>
+                    Task tareaResultados = Task.Run(() =>
                     {
                         try
                         {
@@ -4134,7 +4138,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                                     JsonSerializerSettings jsonSerializerSettingsVB = new JsonSerializerSettings
                                     {
                                         TypeNameHandling = TypeNameHandling.All,
-                                        TypeNameAssemblyFormat = System.Runtime.Serialization.Formatters.FormatterAssemblyStyle.Simple
+                                        TypeNameAssemblyFormatHandling = TypeNameAssemblyFormatHandling.Simple
                                     };
                                     Dictionary<string, object> ViewDataDeserializado = JsonConvert.DeserializeObject<Dictionary<string, object>>(jsonViewData, jsonSerializerSettingsVB);
                                     foreach (string item in ViewDataDeserializado.Keys)
@@ -4151,7 +4155,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                                 }
                                 else
                                 {
-                                    KeyValuePair<int, string> respuestaResultados = JsonConvert.DeserializeObject<KeyValuePair<int, string>>(jsonResultados);
+                                    KeyValuePair<int, string> respuestaResultados = System.Text.Json.JsonSerializer.Deserialize<KeyValuePair<int, string>>(jsonResultados);
 
                                     numResultados = respuestaResultados.Key;
 
@@ -4174,7 +4178,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                         }
                     });
 
-                    Thread hiloFacetas = new Thread(() =>
+                    Task tareaFacetas = Task.Run(() =>
                     {
                         try
                         {
@@ -4207,7 +4211,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                                 JsonSerializerSettings jsonSerializerSettingsVB = new JsonSerializerSettings
                                 {
                                     TypeNameHandling = TypeNameHandling.All,
-                                    TypeNameAssemblyFormat = System.Runtime.Serialization.Formatters.FormatterAssemblyStyle.Simple
+                                    TypeNameAssemblyFormatHandling = TypeNameAssemblyFormatHandling.Simple
                                 };
                                 Dictionary<string, object> ViewDataDeserializado = JsonConvert.DeserializeObject<Dictionary<string, object>>(jsonViewData, jsonSerializerSettingsVB);
                                 foreach (string item in ViewDataDeserializado.Keys)
@@ -4236,17 +4240,8 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                         }
                     });
 
-                    //Lanzamos y esperamos a las facetas y los resultados
-                    if (hiloResultados != null)
-                    {
-                        hiloResultados.Start();
-                    }
-                    hiloFacetas.Start();
-                    if (hiloResultados != null)
-                    {
-                        hiloResultados.Join();
-                    }
-                    hiloFacetas.Join();
+                    //Lanzamos y esperamos a las facetas y los resultados (ya en marcha desde Task.Run)
+                    Task.WaitAll(tareaResultados, tareaFacetas);
                 }
 
                 mLoggingService.AgregarEntrada("Fin llamada a los servicios de resultados y facetas");

@@ -896,6 +896,19 @@ Variables
 
 
 					<div class="form-group mb-3">
+						<label class="control-label d-block">@Html.GetText("DEVTOOLS","NUMEROMAXIMODEVERSIONESACONSERVARPORRECURSO")</label>
+						<input
+							placeholder="@Html.GetText("DEVTOOLS","NUMEROMAXIMODEVERSIONESACONSERVARPORRECURSO")"
+							type="number"
+							min="1"
+							value="@Model.NumeroMaximoVersionesRecurso"
+							onkeypress="return event.charCode >= 48 && event.charCode <= 57"
+							id="NumeroMaximoVersionesRecurso"
+							class="form-control not-outline"/>
+						<small class="form-text text-muted">Por defecto 100</small>
+					</div>
+
+					<div class="form-group mb-3">
 						<label class="control-label d-block">@Html.GetText("DEVTOOLS","PROPIEDADESQUESEDESEANUSARENELALGORITMODEPERSONASRECOMENDADA")</label>
 						<input
 							placeholder="@Html.GetText("DEVTOOLS","PROPIEDADESQUESEDESEANUSARENELALGORITMODEPERSONASRECOMENDADA")"
@@ -1175,7 +1188,7 @@ Variables
 
 @* Carga de operativa *@
 @section operativaScript{
-    <script type="text/javascript" src="@Html.GetBaseUrlStatic()/responsive/theme/logic/configuracion.js?v=@Html.GetVersion()"></script>
+    <script type="text/javascript" src="@Html.GetBaseUrlStatic()/responsive/theme/logic/configuracion.js?v=@Comunidad.VersionJSEcosistema"></script>
     <script type="text/javascript">
 
         (function ($) {

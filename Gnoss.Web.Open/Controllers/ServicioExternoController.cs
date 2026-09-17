@@ -37,8 +37,8 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
     {
         private ILogger mlogger;
         private ILoggerFactory mLoggerFactory;
-        public ServicioExternoController(LoggingService loggingService, ConfigService configService, EntityContext entityContext, RedisCacheWrapper redisCacheWrapper, GnossCache gnossCache, VirtuosoAD virtuosoAD, IHttpContextAccessor httpContextAccessor, ICompositeViewEngine viewEngine, EntityContextBASE entityContextBASE, Microsoft.AspNetCore.Hosting.IHostingEnvironment env, IActionContextAccessor actionContextAccessor, IUtilServicioIntegracionContinua utilServicioIntegracionContinua, IServicesUtilVirtuosoAndReplication servicesUtilVirtuosoAndReplication, IOAuth oAuth, IHostApplicationLifetime appLifetime, IAvailableServices availableServices, ILogger<ServicioExternoController> logger, ILoggerFactory loggerFactory)
-            : base(loggingService, configService, entityContext, redisCacheWrapper, gnossCache, virtuosoAD, httpContextAccessor, viewEngine, entityContextBASE, env, actionContextAccessor, utilServicioIntegracionContinua, servicesUtilVirtuosoAndReplication, oAuth, appLifetime, availableServices, logger, loggerFactory)
+        public ServicioExternoController(LoggingService loggingService, ConfigService configService, EntityContext entityContext, RedisCacheWrapper redisCacheWrapper, GnossCache gnossCache, VirtuosoAD virtuosoAD, IHttpContextAccessor httpContextAccessor, ICompositeViewEngine viewEngine, EntityContextBASE entityContextBASE, IWebHostEnvironment env, IUtilServicioIntegracionContinua utilServicioIntegracionContinua, IServicesUtilVirtuosoAndReplication servicesUtilVirtuosoAndReplication, IOAuth oAuth, IHostApplicationLifetime appLifetime, IAvailableServices availableServices, ILogger<ServicioExternoController> logger, ILoggerFactory loggerFactory)
+            : base(loggingService, configService, entityContext, redisCacheWrapper, gnossCache, virtuosoAD, httpContextAccessor, viewEngine, entityContextBASE, env, utilServicioIntegracionContinua, servicesUtilVirtuosoAndReplication, oAuth, appLifetime, availableServices, logger, loggerFactory)
         {
             mlogger = logger;
             mLoggerFactory = loggerFactory;
@@ -120,7 +120,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                     try
                     {
                         //lanzo la ejecución en un nuevo hilo                                
-                        Task.Factory.StartNew(() => UtilWeb.HacerPeticionPostDevolviendoWebResponse(urlServicio, parametros));
+                        Task.Factory.StartNew(() => UtilWeb.HacerPeticionPostDevolviendoHttpResponseMessage(urlServicio, parametros));
                     }
                     catch (Exception ex)
                     {
@@ -133,14 +133,12 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                 {
                     try
                     {
-                        WebResponse respuesta = UtilWeb.HacerPeticionPostDevolviendoWebResponse(urlServicio, parametros);
+                        HttpResponseMessage respuesta = UtilWeb.HacerPeticionPostDevolviendoHttpResponseMessage(urlServicio, parametros);
 
                         return GenerarRespuesta(respuesta);
                     }
                     catch(WebException ex)
                     {
-                        //Response.StatusCode = (int)((HttpWebResponse)ex.Response).StatusCode;
-                        //Response.ContentType = ((HttpWebResponse)ex.Response).ContentType;
                         string response = new StreamReader(ex.Response.GetResponseStream()).ReadToEnd();
                         string error = $"Error {Response.StatusCode} al enviar una petición al servicio {urlServicio} con los parámetros: {string.Join("\n", parametros.Select(item => $"{item.Key} -> {item.Value}"))} Error: {response}";
                         GuardarLogError(ex, error);
@@ -157,41 +155,30 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
             }
         }
 
-        public ActionResult GenerarRespuesta(WebResponse pRespuesta)
+        public ActionResult GenerarRespuesta(HttpResponseMessage pRespuesta)
         {
-            Stream stream = pRespuesta.GetResponseStream();
+            string contentType = pRespuesta.Content.Headers.ContentType?.ToString() ?? "application/octet-stream";
+            Response.ContentType = contentType;
 
-            Response.ContentType = pRespuesta.ContentType;
-            string body = "";
-
-            if (!pRespuesta.ContentType.StartsWith("application") || pRespuesta.ContentType.Equals("application/json"))
+            if (!contentType.StartsWith("application") || contentType.Equals("application/json"))
             {
-                using (StreamReader sr = new StreamReader(stream))
-                {
-                    body = sr.ReadToEnd();
-                }
-
-                return Content(body, pRespuesta.ContentType);
+                string body = pRespuesta.Content.ReadAsStringAsync().GetAwaiter().GetResult();
+                return Content(body, contentType);
             }
             else
             {
-                if (pRespuesta.Headers["Content-Disposition"]!= null)
+                // Content-Disposition
+                if (pRespuesta.Content.Headers.ContentDisposition != null)
                 {
-                    Response.Headers.ContentDisposition = pRespuesta.Headers["Content-Disposition"];
-				}
-				using (BinaryReader sr = new BinaryReader(stream))
-				{
-					byte[] buffer = new byte[4098];
-                    while(buffer.Length > 0 )
-                    {
-						buffer = sr.ReadBytes(4098);
-                        Response.Body.WriteAsync(buffer);
-					}
-                    Response.Body.FlushAsync();
-				}
+                    Response.Headers.ContentDisposition = pRespuesta.Content.Headers.ContentDisposition.ToString();
+                }
+
+                byte[] bytes = pRespuesta.Content.ReadAsByteArrayAsync().GetAwaiter().GetResult();
+                Response.Body.WriteAsync(bytes).GetAwaiter().GetResult();
+                Response.Body.FlushAsync().GetAwaiter().GetResult();
 
                 return new EmptyResult();
-			}
+            }
         }
     }
 }

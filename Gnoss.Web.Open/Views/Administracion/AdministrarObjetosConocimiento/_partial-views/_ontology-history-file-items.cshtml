@@ -45,8 +45,7 @@ Variables
 	<ul class="js-community-historial-list component-list no-list-style">
 		@* Item *@ 
 		@foreach (string archivo in Model.VersionList)
-		{
-			@* <li>@archivo.Replace("_" + Model.OntologyID, "") (<a href="@Html.GetComunidad().Url/@Html.GetText("URLSEM", "ADMINISTRAROBJETOSCONOCIMIENTOCOM")/download-version?copyName=@(System.Net.WebUtility.UrlEncode(archivo) + "&ontologyID=" + Model.OntologyID + "&ontologyName=" + System.Net.WebUtility.UrlEncode(Model.OntologyName))">descargar</a>)</li>     *@
+		{			
 			<li class="component-wrap historial-row">
 				<div class="component">
 					<div class="component-header-wrap">
@@ -71,7 +70,7 @@ Variables
 											<ul class="no-list-style component-actions">
 												<li>
 													<a title="@Html.GetText("HISTORIALVERSIONES","DESCARGAR")" alt="@Html.GetText("HISTORIALVERSIONES","DESCARGAR")"
-													   href="@Html.GetComunidad().Url/@Html.GetText("URLSEM", "ADMINISTRAROBJETOSCONOCIMIENTOCOM")/download-version?copyName=@(System.Net.WebUtility.UrlEncode(archivo) + "&ontologyID=" + Model.OntologyID + "&ontologyName=" + System.Net.WebUtility.UrlEncode(Model.OntologyName))"
+													   href="@Html.GetComunidad().Url/@Html.GetText("URLSEM", "ADMINISTRAROBJETOSCONOCIMIENTOCOM")/download-version?copyName=@(UtilVistas.UrlEncode(archivo) + "&ontologyID=" + Model.OntologyID + "&ontologyName=" + UtilVistas.UrlEncode(Model.OntologyName))"
 													   class="action-download round-icon-button js-action-download-history-item btnDownloadHistoryItem">
 														<span class="material-icons">download</span>
 													</a>

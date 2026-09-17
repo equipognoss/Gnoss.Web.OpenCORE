@@ -1,10 +1,7 @@
 ﻿using Es.Riam.AbstractsOpen;
-using Es.Riam.Gnoss.AD;
 using Es.Riam.Gnoss.AD.EncapsuladoDatos;
 using Es.Riam.Gnoss.AD.EntityModel;
-using Es.Riam.Gnoss.AD.EntityModel.Models;
 using Es.Riam.Gnoss.AD.EntityModel.Models.Faceta;
-using Es.Riam.Gnoss.AD.EntityModel.Models.ProyectoDS;
 using Es.Riam.Gnoss.AD.EntityModel.Models.ProyectoDS;
 using Es.Riam.Gnoss.AD.EntityModelBASE;
 using Es.Riam.Gnoss.AD.Facetado;
@@ -13,53 +10,37 @@ using Es.Riam.Gnoss.AD.ServiciosGenerales;
 using Es.Riam.Gnoss.AD.Virtuoso;
 using Es.Riam.Gnoss.CL;
 using Es.Riam.Gnoss.CL.ParametrosAplicacion;
-using Es.Riam.Gnoss.CL.Seguridad;
-using Es.Riam.Gnoss.Elementos.Amigos;
-using Es.Riam.Gnoss.Elementos.Amigos;
 using Es.Riam.Gnoss.Elementos.ServiciosGenerales;
 using Es.Riam.Gnoss.Logica.CMS;
-using Es.Riam.Gnoss.Logica.Documentacion;
 using Es.Riam.Gnoss.Logica.Identidad;
-using Es.Riam.Gnoss.Logica.ParametroAplicacion;
 using Es.Riam.Gnoss.Logica.ServiciosGenerales;
 using Es.Riam.Gnoss.Recursos;
 using Es.Riam.Gnoss.Servicios.ControladoresServiciosWeb;
 using Es.Riam.Gnoss.Util.Configuracion;
 using Es.Riam.Gnoss.Util.General;
 using Es.Riam.Gnoss.UtilServiciosWeb;
-using Es.Riam.Gnoss.Web.Controles;
 using Es.Riam.Gnoss.Web.Controles.Administracion;
 using Es.Riam.Gnoss.Web.MVC.Filters;
 using Es.Riam.Gnoss.Web.MVC.Models.Administracion;
-using Es.Riam.Gnoss.Web.MVC.Models.ViewModels;
 using Es.Riam.Interfaces.InterfacesOpen;
 using Es.Riam.InterfacesOpen;
 using Es.Riam.InterfacesOpen.Model;
 using Es.Riam.Util;
 using Gnoss.Web.Open.Filters;
-using Gnoss.Web.Services;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Http.Extensions;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Mvc.Infrastructure;
 using Microsoft.AspNetCore.Mvc.ViewEngines;
-using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Logging;
-using Newtonsoft.Json;
-using Serilog.Core;
-using Serilog.Core;
 using System;
 using System.Collections.Generic;
-using System.Data.Entity.Core.Metadata.Edm;
 using System.Data.Entity.Validation;
 using System.Linq;
 using System.Net;
 using System.Net.Http;
-using System.Text;
-using VDS.RDF.Writing;
+using System.Text.Json;
 using static Es.Riam.Gnoss.Web.MVC.Models.Administracion.TabModel;
 using static Es.Riam.Gnoss.Web.MVC.Models.Administracion.TabModel.SearchTabModel;
 
@@ -103,8 +84,8 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
         private ILogger mlogger;
         private ILoggerFactory mLoggerFactory;
         private readonly IPublishEvents mIPublishEvents;
-        public AdministrarPestanyasController(LoggingService loggingService, ConfigService configService, EntityContext entityContext, RedisCacheWrapper redisCacheWrapper, GnossCache gnossCache, VirtuosoAD virtuosoAD, IHttpContextAccessor httpContextAccessor, ICompositeViewEngine viewEngine, EntityContextBASE entityContextBASE, Microsoft.AspNetCore.Hosting.IHostingEnvironment env, IActionContextAccessor actionContextAccessor, IUtilServicioIntegracionContinua utilServicioIntegracionContinua, IServicesUtilVirtuosoAndReplication servicesUtilVirtuosoAndReplication, IOAuth oAuth, IHostApplicationLifetime appLifetime, IPublishEvents publishEvents, IAvailableServices pAvailableService, ILogger<AdministrarPestanyasController> logger, ILoggerFactory loggerFactory)
-            : base(loggingService, configService, entityContext, redisCacheWrapper, gnossCache, virtuosoAD, httpContextAccessor, viewEngine, entityContextBASE, env, actionContextAccessor, utilServicioIntegracionContinua, servicesUtilVirtuosoAndReplication, oAuth, appLifetime, pAvailableService, logger, loggerFactory)
+        public AdministrarPestanyasController(LoggingService loggingService, ConfigService configService, EntityContext entityContext, RedisCacheWrapper redisCacheWrapper, GnossCache gnossCache, VirtuosoAD virtuosoAD, IHttpContextAccessor httpContextAccessor, ICompositeViewEngine viewEngine, EntityContextBASE entityContextBASE, IWebHostEnvironment env, IUtilServicioIntegracionContinua utilServicioIntegracionContinua, IServicesUtilVirtuosoAndReplication servicesUtilVirtuosoAndReplication, IOAuth oAuth, IHostApplicationLifetime appLifetime, IPublishEvents publishEvents, IAvailableServices pAvailableService, ILogger<AdministrarPestanyasController> logger, ILoggerFactory loggerFactory)
+            : base(loggingService, configService, entityContext, redisCacheWrapper, gnossCache, virtuosoAD, httpContextAccessor, viewEngine, entityContextBASE, env,utilServicioIntegracionContinua, servicesUtilVirtuosoAndReplication, oAuth, appLifetime, pAvailableService, logger, loggerFactory)
         {
             mlogger = logger;
             mLoggerFactory = loggerFactory;
@@ -160,6 +141,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
         /// <returns>ActionResult</returns>
         [HttpPost]
         [TypeFilter(typeof(PermisosContenidos), Arguments = new object[] { new ulong[] { (ulong)PermisoContenidos.CrearPagina } })]
+        [TypeFilter(typeof(LimitarPeticionesAdministracion), Arguments = new object[] { 30, 120, 15 })]
         public ActionResult NuevaPestanya(short TipoPestanya, string nameonto)
         {
             EliminarPersonalizacionVistas();
@@ -486,6 +468,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
         [HttpPost]
         [TypeFilter(typeof(PermisosContenidos), Arguments = new object[] { new ulong[] { (ulong)PermisoContenidos.CrearPagina, (ulong)PermisoContenidos.EditarPagina, (ulong)PermisoContenidos.EliminarPagina } })]
         [TypeFilter(typeof(AccesoIntegracionAttribute))]
+        [TypeFilter(typeof(LimitarPeticionesAdministracion), Arguments = new object[] { 30, 120, 15 })]
         public ActionResult Guardar(List<TabModel> ListaPestanyas)
         {
             GuardarLogAuditoria();
@@ -527,7 +510,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
                     {
                         ListaPestanyas = ModificarOrdenPestanyas(paginaModelPestanyas, ListaPestanyas);
 
-                        HttpResponseMessage resultado = InformarCambioAdministracion("Pestanyas", JsonConvert.SerializeObject(ListaPestanyas, Formatting.Indented));
+                        HttpResponseMessage resultado = InformarCambioAdministracion("Pestanyas", JsonSerializer.Serialize(ListaPestanyas, new JsonSerializerOptions { WriteIndented = true }));
                         if (!resultado.StatusCode.Equals(HttpStatusCode.OK))
                         {
                             throw new Exception("Contacte con el administrador del Proyecto, no es posible atender la petición.");
@@ -563,7 +546,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
 
                 contrPest.CrearFilasPropiedadesIntegracionContinua(ListaPestanyas.Where(pestanya => pestanya.Deleted || pestanya.Modified).ToList());
 
-                if (EntornoActualEsPruebas && iniciado)
+                if (iniciado && EntornoActualEsPruebas)
                 {
                     //con esto funciona para PRE
                     //contrPest.ModificarFilasIntegracionContinuaEntornoSiguiente(ListaPestanyas.ToList(), UrlApiDesplieguesEntornoSiguiente);
@@ -592,6 +575,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
         [HttpPost]
         [TypeFilter(typeof(AccesoIntegracionAttribute))]
         [TypeFilter(typeof(PermisosContenidos), Arguments = new object[] { new ulong[] { (ulong)PermisoContenidos.CrearPagina, (ulong)PermisoContenidos.EditarPagina } })]
+        [TypeFilter(typeof(LimitarPeticionesAdministracion), Arguments = new object[] { 30, 120, 15 })]
         public ActionResult GuardarPestanya(List<TabModel> ListaPestanyas)
         {
             TabModel Pestanya = ListaPestanyas[0];
@@ -621,7 +605,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
                     if (iniciado)
                     {
 
-                        HttpResponseMessage resultado = InformarCambioAdministracion("Pestanyas", JsonConvert.SerializeObject(Pestanya, Formatting.Indented));
+                        HttpResponseMessage resultado = InformarCambioAdministracion("Pestanyas", JsonSerializer.Serialize(Pestanya, new JsonSerializerOptions { WriteIndented = true }));
                         if (!resultado.StatusCode.Equals(HttpStatusCode.OK))
                         {
                             throw new Exception("Contacte con el administrador del Proyecto, no es posible atender la petición.");
@@ -657,7 +641,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
 
                 contrPest.CrearFilasPropiedadesIntegracionContinuaPestanya(Pestanya);
 
-                if (EntornoActualEsPruebas && iniciado)
+                if (iniciado && EntornoActualEsPruebas)
                 {
                     //con esto funciona para PRE
                     //contrPest.ModificarFilasIntegracionContinuaEntornoSiguiente(ListaPestanyas.ToList(), UrlApiDesplieguesEntornoSiguiente);
@@ -697,6 +681,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
 
         [HttpPost]
         [TypeFilter(typeof(PermisosContenidos), Arguments = new object[] { new ulong[] { (ulong)PermisoContenidos.RestaurarVersionPagina, (ulong)PermisoContenidos.VerPagina } })]
+        [TypeFilter(typeof(LimitarPeticionesAdministracion), Arguments = new object[] { 30, 120, 15 })]
         public ActionResult CompararVersionConfigPestanya(string documentosComparar, bool pRestaurar = false)
         {
             ParametroAplicacionCL paramCL = new ParametroAplicacionCL(mEntityContext, mLoggingService, mRedisCacheWrapper, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<ParametroAplicacionCL>(), mLoggerFactory);
@@ -726,6 +711,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
 
         [HttpPost]
         [TypeFilter(typeof(PermisosContenidos), Arguments = new object[] { new ulong[] { (ulong)PermisoContenidos.RestaurarVersionPagina } })]
+        [TypeFilter(typeof(LimitarPeticionesAdministracion), Arguments = new object[] { 30, 120, 15 })]
         public ActionResult RestaurarVersion(Guid pVersionID, string pComentario = null)
         {
             bool iniciado = false;
@@ -739,7 +725,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
                 TabModel pestanyaRestaurada = contrPest.RestaurarPagina(pVersionID, pComentario ?? "");
                 if (iniciado)
                 {
-                    HttpResponseMessage resultado = InformarCambioAdministracion("Pestanyas", JsonConvert.SerializeObject(pestanyaRestaurada, Formatting.Indented));
+                    HttpResponseMessage resultado = InformarCambioAdministracion("Pestanyas", JsonSerializer.Serialize(pestanyaRestaurada, new JsonSerializerOptions { WriteIndented = true }));
                     if (!resultado.StatusCode.Equals(HttpStatusCode.OK))
                     {
                         throw new Exception("Contacte con el administrador del Proyecto, no es posible atender la petición.");
@@ -1057,7 +1043,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
 
             foreach (ProyectoPestanyaMenuVersionPaginaModel version in configPestanyas)
             {
-                TabModel pestanyaRestaurar = JsonConvert.DeserializeObject<TabModel>(version.ModeloJSON);
+                TabModel pestanyaRestaurar = JsonSerializer.Deserialize<TabModel>(version.ModeloJSON);
                 pestanyaRestaurar.ClassCSSBody = pestanyaRestaurar.ClassCSSBody ?? "";
                 pestanyaRestaurar.HtmlAlternativoPrivacidad = pestanyaRestaurar.HtmlAlternativoPrivacidad ?? "";
                 pestanyaRestaurar.PrivacidadPerfiles = pestanyaRestaurar.PrivacidadPerfiles ?? new Dictionary<Guid, string>();

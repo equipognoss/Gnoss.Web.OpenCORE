@@ -1,6 +1,7 @@
 ﻿@model Es.Riam.Gnoss.Web.MVC.Models.AdministrarEstilos.SubidaArchivosModel
 @{
-    Html.GetListaCSS().Add(Html.GetBaseUrlStatic() + "/cssNuevo/administracion.css?v=" + Html.GetVersion());
+    CommunityModel Comunidad = Html.GetComunidad();
+    Html.GetListaCSS().Add(Html.GetBaseUrlStatic() + "/cssNuevo/administracion.css?v=" + Comunidad.VersionCSSEcosistema);
 
     ViewBag.Title = Html.GetText("COMADMINESTILOS", "TITULO");
 
@@ -17,8 +18,8 @@
     else if (!string.IsNullOrEmpty(Model.NombreVersion))
     {
         tituloPagina = Html.GetText("COMADMINESTILOS", "ESTILOSVERSION") + " - " + Model.NombreVersion;
-        urlForm = Html.GetComunidad().Url + "/" + Html.GetText("URLSEM", "ADMINESTILOS") + "/actualizar-version/" + System.Net.WebUtility.UrlEncode(Model.NombreVersion);
-        urlHistorial += "/" + System.Net.WebUtility.UrlEncode(Model.NombreVersion);
+        urlForm = Html.GetComunidad().Url + "/" + Html.GetText("URLSEM", "ADMINESTILOS") + "/actualizar-version/" + UtilVistas.UrlEncode(Model.NombreVersion);
+        urlHistorial += "/" + UtilVistas.UrlEncode(Model.NombreVersion);
     }
 }
 <div class="content">

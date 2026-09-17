@@ -3,10 +3,10 @@
 @{
     CommunityModel Comunidad = Html.GetComunidad();
 
-    Html.GetListaCSS().Add(Html.GetBaseUrlStatic() + "/cssNuevo/administracion.css?v=" + Html.GetVersion());
-    Html.GetListaCSS().Add(Html.GetBaseUrlStatic() + "/jsUnificar/JCrop/css/Jcrop.css?v=" + Html.GetVersion());
-    Html.GetListaJS().Add(Html.GetBaseUrlStatic() + "/ckeditor/ckeditor.js?v=" + Html.GetVersion());
-    Html.GetListaJS().Add(Html.GetBaseUrlStatic() + "/ckeditor/adapters/jquery.js?v=" + Html.GetVersion());
+    Html.GetListaCSS().Add(Html.GetBaseUrlStatic() + "/cssNuevo/administracion.css?v=" + Comunidad.VersionCSSEcosistema);
+    Html.GetListaCSS().Add(Html.GetBaseUrlStatic() + "/jsUnificar/JCrop/css/Jcrop.css?v=" + Comunidad.VersionCSSEcosistema);
+    Html.GetListaJS().Add(Html.GetBaseUrlStatic() + "/ckeditor/ckeditor.js?v=" + Comunidad.VersionJSEcosistema);
+    Html.GetListaJS().Add(Html.GetBaseUrlStatic() + "/ckeditor/adapters/jquery.js?v=" + Comunidad.VersionJSEcosistema);
 }
 
 <div class="content">
@@ -22,8 +22,8 @@
     <input type="button" id="guardarTodo" class="guardarTodo" value="@Html.GetText("COMMON", "GUARDAR")" />
 </div>
 
-<script type="text/javascript" src="@Html.GetBaseUrlStatic()/jsUnificar/jquery.ui.tooltip.js?v=@Html.GetVersion()"></script>
-<script type="text/javascript" src="@Html.GetBaseUrlStatic()/jsNuevo/jquery.demo.js?v=@Html.GetVersion()"></script>
+<script type="text/javascript" src="@Html.GetBaseUrlStatic()/jsUnificar/jquery.ui.tooltip.js?v=@Comunidad.VersionJSEcosistema"></script>
+<script type="text/javascript" src="@Html.GetBaseUrlStatic()/jsNuevo/jquery.demo.js?v=@Comunidad.VersionJSEcosistema"></script>
 
 <script type="text/javascript">
     var OperativaAcciones = {

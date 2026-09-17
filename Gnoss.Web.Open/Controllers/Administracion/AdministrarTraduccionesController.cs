@@ -2,43 +2,44 @@
 using Es.Riam.Gnoss.AD.EncapsuladoDatos;
 using Es.Riam.Gnoss.AD.EntityModel;
 using Es.Riam.Gnoss.AD.EntityModel.Models.ParametroGeneralDS;
+using Es.Riam.Gnoss.AD.EntityModel.Models.Traductor;
 using Es.Riam.Gnoss.AD.EntityModel.Models.VistaVirtualDS;
 using Es.Riam.Gnoss.AD.EntityModelBASE;
 using Es.Riam.Gnoss.AD.ServiciosGenerales;
 using Es.Riam.Gnoss.AD.Virtuoso;
 using Es.Riam.Gnoss.CL;
+using Es.Riam.Gnoss.CL.ParametrosAplicacion;
 using Es.Riam.Gnoss.CL.ParametrosProyecto;
 using Es.Riam.Gnoss.Elementos.ParametroGeneralDSEspacio;
+using Es.Riam.Gnoss.Logica.ParametroAplicacion;
 using Es.Riam.Gnoss.Logica.ParametrosProyecto;
+using Es.Riam.Gnoss.Logica.ServiciosGenerales;
+using Es.Riam.Gnoss.Traducciones;
+using Es.Riam.Gnoss.Traducciones.TraduccionTextos;
 using Es.Riam.Gnoss.Util.Configuracion;
 using Es.Riam.Gnoss.Util.General;
 using Es.Riam.Gnoss.Web.Controles.Administracion;
 using Es.Riam.Gnoss.Web.Controles.ParametroGeneralDSName;
-using Es.Riam.Gnoss.Web.MVC.Filters;
+using Es.Riam.Gnoss.Web.MVC.Models.Administracion;
 using Es.Riam.Gnoss.Web.MVC.Models.AdministrarTraducciones;
+using Es.Riam.Gnoss.Web.MVC.Models.ConsultasSparql;
 using Es.Riam.Gnoss.Web.MVC.Models.ViewModels;
 using Es.Riam.Interfaces.InterfacesOpen;
 using Es.Riam.InterfacesOpen;
+using Gnoss.Web.Open.Filters;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Mvc.Infrastructure;
 using Microsoft.AspNetCore.Mvc.ViewEngines;
-using Newtonsoft.Json;
+using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
 using System.Data;
 using System.Linq;
 using System.Net;
 using System.Net.Http;
-using System.Text;
-using Es.Riam.Gnoss.Web.MVC.Models.Administracion;
-using Es.Riam.Gnoss.Logica.ParametroAplicacion;
-using Es.Riam.Gnoss.CL.ParametrosAplicacion;
-using Microsoft.Extensions.Hosting;
-using Gnoss.Web.Open.Filters;
-using Microsoft.Extensions.Logging;
-using Serilog.Core;
+using System.Text.Json;
 
 namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
 {
@@ -47,12 +48,15 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
 	/// </summary>
 	public class AdministrarTraduccionesController : ControllerAdministrationWeb
 	{
-        private ILogger mlogger;
-        private ILoggerFactory mLoggerFactory;
-        public AdministrarTraduccionesController(LoggingService loggingService, ConfigService configService, EntityContext entityContext, RedisCacheWrapper redisCacheWrapper, GnossCache gnossCache, VirtuosoAD virtuosoAD, IHttpContextAccessor httpContextAccessor, ICompositeViewEngine viewEngine, EntityContextBASE entityContextBASE, Microsoft.AspNetCore.Hosting.IHostingEnvironment env, IActionContextAccessor actionContextAccessor, IUtilServicioIntegracionContinua utilServicioIntegracionContinua, IServicesUtilVirtuosoAndReplication servicesUtilVirtuosoAndReplication, IOAuth oAuth, IHostApplicationLifetime appLifetime, IAvailableServices availableServices, ILogger<AdministrarTraduccionesController> logger, ILoggerFactory loggerFactory)
-			: base(loggingService, configService, entityContext, redisCacheWrapper, gnossCache, virtuosoAD, httpContextAccessor, viewEngine, entityContextBASE, env, actionContextAccessor, utilServicioIntegracionContinua, servicesUtilVirtuosoAndReplication, oAuth, appLifetime, availableServices, logger, loggerFactory)
+        private readonly ILogger _logger;
+        private readonly ILoggerFactory mLoggerFactory;
+        private const string VISTA_EDITAR_CREAR_TRADUCCION = "../AdministrarTraducciones/_modal-views/_translate-edit-item";
+        private const string ERROR_IC = "Contacte con el administrador del Proyecto, no es posible atender la petición.";
+
+        public AdministrarTraduccionesController(LoggingService loggingService, ConfigService configService, EntityContext entityContext, RedisCacheWrapper redisCacheWrapper, GnossCache gnossCache, VirtuosoAD virtuosoAD, IHttpContextAccessor httpContextAccessor, ICompositeViewEngine viewEngine, EntityContextBASE entityContextBASE, IWebHostEnvironment env, IUtilServicioIntegracionContinua utilServicioIntegracionContinua, IServicesUtilVirtuosoAndReplication servicesUtilVirtuosoAndReplication, IOAuth oAuth, IHostApplicationLifetime appLifetime, IAvailableServices availableServices, ILogger<AdministrarTraduccionesController> logger, ILoggerFactory loggerFactory)
+			: base(loggingService, configService, entityContext, redisCacheWrapper, gnossCache, virtuosoAD, httpContextAccessor, viewEngine, entityContextBASE, env, utilServicioIntegracionContinua, servicesUtilVirtuosoAndReplication, oAuth, appLifetime, availableServices, logger, loggerFactory)
 		{
-            mlogger = logger;
+            _logger = logger;
             mLoggerFactory = loggerFactory;
         }
 
@@ -68,7 +72,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
             CargarPermisosAdministracionComunidadEnViewBag();
 
             // Añadir clase para el body del Layout
-            ViewBag.BodyClassPestanya = "configuracion edicionTraducciones edicion no-max-width-container";
+            ViewBag.BodyClassPestanya = "meta-administrador configuracion edicionTraducciones edicion no-max-width-container";
             ViewBag.ActiveSection = AdministracionSeccionesDevTools.SeccionesDevTools.Configuracion;
             ViewBag.ActiveSubSection = AdministracionSeccionesDevTools.SubSeccionesDevTools.Configuracion_TraduccionesComunidad;
             // Establecer el título para el header de DevTools
@@ -79,10 +83,10 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
             ViewBag.IdiomaPorDefecto = IdiomaPorDefecto;
 
             // Controlar si es o no del ecosistema            
-            bool isInEcosistemaPlatform = !string.IsNullOrEmpty(RequestParams("ecosistema")) ? (bool.Parse(RequestParams("ecosistema"))) : false;
+            bool.TryParse(RequestParams("ecosistema"), out bool isInEcosistemaPlatform);
 
             AdministrarTraduccionesViewModel modelo = new AdministrarTraduccionesViewModel();
-
+            
             if (isInEcosistemaPlatform)
             {
                 ViewBag.isInEcosistemaPlatform = "true";
@@ -161,8 +165,9 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
 
                 Dictionary<string, string> idiomas = paramCL.ObtenerListaIdiomasDictionary();
                 TextoTraducidoModel modelo = new TextoTraducidoModel(idiomas);
+                ComprobarTraductorConfigurado(modelo);
 
-                return GnossResultHtml("../AdministrarTraducciones/_modal-views/_translate-edit-item", modelo);
+                return GnossResultHtml(VISTA_EDITAR_CREAR_TRADUCCION, modelo);
             }
             else
             {
@@ -178,44 +183,47 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
         [HttpPost]
         [TypeFilter(typeof(PermisosAdministracion), Arguments = new object[] { new ulong[] { (ulong)PermisoComunidad.GestionarTraducciones } })]
         [TypeFilter(typeof(PermisosAdministracionEcosistema), Arguments = new object[] { new ulong[] { (ulong)PermisoEcosistema.GestionarTraduccionesEcosistema } })]
+        [TypeFilter(typeof(LimitarPeticionesAdministracion), Arguments = new object[] { 30, 120, 15 })]
         public ActionResult Crear(TextoTraducidoModel pModelo)
         {
             ParametroAplicacionCL paramCL = new ParametroAplicacionCL(mEntityContext, mLoggingService, mRedisCacheWrapper, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<ParametroAplicacionCL>(), mLoggerFactory);
-            if (ModelState.IsValid)
-            {
-                try
-                {
-                    GuardarTraduccion(pModelo, false);
-                }
-                catch (Exception ex)
-                {
-                    pModelo.Idiomas = paramCL.ObtenerListaIdiomasDictionary();
-                    if (ex.Message.Equals("Contacte con el administrador del Proyecto, no es posible atender la petición."))
-                    {
-                        ModelState.AddModelError(string.Empty, "Contacte con el administrador del Proyecto, no es posible atender la petición.");
-                    }
-                    else
-                    {
-                        ModelState.AddModelError(string.Empty, "Error al guardar la traducción, inténtelo de nuevo");
-                    }
-
-                    EliminarPersonalizacionVistas();
-                    CargarPermisosAdministracionComunidadEnViewBag();
-                }
-
-                string urlRedireccion = Request.Path.ToString().ToLower();
-                urlRedireccion = urlRedireccion.Substring(0, urlRedireccion.LastIndexOf("/crear"));
-                return Redirect(urlRedireccion);
-            }
             pModelo.Idiomas = paramCL.ObtenerListaIdiomasDictionary();
-            return View("Editar", pModelo);
+            ComprobarTraductorConfigurado(pModelo);
+
+            if(!ModelState.IsValid || ContieneCaracteresFormulaPeligrosos(pModelo))
+            {
+                return GnossResultHtml(VISTA_EDITAR_CREAR_TRADUCCION, pModelo);
+            }
+
+            try
+            {
+                GuardarTraduccion(pModelo, false);
+            }
+            catch (Exception ex)
+            {
+                if (ex.Message.Equals(ERROR_IC))
+                {
+                    ModelState.AddModelError(string.Empty, ERROR_IC);
+                }
+                else
+                {
+                    ModelState.AddModelError(string.Empty, "Error al guardar la traducción, inténtelo de nuevo");
+                }
+
+                EliminarPersonalizacionVistas();
+                CargarPermisosAdministracionComunidadEnViewBag();
+
+                return GnossResultHtml(VISTA_EDITAR_CREAR_TRADUCCION, pModelo);
+            }
+
+            return GnossResultOK();
         }
 
-		/// <summary>
-		/// Permite editar los datos de una traducción.
-		/// </summary>
-		/// <param name="pTextoId">Id del texto a editar</param>
-		/// <returns></returns>        
+        /// <summary>
+        /// Permite editar los datos de una traducción.
+        /// </summary>
+        /// <param name="pTextoId">Id del texto a editar</param>
+        /// <returns></returns>        
         [TypeFilter(typeof(PermisosAdministracion), Arguments = new object[] { new ulong[] { (ulong)PermisoComunidad.GestionarTraducciones } })]
         [TypeFilter(typeof(PermisosAdministracionEcosistema), Arguments = new object[] { new ulong[] { (ulong)PermisoEcosistema.GestionarTraduccionesEcosistema } })]
         public ActionResult EditarLoadModal(string pTextoId)
@@ -229,9 +237,10 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
             var data = Convert.FromBase64String(pTextoId);
             pTextoId = TextoTraducidoModel.GetString(data);
 
-            ParametroGeneralCN paramGeneralCN = new ParametroGeneralCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<ParametroGeneralCN>(), mLoggerFactory);
+            ComprobarTraductorConfigurado(modelo);
+
+			ParametroGeneralCN paramGeneralCN = new ParametroGeneralCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<ParametroGeneralCN>(), mLoggerFactory);
             GestorParametroGeneral gestorParametoGeneral = new GestorParametroGeneral();
-            ParametroGeneralGBD gestorController = new ParametroGeneralGBD(mEntityContext);
 
             if (EsAdministracionEcosistema)
             {
@@ -253,8 +262,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
             }
 
             // Cargo la vista en un modal, no en una página diferente
-            // return View(modelo);            
-            return GnossResultHtml("../AdministrarTraducciones/_modal-views/_translate-edit-item", modelo);
+            return GnossResultHtml(VISTA_EDITAR_CREAR_TRADUCCION, modelo);
 
         }
 
@@ -266,28 +274,31 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
         [HttpPost]
         [TypeFilter(typeof(PermisosAdministracion), Arguments = new object[] { new ulong[] { (ulong)PermisoComunidad.GestionarTraducciones } })]
         [TypeFilter(typeof(PermisosAdministracionEcosistema), Arguments = new object[] { new ulong[] { (ulong)PermisoEcosistema.GestionarTraduccionesEcosistema } })]
+        [TypeFilter(typeof(LimitarPeticionesAdministracion), Arguments = new object[] { 30, 120, 15 })]
         public ActionResult Editar(TextoTraducidoModel pModelo)
         {
             ParametroAplicacionCL paramCL = new ParametroAplicacionCL(mEntityContext, mLoggingService, mRedisCacheWrapper, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<ParametroAplicacionCL>(), mLoggerFactory);
-            if (ModelState.IsValid)
-            {
-                try
-                {
-                    GuardarTraduccion(pModelo, true);
-                }
-                catch (Exception ex)
-                {
-                    GuardarLogError(mLoggingService.DevolverCadenaError(ex, ""));
-                    pModelo.Idiomas = paramCL.ObtenerListaIdiomasDictionary();
-                    ModelState.AddModelError(string.Empty, "Error al guardar la traducción, inténtelo de nuevo");
-                    return View("Editar", pModelo);
-                }
-                string urlRedireccion = Request.Path.ToString().ToLower();
-                urlRedireccion = urlRedireccion.Substring(0, urlRedireccion.LastIndexOf("/editar"));
-                return Redirect(urlRedireccion);
-            }
             pModelo.Idiomas = paramCL.ObtenerListaIdiomasDictionary();
-            return View("Editar", pModelo);
+
+            ComprobarTraductorConfigurado(pModelo);
+
+            if (!ModelState.IsValid || ContieneCaracteresFormulaPeligrosos(pModelo))
+            {
+                return GnossResultHtml(VISTA_EDITAR_CREAR_TRADUCCION, pModelo);
+            }
+
+            try
+            {
+                GuardarTraduccion(pModelo, true);
+            }
+            catch (Exception ex)
+            {
+                GuardarLogError(mLoggingService.DevolverCadenaError(ex, ""));
+                ModelState.AddModelError(string.Empty, "Error al guardar la traducción, inténtelo de nuevo");
+                return GnossResultHtml(VISTA_EDITAR_CREAR_TRADUCCION, pModelo);
+            }
+
+            return GnossResultOK();
         }
 
 
@@ -298,11 +309,12 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
         [HttpPost]
         [TypeFilter(typeof(PermisosAdministracion), Arguments = new object[] { new ulong[] { (ulong)PermisoComunidad.GestionarTraducciones } })]
         [TypeFilter(typeof(PermisosAdministracionEcosistema), Arguments = new object[] { new ulong[] { (ulong)PermisoEcosistema.GestionarTraduccionesEcosistema } })]
+        [TypeFilter(typeof(LimitarPeticionesAdministracion), Arguments = new object[] { 30, 120, 15 })]
         public ActionResult CrearEntradas()
         {
             //Recorremos todas las vistas en BBDD 
             VistaVirtualCN vistaVirtualCN = new VistaVirtualCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<VistaVirtualCN>(), mLoggerFactory);
-            DataWrapperVistaVirtual vistaVirtualDW = new DataWrapperVistaVirtual();
+            DataWrapperVistaVirtual vistaVirtualDW;
             if (EsAdministracionEcosistema)
             {
                 //Estamos en un ecosistema
@@ -397,7 +409,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
                     GestorParametroGeneral gestorParametroGeneral = new GestorParametroGeneral();
                     gestorParametroGeneral.ListaTextosPersonalizadosPersonalizacion = paramCN.ObtenerTextosPersonalizacionProyecto(mControladorBase.PersonalizacionEcosistemaID);
                     ParametroGeneralGBD gestorController = new ParametroGeneralGBD(mEntityContext);
-                    Guid personalizacionID = ((VistaVirtualProyecto)vistaVirtualDW.ListaVistaVirtualProyecto.Where(item => item.ProyectoID.Equals(ProyectoSeleccionado.Clave)).FirstOrDefault()).PersonalizacionID;
+                    Guid personalizacionID = vistaVirtualDW.ListaVistaVirtualProyecto.FirstOrDefault(item => item.ProyectoID.Equals(ProyectoSeleccionado.Clave)).PersonalizacionID;
 
                     foreach (string entradaObtenida in listaEntradasTexto)
                     {
@@ -421,6 +433,50 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
             return new RedirectResult($"{mControladorBase.UrlsSemanticas.ObtenerURLComunidad(UtilIdiomas, BaseURLIdioma, ProyectoSeleccionado.NombreCorto)}/{UtilIdiomas.GetText("URLSEM", "ADMINISTRARTRADUCCIONES")}");
         }
 
+        [HttpPost]
+        [TypeFilter(typeof(PermisosAdministracion), Arguments = new object[] { new ulong[] { (ulong)PermisoComunidad.GestionarTraducciones } })]
+        [TypeFilter(typeof(PermisosAdministracionEcosistema), Arguments = new object[] { new ulong[] { (ulong)PermisoEcosistema.GestionarTraduccionesEcosistema } })]
+        [TypeFilter(typeof(LimitarPeticionesAdministracion), Arguments = new object[] { 30, 120, 15 })]
+        public ActionResult TraducirTexto(string pTexto, string pIdiomaOrigen, List<string> pIdiomasDestino)
+        {
+            try
+            {
+                if (!ModelState.IsValid)
+                {
+                    return GnossResultERROR("Parámetros invalidos");
+                }
+
+                ProyectoCN proyectoCN = new ProyectoCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<ProyectoCN>(), mLoggerFactory);
+                TraductorProyecto traductorProyecto = proyectoCN.ObtenerTraductorDeProyecto(ProyectoSeleccionado.Clave);
+                List<TraduccionIdioma> traducciones = new List<TraduccionIdioma>();
+
+                foreach (string idiomaDestino in pIdiomasDestino)
+                {
+                    TranslationResponse respuesta = UtilTraducciones.TraducirTexto(pTexto, traductorProyecto.Endpoint, traductorProyecto.Token, "", traductorProyecto.Nivel, pIdiomaOrigen, idiomaDestino);
+
+                    if (!respuesta.Success)
+                    {
+                        return GnossResultERROR("Se ha producido un error durante la traduccion de la propiedad");
+                    }
+
+                    TraduccionIdioma traduccionIdioma = new TraduccionIdioma()
+                    {
+                        Idioma = idiomaDestino,
+                        Texto = respuesta.TranslatedText
+                    };
+                    traducciones.Add(traduccionIdioma);
+                }
+                
+
+                return Ok(traducciones);
+            }
+            catch (Exception ex)
+            {
+                mLoggingService.GuardarLogError(ex, _logger);
+                return GnossResultERROR("Ha surgido un error durante la traduccion del texto, intentelo más tarde");
+            }
+        }
+
         /// <summary>
         /// Elimina las entradas que están en la  BBDD pero no en la vista
         /// </summary>
@@ -439,7 +495,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
             catch (Exception ex)
             {
                 GuardarLogError(ex, "Se ha comprobado que tiene la integración continua configurada y no puede acceder al API de Integración Continua.");
-                return GnossResultERROR("Contacte con el administrador del Proyecto, no es posible atender la petición.");
+                return GnossResultERROR(ERROR_IC);
             }
 
             ProyectoAD proyAD = new ProyectoAD(mLoggingService, mEntityContext, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<ProyectoAD>(), mLoggerFactory);
@@ -452,7 +508,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
 
                 //Recorremos todas las vistas en BBDD 
                 VistaVirtualCN vistaVirtualCN = new VistaVirtualCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<VistaVirtualCN>(), mLoggerFactory);
-                DataWrapperVistaVirtual vistaVirtualDW = new DataWrapperVistaVirtual();
+                DataWrapperVistaVirtual vistaVirtualDW;
                 if (EsAdministracionEcosistema)
                 {
                     //Estamos en un ecosistema
@@ -553,7 +609,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
                         ParametroGeneralGBD gestorController = new ParametroGeneralGBD(mEntityContext);
                         GestorParametroGeneral gestorParametroGeneral = new GestorParametroGeneral();
                         gestorParametroGeneral.ListaTextosPersonalizadosPersonalizacion = paramCN.ObtenerTextosPersonalizacionProyecto(ProyectoSeleccionado.Clave);
-                        Guid personalizacionID = (vistaVirtualDW.ListaVistaVirtualProyecto.Where(item => item.ProyectoID.Equals(ProyectoSeleccionado.Clave)).FirstOrDefault()).PersonalizacionID;
+                        Guid personalizacionID = vistaVirtualDW.ListaVistaVirtualProyecto.FirstOrDefault(item => item.ProyectoID.Equals(ProyectoSeleccionado.Clave)).PersonalizacionID;
 
                         foreach (TextosPersonalizadosPersonalizacion filaTextosPersonalizadosPersonalizacion in gestorParametroGeneral.ListaTextosPersonalizadosPersonalizacion.Where(textoPersonalizado => textoPersonalizado.PersonalizacionID.Equals(personalizacionID)).ToList())
                         {
@@ -579,10 +635,10 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
 
                 if (iniciado && listaTraducciones.Count > 0)
                 {
-                    HttpResponseMessage resultado = InformarCambioAdministracion("Traducciones", JsonConvert.SerializeObject(listaTraducciones, Formatting.Indented));
+                    HttpResponseMessage resultado = InformarCambioAdministracion("Traducciones", JsonSerializer.Serialize(listaTraducciones, new JsonSerializerOptions { WriteIndented = true }));
                     if (!resultado.StatusCode.Equals(HttpStatusCode.OK))
                     {
-                        throw new Exception("Contacte con el administrador del Proyecto, no es posible atender la petición.");
+                        throw new BadHttpRequestException(ERROR_IC);
                     }
                 }
 
@@ -667,10 +723,10 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
 
                 if (iniciado && listaTraducciones.Count > 0)
                 {
-                    HttpResponseMessage resultado = InformarCambioAdministracion("Traducciones", JsonConvert.SerializeObject(listaTraducciones, Formatting.Indented));
+                    HttpResponseMessage resultado = InformarCambioAdministracion("Traducciones", JsonSerializer.Serialize(listaTraducciones, new JsonSerializerOptions { WriteIndented = true }));
                     if (!resultado.StatusCode.Equals(HttpStatusCode.OK))
                     {
-                        throw new Exception("Contacte con el administrador del Proyecto, no es posible atender la petición.");
+                        throw new BadHttpRequestException(ERROR_IC);
                     }
                 }
 
@@ -697,7 +753,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
         /// </summary>
         /// <param name="pHtml"></param>
         /// <returns></returns>
-        private List<string> BuscarTextoTraducir(string pHtml)
+        private static List<string> BuscarTextoTraducir(string pHtml)
         {
             List<string> listaEntradas = new List<string>();
             string comandoTraduccion = "Html.Translate(\"";
@@ -736,6 +792,51 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
                 indice = pHtml.IndexOf(comandoTraduccion, indice);
             }
             return listaEntradas;
+        }
+
+        /// <summary>
+        /// Carga los idiomas disponibles del traductor configurado de la comunidad.
+        /// </summary>
+        /// <param name="pModelo"></param>
+        private void ComprobarTraductorConfigurado(TextoTraducidoModel pModelo)
+        {
+            using ProyectoCN proyectoCN = new(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<ProyectoCN>(), mLoggerFactory);
+
+            if (!proyectoCN.ExisteTraductorDeProyecto(ProyectoSeleccionado.Clave))
+            {
+                return;
+            }
+
+            using ParametroAplicacionCN parametroCN = new ParametroAplicacionCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<ParametroAplicacionCN>(), mLoggerFactory);
+
+            pModelo.IdiomasDisponiblesTraducir = UtilTraducciones.ObtenerIdiomasBaseParaTraducir(ProyectoSeleccionado.Clave, parametroCN, proyectoCN, UtilIdiomas, mLoggingService, _logger);
+        }
+
+        /// <summary>
+        /// Comprueba que el TextoID y las traducciones no empiecen por caracteres que se puedan interpretar como inicio de fórmula.
+        /// </summary>
+        /// <param name="pModelo">Modelo de la traduccion a comprobar</param>
+        /// <returns>true si algún campo empieza por un caracter de fórmula peligroso</returns>
+        private bool ContieneCaracteresFormulaPeligrosos(TextoTraducidoModel pModelo)
+        {
+            bool contieneCaracteresPeligrosos = false;
+
+            if (UtilFicheros.EmpiezaPorCaracterFormulaPeligroso(pModelo.TextoID))
+            {
+                ModelState.AddModelError(string.Empty, UtilIdiomas.GetText("DEVTOOLS", "ERRORCARACTERESINVALIDOSTEXTID"));
+                contieneCaracteresPeligrosos = true;
+            }
+
+            if (pModelo.Traducciones != null)
+            {
+                foreach (TraduccionModel traduccion in pModelo.Traducciones.Where(item => UtilFicheros.EmpiezaPorCaracterFormulaPeligroso(item.Texto)))
+                {
+                    ModelState.AddModelError(string.Empty, UtilIdiomas.GetText("DEVTOOLS", "ERRORCARACTERESINVALIDOSTRADUCCION", UtilIdiomas.GetText("COMMON", $"IDIOMA{traduccion.Idioma.ToUpper()}")));
+                    contieneCaracteresPeligrosos = true;
+                }
+            }
+
+            return contieneCaracteresPeligrosos;
         }
 
         #region Guardar en BD
@@ -822,11 +923,11 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
                             }
                         }
 
-                        HttpResponseMessage resultado = InformarCambioAdministracion("Traducciones", JsonConvert.SerializeObject(new List<TranslatorModel>() { modeloTraduccion }, Formatting.Indented));
+                        HttpResponseMessage resultado = InformarCambioAdministracion("Traducciones", JsonSerializer.Serialize(new List<TranslatorModel>() { modeloTraduccion }, new JsonSerializerOptions { WriteIndented = true }));
 
                         if (!resultado.StatusCode.Equals(HttpStatusCode.OK))
                         {
-                            throw new BadHttpRequestException("Contacte con el administrador del Proyecto, no es posible atender la petición.");
+                            throw new BadHttpRequestException(ERROR_IC);
                         }
                     }
                     ControladorTraducciones.LimpiarCaches(personalizacionID, EsAdministracionEcosistema);

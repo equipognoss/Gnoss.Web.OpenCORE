@@ -97,7 +97,6 @@ using System.Text.Json;
 using System.Text.RegularExpressions;
 using System.Web;
 using System.Xml;
-using Universal.Common.Extensions;
 using static Es.Riam.Gnoss.Web.Controles.ControladorBase;
 
 namespace Es.Riam.Gnoss.Web.MVC.Controllers
@@ -122,8 +121,8 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
         protected IHostApplicationLifetime _appLifetime;
         private Web.Controles.Administracion.ControladorAdministrarVistas mControladorAdministrarVistas;
         private UtilGeneral mUtilGeneral;
-        protected Microsoft.AspNetCore.Hosting.IHostingEnvironment mEnv;
-        protected IActionContextAccessor mActionContextAccessor;
+        protected IWebHostEnvironment mEnv;
+        protected IHttpContextAccessor mHttpContextAccessor;
         protected IServiceScopeFactory mServiceScopeFactory;
         protected IOAuth mOAuth;
         private static object BLOQUEO_COMPROBACION_TRAZA = new object();
@@ -136,10 +135,10 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
         /// </summary>
         private bool mPaginaVisibleEnPrivada = false;
 
-        protected ControllerBaseWeb(LoggingService loggingService, ConfigService configService, EntityContext entityContext, RedisCacheWrapper redisCacheWrapper, GnossCache gnossCache, VirtuosoAD virtuosoAD, IHttpContextAccessor httpContextAccessor, ICompositeViewEngine viewEngine, EntityContextBASE entityContextBASE, Microsoft.AspNetCore.Hosting.IHostingEnvironment env, IActionContextAccessor actionContextAccessor, IUtilServicioIntegracionContinua utilServicioIntegracionContinua, IServicesUtilVirtuosoAndReplication servicesUtilVirtuosoAndReplication, IOAuth oAuth, IHostApplicationLifetime appLifetime, IAvailableServices availableServices, ILogger<ControllerBaseWeb> logger, ILoggerFactory loggerFactory)
+        protected ControllerBaseWeb(LoggingService loggingService, ConfigService configService, EntityContext entityContext, RedisCacheWrapper redisCacheWrapper, GnossCache gnossCache, VirtuosoAD virtuosoAD, IHttpContextAccessor httpContextAccessor, ICompositeViewEngine viewEngine, EntityContextBASE entityContextBASE, IWebHostEnvironment env, IUtilServicioIntegracionContinua utilServicioIntegracionContinua, IServicesUtilVirtuosoAndReplication servicesUtilVirtuosoAndReplication, IOAuth oAuth, IHostApplicationLifetime appLifetime, IAvailableServices availableServices, ILogger<ControllerBaseWeb> logger, ILoggerFactory loggerFactory)
             : base(httpContextAccessor, entityContext, loggingService, configService, redisCacheWrapper, virtuosoAD, gnossCache, viewEngine, utilServicioIntegracionContinua, servicesUtilVirtuosoAndReplication, env, entityContextBASE, availableServices, logger, loggerFactory)
         {
-            mActionContextAccessor = actionContextAccessor;
+            mHttpContextAccessor = httpContextAccessor;
             mEnv = env;
             mEntityContextBASE = entityContextBASE;
             mServicesUtilVirtuosoAndReplication = servicesUtilVirtuosoAndReplication;
@@ -459,6 +458,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
             ViewBag.Perfil = Perfil;
 
             CargarPermisosViewBag();
+            CargarEntornoActualComunidad();
 
             if (string.IsNullOrEmpty(RequestParams("callback")) && !ViewBag.ControllerName.Equals("Widget"))
             {
@@ -1930,7 +1930,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
             {
                 ProyectoCL proyCL = new ProyectoCL(mEntityContext, mLoggingService, mRedisCacheWrapper, mConfigService, mVirtuosoAD, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<ProyectoCL>(), mLoggerFactory);
                 registro = (AutenticationModel)proyCL.ObtenerFormularioRegistroMVC(ProyectoSeleccionado.Clave);
-                RegistroController registroController = new RegistroController(mLoggingService, mConfigService, mEntityContext, mRedisCacheWrapper, mGnossCache, mVirtuosoAD, mHttpContextAccessor, mViewEngine, mEntityContextBASE, mEnv, mActionContextAccessor, mUtilServicioIntegracionContinua, mServicesUtilVirtuosoAndReplication, mOAuth, _appLifetime, null, pAvailableServices, mLoggerFactory.CreateLogger<RegistroController>(), mLoggerFactory);
+                RegistroController registroController = new RegistroController(mLoggingService, mConfigService, mEntityContext, mRedisCacheWrapper, mGnossCache, mVirtuosoAD, mHttpContextAccessor, mViewEngine, mEntityContextBASE, mEnv, mUtilServicioIntegracionContinua, mServicesUtilVirtuosoAndReplication, mOAuth, _appLifetime, null, pAvailableServices, mLoggerFactory.CreateLogger<RegistroController>(), mLoggerFactory);
                 if (registro == null)
                 {
                     registro = new AutenticationModel();
@@ -3136,7 +3136,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
         /// <returns>Redirección a la página 404</returns>
         public ActionResult RedireccionarAPaginaNoEncontrada(string pStatusCode)
         {
-            return ViewError404(new ErrorController(mLoggingService, mConfigService, mEntityContext, mRedisCacheWrapper, mGnossCache, mVirtuosoAD, mHttpContextAccessor, mViewEngine, mEntityContextBASE, mEnv, mActionContextAccessor, mUtilServicioIntegracionContinua, mServicesUtilVirtuosoAndReplication, mOAuth, _appLifetime, mAvailableServices, mLoggerFactory.CreateLogger<ErrorController>(), mLoggerFactory).Error404(this, false));
+            return ViewError404(new ErrorController(mLoggingService, mConfigService, mEntityContext, mRedisCacheWrapper, mGnossCache, mVirtuosoAD, mHttpContextAccessor, mViewEngine, mEntityContextBASE, mEnv, mUtilServicioIntegracionContinua, mServicesUtilVirtuosoAndReplication, mOAuth, _appLifetime, mAvailableServices, mLoggerFactory.CreateLogger<ErrorController>(), mLoggerFactory).Error404(this, false));
         }
 
         public void CargarJSGraficasGoogle()
@@ -3386,6 +3386,18 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
             if (string.IsNullOrEmpty(RequestParams("new-community-wizard")))
             {
                 ViewBag.PermisosPaginas = PermisosPaginasAdministracion;
+            }
+        }
+
+        protected void CargarEntornoActualComunidad()
+        {
+            if (mEnv.IsProduction())
+            {
+                Comunidad.EntornoEsPro = true;
+            }
+            else if (mEnv.IsStaging())
+            {
+                Comunidad.EntornoEsPre = true;
             }
         }
 
@@ -4152,7 +4164,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
             {
                 string url = Request.Path;
 
-                RouteValueDictionary ruta = mActionContextAccessor.ActionContext.RouteData.Values;
+                RouteValueDictionary ruta = HttpContext.GetRouteData().Values;
 
                 string[] partesUrl = url.Split("/", StringSplitOptions.RemoveEmptyEntries);
                 foreach (string parteUrl in partesUrl.Where(item => ruta.Values.Contains(item)))
@@ -4271,7 +4283,8 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                     if (!mEnv.IsDevelopment() || (mEnv.IsDevelopment() && !pUrlRedirect.Contains("depuracion")))
                     {
                         sbMessage.AppendLine($"1. COMPROBAR REDIRECT VALIDO - pUrlRedirect: {pUrlRedirect}");
-                        string hostRedirect = new Uri(pUrlRedirect).Host;
+                        Uri uriRedirect = new Uri(pUrlRedirect);
+                        string hostRedirect = $"{uriRedirect.Scheme}://{uriRedirect.Host}";
                         sbMessage.AppendLine($"\t1.1 hostRedirect: {hostRedirect}");
                         string hostProyecto = new Uri(ProyectoSeleccionado.UrlPropia(IdiomaUsuario)).Host;
                         sbMessage.AppendLine($"\t1.2 hostProyecto: {hostProyecto} - ProyectoSeleccionado: {ProyectoSeleccionado.Clave}");
@@ -4279,7 +4292,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                         sbMessage.AppendLine($"\t1.2 hostProyecto: {hostProyecto} - ProyectoSeleccionado: {ProyectoSeleccionado.Clave}");
                         sbMessage.AppendLine($"\t1.3 urlRedirectLimpio: {urlRedirectLimpio}");
                         sbMessage.AppendLine($"\t1.3 DominioPaginasAdministracion: {DominioPaginasAdministracion}");
-                        if ((!hostRedirect.Equals(hostProyecto) || !urlRedirectLimpio.Equals(pUrlRedirect)) && (!string.IsNullOrEmpty(DominioPaginasAdministracion) && !DominioPaginasAdministracion.Contains(hostRedirect)))
+                        if (!UtilServicios.ComprobarDominioPermitidoCORS(hostRedirect) || !urlRedirectLimpio.Equals(pUrlRedirect))
                         {
                             sbMessage.AppendLine($"\t1.4 UrlRedirect no valido: {urlRedirectLimpio}");
                             mLoggingService.GuardarLog(sbMessage.ToString(), mLogger);
@@ -4905,7 +4918,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
             {
                 TypeNameHandling = TypeNameHandling.All,
                 ReferenceLoopHandling = ReferenceLoopHandling.Ignore,
-                TypeNameAssemblyFormat = System.Runtime.Serialization.Formatters.FormatterAssemblyStyle.Full
+                TypeNameAssemblyFormatHandling = TypeNameAssemblyFormatHandling.Full
             };
             Dictionary<string, object> dic = ViewData.Where(k => !k.Key.Equals("LoggingService")).ToDictionary(k => k.Key, v => v.Value);
             string jsonViewData = JsonConvert.SerializeObject(dic, jsonSerializerSettingsVB);
@@ -5315,9 +5328,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                             string secret = filaParametroGoogleRecaptchaSecret.Valor;
                             mensaje += "\r\nHay fila google recaptcha secret: " + secret;
 
-                            WebClient client = new WebClient();
-                            string reply = client.DownloadString(string.Format("https://www.google.com/recaptcha/api/siteverify?secret={0}&response={1}", secret, response));
-                            client.Dispose();
+                            string reply = UtilWeb.WebRequestStringData(UtilWeb.Metodo.GET, string.Format("https://www.google.com/recaptcha/api/siteverify?secret={0}&response={1}", secret, response), null);
 
                             mensaje += "\r\nPetición OK: " + reply;
 

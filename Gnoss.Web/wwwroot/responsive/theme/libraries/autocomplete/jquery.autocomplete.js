@@ -1340,6 +1340,9 @@ $.fn.selection = function(start, end) {
 };
 })(jQuery);
 
+function escaparHtml(texto) {
+	return $('<div>').text(texto).html();
+}
 /**
  * Pintar los Tags que se desean seleccionar para (por ejemplo un recurso) para que sean mostrados en el contenedor correspondiente.
  * @param {any} textBox
@@ -1366,7 +1369,8 @@ function PintarTags(textBox, allowCapitalLetters = false)
             for(var i=0; i<tags.length; i++)
             {
 				// Convertirla a minúsculas. No se permitirán TAGS repetidas (Tags guardadas en minúsculas)
-                var tagNombre = tags[i].trim();
+				var tagNombre = tags[i].trim();
+				tagNombre = escaparHtml(tagNombre)
                 var tagNombreEncode = Encoder.htmlEncode(tagNombre);                
                 //var estaYaAgregada = textBoxHack.val().trim().indexOf(',' + tagNombre + ',') != -1;
 				//estaYaAgregada = estaYaAgregada || textBoxHack.val().trim().substring(0, tagNombre.length + 1) == tagNombre + ',';

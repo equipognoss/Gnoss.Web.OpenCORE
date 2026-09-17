@@ -9,6 +9,7 @@ Variables
 
 @model ConfiguracionOCModel
 @{
+    CommunityModel Comunidad = Html.GetComunidad();
     Layout = "~/Views/Shared/Layout/_Layout_ConfigOC.cshtml";
     string ontologiaID = Html.RequestParams("ontologiaID", Html.ViewContext.HttpContext);
 
@@ -378,7 +379,7 @@ Variables
 
 @* Carga de operativa *@
 @section operativaScript{
-    <script type="text/javascript" src="@Html.GetBaseUrlStatic()/responsive/theme/logic/configuracion_oc.js?v=@Html.GetVersion()"></script>
+    <script type="text/javascript" src="@Html.GetBaseUrlStatic()/responsive/theme/logic/configuracion_oc.js?v=@Comunidad.VersionJSEcosistema"></script>
     <script type="text/javascript">
         
         (function ($) {

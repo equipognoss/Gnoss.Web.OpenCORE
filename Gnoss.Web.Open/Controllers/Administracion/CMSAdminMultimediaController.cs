@@ -1,5 +1,4 @@
-﻿using DotNetOpenAuth.Messaging;
-using Es.Riam.AbstractsOpen;
+﻿using Es.Riam.AbstractsOpen;
 using Es.Riam.Gnoss.AD.EntityModel;
 using Es.Riam.Gnoss.AD.EntityModelBASE;
 using Es.Riam.Gnoss.AD.ServiciosGenerales;
@@ -14,31 +13,24 @@ using Es.Riam.Gnoss.Util.Configuracion;
 using Es.Riam.Gnoss.Util.General;
 using Es.Riam.Gnoss.UtilServiciosWeb;
 using Es.Riam.Gnoss.Web.Controles.ServicioImagenesWrapper;
-using Es.Riam.Gnoss.Web.Controles.ServicioImagenesWrapper.Model;
-using Es.Riam.Gnoss.Web.MVC.Filters;
 using Es.Riam.Gnoss.Web.MVC.Models;
 using Es.Riam.Gnoss.Web.MVC.Models.Administracion;
-using Es.Riam.Gnoss.Web.MVC.Models.ViewModels;
 using Es.Riam.Interfaces.InterfacesOpen;
 using Es.Riam.InterfacesOpen;
 using Es.Riam.Util;
-using Es.Riam.Web.Util;
 using Gnoss.Web.Open.Filters;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Mvc.Infrastructure;
 using Microsoft.AspNetCore.Mvc.ViewEngines;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
-using Serilog.Core;
 using System;
 using System.Collections.Generic;
 using System.Data;
 using System.Data.Entity.Core.Metadata.Edm;
 using System.IO;
 using System.Linq;
-using System.Web;
 
 namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
 {
@@ -46,8 +38,8 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
 	{
         private ILogger mlogger;
         private ILoggerFactory mLoggerFactory;
-        public CMSAdminMultimediaController(LoggingService loggingService, ConfigService configService, EntityContext entityContext, RedisCacheWrapper redisCacheWrapper, GnossCache gnossCache, VirtuosoAD virtuosoAD, IHttpContextAccessor httpContextAccessor, ICompositeViewEngine viewEngine, EntityContextBASE entityContextBASE, Microsoft.AspNetCore.Hosting.IHostingEnvironment env, IActionContextAccessor actionContextAccessor, IUtilServicioIntegracionContinua utilServicioIntegracionContinua, IServicesUtilVirtuosoAndReplication servicesUtilVirtuosoAndReplication, IOAuth oAuth, IHostApplicationLifetime appLifetime, IAvailableServices availableServices, ILogger<CMSAdminMultimediaController> logger, ILoggerFactory loggerFactory)
-            : base(loggingService, configService, entityContext, redisCacheWrapper, gnossCache, virtuosoAD, httpContextAccessor, viewEngine, entityContextBASE, env, actionContextAccessor, utilServicioIntegracionContinua, servicesUtilVirtuosoAndReplication, oAuth, appLifetime, availableServices, logger, loggerFactory)
+        public CMSAdminMultimediaController(LoggingService loggingService, ConfigService configService, EntityContext entityContext, RedisCacheWrapper redisCacheWrapper, GnossCache gnossCache, VirtuosoAD virtuosoAD, IHttpContextAccessor httpContextAccessor, ICompositeViewEngine viewEngine, EntityContextBASE entityContextBASE, IWebHostEnvironment env, IUtilServicioIntegracionContinua utilServicioIntegracionContinua, IServicesUtilVirtuosoAndReplication servicesUtilVirtuosoAndReplication, IOAuth oAuth, IHostApplicationLifetime appLifetime, IAvailableServices availableServices, ILogger<CMSAdminMultimediaController> logger, ILoggerFactory loggerFactory)
+            : base(loggingService, configService, entityContext, redisCacheWrapper, gnossCache, virtuosoAD, httpContextAccessor, viewEngine, entityContextBASE, env,utilServicioIntegracionContinua, servicesUtilVirtuosoAndReplication, oAuth, appLifetime, availableServices, logger, loggerFactory)
         {
             mlogger = logger;
             mLoggerFactory = loggerFactory;
@@ -106,7 +98,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
                 bool subidaCorrecta = CargarFichero();     
                 if (!subidaCorrecta)
                 {
-                    return GnossResultERROR(ViewBag.TextoSubida);
+                    return GnossResultERROR(UtilIdiomas.GetText("DEVTOOLS", "ERRORSUBIRFICHEROCMSMULTIMEDIA"));
                 }
             }
 
@@ -195,7 +187,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
                                 string rutaFichero = $"{UtilArchivos.ContentImagenes}/{ruta}";
                                 ServicioImagenes servicioImagenes = new ServicioImagenes(mLoggingService, mConfigService, mLoggerFactory.CreateLogger<ServicioImagenes>(), mLoggerFactory);
                                 servicioImagenes.Url = UrlIntragnossServicios;
-                                cargado = servicioImagenes.AgregarFichero(buffer1.ToArray(), nombre, extensionArchivo, rutaFichero);
+                                cargado = servicioImagenes.AgregarFichero(buffer1.ToArray(), nombre, extensionArchivo, rutaFichero, true);
                                 InformarCambioAdministracionCMS("ObjetosMultimedia", Convert.ToBase64String(buffer1), fichero.FileName);
                             }
                             catch (Exception ex)
@@ -208,7 +200,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
                     else
                     {
                         HashSet<string> extensionesPermitidas = ExtensionesImagenesPermitidas.ToHashSet();
-                        extensionesPermitidas.AddRange(ExtensionesDocumentosPermitidos.ToList());
+                        extensionesPermitidas.UnionWith(ExtensionesDocumentosPermitidos);
                         
                         ViewBag.TextoSubida = $"La extensión {extensionArchivo} no está incluida entre las extensiones permitidas: {string.Join(", ", extensionesPermitidas)}. Revisa las extensiones configuradas desde la administración.";
                         cargado = false;
@@ -420,6 +412,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
                         mExtensionesImagenesPermitidas.Add(".jpeg");
                         mExtensionesImagenesPermitidas.Add(".png");
                         mExtensionesImagenesPermitidas.Add(".gif");
+                        mExtensionesImagenesPermitidas.Add(".webp");
                     }
                 }
                 return mExtensionesImagenesPermitidas;

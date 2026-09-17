@@ -3,7 +3,7 @@
 @{
     CommunityModel comunidad = Html.GetComunidad();
     HeaderModel cabecera = Html.GetCabecera();
-    //Html.GetListaCSS().Add(Html.GetBaseUrlStatic() + "/cssNuevo/administracion.css?v=" + Html.GetVersion());
+    //Html.GetListaCSS().Add(Html.GetBaseUrlStatic() + "/cssNuevo/administracion.css?v=" + Comunidad.VersionCSSEcosistema);
 
     Layout = "~/Views/Shared/Layout/_Layout_Admin.cshtml";
 

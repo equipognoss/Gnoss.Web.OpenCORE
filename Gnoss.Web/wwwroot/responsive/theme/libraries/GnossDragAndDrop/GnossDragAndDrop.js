@@ -412,7 +412,8 @@
                 file.name.includes('data:image') || 
                 file.name.includes('.jpg') ||
                 file.name.includes('.png') ||
-                file.name.includes('.gif');
+                file.name.includes('.gif') ||
+                file.name.includes('.webp');
         };
 
         /**
@@ -423,6 +424,7 @@
         plugin._isImageUrl = function (file) {
             return file.name.includes('http') && (file.name.includes('.jpg') ||
                 file.name.includes('.png') ||
+                file.name.includes('.webp') ||
                 file.name.includes('.gif'));
         };
 

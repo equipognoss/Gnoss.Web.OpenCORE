@@ -2,8 +2,8 @@
 @{
     Html.SetBodyClass(" layout04 full ");
     @* Comentado este fichero para que no les sobreescriban css: 01-06-2021 *@
-    @* Html.GetListaJS().Add("defer/"+Html.GetBaseUrlStatic() + "/jsNuevo/jquery.demo.js?v=" + Html.GetVersion()); *@
-    @*Html.GetListaCSS().Add(Html.GetBaseUrlStatic() + "/cssNuevo/demo.css?v=" + Html.GetVersion());*@
+    @* Html.GetListaJS().Add("defer/"+Html.GetBaseUrlStatic() + "/jsNuevo/jquery.demo.js?v=" + Comunidad.VersionJSEcosistema); *@
+    @*Html.GetListaCSS().Add(Html.GetBaseUrlStatic() + "/cssNuevo/demo.css?v=" + Comunidad.VersionCSSEcosistema);*@
 
     if ((short)ViewBag.TipoUbicacionCMSPaginaActual == (short)Es.Riam.Gnoss.AD.CMS.TipoUbicacionCMS.HomeProyecto || (short)ViewBag.TipoUbicacionCMSPaginaActual == (short)Es.Riam.Gnoss.AD.CMS.TipoUbicacionCMS.HomeProyectoMiembro || (short)ViewBag.TipoUbicacionCMSPaginaActual == (short)Es.Riam.Gnoss.AD.CMS.TipoUbicacionCMS.HomeProyectoNoMiembro)
     {

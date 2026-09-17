@@ -1,12 +1,8 @@
-﻿using Es.Riam.AbstractsOpen;
-using Es.Riam.Gnoss.AD.EntityModel;
-using Es.Riam.Gnoss.AD.Virtuoso;
+﻿using Es.Riam.Gnoss.AD.EntityModel;
 using Es.Riam.Gnoss.CL.ParametrosAplicacion;
 using Es.Riam.Gnoss.CL;
 using Es.Riam.Gnoss.Elementos.Notificacion;
-using Es.Riam.Gnoss.Logica.ParametroAplicacion;
 using Es.Riam.Gnoss.Recursos;
-using Es.Riam.Gnoss.Servicios.ControladoresServiciosWeb;
 using Es.Riam.Gnoss.Util.Configuracion;
 using Es.Riam.Gnoss.Util.General;
 using Es.Riam.Gnoss.Web.MVC.Models.Administracion;
@@ -14,34 +10,28 @@ using Es.Riam.Gnoss.Web.MVC.Models.Routes;
 using Gnoss.Web.Services;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Mvc.Filters;
 using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Net;
-using System.Runtime.Serialization.Formatters.Binary;
 using System.Threading.Tasks;
-using System.Web;
 using Es.Riam.Gnoss.Logica.ServiciosGenerales;
-using Newtonsoft.Json;
 using Es.Riam.Gnoss.AD.ServiciosGenerales;
 using Microsoft.Extensions.Logging;
-using Serilog.Core;
-using Es.Riam.Gnoss.Web.MVC.Controllers.Administracion;
 using Es.Riam.Util;
+using System.Text.Json;
 
 namespace Gnoss.Web.Middlewares
 {
     public class ErrorMiddleware
     {
         private readonly RequestDelegate _next;
-        private readonly IHostingEnvironment _env;
+        private readonly IWebHostEnvironment _env;
         private ConfigService _configService;
         private ILogger mlogger;
         private ILoggerFactory mLoggerFactory;
-        public ErrorMiddleware(RequestDelegate next, IHostingEnvironment env, ConfigService configService, ILogger<ErrorMiddleware> logger, ILoggerFactory loggerFactory)
+        public ErrorMiddleware(RequestDelegate next, IWebHostEnvironment env, ConfigService configService, ILogger<ErrorMiddleware> logger, ILoggerFactory loggerFactory)
         { 
             _next = next;
             _env = env;
@@ -108,7 +98,7 @@ namespace Gnoss.Web.Middlewares
             excep.Add("Error", ex.Message);
             excep.Add("ErrorTrace", ex.StackTrace);
             var stream = new MemoryStream();
-            string json = JsonConvert.SerializeObject(excep);
+            string json = JsonSerializer.Serialize(excep);
             var writer = new StreamWriter(stream, System.Text.Encoding.UTF8);
             writer.Write(json);
             writer.Flush();

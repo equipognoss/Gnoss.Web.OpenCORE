@@ -133,6 +133,13 @@ Variables
                     <span>@Html.Raw(Html.GetText("FLUJOS", "AVISOESTASENHISTORICOMEJORA", FichaDocumento.ImprovementCardLink))</span>
                 </div>
             }
+            @if (FichaDocumento.TranslationInProgress)
+            {
+                <div role="alert" class="alert alert-warning mt-2 d-flex" id="avisoMejora-info">
+                    <span class="material-icons mr-3">construction</span>
+                    <span>@Html.Raw(Html.GetText("DEVTOOLS", "AVISOECURSOENPROCESODETRADUCCION", FichaDocumento.ImprovementCardLink))</span>
+                </div>
+            }
 
             @* Mostrar útiles del recurso *@
             @if (!Model.HideUtilsResource)
@@ -331,10 +338,10 @@ Variables
                                 Guid proyID = Comunidad.Key;
                                 string UrlIntragnoss = Model.UrlIntragnoss;
 
-                                Html.GetListaJS().Add(Html.GetBaseUrlStatic() + "/jsNuevo/grafos/js/arbor.js?v=" + Html.GetVersion());
-                                Html.GetListaJS().Add(Html.GetBaseUrlStatic() + "/jsNuevo/grafos/js/grafo.gnoss.js?v=" + Html.GetVersion());
-                                Html.GetListaJS().Add(Html.GetBaseUrlStatic() + "/jsNuevo/grafos/js/jquery.qtip.min.js?v=" + Html.GetVersion());
-                                Html.GetListaCSS().Add(Html.GetBaseUrlStatic() + "/jsNuevo/grafos/css/jquery.qtip.min.css?v=" + Html.GetVersion());
+                                Html.GetListaJS().Add(Html.GetBaseUrlStatic() + "/jsNuevo/grafos/js/arbor.js?v=" + Comunidad.VersionJSEcosistema);
+                                Html.GetListaJS().Add(Html.GetBaseUrlStatic() + "/jsNuevo/grafos/js/grafo.gnoss.js?v=" + Comunidad.VersionJSEcosistema);
+                                Html.GetListaJS().Add(Html.GetBaseUrlStatic() + "/jsNuevo/grafos/js/jquery.qtip.min.js?v=" + Comunidad.VersionJSEcosistema);
+                                Html.GetListaCSS().Add(Html.GetBaseUrlStatic() + "/jsNuevo/grafos/css/jquery.qtip.min.css?v=" + Comunidad.VersionCSSEcosistema);
 
                                 int count = 1;
                                 foreach (ResourceModel.GrafoRecurso grafo in FichaDocumento.Graphs)

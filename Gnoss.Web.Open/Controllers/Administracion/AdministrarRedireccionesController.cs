@@ -21,6 +21,7 @@ using Microsoft.AspNetCore.Mvc.ViewEngines;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text.RegularExpressions;
 using Es.Riam.InterfacesOpen;
 using Microsoft.Extensions.Hosting;
 using Gnoss.Web.Open.Filters;
@@ -133,18 +134,22 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
     /// </summary>
     public class AdministrarRedireccionesController : ControllerAdministrationWeb
 	{
-        private ILogger mlogger;
-        private ILoggerFactory mLoggerFactory;
-        public AdministrarRedireccionesController(LoggingService loggingService, ConfigService configService, EntityContext entityContext, RedisCacheWrapper redisCacheWrapper, GnossCache gnossCache, VirtuosoAD virtuosoAD, IHttpContextAccessor httpContextAccessor, ICompositeViewEngine viewEngine, EntityContextBASE entityContextBASE, Microsoft.AspNetCore.Hosting.IHostingEnvironment env, IActionContextAccessor actionContextAccessor, IUtilServicioIntegracionContinua utilServicioIntegracionContinua, IServicesUtilVirtuosoAndReplication servicesUtilVirtuosoAndReplication, IOAuth oAuth, IHostApplicationLifetime appLifetime, IAvailableServices availableServices, ILogger<AdministrarRedireccionesController> logger, ILoggerFactory loggerFactory)
-            : base(loggingService, configService, entityContext, redisCacheWrapper, gnossCache, virtuosoAD, httpContextAccessor, viewEngine, entityContextBASE, env, actionContextAccessor, utilServicioIntegracionContinua, servicesUtilVirtuosoAndReplication, oAuth, appLifetime, availableServices, logger, loggerFactory)
+        private readonly ILogger _logger;
+        private readonly ILoggerFactory mLoggerFactory;
+        public AdministrarRedireccionesController(LoggingService loggingService, ConfigService configService, EntityContext entityContext, RedisCacheWrapper redisCacheWrapper, GnossCache gnossCache, VirtuosoAD virtuosoAD, IHttpContextAccessor httpContextAccessor, ICompositeViewEngine viewEngine, EntityContextBASE entityContextBASE, IWebHostEnvironment env, IUtilServicioIntegracionContinua utilServicioIntegracionContinua, IServicesUtilVirtuosoAndReplication servicesUtilVirtuosoAndReplication, IOAuth oAuth, IHostApplicationLifetime appLifetime, IAvailableServices availableServices, ILogger<AdministrarRedireccionesController> logger, ILoggerFactory loggerFactory)
+            : base(loggingService, configService, entityContext, redisCacheWrapper, gnossCache, virtuosoAD, httpContextAccessor, viewEngine, entityContextBASE, env, utilServicioIntegracionContinua, servicesUtilVirtuosoAndReplication, oAuth, appLifetime, availableServices, logger, loggerFactory)
         {
-            mlogger = logger;
+            _logger = logger;
             mLoggerFactory = loggerFactory;
         }
 
         #region Miembros
 
         private ManageRedirectionsViewModel mPaginaModel = null;
+
+        private readonly Regex RegexRutaOrigenValida = new Regex(@"^[\p{L}\p{N}\-_/\.~%]+$", RegexOptions.Compiled);
+        private readonly Regex RegexUrlDestinoValida = new Regex(@"^[^\s<>]+$", RegexOptions.Compiled);
+        private readonly string[] EsquemasUrlDestinoPermitidos = { "http", "https" };
 
         #endregion
 
@@ -199,7 +204,8 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
         /// <returns>ActionResult</returns>
         [HttpPost]
 		[TypeFilter(typeof(PermisosAdministracion), Arguments = new object[] { new ulong[] { (ulong)PermisoComunidad.GestionarRedirecciones } })]
-		public ActionResult Guardar(List<ManageRedirectionsViewModel.RedirectionModel> ListaRedirecciones)
+        [TypeFilter(typeof(LimitarPeticionesAdministracion), Arguments = new object[] { 30, 120, 15 })]
+        public ActionResult Guardar(List<ManageRedirectionsViewModel.RedirectionModel> ListaRedirecciones)
         {
             GuardarLogAuditoria();
             string errores = "";
@@ -213,50 +219,9 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
             {
                 foreach (ManageRedirectionsViewModel.RedirectionModel redVista in ListaRedirecciones)
                 {
-                    if (string.IsNullOrEmpty(redVista.OriginalUrl))
-                    {
-                        errores = "URLORIGEN VACIO";
-                    }
-                    else if (redVista.RedirectionType.Equals(ManageRedirectionsViewModel.RedirectionType.Direct))
-                    {
-                        if (string.IsNullOrEmpty(redVista.DestinationUrl))
-                        {
-                            errores = "URLDESTINO VACIO";
-                        }
-                    }
-                    else if (redVista.RedirectionType.Equals(ManageRedirectionsViewModel.RedirectionType.Parameterised))
-                    {
-                        if (string.IsNullOrEmpty(redVista.ParameterName))
-                        {
-                            errores = "NOMPARAMETRO VACIO";
-                        }
-                        else
-                        {
-                            if (redVista.ParameterValues != null)
-                            {
-                                foreach (ManageRedirectionsViewModel.ParameterValue valoresParam in redVista.ParameterValues)
-                                {
-                                    if (string.IsNullOrEmpty(valoresParam.Value) || string.IsNullOrEmpty(valoresParam.DestinationUrl))
-                                    {
-                                        errores = "CAMPOPARAMETROS VACIO";
-                                        break;
-                                    }
-                                }
-                            }
-                            else
-                            {
-                                errores = "SIN PARAMETROS";
-                            }
-                        }
-                    }
-                    else
-                    {
-                        errores = "TIPOREDIRECCION INCORRECTA";
-                    }
-
+                    errores = ComprobarErroresCamposRedireccion(redVista);
                     if (!string.IsNullOrEmpty(errores))
                     {
-                        errores += "|||" + redVista.Key;
                         break;
                     }
                 }
@@ -270,12 +235,8 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
 				}
                 catch (Exception ex)
                 {
-                    GuardarLogError(ex);
+                    mLoggingService.GuardarLogError(ex, _logger);
                     return GnossResultERROR(UtilIdiomas.GetText("COMADMINREDIRECCIONES", "ERRORGUARDARBD"));
-                }
-                finally
-                {
-
                 }
 
                 return GnossResultOK();
@@ -371,6 +332,99 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
 
         #region Métodos privados
 
+        /// <summary>
+        /// Valida que el campo UrlOrigen sea una ruta relativa formada únicamente por el subconjunto de caracteres admitido.
+        /// </summary>
+        private bool EsRutaOrigenValida(string pRuta)
+        {
+            if (string.IsNullOrWhiteSpace(pRuta) || !RegexRutaOrigenValida.IsMatch(pRuta) || pRuta.Split('/').Any(segmento => segmento.Equals(".") || segmento.Equals("..")))
+            {
+                return false;
+            }
+
+            return !Uri.TryCreate(pRuta, UriKind.Absolute, out _);
+        }
+
+        /// <summary>
+        /// Valida que el campo UrlDestino sea una URL absoluta completa con esquema http o https.
+        /// </summary>
+        private bool EsUrlDestinoValida(string pUrl)
+        {
+            if (string.IsNullOrWhiteSpace(pUrl) || !RegexUrlDestinoValida.IsMatch(pUrl))
+            {
+                return false;
+            }
+
+            return Uri.TryCreate(pUrl, UriKind.Absolute, out Uri uri) && EsquemasUrlDestinoPermitidos.Contains(uri.Scheme, StringComparer.OrdinalIgnoreCase);
+        }
+
+        private string ComprobarErroresCamposRedireccion(ManageRedirectionsViewModel.RedirectionModel modelo)
+        {
+            var error = ObtenerCodigoError(modelo);
+
+            if (string.IsNullOrEmpty(error))
+                return string.Empty;
+
+            return $"{UtilIdiomas.GetText("COMADMINREDIRECCIONES", error)}|||{modelo.Key}";
+        }
+
+        private string ObtenerCodigoError(ManageRedirectionsViewModel.RedirectionModel pModelo)
+        {
+            if (string.IsNullOrWhiteSpace(pModelo.OriginalUrl))
+                return "ERRORURLORIGENVACIA";
+
+            if (!EsRutaOrigenValida(pModelo.OriginalUrl))
+                return "ERRORURLORIGENNOVALIDA";
+
+            switch (pModelo.RedirectionType)
+            {
+                case ManageRedirectionsViewModel.RedirectionType.Direct:
+                    return ValidarRedireccionDirecta(pModelo);
+
+                case ManageRedirectionsViewModel.RedirectionType.Parameterised:
+                    return ValidarRedireccionParametrizada(pModelo);
+
+                default:
+                    return "ERRORSINTIPOREDIRECCION";
+            }
+        }
+
+        private string ValidarRedireccionDirecta(ManageRedirectionsViewModel.RedirectionModel modelo)
+        {
+            if (string.IsNullOrWhiteSpace(modelo.DestinationUrl))
+                return "ERRORURLDESTINOVACIA";
+
+            if (!EsUrlDestinoValida(modelo.DestinationUrl))
+                return "ERRORURLDESTINONOVALIDA";
+
+            return string.Empty;
+        }
+
+        private string ValidarRedireccionParametrizada(ManageRedirectionsViewModel.RedirectionModel modelo)
+        {
+            if (string.IsNullOrWhiteSpace(modelo.ParameterName))
+                return "ERRORNOMPARAMETROVACIO";
+
+            if (modelo.ParameterValues == null)
+                return "ERRORSINPARAMETROS";
+
+            foreach (var parametro in modelo.ParameterValues)
+            {
+                if (string.IsNullOrWhiteSpace(parametro.Value) ||
+                    string.IsNullOrWhiteSpace(parametro.DestinationUrl))
+                {
+                    return "ERRORCAMPOPARAMETROSVACIO";
+                }
+
+                if (!EsUrlDestinoValida(parametro.DestinationUrl))
+                {
+                    return "ERRORCAMPOPARAMETROSNOVALIDO";
+                }
+            }
+
+            return string.Empty;
+        }
+
         private void GuardarRedirecciones(List<ManageRedirectionsViewModel.RedirectionModel> pListaRedireccionesVista)
         {           
             ProyectoCN proyCN = new ProyectoCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<ProyectoCN>(), mLoggerFactory);
@@ -382,7 +436,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
 
                 foreach (ManageRedirectionsViewModel.RedirectionModel redireccionVista in pListaRedireccionesVista)
                 {
-                    RedireccionRegistroRuta redireccionRegistroRuta = listaRedireccionesBD.Where(item => item.RedireccionID.Equals(redireccionVista.Key)).FirstOrDefault();
+                    RedireccionRegistroRuta redireccionRegistroRuta = listaRedireccionesBD.FirstOrDefault(item => item.RedireccionID.Equals(redireccionVista.Key));
                     if (redireccionVista.DeleteRedirection)
                     {
                         proyCN.BorrarRedireccionRegistroRuta(redireccionVista.Key);
@@ -447,7 +501,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
                 foreach (ManageRedirectionsViewModel.ParameterValue parametroValorVista in pRedireccionRegistroRuta.ParameterValues)
                 {
                     bool esNueva = false;
-                    RedireccionValorParametro redireccionValorParametroBD = listaRedireccionesValorParametroBD.Where(item => item.ValorParametro.Equals(parametroValorVista.Value)).FirstOrDefault();
+                    RedireccionValorParametro redireccionValorParametroBD = listaRedireccionesValorParametroBD.FirstOrDefault(item => item.ValorParametro.Equals(parametroValorVista.Value));
 
                     if (redireccionValorParametroBD == null)
                     {
@@ -475,7 +529,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
             }
             else
             {
-                RedireccionValorParametro redireccionDirecta = listaRedireccionesValorParametroBD.Where(item => string.IsNullOrEmpty(item.ValorParametro)).FirstOrDefault();
+                RedireccionValorParametro redireccionDirecta = listaRedireccionesValorParametroBD.FirstOrDefault(item => string.IsNullOrEmpty(item.ValorParametro));
                 if (redireccionDirecta != null)
                 {
                     //Si existe no se marca para eliminar posteriormente

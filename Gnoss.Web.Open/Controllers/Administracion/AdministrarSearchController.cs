@@ -1,17 +1,14 @@
 ﻿using Es.Riam.AbstractsOpen;
 using Es.Riam.Gnoss.AD.BASE_BD.Model;
 using Es.Riam.Gnoss.AD.EntityModel;
-using Es.Riam.Gnoss.AD.EntityModel.Models.Faceta;
 using Es.Riam.Gnoss.AD.EntityModelBASE;
 using Es.Riam.Gnoss.AD.ServiciosGenerales;
 using Es.Riam.Gnoss.AD.Virtuoso;
 using Es.Riam.Gnoss.CL;
 using Es.Riam.Gnoss.Logica.Parametro;
-using Es.Riam.Gnoss.Logica.ServiciosGenerales;
 using Es.Riam.Gnoss.RabbitMQ;
 using Es.Riam.Gnoss.Util.Configuracion;
 using Es.Riam.Gnoss.Util.General;
-using Es.Riam.Gnoss.Web.MVC.Filters;
 using Es.Riam.Gnoss.Web.MVC.Models.Administracion;
 using Es.Riam.Interfaces.InterfacesOpen;
 using Es.Riam.InterfacesOpen;
@@ -20,20 +17,17 @@ using Gnoss.Web.Open.Filters;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Mvc.Infrastructure;
 using Microsoft.AspNetCore.Mvc.ViewEngines;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
-using Newtonsoft.Json;
-using Serilog.Core;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net;
 using System.Net.Http;
 using System.Text;
+using System.Text.Json;
 using System.Text.RegularExpressions;
-using Universal.Common.Extensions;
 using static Es.Riam.Util.UtilWeb;
 
 namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
@@ -45,8 +39,8 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
 	{
         private ILogger mlogger;
         private ILoggerFactory mLoggerFactory;
-        public AdministrarSearchController(LoggingService loggingService, ConfigService configService, EntityContext entityContext, RedisCacheWrapper redisCacheWrapper, GnossCache gnossCache, VirtuosoAD virtuosoAD, IHttpContextAccessor httpContextAccessor, ICompositeViewEngine viewEngine, EntityContextBASE entityContextBASE, Microsoft.AspNetCore.Hosting.IHostingEnvironment env, IActionContextAccessor actionContextAccessor, IUtilServicioIntegracionContinua utilServicioIntegracionContinua, IServicesUtilVirtuosoAndReplication servicesUtilVirtuosoAndReplication, IOAuth oAuth, IHostApplicationLifetime appLifetime, IAvailableServices availableServices, ILogger<AdministrarSearchController> logger, ILoggerFactory loggerFactory)
-            : base(loggingService, configService, entityContext, redisCacheWrapper, gnossCache, virtuosoAD, httpContextAccessor, viewEngine, entityContextBASE, env, actionContextAccessor, utilServicioIntegracionContinua, servicesUtilVirtuosoAndReplication, oAuth, appLifetime, availableServices, logger, loggerFactory)
+        public AdministrarSearchController(LoggingService loggingService, ConfigService configService, EntityContext entityContext, RedisCacheWrapper redisCacheWrapper, GnossCache gnossCache, VirtuosoAD virtuosoAD, IHttpContextAccessor httpContextAccessor, ICompositeViewEngine viewEngine, EntityContextBASE entityContextBASE, IWebHostEnvironment env,IUtilServicioIntegracionContinua utilServicioIntegracionContinua, IServicesUtilVirtuosoAndReplication servicesUtilVirtuosoAndReplication, IOAuth oAuth, IHostApplicationLifetime appLifetime, IAvailableServices availableServices, ILogger<AdministrarSearchController> logger, ILoggerFactory loggerFactory)
+            : base(loggingService, configService, entityContext, redisCacheWrapper, gnossCache, virtuosoAD, httpContextAccessor, viewEngine, entityContextBASE, env,utilServicioIntegracionContinua, servicesUtilVirtuosoAndReplication, oAuth, appLifetime, availableServices, logger, loggerFactory)
         {
             mlogger = logger;
             mLoggerFactory = loggerFactory;
@@ -87,7 +81,8 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
         /// <returns>ActionResult</returns>
         [HttpPost]
 		[TypeFilter(typeof(PermisosAdministracion), Arguments = new object[] { new ulong[] { (ulong)PermisoComunidad.GestionarSugerenciasDeBusqueda } })]
-		public ActionResult Guardar(AdministrarSearchViewModel pOptions)
+        [TypeFilter(typeof(LimitarPeticionesAdministracion), Arguments = new object[] { 30, 120, 15 })]
+        public ActionResult Guardar(AdministrarSearchViewModel pOptions)
         {
             GuardarLogAuditoria();
             bool iniciado = false;
@@ -107,7 +102,8 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
                 string[] trozosAuto = autocompletar.Split(',', StringSplitOptions.RemoveEmptyEntries);
                 for (int i = 0; i < trozosAuto.Length; i++)
                 {
-                    listaAutocompletar.Add(trozosAuto[i]);
+                    string autocompletarTag = UtilCadenas.LimpiarInyeccionCodigo(trozosAuto[i]);
+                    listaAutocompletar.Add(autocompletarTag);
                 }
             }
             
@@ -119,7 +115,8 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
                 string[] trozosTxt = txtLibre.Split(',', StringSplitOptions.RemoveEmptyEntries);
                 for (int i = 0; i < trozosTxt.Length; i++)
                 {
-                    listaTxtLibre.Add(trozosTxt[i]);
+                    string txtLibreTag = UtilCadenas.LimpiarInyeccionCodigo(trozosTxt[i]);
+                    listaTxtLibre.Add(txtLibreTag);
                 }
             }
             
@@ -136,7 +133,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
                     ConfigSearchModel configSearchModel = new ConfigSearchModel();
                     configSearchModel.ConfigSearch = txtLibre;
                     configSearchModel.ConfigAutocompletar = autocompletar;
-                    HttpResponseMessage resultado = InformarCambioAdministracion("ConfigSearch", JsonConvert.SerializeObject(configSearchModel, Formatting.Indented));
+                    HttpResponseMessage resultado = InformarCambioAdministracion("ConfigSearch", JsonSerializer.Serialize(configSearchModel, new JsonSerializerOptions { WriteIndented = true }));
                     if (!resultado.StatusCode.Equals(HttpStatusCode.OK))
                     {
                         throw new Exception("Contacte con el administrador del Proyecto, no es posible atender la petición.");
@@ -165,7 +162,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
             {
                 if (Regex.IsMatch(propertyValue,re))
                 {
-                    respuesta = WebRequest(Metodo.POST, url, data, pRequest);
+                    respuesta = WebRequestStringData(Metodo.POST, url, data, pRequest);
                     if (!respuesta.Equals("") && respuesta.Split(Environment.NewLine, StringSplitOptions.RemoveEmptyEntries).Where(item => item.Equals(propertyValue.Split("@@@").Last())).Count() > 0)
                     {
                         return GnossResultOK();
@@ -178,7 +175,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
             }
             else
             {
-                respuesta = WebRequest(Metodo.POST, url, data, pRequest);
+                respuesta = WebRequestStringData(Metodo.POST, url, data, pRequest);
                 if (!respuesta.Equals("") && respuesta.Split(Environment.NewLine, StringSplitOptions.RemoveEmptyEntries).Where(item => item.Equals(propertyValue)).Count() > 0)
                 {
                     return GnossResultOK();
@@ -245,7 +242,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
             {
                 using (RabbitMQClient rabbitMQ = new RabbitMQClient(RabbitMQClient.BD_SERVICIOS_WIN, colaRabbit, mLoggingService, mConfigService, mLoggerFactory.CreateLogger<RabbitMQClient>(), mLoggerFactory, exchange, colaRabbit))
                 {
-                    rabbitMQ.AgregarElementoACola(JsonConvert.SerializeObject(pFilaCola.ItemArray));
+                    rabbitMQ.AgregarElementoACola(Newtonsoft.Json.JsonConvert.SerializeObject(pFilaCola.ItemArray));
                 }
             }
         }

@@ -1,3 +1,4 @@
+using DocumentFormat.OpenXml.InkML;
 using Es.Riam.AbstractsOpen;
 using Es.Riam.Gnoss.AD.EntityModel;
 using Es.Riam.Gnoss.AD.ServiciosGenerales;
@@ -12,19 +13,20 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.FileProviders;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Primitives;
 using Serilog;
 using System;
+using System.Diagnostics;
 using System.IO;
+using System.Runtime.InteropServices.JavaScript;
 
 namespace Gnoss.Web
 {
+    //comentario prueba
     public class Program
     {
-        private static Serilog.ILogger _startupLogger;
+        private static readonly Serilog.ILogger _startupLogger = LoggingService.ConfigurarBasicStartupSerilog().CreateBootstrapLogger().ForContext<Program>();
         public static void Main(string[] args)
         {
-            _startupLogger = LoggingService.ConfigurarBasicStartupSerilog().CreateBootstrapLogger().ForContext<Program>();
             try
             {
                 var host = CreateHostBuilder(args).Build();
@@ -54,12 +56,20 @@ namespace Gnoss.Web
                 .ConfigureServices((context, services) =>
                 {
                     LoggingService.SuscribirCambios(context, _startupLogger);
-                    _startupLogger.Information("Suscripción a cambios de configuración registrada");
+                    _startupLogger.Information("Suscripci�n a cambios de configuraci�n registrada");
                 })
                 .ConfigureWebHostDefaults(webBuilder =>
-                {
+                {                    
                     webBuilder.UseStartup<Startup>();
-                    webBuilder.ConfigureKestrel(options => options.Limits.MaxRequestBodySize = 1000000000); // Maximo tama�o de subida ~ 1Gb
+                    webBuilder.ConfigureKestrel((context, options) => {
+                        options.Limits.MaxRequestBodySize = 1000000000;
+#if !DEBUG
+                        var apiPort = context.Configuration.GetValue("ApiPort", 8080);
+                        var managementPort = context.Configuration.GetValue("ManagementPort", 8081);
+                        options.ListenAnyIP(apiPort);
+                        options.ListenAnyIP(managementPort);
+#endif
+                    }); // Maximo tama�o de subida ~ 1Gb
                     AppContext.SetSwitch("Npgsql.EnableLegacyTimestampBehavior", true);
                 });
 

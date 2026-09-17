@@ -17,18 +17,14 @@ using Gnoss.Web.Open.Filters;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Mvc.Infrastructure;
 using Microsoft.AspNetCore.Mvc.ViewEngines;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
-using Newtonsoft.Json;
-using Serilog.Core;
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Net;
 using System.Net.Http;
-using System.Web;
+using System.Text.Json;
 
 
 namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
@@ -40,8 +36,8 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
 	{
         private ILogger mlogger;
         private ILoggerFactory mLoggerFactory;
-        public AdministrarParametrosBusquedaPersonalizadosController(LoggingService loggingService, ConfigService configService, EntityContext entityContext, RedisCacheWrapper redisCacheWrapper, GnossCache gnossCache, VirtuosoAD virtuosoAD, IHttpContextAccessor httpContextAccessor, ICompositeViewEngine viewEngine, EntityContextBASE entityContextBASE, Microsoft.AspNetCore.Hosting.IHostingEnvironment env, IActionContextAccessor actionContextAccessor, IUtilServicioIntegracionContinua utilServicioIntegracionContinua, IServicesUtilVirtuosoAndReplication servicesUtilVirtuosoAndReplication, IOAuth oAuth, IHostApplicationLifetime appLifetime, IAvailableServices availableServices, ILogger<AdministrarParametrosBusquedaPersonalizadosController> logger, ILoggerFactory loggerFactory)
-            : base(loggingService, configService, entityContext, redisCacheWrapper, gnossCache, virtuosoAD, httpContextAccessor, viewEngine, entityContextBASE, env, actionContextAccessor, utilServicioIntegracionContinua, servicesUtilVirtuosoAndReplication, oAuth, appLifetime, availableServices, logger, loggerFactory)
+        public AdministrarParametrosBusquedaPersonalizadosController(LoggingService loggingService, ConfigService configService, EntityContext entityContext, RedisCacheWrapper redisCacheWrapper, GnossCache gnossCache, VirtuosoAD virtuosoAD, IHttpContextAccessor httpContextAccessor, ICompositeViewEngine viewEngine, EntityContextBASE entityContextBASE, IWebHostEnvironment env, IUtilServicioIntegracionContinua utilServicioIntegracionContinua, IServicesUtilVirtuosoAndReplication servicesUtilVirtuosoAndReplication, IOAuth oAuth, IHostApplicationLifetime appLifetime, IAvailableServices availableServices, ILogger<AdministrarParametrosBusquedaPersonalizadosController> logger, ILoggerFactory loggerFactory)
+            : base(loggingService, configService, entityContext, redisCacheWrapper, gnossCache, virtuosoAD, httpContextAccessor, viewEngine, entityContextBASE, env,utilServicioIntegracionContinua, servicesUtilVirtuosoAndReplication, oAuth, appLifetime, availableServices, logger, loggerFactory)
         {
             mlogger = logger;
             mLoggerFactory = loggerFactory;
@@ -99,7 +95,8 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
         [HttpPost]
 		[TypeFilter(typeof(PermisosAdministracion), Arguments = new object[] { new ulong[] { (ulong)PermisoComunidad.GestionarParametrosDeBusquedaPersonalizados } })]
 		[TypeFilter(typeof(AccesoIntegracionAttribute))]
-		public ActionResult Guardar(List<ParametroBusquedaPersonalizadoModel> ListaPestanyas)
+        [TypeFilter(typeof(LimitarPeticionesAdministracion), Arguments = new object[] { 30, 120, 15 })]
+        public ActionResult Guardar(List<ParametroBusquedaPersonalizadoModel> ListaPestanyas)
         {
             GuardarLogAuditoria();
             bool iniciado = false;
@@ -118,7 +115,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
                 proyCN.ActualizarParametrosBusquedaPersonalizados(organizacionID, ProyectoSeleccionado.Clave, ListaPestanyas);
                 if (iniciado)
                 {
-                    HttpResponseMessage resultado = InformarCambioAdministracion("SearchPersonalizado", JsonConvert.SerializeObject(ListaPestanyas, Formatting.Indented));
+                    HttpResponseMessage resultado = InformarCambioAdministracion("SearchPersonalizado", JsonSerializer.Serialize(ListaPestanyas, new JsonSerializerOptions { WriteIndented = true }));
                     if (!resultado.StatusCode.Equals(HttpStatusCode.OK))
                     {
                         throw new Exception("Contacte con el administrador del Proyecto, no es posible atender la petición.");

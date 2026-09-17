@@ -154,23 +154,12 @@ int actionsAllowedCounter = 0;
                         @* Revisar cada acción para comprobar si se disponen de acciones disponibles para mostrar o no hamburgesa de acciones *@
                         @if (Model.Actions != null)
                         {
-                            foreach (System.Reflection.PropertyInfo propiedad in Model.Actions.GetType().GetProperties())
+                            foreach (string actionName in UtilVistas.GetActiveBooleanProperties(Model.Actions, "ActionsModel"))
                             {
-                                @* Comprobar que la propiedad sea de tipo ActionsModel *@
-                                var tipoAction = propiedad.DeclaringType.Name;
-                                var dataType = propiedad.PropertyType.Name;
-
-                                if (tipoAction == "ActionsModel" && dataType == "Boolean")
+                                @* "FollowingProfile" ya se muestra en un botón, así que no cuenta como acción del desplegable. UrlFollow/UrlUnfollow no llegan aquí porque no son booleanas *@
+                                if (actionName != "FollowingProfile")
                                 {
-                                    @* Comprobar valor Booleano y sumar contador si es true *@
-                                    Boolean allowAction = (Boolean)propiedad.GetValue(Model.Actions);
-                                    if (allowAction == true) {
-                                        @* Comprobar si la acción es "Follow" o "Unfollow" ya que están presentes en botones y no haría falta *@
-                                        if ( (propiedad.Name != "UrlFollow" || propiedad.Name != "UrlUnfollow") && propiedad.Name != "FollowingProfile" )
-                                        {
-                                            actionsAllowedCounter += 1;
-                                        }
-                                    }
+                                    actionsAllowedCounter += 1;
                                 }
                             }
                         }

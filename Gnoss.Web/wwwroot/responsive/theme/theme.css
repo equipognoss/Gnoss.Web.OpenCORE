@@ -1717,7 +1717,7 @@ span.material-icons.expand[aria-expanded=true]::before {font-family: 'Material I
 .resource-list .resource .middle-wrap .content-wrap .description-wrap p { font-size: 0.933rem; line-height: 1.47; color: var(--c-texto-medio); margin-bottom: 15px; overflow-wrap: anywhere; }
 .resource-list .resource .middle-wrap .content-wrap .description-wrap p:last-child { margin-bottom: 0; }
 .resource-list .resource .middle-wrap .content-wrap .image-wrap { padding-right: 30px;}
-.resource-list .resource .middle-wrap .content-wrap .image-wrap .image { height: 160px; width: 180px;}
+.resource-list .resource .middle-wrap .content-wrap .image-wrap .image { height: var(--resource-image-height, 160px); width: var(--resource-image-width, 180px);}
 .resource-list .resource .middle-wrap .content-wrap .image-wrap .image img { height: 100%; width: 100%; object-fit: cover; }
 .resource-list .resource .middle-wrap .content-properties { margin-top: 8px}
 .resource-list .resource .middle-wrap .content-properties p { margin-bottom: 8px; font-size: .8rem; font-weight: 300;}

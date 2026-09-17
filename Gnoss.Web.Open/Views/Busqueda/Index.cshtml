@@ -41,7 +41,7 @@ string FiltroOrdenSeleccionado = Model.FilterOrderSelected;
 
     if (IdentidadActual.IsProyectAdmin && ViewContext.RouteData.Values["admin"] != null && ViewContext.RouteData.Values["admin"].Equals("true"))
     {
-        Html.GetListaCSS().Add(Html.GetBaseUrlStatic() + "/cssNuevo/administracion.css?v=" + Html.GetVersion());
+        Html.GetListaCSS().Add(Html.GetBaseUrlStatic() + "/cssNuevo/administracion.css?v=" + Comunidad.VersionCSSEcosistema);
 
     }
 }

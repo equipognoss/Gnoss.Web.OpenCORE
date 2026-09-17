@@ -509,6 +509,18 @@
                                 </li>
                             }
 
+                            @* Opcion Traducir un recurso semantico *@
+                            @if (acciones.Translate)
+                            {
+                                <li>
+                                    <a id="op_Translate" onclick="DeployActionInModalPanel('@fichaRecurso.ListActions.UrlLoadActionTranslate', this, 'modal-dinamic-content', '');"
+                                       class="item-dropdown" data-toggle="modal" data-target="#modal-container">
+                                        <span class="material-icons">translate</span>
+                                        <span class="texto">@Html.GetText("PERFILBASERECURSOSFICHA", "TRADUCIR")</span>
+                                    </a>
+                                </li>
+                            }
+
                             @* Opción Bloquear o no comentarios en un recurso *@
                             @if (acciones.BlockComments)
                             {

@@ -6,7 +6,6 @@ using Es.Riam.Gnoss.Util.Configuracion;
 using Es.Riam.Gnoss.Util.General;
 using Es.Riam.Gnoss.Web.Controles;
 using Es.Riam.Gnoss.Web.MVC;
-using Es.Riam.Util;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
@@ -19,7 +18,7 @@ namespace Gnoss.Web.Middlewares
 {
     public class GnossMiddleware
     {
-        private IHostingEnvironment mEnv;
+        private IWebHostEnvironment mEnv;
         private readonly RequestDelegate _next;
         private ConfigService mConfigService;
         public static bool RecalculandoRutas { get; set; }
@@ -27,7 +26,7 @@ namespace Gnoss.Web.Middlewares
         private ILogger mlogger;
         private ILoggerFactory mLoggerFactory;
 
-        public GnossMiddleware(RequestDelegate next, IHostingEnvironment env, ConfigService configService, ILogger<GnossMiddleware> logger, ILoggerFactory loggerFactory)
+        public GnossMiddleware(RequestDelegate next, IWebHostEnvironment env, ConfigService configService, ILogger<GnossMiddleware> logger, ILoggerFactory loggerFactory)
         {
             _next = next;
             mEnv = env;
@@ -36,14 +35,14 @@ namespace Gnoss.Web.Middlewares
             mLoggerFactory = loggerFactory;
         }
 
-        public async Task Invoke(HttpContext context, LoggingService loggingService, GnossCache gnossCache, VirtuosoAD virtuosoAD, IHttpContextAccessor httpContextAccessor, UtilTelemetry utilTelemetry, EntityContext entityContext, RedisCacheWrapper redisCacheWrapper, RouteConfig routeConfig, IServicesUtilVirtuosoAndReplication servicesUtilVirtuosoAndReplication)
+        public async Task Invoke(HttpContext context, LoggingService loggingService, GnossCache gnossCache, VirtuosoAD virtuosoAD, IHttpContextAccessor httpContextAccessor, EntityContext entityContext, RedisCacheWrapper redisCacheWrapper, RouteConfig routeConfig, IServicesUtilVirtuosoAndReplication servicesUtilVirtuosoAndReplication)
         {
             ControladorBase controladorBase = new ControladorBase(loggingService, mConfigService, entityContext, redisCacheWrapper, gnossCache, virtuosoAD, httpContextAccessor, servicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<ControladorBase>(), mLoggerFactory);
             Application_BeginRequest(entityContext, context, routeConfig, loggingService, redisCacheWrapper);
             AddHeaders(context);
             await _next(context);
             Application_PostRequestHandlerExecute(context, servicesUtilVirtuosoAndReplication, gnossCache);
-            Application_EndRequest(context, loggingService, controladorBase, utilTelemetry);
+            Application_EndRequest(context, loggingService, controladorBase);
         }
 
         protected void Application_BeginRequest(EntityContext pEntityContext, HttpContext pHttpContextAccessor, RouteConfig pRouteConfig, LoggingService pLoggingService, RedisCacheWrapper pRedisCacheWrapper)
@@ -80,7 +79,7 @@ namespace Gnoss.Web.Middlewares
             }
         }
 
-        protected void Application_EndRequest(HttpContext pHttpContextAccessor, LoggingService pLoggingService, ControladorBase pControladorBase, UtilTelemetry pUtilTelemetry)
+        protected void Application_EndRequest(HttpContext pHttpContextAccessor, LoggingService pLoggingService, ControladorBase pControladorBase)
         {
             try
             {

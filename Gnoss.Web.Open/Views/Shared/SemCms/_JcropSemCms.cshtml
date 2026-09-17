@@ -1,8 +1,9 @@
 ﻿@model SemanticResourceModel
 
 @{
-    Html.GetListaJS().Add(Html.GetBaseUrlStatic() + "/jsNuevo/JCROP/js/jquery.Jcrop.min.js?v=" + Html.GetVersion());
-    Html.GetListaCSS().Add(Html.GetBaseUrlStatic() + "/jsNuevo/JCROP/css/jquery.Jcrop.css?v=" + Html.GetVersion());
+    CommunityModel Comunidad = Html.GetComunidad();
+    Html.GetListaJS().Add(Html.GetBaseUrlStatic() + "/jsNuevo/JCROP/js/jquery.Jcrop.min.js?v=" + Comunidad.VersionJSEcosistema);
+    Html.GetListaCSS().Add(Html.GetBaseUrlStatic() + "/jsNuevo/JCROP/css/jquery.Jcrop.css?v=" + Comunidad.VersionCSSEcosistema);
 }
 
 <div id="panContenedorJcrop" style="display:none;">
@@ -13,6 +14,16 @@
                 </div>
                 <div class="contenedorImg jCrop" style="z-index: 10001; background-color: #373737; height: 540px; left: 0px; position: absolute; top: 0px; width: 540px; margin-top: 100px; margin-left:300px">
                     <img ID="imagenJCROP" style="max-width: 540px; max-height: 540px;" src=""/>
+
+                    <div style="display: flex; gap: 5px; margin: 5px;">
+                        <a style="text-decoration: none; color: white; padding: 5px; background: #555; display: block; cursor: pointer; flex: 1; text-align: center; font-size: 12px;"
+                           onclick="aplicarRecortePredefinido('cuadrado')">&#9634; 1:1</a>
+                        <a style="text-decoration: none; color: white; padding: 5px; background: #555; display: block; cursor: pointer; flex: 1; text-align: center; font-size: 12px;"
+                           onclick="aplicarRecortePredefinido('paisaje')">&#9644; 16:9</a>
+                        <a style="text-decoration: none; color: white; padding: 5px; background: #555; display: block; cursor: pointer; flex: 1; text-align: center; font-size: 12px;"
+                           onclick="aplicarRecortePredefinido('retrato')">&#9645; 4:3</a>
+                    </div>
+
                     <label>
                         <a style="text-decoration: none; color: white; padding: 5px; border: grey; background: grey; display: block; margin-top: 5px; margin-left: 5px;" id="btnAceptarFoto" onclick="javascript:guardarSeleccion();">@Html.GetText("COMMON", "GUARDAR")</a>
                     </label>
@@ -197,14 +208,15 @@
         GnossPeticionAjax(urlPaginaActual + '/savejcrop', args, true).done(function (data) {
             var img = contenedorJcrop.find('.contenedorImg img')[0];
             var rutaImagen = img.src;
-            var extensionDoc = rutaImagen.substr(rutaImagen.lastIndexOf('.'));
+            //var extensionDoc = webp;
+            //var extensionDoc = rutaImagen.substr(rutaImagen.lastIndexOf('.'));
 
             if(documentoVersionID != "00000000-0000-0000-0000-000000000000")
             {
-                AgregarArchivoComoPropiedad('txtHackArchivoSelecc', documentoVersionID, 'txtHackValorImgRepresentante', 'imagenes/Documentos/imgsem/', 'VideosSemanticos/', 'doclinks/', data, extensionDoc);
+                AgregarArchivoComoPropiedad('txtHackArchivoSelecc', documentoVersionID, 'txtHackValorImgRepresentante', 'imagenes/Documentos/imgsem/', 'VideosSemanticos/', 'doclinks/', data, '.webp');
             }
             else{
-                AgregarArchivoComoPropiedad('txtHackArchivoSelecc', documentoID, 'txtHackValorImgRepresentante', 'imagenes/Documentos/imgsem/', 'VideosSemanticos/', 'doclinks/', data, extensionDoc);
+                AgregarArchivoComoPropiedad('txtHackArchivoSelecc', documentoID, 'txtHackValorImgRepresentante', 'imagenes/Documentos/imgsem/', 'VideosSemanticos/', 'doclinks/', data, '.webp');
             }
                         
         }).fail(function (data) {
@@ -255,6 +267,52 @@
         jcrop_api.destroy();
 
         contenedorJcrop.hide();
+    }
+
+    function aplicarRecortePredefinido(tipo) {
+        if (!jcrop_api) return;
+
+        var imgJcrop = contenedorJcrop.find('.contenedorImg img')[0];
+
+        var anchoImg = $(imgJcrop).width();
+        var altoImg  = $(imgJcrop).height();
+
+        // Límite real en píxeles de pantalla (tamMaximo ya está escalado en JcropearSelectivo)
+        var limiteW = (tamMaximo[0] > 0) ? tamMaximo[0] : anchoImg;
+        var limiteH = (tamMaximo[1] > 0) ? tamMaximo[1] : altoImg;
+
+        var ratios = {
+            'cuadrado': 1 / 1,
+            'paisaje':  16 / 9,
+            'retrato':  4 / 3
+        };
+
+        var ratio = ratios[tipo];
+        var w, h, x, y;
+
+        // Mayor recorte posible respetando el ratio Y el tamaño máximo permitido
+        if (limiteW / limiteH > ratio) {
+            h = limiteH;
+            w = Math.round(h * ratio);
+        } else {
+            w = limiteW;
+            h = Math.round(w / ratio);
+        }
+
+        // Aseguramos que no supera el límite en ningún eje
+        if (w > limiteW) { w = limiteW; h = Math.round(w / ratio); }
+        if (h > limiteH) { h = limiteH; w = Math.round(h * ratio); }
+
+        // Centrar en la imagen
+        x = Math.round((anchoImg - w) / 2);
+        y = Math.round((altoImg  - h) / 2);
+
+        // Clamp para que no se salga de los bordes
+        x = Math.max(0, Math.min(x, anchoImg - w));
+        y = Math.max(0, Math.min(y, altoImg  - h));
+
+        jcrop_api.setSelect([x, y, x + w, y + h]);
+        showCoords({ x: x, y: y, w: w, h: h });
     }
 
 </script>

@@ -1,9 +1,9 @@
 ﻿@model Es.Riam.Gnoss.Web.MVC.Models.Administracion.AdministrarPreferenciaProyectoViewModel
 @{
-    Html.GetListaCSS().Add(Html.GetBaseUrlStatic() + "/cssNuevo/administracion.css?v=" + Html.GetVersion());
+    CommunityModel Comunidad = Html.GetComunidad();
+    Html.GetListaCSS().Add(Html.GetBaseUrlStatic() + "/cssNuevo/administracion.css?v=" + Comunidad.VersionCSSEcosistema);
     Layout = "~/Views/Shared/Layout/_Layout_AnteriorEAD.cshtml";
 
-    CommunityModel Comunidad = Html.GetComunidad();
     HeaderModel cabecera = Html.GetCabecera();
 
     string CategoriasSeleccionadas = "";

@@ -23,15 +23,12 @@ using Es.Riam.Gnoss.Util.General;
 using Es.Riam.Gnoss.Web.Controles.Administracion;
 using Es.Riam.Gnoss.Web.Controles.Documentacion;
 using Es.Riam.Gnoss.Web.MVC.Controles;
-using Es.Riam.Gnoss.Web.MVC.Filters;
 using Es.Riam.Gnoss.Web.MVC.Models;
-using Es.Riam.Gnoss.Web.MVC.Models.ViewModels;
 using Es.Riam.Interfaces;
 using Es.Riam.Interfaces.InterfacesOpen;
 using Es.Riam.InterfacesOpen;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Mvc.Infrastructure;
 using Microsoft.AspNetCore.Mvc.ViewEngines;
 using Microsoft.EntityFrameworkCore;
 using System;
@@ -44,17 +41,10 @@ using Microsoft.Extensions.Hosting;
 using Es.Riam.Gnoss.Web.Controles.ServicioImagenesWrapper;
 using Es.Riam.Util;
 using System.IO;
-using Es.Riam.Gnoss.RabbitMQ;
-using Newtonsoft.Json;
-using Es.Riam.Gnoss.Web.RSS.Redifusion;
-using Es.Riam.Gnoss.Web.MVC.Models.Tesauro;
-using DocumentFormat.OpenXml.Bibliography;
 using Gnoss.Web.Open.Filters;
-using StackExchange.Redis;
 using Es.Riam.Gnoss.UtilServiciosWeb;
 using Microsoft.Extensions.Logging;
-using Serilog.Core;
-using Es.Riam.Gnoss.Elementos.Amigos;
+using Microsoft.AspNetCore.Hosting;
 namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
 {
 	/// <summary>
@@ -179,8 +169,8 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
 	{
         private ILogger mlogger;
         private ILoggerFactory mLoggerFactory;
-        public AdministrarCategoriasController(LoggingService loggingService, ConfigService configService, EntityContext entityContext, RedisCacheWrapper redisCacheWrapper, GnossCache gnossCache, VirtuosoAD virtuosoAD, IHttpContextAccessor httpContextAccessor, ICompositeViewEngine viewEngine, EntityContextBASE entityContextBASE, Microsoft.AspNetCore.Hosting.IHostingEnvironment env, IActionContextAccessor actionContextAccessor, IUtilServicioIntegracionContinua utilServicioIntegracionContinua, IServicesUtilVirtuosoAndReplication servicesUtilVirtuosoAndReplication, IOAuth oAuth, IHostApplicationLifetime appLifetime, IAvailableServices availableServices, ILogger<AdministrarCategoriasController> logger, ILoggerFactory loggerFactory)
-			: base(loggingService, configService, entityContext, redisCacheWrapper, gnossCache, virtuosoAD, httpContextAccessor, viewEngine, entityContextBASE, env, actionContextAccessor, utilServicioIntegracionContinua, servicesUtilVirtuosoAndReplication, oAuth, appLifetime, availableServices, logger, loggerFactory)
+        public AdministrarCategoriasController(LoggingService loggingService, ConfigService configService, EntityContext entityContext, RedisCacheWrapper redisCacheWrapper, GnossCache gnossCache, VirtuosoAD virtuosoAD, IHttpContextAccessor httpContextAccessor, ICompositeViewEngine viewEngine, EntityContextBASE entityContextBASE, IWebHostEnvironment env,IUtilServicioIntegracionContinua utilServicioIntegracionContinua, IServicesUtilVirtuosoAndReplication servicesUtilVirtuosoAndReplication, IOAuth oAuth, IHostApplicationLifetime appLifetime, IAvailableServices availableServices, ILogger<AdministrarCategoriasController> logger, ILoggerFactory loggerFactory)
+			: base(loggingService, configService, entityContext, redisCacheWrapper, gnossCache, virtuosoAD, httpContextAccessor, viewEngine, entityContextBASE, env,utilServicioIntegracionContinua, servicesUtilVirtuosoAndReplication, oAuth, appLifetime, availableServices, logger, loggerFactory)
 		{
             mlogger = logger;
             mLoggerFactory = loggerFactory;
@@ -361,7 +351,8 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
 		/// </summary>
 		/// <returns>ActionResult</returns>
 		[TypeFilter(typeof(PermisosContenidos), Arguments = new object[] { new ulong[] { (ulong)PermisoContenidos.VerCategorias, (ulong)PermisoContenidos.EliminarCategoria, (ulong)PermisoContenidos.AnyadirCategoria, (ulong)PermisoContenidos.ModificarCategoria } })]
-		public ActionResult MostrarAccion(string typeAction)
+        [TypeFilter(typeof(LimitarPeticionesAdministracion), Arguments = new object[] { 30, 120, 15 })]
+        public ActionResult MostrarAccion(string typeAction)
 		{
 			CargarPermisosCategoriasViewBag();
 			typeAction = typeAction.Replace('-', '_');
@@ -511,11 +502,13 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
 			}
 		}
 
-		/// <summary>
-		/// Ejecuta la acción solicitada
-		/// </summary>
-		/// <returns>ActionResult</returns>
-		public ActionResult EjecutarAccion(string typeAction, IFormFile pImagenCategoria, string name, Guid parentKey)
+        /// <summary>
+        /// Ejecuta la acción solicitada
+        /// </summary>
+        /// <returns>ActionResult</returns>
+        [TypeFilter(typeof(PermisosContenidos), Arguments = new object[] { new ulong[] { (ulong)PermisoContenidos.VerCategorias, (ulong)PermisoContenidos.EliminarCategoria, (ulong)PermisoContenidos.AnyadirCategoria, (ulong)PermisoContenidos.ModificarCategoria } })]
+        [TypeFilter(typeof(LimitarPeticionesAdministracion), Arguments = new object[] { 30, 120, 15 })]
+        public ActionResult EjecutarAccion(string typeAction, IFormFile pImagenCategoria, string name, Guid parentKey)
 		{
 			GuardarLogAuditoria();
 			CargarPermisosCategoriasViewBag();
@@ -606,7 +599,8 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
 		/// </summary>
 		/// <returns>ActionResult</returns>
 		[TypeFilter(typeof(PermisosContenidos), Arguments = new object[] { new ulong[] { (ulong)PermisoContenidos.EliminarCategoria, (ulong)PermisoContenidos.AnyadirCategoria, (ulong)PermisoContenidos.ModificarCategoria } })]
-		public ActionResult Guardar()
+        [TypeFilter(typeof(LimitarPeticionesAdministracion), Arguments = new object[] { 30, 120, 15 })]
+        public ActionResult Guardar()
 		{
 			GuardarLogAuditoria();
 			CargarPermisosCategoriasViewBag();
@@ -681,7 +675,8 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
 		/// </summary>
 		/// <returns>ActionResult</returns>
 		[TypeFilter(typeof(PermisosContenidos), Arguments = new object[] { new ulong[] { (ulong)PermisoContenidos.EliminarCategoria, (ulong)PermisoContenidos.AnyadirCategoria, (ulong)PermisoContenidos.ModificarCategoria } })]
-		public ActionResult GuardarNuevoOrden(List<OrdenCategoria> pListaOrden)
+        [TypeFilter(typeof(LimitarPeticionesAdministracion), Arguments = new object[] { 30, 120, 15 })]
+        public ActionResult GuardarNuevoOrden(List<OrdenCategoria> pListaOrden)
         {
 			try
 			{
@@ -937,7 +932,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
 				{
 					FileInfo file = new FileInfo(pImagenCategoria.FileName);
 					string extensionArchivo = Path.GetExtension(file.Name).ToLower();
-					if (!extensionArchivo.Equals(".png") && !extensionArchivo.Equals(".jpg"))
+					if (!extensionArchivo.Equals(".png") && !extensionArchivo.Equals(".jpg") && !extensionArchivo.Equals(".webp"))
 					{
 						return UtilIdiomas.GetText("DEVTOOLS", "ERRORFORMATOIMAGENCATEGORIA");
 					}
@@ -2770,7 +2765,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
 			facetadoCL.InvalidarCacheLocal($"{ProyectoSeleccionado.Clave}_CategoriasCom");
 			facetadoCL.Dispose();
 			ControladorFacetas contrFacetas = new ControladorFacetas(ProyectoSeleccionado, ParametroProyecto, null, mLoggingService, mEntityContext, mConfigService, mRedisCacheWrapper, mGnossCache, mVirtuosoAD, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<ControladorFacetas>(), mLoggerFactory);
-			contrFacetas.InvalidarCaches(UrlIntragnoss);
+			contrFacetas.InvalidarCaches(UrlIntragnoss, IdentidadActual.Clave);
 		}
 
 		/// <summary>

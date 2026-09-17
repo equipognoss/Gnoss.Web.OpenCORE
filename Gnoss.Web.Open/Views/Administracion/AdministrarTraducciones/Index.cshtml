@@ -64,7 +64,7 @@ string endpointDescargarTraducciones = isInEcosistemaPlatform ? Html.GetText("UR
     @* Contenido Central *@    
     <div class="formulario-edicion background-blanco">
 		@* Panel de idiomas *@	
-		<ul class="nav nav-tabs @( (cabecera.Languajes.Count > 1) ? "" : "d-none")" id="tabIdiomasPaginas" role="tablist">
+		<ul class="nav nav-tabs @( (cabecera.Languajes.Count > 1) ? "" : "d-none")" id="tabIdiomasPaginas" role="tablist" style="position: relative; right: 0;">
 			@* Títulos de Tabs con los diferentes idiomas a visualizar de categorías. De momento ignoro el dropdown *@
 				@foreach (KeyValuePair<string, string> idioma in cabecera.Languajes){
 					if (contNumPestañasVisibles < numMaxPestañasIdiomasVisibles) {
@@ -258,7 +258,7 @@ string endpointDescargarTraducciones = isInEcosistemaPlatform ? Html.GetText("UR
 
 @* Carga de operativa *@
 @section operativaScript{    
-    <script type="text/javascript" src="@Html.GetBaseUrlStatic()/responsive/theme/logic/configuracion.js?v=@Html.GetVersion()"></script>        
+    <script type="text/javascript" src="@Html.GetBaseUrlStatic()/responsive/theme/logic/configuracion.js?v=@Comunidad.VersionJSEcosistema"></script>        
     <script type="text/javascript">
            
         (function ($) {            

@@ -22,6 +22,8 @@ using Es.Riam.Gnoss.Web.MVC.Models.Administracion;
 using Es.Riam.Interfaces.InterfacesOpen;
 using Es.Riam.InterfacesOpen;
 using Es.Riam.Util;
+using Gnoss.Web.Open.Filters;
+using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Infrastructure;
@@ -45,8 +47,8 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
 	{
         private ILogger mlogger;
         private ILoggerFactory mLoggerFactory;
-        public AdministrarConfiguracionInicialController(LoggingService loggingService, ConfigService configService, EntityContext entityContext, RedisCacheWrapper redisCacheWrapper, GnossCache gnossCache, VirtuosoAD virtuosoAD, IHttpContextAccessor httpContextAccessor, ICompositeViewEngine viewEngine, EntityContextBASE entityContextBASE, Microsoft.AspNetCore.Hosting.IHostingEnvironment env, IActionContextAccessor actionContextAccessor, IUtilServicioIntegracionContinua utilServicioIntegracionContinua, IServicesUtilVirtuosoAndReplication servicesUtilVirtuosoAndReplication, IOAuth oAuth, IHostApplicationLifetime appLifetime, IAvailableServices availableServices, ILogger<AdministrarConfiguracionInicialController> logger, ILoggerFactory loggerFactory)
-            : base(loggingService, configService, entityContext, redisCacheWrapper, gnossCache, virtuosoAD, httpContextAccessor, viewEngine, entityContextBASE, env, actionContextAccessor, utilServicioIntegracionContinua, servicesUtilVirtuosoAndReplication, oAuth, appLifetime, availableServices,logger,loggerFactory)
+        public AdministrarConfiguracionInicialController(LoggingService loggingService, ConfigService configService, EntityContext entityContext, RedisCacheWrapper redisCacheWrapper, GnossCache gnossCache, VirtuosoAD virtuosoAD, IHttpContextAccessor httpContextAccessor, ICompositeViewEngine viewEngine, EntityContextBASE entityContextBASE, IWebHostEnvironment env, IUtilServicioIntegracionContinua utilServicioIntegracionContinua, IServicesUtilVirtuosoAndReplication servicesUtilVirtuosoAndReplication, IOAuth oAuth, IHostApplicationLifetime appLifetime, IAvailableServices availableServices, ILogger<AdministrarConfiguracionInicialController> logger, ILoggerFactory loggerFactory)
+            : base(loggingService, configService, entityContext, redisCacheWrapper, gnossCache, virtuosoAD, httpContextAccessor, viewEngine, entityContextBASE, env, utilServicioIntegracionContinua, servicesUtilVirtuosoAndReplication, oAuth, appLifetime, availableServices,logger,loggerFactory)
         {
             mlogger = logger;
             mLoggerFactory = loggerFactory;
@@ -85,6 +87,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
         /// <returns></returns>
         [HttpPost]
         [TypeFilter(typeof(UsuarioLogueadoAttribute), Arguments = new object[] { RolesUsuario.AdministradorComunidad })]
+        [TypeFilter(typeof(LimitarPeticionesAdministracion), Arguments = new object[] { 30, 120, 15 })]
         public ActionResult Guardar(string UserName, string UserEmail, string UserPassword, string UrlProyectosPublicos, string UrlProyectosPrivados, bool UseSameUrlForPrivateProjects, string UrlIntraGnoss, string Name, string ShortName, short Type)
         {
             GuardarLogAuditoria();
@@ -199,11 +202,9 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
                 versionDocConfiguracion = busqueda.First().Valor;
                 urlDocConfigComunidad = BaseURLContent + "/Documentacion/Configuracion/ConfiguracionComunidadDefecto.xml?v=" + versionDocConfiguracion;
                 string urlDocTesauroComunidad = BaseURLContent + "/Documentacion/Configuracion/TesauroDefecto.xml?v=" + versionDocConfiguracion;
-                WebClient webClient = new WebClient();
-
                 try
                 {
-                    xml = webClient.DownloadString(urlDocConfigComunidad);
+                    xml = UtilWeb.WebRequest("GET", urlDocConfigComunidad, null);
                 }
                 catch (Exception ex)
                 {
@@ -212,13 +213,12 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
 
                 try
                 {
-                    xmlTesauro = webClient.DownloadString(urlDocTesauroComunidad);
+                    xmlTesauro = UtilWeb.WebRequest("GET", urlDocTesauroComunidad, null);
                 }
                 catch (Exception ex)
                 {
                     mLoggingService.GuardarLog("Problema al obtener el xml del tesauro por defecto. Ruta: " + urlDocTesauroComunidad, mlogger);
                 }
-                webClient.Dispose();
             }
 
 

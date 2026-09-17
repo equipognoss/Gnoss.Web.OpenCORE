@@ -1,16 +1,9 @@
 ﻿using System;
-using System.Text;
 using Es.Riam.Gnoss.CL.ServiciosGenerales;
 using Es.Riam.Gnoss.Web.MVC.Models.IntegracionContinua;
-using Es.Riam.Gnoss.Util.Seguridad;
 using Es.Riam.Gnoss.Util.General;
-using Es.Riam.Util;
 using Es.Riam.Gnoss.Web.MVC.Models.Administracion;
-using Newtonsoft.Json;
-using Es.Riam.Gnoss.UtilServiciosWeb;
-using Es.Riam.Gnoss.Recursos;
 using Es.Riam.Gnoss.Web.Controles;
-using Es.Riam.Gnoss.Web.MVC.Controllers.Administracion;
 using Microsoft.AspNetCore.Mvc.Filters;
 using Microsoft.AspNetCore.Mvc;
 using Es.Riam.Gnoss.AD.EntityModel;
@@ -21,7 +14,6 @@ using Microsoft.AspNetCore.Http;
 using Es.Riam.Gnoss.AD.EntityModelBASE;
 using Es.Riam.Interfaces.InterfacesOpen;
 using Es.Riam.Gnoss.Web.MVC.Controles;
-using Microsoft.AspNetCore.Mvc.ViewEngines;
 using Es.Riam.AbstractsOpen;
 using Microsoft.Extensions.Logging;
 

@@ -16,16 +16,15 @@ using Es.Riam.InterfacesOpen;
 using Gnoss.Web.Open.Filters;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Mvc.Infrastructure;
 using Microsoft.AspNetCore.Mvc.ViewEngines;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
-using Newtonsoft.Json;
-using Serilog.Core;
 using System;
 using System.Linq;
 using System.Net;
 using System.Net.Http;
+using Microsoft.AspNetCore.Hosting;
+using System.Text.Json;
 
 namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
 {
@@ -33,8 +32,8 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
     {
         private ILogger mlogger;
         private ILoggerFactory mLoggerFactory;
-        public AdministrarUtilidadesController(LoggingService loggingService, ConfigService configService, EntityContext entityContext, RedisCacheWrapper redisCacheWrapper, GnossCache gnossCache, VirtuosoAD virtuosoAD, IHttpContextAccessor httpContextAccessor, ICompositeViewEngine viewEngine, EntityContextBASE entityContextBASE, Microsoft.AspNetCore.Hosting.IHostingEnvironment env, IActionContextAccessor actionContextAccessor, IUtilServicioIntegracionContinua utilServicioIntegracionContinua, IServicesUtilVirtuosoAndReplication servicesUtilVirtuosoAndReplication, IOAuth oAuth, IHostApplicationLifetime appLifetime, IAvailableServices availableServices, ILogger<AdministrarUtilidadesController> logger, ILoggerFactory loggerFactory)
-            : base(loggingService, configService, entityContext, redisCacheWrapper, gnossCache, virtuosoAD, httpContextAccessor, viewEngine, entityContextBASE, env, actionContextAccessor, utilServicioIntegracionContinua, servicesUtilVirtuosoAndReplication, oAuth, appLifetime, availableServices, logger, loggerFactory)
+        public AdministrarUtilidadesController(LoggingService loggingService, ConfigService configService, EntityContext entityContext, RedisCacheWrapper redisCacheWrapper, GnossCache gnossCache, VirtuosoAD virtuosoAD, IHttpContextAccessor httpContextAccessor, ICompositeViewEngine viewEngine, EntityContextBASE entityContextBASE, IWebHostEnvironment env, IUtilServicioIntegracionContinua utilServicioIntegracionContinua, IServicesUtilVirtuosoAndReplication servicesUtilVirtuosoAndReplication, IOAuth oAuth, IHostApplicationLifetime appLifetime, IAvailableServices availableServices, ILogger<AdministrarUtilidadesController> logger, ILoggerFactory loggerFactory)
+            : base(loggingService, configService, entityContext, redisCacheWrapper, gnossCache, virtuosoAD, httpContextAccessor, viewEngine, entityContextBASE, env,utilServicioIntegracionContinua, servicesUtilVirtuosoAndReplication, oAuth, appLifetime, availableServices, logger, loggerFactory)
         {
 
             mlogger = logger;
@@ -140,7 +139,8 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
         [HttpPost]		
 		[TypeFilter(typeof(PermisosAdministracion), Arguments = new object[] { new ulong[] { (ulong)PermisoComunidad.GestionarNivelesDeCertificacion } })]
 		[TypeFilter(typeof(AccesoIntegracionAttribute))]
-		public ActionResult Guardar(AdministrarComunidadUtilidades DatosGuardado)
+        [TypeFilter(typeof(LimitarPeticionesAdministracion), Arguments = new object[] { 30, 120, 15 })]
+        public ActionResult Guardar(AdministrarComunidadUtilidades DatosGuardado)
         {
             GuardarLogAuditoria();
             bool iniciado = false;
@@ -172,7 +172,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
                     if (iniciado)
                     {
                         contrUtilidades.CargarNivelesCertificacion(DatosGuardado, ParametrosGeneralesRow.PoliticaCertificacion, this.IdentidadActual, ProyectoVirtual.TipoProyecto, UtilIdiomas);
-                        HttpResponseMessage resultado = InformarCambioAdministracion("Utilidades", JsonConvert.SerializeObject(DatosGuardado, Formatting.Indented));
+                        HttpResponseMessage resultado = InformarCambioAdministracion("Utilidades", JsonSerializer.Serialize(DatosGuardado, new JsonSerializerOptions { WriteIndented = true }));
 
                         if (!resultado.StatusCode.Equals(HttpStatusCode.OK))
                         {
@@ -205,6 +205,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
         [HttpPost]
 		[TypeFilter(typeof(PermisosAdministracion), Arguments = new object[] { new ulong[] { (ulong)PermisoComunidad.GestionarNivelesDeCertificacion } })]
 		[TypeFilter(typeof(AccesoIntegracionAttribute))]
+        [TypeFilter(typeof(LimitarPeticionesAdministracion), Arguments = new object[] { 30, 120, 15 })]
         public ActionResult SaveCertifications(AdministrarComunidadUtilidades DatosGuardado)
         {
             GuardarLogAuditoria();
@@ -240,7 +241,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
                     if (iniciado)
                     {
                         contrUtilidades.CargarTiposYPermisos(DatosGuardado);
-                        HttpResponseMessage resultado = InformarCambioAdministracion("Utilidades", JsonConvert.SerializeObject(DatosGuardado, Formatting.Indented));
+                        HttpResponseMessage resultado = InformarCambioAdministracion("Utilidades", JsonSerializer.Serialize(DatosGuardado, new JsonSerializerOptions { WriteIndented = true }));
 
                         if (!resultado.StatusCode.Equals(HttpStatusCode.OK))
                         {

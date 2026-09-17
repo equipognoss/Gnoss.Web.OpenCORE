@@ -1,5 +1,4 @@
-﻿using DocumentFormat.OpenXml.Bibliography;
-using Es.Riam.AbstractsOpen;
+﻿using Es.Riam.AbstractsOpen;
 using Es.Riam.Gnoss.AD.BASE_BD;
 using Es.Riam.Gnoss.AD.Documentacion;
 using Es.Riam.Gnoss.AD.EncapsuladoDatos;
@@ -47,8 +46,10 @@ using Es.Riam.Gnoss.Logica.ServiciosGenerales;
 using Es.Riam.Gnoss.Logica.Tesauro;
 using Es.Riam.Gnoss.Logica.Usuarios;
 using Es.Riam.Gnoss.Logica.Voto;
+using Es.Riam.Gnoss.RabbitMQ.Models;
 using Es.Riam.Gnoss.Recursos;
 using Es.Riam.Gnoss.Servicios;
+using Es.Riam.Gnoss.Traducciones.TraduccionTextos;
 using Es.Riam.Gnoss.Util.Configuracion;
 using Es.Riam.Gnoss.Util.General;
 using Es.Riam.Gnoss.Util.Seguridad;
@@ -80,16 +81,13 @@ using Es.Riam.Util;
 using Gnoss.Web.Controllers;
 using Gnoss.Web.Open.Filters;
 using Gnoss.Web.Open.Models.FichaRecurso;
-using Google.Protobuf.Compiler;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Filters;
-using Microsoft.AspNetCore.Mvc.Infrastructure;
 using Microsoft.AspNetCore.Mvc.ViewEngines;
 using Microsoft.AspNetCore.StaticFiles;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
-using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.Data;
@@ -99,8 +97,9 @@ using System.Linq;
 using System.Text;
 using System.Web;
 using System.Xml;
-using Universal.Common.Extensions;
 using static Es.Riam.Gnoss.Web.MVC.Models.ResourceModel;
+using Microsoft.AspNetCore.Hosting;
+using System.Text.Json;
 
 namespace Es.Riam.Gnoss.Web.MVC.Controllers
 {
@@ -110,8 +109,8 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
         private IRDFSearch mRDFSearch;
         private ILogger mlogger;
         private ILoggerFactory mLoggerFactory;
-        public FichaRecursoController(LoggingService loggingService, ConfigService configService, EntityContext entityContext, RedisCacheWrapper redisCacheWrapper, GnossCache gnossCache, VirtuosoAD virtuosoAD, IHttpContextAccessor httpContextAccessor, ICompositeViewEngine viewEngine, EntityContextBASE entityContextBASE, Microsoft.AspNetCore.Hosting.IHostingEnvironment env, IActionContextAccessor actionContextAccessor, IUtilServicioIntegracionContinua utilServicioIntegracionContinua, IServicesUtilVirtuosoAndReplication servicesUtilVirtuosoAndReplication, IRDFSearch rDFSearch, IOAuth oAuth, IHostApplicationLifetime appLifetime, IPublishEvents publishEvents, IAvailableServices availableServices, ILogger<FichaRecursoController> logger, ILoggerFactory loggerFactory)
-            : base(loggingService, configService, entityContext, redisCacheWrapper, gnossCache, virtuosoAD, httpContextAccessor, viewEngine, entityContextBASE, env, actionContextAccessor, utilServicioIntegracionContinua, servicesUtilVirtuosoAndReplication, oAuth, appLifetime, availableServices, logger, loggerFactory)
+        public FichaRecursoController(LoggingService loggingService, ConfigService configService, EntityContext entityContext, RedisCacheWrapper redisCacheWrapper, GnossCache gnossCache, VirtuosoAD virtuosoAD, IHttpContextAccessor httpContextAccessor, ICompositeViewEngine viewEngine, EntityContextBASE entityContextBASE, IWebHostEnvironment env, IUtilServicioIntegracionContinua utilServicioIntegracionContinua, IServicesUtilVirtuosoAndReplication servicesUtilVirtuosoAndReplication, IRDFSearch rDFSearch, IOAuth oAuth, IHostApplicationLifetime appLifetime, IPublishEvents publishEvents, IAvailableServices availableServices, ILogger<FichaRecursoController> logger, ILoggerFactory loggerFactory)
+            : base(loggingService, configService, entityContext, redisCacheWrapper, gnossCache, virtuosoAD, httpContextAccessor, viewEngine, entityContextBASE, env, utilServicioIntegracionContinua, servicesUtilVirtuosoAndReplication, oAuth, appLifetime, availableServices, logger, loggerFactory)
         {
             mRDFSearch = rDFSearch;
             mIPublishEvents = publishEvents;
@@ -181,6 +180,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
         {
             CargarUsuarioActual(filterContext);
             ComprobarDocumentoVersionado();
+            CargarViewBagBasico();
 
             if (filterContext.Result == null)
             {
@@ -189,7 +189,6 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
 
             if (filterContext.Result != null)
             {
-                CargarViewBagBasico();
                 return;
             }
 
@@ -208,13 +207,15 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
 
         private void CargarViewBagBasico()
         {
+            CargarEntornoActualComunidad();
+            CargarPermisosViewBag();
+
             ViewBag.Comunidad = Comunidad;
             ViewBag.Perfil = Perfil;
             ViewBag.UtilIdiomas = UtilIdiomas;
             ViewBag.NotificacionesPushConfiguradas = !string.IsNullOrEmpty(mConfigService.ObtenerVapidPublicKey());
             ViewBag.UrlPagina = UrlPagina;
             ViewBag.ListaCategoriaCookie = ListaPersonalizacionCategoriaCookieModel;
-            CargarPermisosViewBag();
         }
 
         /// <summary>
@@ -259,27 +260,27 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
             }
             else
             {
-            using (DocumentacionCN docCN = new DocumentacionCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<DocumentacionCN>(), mLoggerFactory))
-            {
-                try
+                using (DocumentacionCN docCN = new DocumentacionCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<DocumentacionCN>(), mLoggerFactory))
                 {
+                    try
+                    {
                         Guid ultimaVersion = docCN.ObtenerUltimaVersionDeDocumento(DocumentoID);
 
                         if (ultimaVersion.Equals(Guid.Empty))
                         {
-                        return;
+                            return;
                         }
 
-                    mDocumentoVersionado = true;
+                        mDocumentoVersionado = true;
                         mDocumentoUltimaVersionID = ultimaVersion;
                         mDocumentoOriginalVersionID = DocumentoID;
-                }
-                catch (Exception ex)
-                {
-                    mLoggingService.GuardarLogError(ex, $"ERROR: ${ex.Message}\r\nStackTrace: {ex.StackTrace}", mlogger);
+                    }
+                    catch (Exception ex)
+                    {
+                        mLoggingService.GuardarLogError(ex, $"ERROR: ${ex.Message}\r\nStackTrace: {ex.StackTrace}", mlogger);
+                    }
                 }
             }
-        }
         }
 
         /// <summary>
@@ -310,7 +311,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
 
                 if (!docCN.ExisteDocumentoEnProyecto(pProyectoID, ultimaVersionDocumentoID))
                 {
-                    pFilterContext.Result = RedireccionarAPaginaNoEncontrada();
+                    pFilterContext.Result = RedireccionarAPaginaNoEncontrada("404");
                 }
 
                 if (esPeticionConVersionID && (DocumentoVersionID == Guid.Empty || !docCN.ExisteDocumentoEnProyecto(pProyectoID, DocumentoVersionID)))
@@ -498,6 +499,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
         /// <param name="Description">Descripción editada del comentario</param>
         /// <returns></returns>
         [HttpPost, TypeFilter(typeof(UsuarioLogueadoAttribute), Arguments = new object[] { RolesUsuario.MiembroComunidad }), TypeFilter(typeof(AccesoRecursoAttribute))]
+        [TypeFilter(typeof(LimitarPeticionesAdministracion), Arguments = new object[] { 30, 120, 15 })]
         public ActionResult EditComment(Guid comentarioID, string Description)
         {
             try
@@ -513,8 +515,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                 CargarComentarios();
 
                 Comentario comentario = GestorDocumental.GestionComentarios.ListaComentarios[comentarioID];
-                string textoComentario = HttpUtility.UrlDecode(Description);
-
+                string textoComentario = UtilCadenas.LimpiarInyeccionCodigo(Description);
                 ControladorDocumentoMVC.CargarIdentidadesLectoresEditores(Documento, GestorDocumental, ProyectoSeleccionado.Clave);
 
                 bool respuestasMismoAutor = ComprobarAutorHijos(comentario, comentario.FilaComentario.IdentidadID);
@@ -547,6 +548,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
         /// <param name="comentarioID">Comentario al que vamos a responder</param>
         /// <returns></returns>
         [HttpPost, TypeFilter(typeof(UsuarioLogueadoAttribute), Arguments = new object[] { RolesUsuario.MiembroComunidad }), TypeFilter(typeof(AccesoRecursoAttribute))]
+        [TypeFilter(typeof(LimitarPeticionesAdministracion), Arguments = new object[] { 30, 120, 15 })]
         public ActionResult ReplyComment(string Description, Guid comentarioID)
         {
             return CrearComentario(Description, comentarioID);
@@ -558,6 +560,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
         /// <param name="Description">Descripción del comentario que vamos a crear</param>
         /// <returns></returns>
         [HttpPost, TypeFilter(typeof(UsuarioLogueadoAttribute), Arguments = new object[] { RolesUsuario.MiembroComunidad }), TypeFilter(typeof(AccesoRecursoAttribute))]
+        [TypeFilter(typeof(LimitarPeticionesAdministracion), Arguments = new object[] { 30, 120, 15 })]
         public ActionResult CreateComment(string Description)
         {
             return CrearComentario(Description, Guid.Empty);
@@ -960,8 +963,6 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
             return GnossResultOK();
         }
 
-
-
         private ActionResult CrearComentario(string pDescripcion, Guid pComentarioPadre)
         {
             try
@@ -976,8 +977,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                 CargarComentarios();
 
                 Comentario comentario = null;
-                string textoComentario = HttpUtility.UrlDecode(pDescripcion);
-                textoComentario = UtilCadenas.LimpiarInyeccionCodigo(textoComentario);
+                string textoComentario = UtilCadenas.LimpiarInyeccionCodigo(pDescripcion);
 
                 if (MostrarControlAgregarComentario && (ComunidadPermiteComentarios || Documento.TipoDocumentacion == TiposDocumentacion.Pregunta))
                 {
@@ -2220,7 +2220,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                 {
                     return GnossResultERROR("No se pudo cargar el historial");
                 }
-                
+
             }
             catch (Exception ex)
             {
@@ -2231,6 +2231,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
 
         [HttpGet]
         [TypeFilter(typeof(AccesoRecursoAttribute))]
+        [TypeFilter(typeof(LimitarPeticionesAdministracion), Arguments = new object[] { 30, 120, 15 })]
         public ActionResult DownloadSharepoint(string RecursoID)
         {
             /*ActionResult redireccion = FuncionalidadSharepoint();
@@ -2255,7 +2256,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                 {
                     return redireccion;
                 }
-                SharepointController spController = new SharepointController(RecursoID, mLoggingService, mConfigService, mEntityContext, mRedisCacheWrapper, mGnossCache, mVirtuosoAD, mHttpContextAccessor, mViewEngine, mEntityContextBASE, mEnv, mActionContextAccessor, mUtilServicioIntegracionContinua, mServicesUtilVirtuosoAndReplication, mOAuth, _appLifetime, mAvailableServices, mLoggerFactory.CreateLogger<SharepointController>(), mLoggerFactory);
+                SharepointController spController = new SharepointController(RecursoID, mLoggingService, mConfigService, mEntityContext, mRedisCacheWrapper, mGnossCache, mVirtuosoAD, mHttpContextAccessor, mViewEngine, mEntityContextBASE, mEnv, mUtilServicioIntegracionContinua, mServicesUtilVirtuosoAndReplication, mOAuth, _appLifetime, mAvailableServices, mLoggerFactory.CreateLogger<SharepointController>(), mLoggerFactory);
                 spController.Token = tokenSP;
                 extension = spController.ExtraerExtensionFicheroAPI(enlace);
                 nombre = spController.ExtraerNombreSinExtension(enlace);
@@ -2292,7 +2293,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                 string oneDrive = parametroCN.ObtenerParametroAplicacion(ParametroAD.PermitirEnlazarDocumentosOneDrive);
                 bool esDocumentoSharepoint = UtilCadenas.EsEnlaceSharepoint(Documento.Enlace, oneDrive);
                 string sharepointConfigurado = parametroCN.ObtenerParametroAplicacion("SharepointClientID");
-                SharepointController spController = new SharepointController(Documento.Clave.ToString(), mLoggingService, mConfigService, mEntityContext, mRedisCacheWrapper, mGnossCache, mVirtuosoAD, mHttpContextAccessor, mViewEngine, mEntityContextBASE, mEnv, mActionContextAccessor, mUtilServicioIntegracionContinua, mServicesUtilVirtuosoAndReplication, mOAuth, _appLifetime, mAvailableServices, mLoggerFactory.CreateLogger<SharepointController>(), mLoggerFactory);
+                SharepointController spController = new SharepointController(Documento.Clave.ToString(), mLoggingService, mConfigService, mEntityContext, mRedisCacheWrapper, mGnossCache, mVirtuosoAD, mHttpContextAccessor, mViewEngine, mEntityContextBASE, mEnv, mUtilServicioIntegracionContinua, mServicesUtilVirtuosoAndReplication, mOAuth, _appLifetime, mAvailableServices, mLoggerFactory.CreateLogger<SharepointController>(), mLoggerFactory);
                 string nombre = string.Empty;
 
                 if (string.IsNullOrEmpty(sharepointConfigurado))
@@ -2385,7 +2386,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                 dwDocumentacion.ListaDocumento[0].FechaModificacion = DateTime.Now;
 
                 // Guardarmos el fichero de SharePoint en el servidor
-                SharepointController spController = new SharepointController(pDocumentoID, mLoggingService, mConfigService, mEntityContext, mRedisCacheWrapper, mGnossCache, mVirtuosoAD, mHttpContextAccessor, mViewEngine, mEntityContextBASE, mEnv, mActionContextAccessor, mUtilServicioIntegracionContinua, mServicesUtilVirtuosoAndReplication, mOAuth, _appLifetime, mAvailableServices, mLoggerFactory.CreateLogger<SharepointController>(), mLoggerFactory);
+                SharepointController spController = new SharepointController(pDocumentoID, mLoggingService, mConfigService, mEntityContext, mRedisCacheWrapper, mGnossCache, mVirtuosoAD, mHttpContextAccessor, mViewEngine, mEntityContextBASE, mEnv, mUtilServicioIntegracionContinua, mServicesUtilVirtuosoAndReplication, mOAuth, _appLifetime, mAvailableServices, mLoggerFactory.CreateLogger<SharepointController>(), mLoggerFactory);
                 spController.Token = tokenSP;
                 string nombreFichero = spController.GuardarArchivoDesdeAPI(pEnlace);
 
@@ -2874,6 +2875,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
         #region Compartir, Guardar espacio personal
 
         [HttpPost, TypeFilter(typeof(UsuarioLogueadoAttribute), Arguments = new object[] { RolesUsuario.MiembroComunidad }), TypeFilter(typeof(AccesoRecursoAttribute))]
+        [TypeFilter(typeof(LimitarPeticionesAdministracion), Arguments = new object[] { 30, 120, 15 })]
         public ActionResult AddToPersonalSpace(string[] categoriesList)
         {
             try
@@ -2922,7 +2924,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                 {
                     if (categoriesList != null)
                     {
-                        modeloDatos = JsonConvert.SerializeObject(categoriesList);
+                        modeloDatos = JsonSerializer.Serialize(categoriesList);
                     }
                 }
                 catch (Exception ex2)
@@ -2936,6 +2938,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
         }
 
         [HttpPost, TypeFilter(typeof(UsuarioLogueadoAttribute), Arguments = new object[] { RolesUsuario.MiembroComunidad }), TypeFilter(typeof(AccesoRecursoAttribute))]
+        [TypeFilter(typeof(LimitarPeticionesAdministracion), Arguments = new object[] { 30, 120, 15 })]
         public ActionResult AddToPersonalSpacePrivate()
         {
             try
@@ -3026,11 +3029,12 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
             catch (Exception ex)
             {
                 GuardarLogError(ex, $" categoryName: {categoryName} parentCategoryID: {parentCategoryID}");
-                throw;
+                return GnossResultERROR();
             }
         }
 
         [HttpPost, TypeFilter(typeof(AccesoRecursoAttribute))]
+        [TypeFilter(typeof(LimitarPeticionesAdministracion), Arguments = new object[] { 30, 120, 15 })]
         public ActionResult Share(string[] Categories, string[] Editors, string[] Readers, bool Private)
         {
             try
@@ -3134,15 +3138,15 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                 {
                     if (Categories != null)
                     {
-                        modeloCategories = JsonConvert.SerializeObject(Categories);
+                        modeloCategories = JsonSerializer.Serialize(Categories);
                     }
                     if (Editors != null)
                     {
-                        modeloEditors = JsonConvert.SerializeObject(Editors);
+                        modeloEditors = JsonSerializer.Serialize(Editors);
                     }
                     if (Readers != null)
                     {
-                        modeloReaders = JsonConvert.SerializeObject(Readers);
+                        modeloReaders = JsonSerializer.Serialize(Readers);
                     }
                 }
                 catch (Exception ex2)
@@ -3588,6 +3592,10 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                     * Si no esta bloqueado por otro usuario o (es administrador del proyecto y tiene permisos para editar el recurso)
                 */
                 ControladorDocumentoMVC.CargarIdentidadesLectoresEditores(Documento, GestorDocumental, ProyectoSeleccionado.Clave);
+                if (!ComprobarPermisoEdicion())
+                {
+                    return GnossResultERROR(UtilIdiomas.GetText("COMMON", "SINPERMISO"));
+                }
                 if (!Documento.EsBorrador && Documento.FilaDocumento.UltimaVersion /*&& (Documento.TipoDocumentacion == TiposDocumentacion.Encuesta)*/ && ProyectoOrigenBusquedaID == Guid.Empty && (GenPlantillasOWL == null || !GenPlantillasOWL.Ontologia.ConfiguracionPlantilla.OcultarBotonAgregarEtiquetasDoc))
                 {
                     return AccionRecurso_AgregarTags_Aceptar(Tags);
@@ -3600,7 +3608,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                 {
                     if (Tags != null)
                     {
-                        modeloDatos = JsonConvert.SerializeObject(Tags);
+                        modeloDatos = JsonSerializer.Serialize(Tags);
                     }
                 }
                 catch (Exception ex2)
@@ -3625,6 +3633,10 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                     * Si no esta bloqueado por otro usuario o (es administrador del proyecto y tiene permisos para editar el recurso)
                 */
                 ControladorDocumentoMVC.CargarIdentidadesLectoresEditores(Documento, GestorDocumental, ProyectoSeleccionado.Clave);
+                if (!ComprobarPermisoEdicion())
+                {
+                    return GnossResultERROR(UtilIdiomas.GetText("COMMON", "SINPERMISO"));
+                }
                 if (!Documento.EsBorrador && Documento.FilaDocumento.UltimaVersion && ProyectoOrigenBusquedaID == Guid.Empty && (GenPlantillasOWL == null || !GenPlantillasOWL.Ontologia.ConfiguracionPlantilla.OcultarBotonAgregarCategoriaDoc))
                 {
                     return AccionRecurso_AgregarCategorias_Aceptar(Categories);
@@ -3637,7 +3649,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                 {
                     if (Categories != null)
                     {
-                        modeloDatos = JsonConvert.SerializeObject(Categories);
+                        modeloDatos = JsonSerializer.Serialize(Categories);
                     }
                 }
                 catch (Exception ex2)
@@ -3828,7 +3840,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                     {
                         eliminandoCategorias = true;
                     }
-                    
+
                     UtilidadesVirtuoso.GuardarEdicionCategoriasRecursoEnGrafoBusqueda(Documento, mControladorBase.UsuarioActual.ProyectoID, eliminandoCategorias, UrlIntragnoss, PrioridadBase.Alta, mAvailableServices);
 
                     int tipo;
@@ -3898,7 +3910,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                 {
                     if (MetaTitle != null)
                     {
-                        modeloDatos = JsonConvert.SerializeObject(MetaTitle);
+                        modeloDatos = JsonSerializer.Serialize(MetaTitle);
                     }
                 }
                 catch (Exception ex2)
@@ -3935,7 +3947,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                 {
                     if (MetaDescripcion != null)
                     {
-                        modeloDatos = JsonConvert.SerializeObject(MetaDescripcion);
+                        modeloDatos = JsonSerializer.Serialize(MetaDescripcion);
                     }
                 }
                 catch (Exception ex2)
@@ -4000,6 +4012,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
         #region Restaurar Version
 
         [HttpPost, TypeFilter(typeof(AccesoRecursoAttribute))]
+        [TypeFilter(typeof(LimitarPeticionesAdministracion), Arguments = new object[] { 30, 120, 15 })]
         public ActionResult RestoreVersion()
         {
             try
@@ -4188,6 +4201,15 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
 
                     ActualizarBase(controDoc, docUltimaVersion, nuevaVersionRestaurada);
 
+                    try
+                    {
+                        controDoc.PurgarVersionesExcedentes(nuevaVersionRestaurada.VersionOriginalID, ProyectoSeleccionado.Clave, Documento.GestorDocumental, mAvailableServices);
+                    }
+                    catch (Exception ex)
+                    {
+                        mLoggingService.GuardarLogError(ex, $"Error al purgar versiones antiguas del recurso {nuevaVersionRestaurada.VersionOriginalID}", mlogger);
+                    }
+
                     ControladorDocumentacion.BorrarCacheControlFichaRecursos(docUltimaVersion.Clave);
 
                     return GnossResultUrl(mControladorBase.UrlsSemanticas.GetURLBaseRecursosFicha(BaseURLIdioma, UtilIdiomas, ProyectoSeleccionado.NombreCorto, UrlPerfil, nuevaVersionRestaurada, false).Replace(nuevaVersionRestaurada.Clave.ToString(), nuevaVersionRestaurada.VersionOriginalID.ToString()));
@@ -4218,7 +4240,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
 
                 CargarGestorVotosRestaurar(documentoUltimaVersionMejora.Clave);
 
-                Documento nuevaVersionRestaurada = Documento.GestorDocumental.RestaurarVersion(Documento, documentoUltimaVersionMejora,IdentidadRestaurar, true);
+                Documento nuevaVersionRestaurada = Documento.GestorDocumental.RestaurarVersion(Documento, documentoUltimaVersionMejora, IdentidadRestaurar, true);
 
                 ComprobarNuevaVersionAgregada(nuevaVersionRestaurada);
 
@@ -4235,7 +4257,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                     return GnossResultERROR(UtilIdiomas.GetText("HISTORIALVERSIONES", "ERRORRESTAURARVERSION"));
                 }
             }
-            catch(Exception ex)
+            catch (Exception ex)
             {
                 mLoggingService.GuardarLogError(ex, $"ERROR: ${ex.Message}\r\nStackTrace: {ex.StackTrace}", mlogger);
                 return GnossResultERROR();
@@ -4332,24 +4354,24 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
             return GnossResultERROR();
         }
 
-		[HttpPost, TypeFilter(typeof(AccesoRecursoAttribute))]
-		public GnossResult StartImprovement()
-		{
-			try
-			{
+        [HttpPost, TypeFilter(typeof(AccesoRecursoAttribute))]
+        public GnossResult StartImprovement()
+        {
+            try
+            {
                 bool tienePermiso = TienePermisoIniciarMejora();
                 if (tienePermiso)
-                {					
-					return AccionRecurso_Iniciar_Mejora();
-				}
-				return GnossResultERROR(UtilIdiomas.GetText("FLUJOS", "ERRORPERMISOINICIARMEJORA"));				
-			}
-			catch (Exception ex)
-			{
-				mLoggingService.GuardarLogError(ex, mlogger);
-				return GnossResultERROR(UtilIdiomas.GetText("FLUJOS", "ERRORINICIARMEJORA"));
-			}
-		}
+                {
+                    return AccionRecurso_Iniciar_Mejora();
+                }
+                return GnossResultERROR(UtilIdiomas.GetText("FLUJOS", "ERRORPERMISOINICIARMEJORA"));
+            }
+            catch (Exception ex)
+            {
+                mLoggingService.GuardarLogError(ex, mlogger);
+                return GnossResultERROR(UtilIdiomas.GetText("FLUJOS", "ERRORINICIARMEJORA"));
+            }
+        }
 
         private bool TienePermisoAprobarMejora(AD.EntityModel.Models.Documentacion.VersionDocumento pVersionDocumento)
         {
@@ -4391,38 +4413,38 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
 
         private bool TienePermisoIniciarMejora()
         {
-			// Comprobar que el usuario tiene permisos de edición en el estado            
-			// Comprobar que el estado permita mejora
+            // Comprobar que el usuario tiene permisos de edición en el estado            
+            // Comprobar que el estado permita mejora
             // Comprobar que el estado sea final
-			// Comprobar que no esté ya en otro proceso de mejora
-            
-			bool permitirIniciarMejora = false;
+            // Comprobar que no esté ya en otro proceso de mejora
+
+            bool permitirIniciarMejora = false;
             EstadoModel estado = ObtenerEstadoDocumento();
 
-			if (estado != null && !ComprobarSiDocumentoEstaSiendoMejorado() && estado.EsFinal && estado.PermiteMejora)
+            if (estado != null && !ComprobarSiDocumentoEstaSiendoMejorado() && estado.EsFinal && estado.PermiteMejora)
             {
-				FlujosCN flujosCN = new FlujosCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<FlujosCN>(), mLoggerFactory);
-				permitirIniciarMejora = flujosCN.ComprobarIdentidadTienePermisoEdicionEnEstado(estado.EstadoID, IdentidadActual.FilaIdentidad.IdentidadID, DocumentoID);
+                FlujosCN flujosCN = new FlujosCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<FlujosCN>(), mLoggerFactory);
+                permitirIniciarMejora = flujosCN.ComprobarIdentidadTienePermisoEdicionEnEstado(estado.EstadoID, IdentidadActual.FilaIdentidad.IdentidadID, DocumentoID);
             }
 
             return permitirIniciarMejora;
-		}
+        }
 
         private bool ComprobarSiDocumentoEstaSiendoMejorado()
         {
             if (DocumentoVersionID == Guid.Empty)
             {
-			    List<AD.EntityModel.Models.Documentacion.VersionDocumento> versiones = mGestorDocumental.DataWrapperDocumentacion.ListaVersionDocumento.Where(item => item.DocumentoOriginalID.Equals(DocumentoID) && item.EsMejora && item.EstadoVersion.Equals((short)EstadoVersion.Pendiente)).ToList();
-			    if (versiones.Count > 0)
-			    {
-				    return true;
-			    }
-			}			
+                List<AD.EntityModel.Models.Documentacion.VersionDocumento> versiones = mGestorDocumental.DataWrapperDocumentacion.ListaVersionDocumento.Where(item => item.DocumentoOriginalID.Equals(DocumentoID) && item.EsMejora && item.EstadoVersion.Equals((short)EstadoVersion.Pendiente)).ToList();
+                if (versiones.Count > 0)
+                {
+                    return true;
+                }
+            }
 
-			return false;
-		}
+            return false;
+        }
 
-		private GnossResult AccionRecurso_Iniciar_Mejora()
+        private GnossResult AccionRecurso_Iniciar_Mejora()
         {
             try
             {
@@ -4435,14 +4457,14 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                 }
                 docCN.Dispose();
                 Elementos.Documentacion.Documento docMejora = GestorDocumental.CrearNuevaVersionDocumento(Documento, IdentidadActual, pEsMejora: true);
-				ControladorDocumentacion controladorDocumentacion = new ControladorDocumentacion(mLoggingService, mEntityContext, mConfigService, mRedisCacheWrapper, mGnossCache, mEntityContextBASE, mVirtuosoAD, mHttpContextAccessor, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<ControladorDocumentacion>(), mLoggerFactory);
+                ControladorDocumentacion controladorDocumentacion = new ControladorDocumentacion(mLoggingService, mEntityContext, mConfigService, mRedisCacheWrapper, mGnossCache, mEntityContextBASE, mVirtuosoAD, mHttpContextAccessor, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<ControladorDocumentacion>(), mLoggerFactory);
                 controladorDocumentacion.IniciarMejoraSobreDocumento(Documento, docMejora, UsuarioActual, IdentidadOrganizacionBROrg, ProyectoSeleccionado.Clave != ProyectoAD.MetaProyecto, GenPlantillasOWL?.Ontologia);
                 string urlMejora = $"{mControladorBase.UrlsSemanticas.GetURLBaseRecursosFichaConIDs(BaseURLIdioma, UtilIdiomas, ProyectoSeleccionado.NombreCorto, UrlPerfil, UtilCadenas.EliminarCaracteresUrlSem(Documento.Titulo), Documento.VersionOriginalID, Documento.ElementoVinculadoID, false)}/{docMejora.Clave}";
                 ResourceEvent publicarModificarEliminarRecursoModel = new ResourceEvent(ProyectoSeleccionado.Clave, Documento.Clave, Documento.VersionOriginalID, mControladorBase.UsuarioActual.UsuarioID, Documento.Fecha);
                 publicarModificarEliminarRecursoModel.ImprovementLink = urlMejora;
                 mIPublishEvents.PublishResource(publicarModificarEliminarRecursoModel, ActionTypeExternalEvent.StartImprovement);
                 return GnossResultUrl(urlMejora);
-			}
+            }
             catch (Exception ex)
             {
                 mLoggingService.GuardarLogError(ex, mlogger);
@@ -4484,7 +4506,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                 DocumentoWeb documentoWebMejorado = new DocumentoWeb(documentoMejorado, new GestorDocumental(dataWrapperDocumentacionDocMejorado, mLoggingService, mEntityContext, mLoggerFactory.CreateLogger<GestorDocumental>(), mLoggerFactory));
                 documentoWebMejorado.GestorDocumental.GestorIdentidades = IdentidadActual.GestorIdentidades;
 
-				if (documentoWebPrevio.TipoDocumentacion == TiposDocumentacion.Semantico)
+                if (documentoWebPrevio.TipoDocumentacion == TiposDocumentacion.Semantico)
                 {
                     controDoc.AplicarMejoraDocumentoRDF(documentoWebPrevio, documentoWebMejorado, mAvailableServices);
                 }
@@ -4537,7 +4559,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
 
             foreach (Guid baseRecurso in documentoWebPrevio.BaseRecursos)
             {
-                Guid proyecto = documentoWebPrevio.GestorDocumental.ObtenerProyectoID(baseRecurso);
+                Guid proyecto = GestorDocumental.ObtenerProyectoID(baseRecurso);
 
                 string infoExtra = null;
 
@@ -4676,7 +4698,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                             {
                                 return redirect;
                             }
-                            SharepointController spController = new SharepointController(Documento.Clave.ToString(), mLoggingService, mConfigService, mEntityContext, mRedisCacheWrapper, mGnossCache, mVirtuosoAD, mHttpContextAccessor, mViewEngine, mEntityContextBASE, mEnv, mActionContextAccessor, mUtilServicioIntegracionContinua, mServicesUtilVirtuosoAndReplication, mOAuth, _appLifetime, mAvailableServices, mLoggerFactory.CreateLogger<SharepointController>(), mLoggerFactory);
+                            SharepointController spController = new SharepointController(Documento.Clave.ToString(), mLoggingService, mConfigService, mEntityContext, mRedisCacheWrapper, mGnossCache, mVirtuosoAD, mHttpContextAccessor, mViewEngine, mEntityContextBASE, mEnv, mUtilServicioIntegracionContinua, mServicesUtilVirtuosoAndReplication, mOAuth, _appLifetime, mAvailableServices, mLoggerFactory.CreateLogger<SharepointController>(), mLoggerFactory);
                             spController.Token = tokenSP;
                             spController.TokenCreadorRecurso = tokenSPAdminDocument;
                             bool eliminacionCorrecta = spController.EliminarDocumentoDeSharepoint(Documento.Enlace);
@@ -4801,11 +4823,25 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                     {
                         Documento.GestorDocumental.EliminarDocumentoLogicamente(Documento);
                         Documento.GestorDocumental.AgregarEliminarCategoriaTesauroHistorial(Documento, Guid.Empty, AccionHistorialDocumento.Eliminar, mControladorBase.UsuarioActual.ProyectoID, IdentidadActual.Clave);
+                        List<string> baseRecursos = new List<string>();
+                        foreach (Guid baseRecurso in Documento.BaseRecursos.Where(br => br != Documento.GestorDocumental.BaseRecursosIDActual).ToList())
+                        {
+                            baseRecursos.Add(baseRecurso.ToString());
+                        }
+                        if (baseRecursos.Count > 0)
+                        {
+                            DeleteSelective(baseRecursos.ToArray());
+                        }
                     }
 
                     // Hay que desvincular las categorias con todos las versiones del documento actual.
-                    List<Guid> documentoIDs = GestorDocumental.DataWrapperDocumentacion.ListaVersionDocumento.Select(doc => doc.DocumentoID).ToList();
-                    documentoIDs.Add(Documento.VersionOriginalID);
+                    DocumentacionCN documentacionCN = new DocumentacionCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<DocumentacionCN>(), mLoggerFactory);
+
+                    List<Guid> documentoIDs = documentacionCN.ObtenerVersionesDocumentoIDPorID(Documento.VersionOriginalID).Keys.ToList();
+
+                    documentacionCN.ObtenerDocumentosPorIDCargarTotal(documentoIDs, GestorDocumental.DataWrapperDocumentacion, true, true, null);
+
+                    GestorDocumental.CargarDocumentosWeb();
 
                     foreach (Guid docID in GestorDocumental.ListaDocumentosWeb.Keys)
                     {
@@ -5074,7 +5110,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                 {
                     if (SharedCommunities != null)
                     {
-                        modeloDatos = JsonConvert.SerializeObject(SharedCommunities);
+                        modeloDatos = JsonSerializer.Serialize(SharedCommunities);
                     }
                 }
                 catch (Exception ex2)
@@ -5165,7 +5201,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                 parametros.Add("UserLanguaje", UtilIdiomas.LanguageCode);
 
                 respuesta = UtilWeb.HacerPeticionPost(pUrlServicio, parametros);
-                JsonExtServResponse jsonRes = JsonConvert.DeserializeObject<JsonExtServResponse>(respuesta);
+                JsonExtServResponse jsonRes = JsonSerializer.Deserialize<JsonExtServResponse>(respuesta);
 
                 mLoggingService.AgregarEntradaDependencia($"Enviar al servicio de quitar publicacion '{pUrlServicio}' el documento '{Documento.Clave}' con entidad principal '{entidadID}'", false, "NotificarServicioExternoBorradoRecurso", sw, true);
 
@@ -5308,6 +5344,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
         #region Enviar Newsletter
 
         [HttpPost, TypeFilter(typeof(UsuarioLogueadoAttribute), Arguments = new object[] { RolesUsuario.MiembroComunidad }), TypeFilter(typeof(AccesoRecursoAttribute))]
+        [TypeFilter(typeof(LimitarPeticionesAdministracion), Arguments = new object[] { 30, 120, 15 })]
         public ActionResult SendNewsletter(string Language)
         {
             try
@@ -5332,6 +5369,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
         }
 
         [HttpPost, TypeFilter(typeof(UsuarioLogueadoAttribute), Arguments = new object[] { RolesUsuario.MiembroComunidad }), TypeFilter(typeof(AccesoRecursoAttribute))]
+        [TypeFilter(typeof(LimitarPeticionesAdministracion), Arguments = new object[] { 30, 120, 15 })]
         public ActionResult SendNewsletterGroups(string Language, string[] Groups)
         {
             try
@@ -5384,7 +5422,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                 {
                     if (Groups != null)
                     {
-                        modeloGroups = JsonConvert.SerializeObject(Groups);
+                        modeloGroups = JsonSerializer.Serialize(Groups);
                     }
                 }
                 catch (Exception ex2)
@@ -5629,7 +5667,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
             }
 
             string respuesta = UtilWeb.HacerPeticionPost(pUrlServicio, parametros, cabeceras);
-            JsonExtServResponse jResponse = JsonConvert.DeserializeObject<JsonExtServResponse>(respuesta);
+            JsonExtServResponse jResponse = JsonSerializer.Deserialize<JsonExtServResponse>(respuesta);
 
             return GestionarRespuestaServicioExterno(jResponse);
         }
@@ -5771,6 +5809,8 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                 Dictionary<Guid, ResourceModel> listaRecursos = controladorMVC.ObtenerRecursosPorID(listaRecursosID, baseUrlBusqueda, espacioPersonal, null, false);
 
                 paginaModel.Resource = listaRecursos[DocumentoID];
+
+                ParametroAplicacionCN parametroCN = new ParametroAplicacionCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<ParametroAplicacionCN>(), mLoggerFactory);
 
                 if (accion == "delete")
                 {
@@ -5951,9 +5991,37 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                 {
                     // TODO: Rellenar las acciones
                 }
+                else if (accion == "load-modal-translate")
+                {
+                    ProyectoCN proyectoCN = new ProyectoCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<ProyectoCN>(), mLoggerFactory);
+
+                    Dictionary<string, string> idiomasBase = UtilTraducciones.ObtenerIdiomasBaseParaTraducir(ProyectoSeleccionado.Clave, parametroCN, proyectoCN, UtilIdiomas, mLoggingService, mlogger);
+
+                    List<string> idiomasRecurso = new List<string>();
+
+                    if (Documento.TipoDocumentacion.Equals(TiposDocumentacion.Semantico))
+                    {
+                        idiomasRecurso = ObtenerIdiomasRecursoSemantico();
+                    }
+                    else
+                    {
+                        idiomasRecurso = ObtenerIdiomasRecursoNoSemantico();
+                    }
+
+                    if (idiomasRecurso.Count == 0)
+                    {
+                        return GnossResultERROR("No puedes traducir un recurso que no tenga triples multiidioma");
+                    }
+
+                    paginaModel.IdiomasOrigen = idiomasBase.Where(kvp => idiomasRecurso.Contains(kvp.Key)).ToDictionary(kvp => kvp.Key, kvp => kvp.Value);
+
+                    paginaModel.IdiomasDestino = idiomasBase;
+
+                    ViewBag.IdiomaUsuario = IdiomaUsuario;
+                }
 
                 paginaModel.Action = accion;
-                ParametroAplicacionCN parametroCN = new ParametroAplicacionCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<ParametroAplicacionCN>(), mLoggerFactory);
+
                 string oneDrive = parametroCN.ObtenerParametroAplicacion(ParametroAD.PermitirEnlazarDocumentosOneDrive);
                 paginaModel.Resource.EsEnlaceSharepoint = UtilCadenas.EsEnlaceSharepoint(Documento.Enlace, oneDrive);
                 string sharepointConfigurado = parametroCN.ObtenerParametroAplicacion("SharepointClientID");
@@ -5961,13 +6029,12 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                 {
                     paginaModel.Resource.EsEnlaceSharepoint = false;
                 }
-
                 return PartialView("_FichaAcciones", paginaModel);
             }
             catch (Exception ex)
             {
                 GuardarLogError(ex, $" accion: {accion} idNuevaCategoria: {idNuevaCategoria}");
-                throw;
+                return GnossResultERROR();
             }
         }
 
@@ -6331,9 +6398,9 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
 
             if (ComprobarSiDocumentoEstaSiendoMejorado())
             {
-				FlujosCN flujosCN = new FlujosCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<FlujosCN>(), mLoggerFactory);
-				bool tienePermisoEdicionEstado = flujosCN.ComprobarIdentidadTienePermisoEdicionEnEstado(pFichaRecurso.Estado.EstadoID, IdentidadActual.Clave, Documento.VersionOriginalID);
-				fichaAcciones.AddCategories = false;
+                FlujosCN flujosCN = new FlujosCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<FlujosCN>(), mLoggerFactory);
+                bool tienePermisoEdicionEstado = flujosCN.ComprobarIdentidadTienePermisoEdicionEnEstado(pFichaRecurso.Estado.EstadoID, IdentidadActual.Clave, Documento.VersionOriginalID);
+                fichaAcciones.AddCategories = false;
                 fichaAcciones.AddTags = false;
                 fichaAcciones.AddToMyPersonalSpace = true;
                 fichaAcciones.BlockComments = false;
@@ -6345,24 +6412,25 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                 fichaAcciones.EditImprovement = tienePermisoEdicionEstado;
                 fichaAcciones.LinkUp = false;
                 fichaAcciones.Restore = false;
-				fichaAcciones.SendLink = true;
-				fichaAcciones.SendNewsletter = true;
-                fichaAcciones.SendNewsletterGroups = true;                
+                fichaAcciones.SendLink = true;
+                fichaAcciones.SendNewsletter = true;
+                fichaAcciones.SendNewsletterGroups = true;
                 fichaAcciones.Share = true;
                 fichaAcciones.Transition = true;
                 fichaAcciones.UnLinkUp = false;
                 fichaAcciones.ViewHistory = true;
 
-				pFichaRecurso.Actions = fichaAcciones;
+                pFichaRecurso.Actions = fichaAcciones;
 
-				return;
-            }			
+                return;
+            }
 
             UtilPermisos utilPermisos = new UtilPermisos(mEntityContext, mLoggingService, mConfigService, mLoggerFactory.CreateLogger<UtilPermisos>(), mLoggerFactory);
             bool permisoEditar = true;
             bool permisoEliminar = true;
             bool permisoRestaurarVersion = true;
             bool permisoEliminarVersion = true;
+            bool permisoTraducir = utilPermisos.IdentidadTienePermisoRecursoSemantico(IdentidadActual.Clave, IdentidadActual.IdentidadMyGNOSS.Clave, TipoPermisoRecursosSemanticos.Modificar, Documento.ElementoVinculadoID) && ParametrosGeneralesRow.IdiomasDisponibles && Comunidad.TranslatorAvailable;
             bool permisoCertificar = utilPermisos.IdentidadTienePermiso((ulong)PermisoRecursos.CertificarRecurso, IdentidadActual.Clave, IdentidadActual.IdentidadMyGNOSS.Clave, TipoDePermiso.Recursos);
 
             switch (Documento.TipoDocumentacion)
@@ -6486,6 +6554,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                 fichaAcciones.Delete = false;
                 fichaAcciones.SendLink = false;
                 fichaAcciones.Transition = false;
+                fichaAcciones.Translate = false;
             }
             else
             {
@@ -6514,7 +6583,8 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                 {
                     fichaAcciones.AddCategories = false;
                     fichaAcciones.AddTags = false;
-                }else if (Documento.FilaDocumentoWebVinBR != null && Documento.FilaDocumentoWebVinBR.TipoPublicacion == (short)TipoPublicacion.CompartidoAutomatico)
+                }
+                else if (Documento.FilaDocumentoWebVinBR != null && Documento.FilaDocumentoWebVinBR.TipoPublicacion == (short)TipoPublicacion.CompartidoAutomatico)
                 {
                     //Si es compartido automáticamente no se le pueden editar las categorías en esta comunidad.
                     fichaAcciones.AddCategories = false;
@@ -6526,7 +6596,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                         fichaAcciones.AddCategories = true;
                         fichaAcciones.AddTags = true;
                     }
-                }  
+                }
 
                 #endregion
 
@@ -6534,7 +6604,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                 fichaAcciones.Edit = permisoEditar && RecursoPuedeSerEditado(bloqueadoPorOtroUsuario);
 
                 // Si el usuario tiene un rol que no tiene permisos de edicion, miramos si es un editor del recurso
-                if(!fichaAcciones.Edit && Documento.TienePermisosEdicionIdentidad(IdentidadActual, IdentidadOrganizacionBROrg, ProyectoSeleccionado, UsuarioActual.UsuarioID, EsIdentidadActualAdministradorOrganizacion) && Documento.FilaDocumento.UltimaVersion)
+                if (!fichaAcciones.Edit && Documento.TienePermisosEdicionIdentidad(IdentidadActual, IdentidadOrganizacionBROrg, ProyectoSeleccionado, UsuarioActual.UsuarioID, EsIdentidadActualAdministradorOrganizacion) && Documento.FilaDocumento.UltimaVersion)
                 {
                     fichaAcciones.Edit = true;
                 }
@@ -6672,6 +6742,19 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                 }
 
                 #endregion
+
+                #region Traducir
+
+                fichaAcciones.Translate = permisoTraducir;
+
+                DocumentacionCN docCN = new DocumentacionCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<DocumentacionCN>(), mLoggerFactory);
+
+                if ((docCN.ComprobarSiDocumentoEsUnaMejora(Documento.Clave) && Documento.FilaDocumento.VersionDocumento.EstadoVersion == (short)EstadoVersion.Historico) || !Documento.FilaDocumento.UltimaVersion)
+                {
+                    fichaAcciones.Translate = false;
+                }
+
+                #endregion
             }
 
             if (GenPlantillasOWL != null)
@@ -6724,6 +6807,11 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                 {
                     fichaAcciones.Delete = false;
                 }
+
+                if (!GenPlantillasOWL.Ontologia.ConfiguracionPlantilla.MultiIdioma)
+                {
+                    fichaAcciones.Translate = false;
+                }
             }
 
             pFichaRecurso.AllowComments = ParametrosGeneralesRow.ComentariosDisponibles && Documento.FilaDocumento.UltimaVersion;
@@ -6739,26 +6827,26 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                 FlujosCN flujosCN = new FlujosCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<FlujosCN>(), mLoggerFactory);
                 bool tienePermisoEdicionEstado = flujosCN.ComprobarIdentidadTienePermisoEdicionEnEstado(pFichaRecurso.Estado.EstadoID, IdentidadActual.Clave, Documento.VersionOriginalID);
                 DocumentacionCN docCN = new DocumentacionCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<DocumentacionCN>(), mLoggerFactory);
-                bool puedeSerEditado = !docCN.ComprobarDocumentoTieneVersiones(Documento.VersionOriginalID) || Documento.FilaDocumento.VersionDocumento.EstadoVersion == (short) EstadoVersion.Vigente || Documento.FilaDocumento.VersionDocumento.EstadoVersion == (short)EstadoVersion.Pendiente;
+                bool puedeSerEditado = (!docCN.ComprobarDocumentoTieneVersiones(Documento.VersionOriginalID) || Documento.FilaDocumento.VersionDocumento.EstadoVersion == (short)EstadoVersion.Vigente || Documento.FilaDocumento.VersionDocumento.EstadoVersion == (short)EstadoVersion.Pendiente);
                 docCN.Dispose();
                 if (tienePermisoEdicionEstado && puedeSerEditado)
                 {
                     fichaAcciones.Edit = true;
                     fichaAcciones.AddCategories = true;
                     fichaAcciones.AddTags = true;
-                    
+
                 }
 
                 fichaAcciones.ViewHistory = tienePermisoEdicionEstado;
                 fichaAcciones.EditImprovement = fichaAcciones.Edit;
-                fichaAcciones.Transition = true;
+                fichaAcciones.Transition = !UsuarioActual.EsUsuarioInvitado;
 
                 using (DocumentacionCN documentacionCN = new DocumentacionCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<DocumentacionCN>(), mLoggerFactory))
-				{
+                {
                     if (documentacionCN.ComprobarSiDocumentoEsUnaMejora(DocumentoVersionID))
                     {
                         pFichaRecurso.AllowComments = false;
-                    }  
+                    }
                 }
             }
 
@@ -6991,21 +7079,20 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                 }
 
                 string baseUrlBusqueda = $"{mControladorBase.UrlsSemanticas.GetURLBaseRecursos(BaseURLIdioma, UtilIdiomas, nombreProy, UrlPerfil, EsIdentidadBROrg, nombreSem)}/";
-
                 bool esMejora = false;
-				AD.EntityModel.Models.Documentacion.VersionDocumento versionDocumento = mGestorDocumental.DataWrapperDocumentacion.ListaVersionDocumento.FirstOrDefault(item => item.DocumentoID.Equals(Documento.Clave));
+                AD.EntityModel.Models.Documentacion.VersionDocumento versionDocumento = mGestorDocumental.DataWrapperDocumentacion.ListaVersionDocumento.FirstOrDefault(item => item.DocumentoID.Equals(Documento.Clave));
                 if (versionDocumento != null)
                 {
                     esMejora = versionDocumento.EsMejora;
                 }
-				List<Guid> listaRecursosID = new List<Guid>();
+                List<Guid> listaRecursosID = new List<Guid>();
                 listaRecursosID.Add(Documento.Clave);
                 Dictionary<Guid, ResourceModel> diccRecursos = ControladorProyectoMVC.ObtenerRecursosPorIDSinProcesarIdioma(listaRecursosID, baseUrlBusqueda, baseRecursosPersonaID, Documento.FilaDocumento.ProyectoID, pEsFichaRecurso: true, pEsMejora: esMejora);
                 if (!diccRecursos.ContainsKey(Documento.Clave))
                 {
-					return Redirect(Comunidad.Url);
-				}
-				paginaModel.Resource = diccRecursos[Documento.Clave];
+                    return Redirect(Comunidad.Url);
+                }
+                paginaModel.Resource = diccRecursos[Documento.Clave];
                 bool recursoObtenidoDeCache = true;
 
                 paginaModel.Resource.LastVersion = Documento.UltimaVersionID;
@@ -7306,14 +7393,14 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                     }
                 }
 
-				paginaModel.Resource.Title = UtilCadenas.ObtenerTextoDeIdioma(paginaModel.Resource.Title, UtilIdiomas.LanguageCode, ParametrosGeneralesRow.IdiomaDefecto);
-				paginaModel.Resource.Description = UtilCadenas.ObtenerTextoDeIdioma(paginaModel.Resource.Description, UtilIdiomas.LanguageCode, ParametrosGeneralesRow.IdiomaDefecto);
+                paginaModel.Resource.Title = UtilCadenas.ObtenerTextoDeIdioma(paginaModel.Resource.Title, UtilIdiomas.LanguageCode, ParametrosGeneralesRow.IdiomaDefecto);
+                paginaModel.Resource.Description = UtilCadenas.ObtenerTextoDeIdioma(paginaModel.Resource.Description, UtilIdiomas.LanguageCode, ParametrosGeneralesRow.IdiomaDefecto);
 
-				string rdfType = Documento.TipoDocumentacion.ToString();
+                string rdfType = Documento.TipoDocumentacion.ToString();
                 if (Documento.TipoDocumentacion == TiposDocumentacion.Semantico)
                 {
                     rdfType = Path.GetFileNameWithoutExtension(GestorDocumental.ListaDocumentos[Documento.ElementoVinculadoID].Enlace);
-                    
+
                     paginaModel.Resource.Description = ModificarVideoSiNoHayCookiesYoutube(paginaModel.Resource.Description);
 
                     if (Documento.GestorDocumental.ListaDocumentos.ContainsKey(paginaModel.Resource.ItemLinked) && Documento.GestorDocumental.ListaDocumentos[paginaModel.Resource.ItemLinked].FilaDocumento.VersionFotoDocumento.HasValue && Documento.GestorDocumental.ListaDocumentos[paginaModel.Resource.ItemLinked].FilaDocumento.VersionFotoDocumento > 0)
@@ -7353,7 +7440,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                 CambiarIndexacionDelRecurso();
 
                 paginaModel.Resource.Estado = ObtenerEstadoDocumento();
-                
+
                 if (versionDocumento != null)
                 {
                     paginaModel.Resource.IsImprovement = versionDocumento.EsMejora;
@@ -7361,7 +7448,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                 }
 
 
-				paginaModel.Resource.IsInProcessOfImprovement = ComprobarSiDocumentoEstaSiendoMejorado();				
+                paginaModel.Resource.IsInProcessOfImprovement = ComprobarSiDocumentoEstaSiendoMejorado();
 
                 if (paginaModel.Resource.Estado != null)
                 {
@@ -7407,7 +7494,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                         {
                             return redirect;
                         }
-                        SharepointController spController = new SharepointController(Documento.Clave.ToString(), mLoggingService, mConfigService, mEntityContext, mRedisCacheWrapper, mGnossCache, mVirtuosoAD, mHttpContextAccessor, mViewEngine, mEntityContextBASE, mEnv, mActionContextAccessor, mUtilServicioIntegracionContinua, mServicesUtilVirtuosoAndReplication, mOAuth, _appLifetime, mAvailableServices, mLoggerFactory.CreateLogger<SharepointController>(), mLoggerFactory);
+                        SharepointController spController = new SharepointController(Documento.Clave.ToString(), mLoggingService, mConfigService, mEntityContext, mRedisCacheWrapper, mGnossCache, mVirtuosoAD, mHttpContextAccessor, mViewEngine, mEntityContextBASE, mEnv, mUtilServicioIntegracionContinua, mServicesUtilVirtuosoAndReplication, mOAuth, _appLifetime, mAvailableServices, mLoggerFactory.CreateLogger<SharepointController>(), mLoggerFactory);
                         spController.Token = tokenSP;
                         spController.TokenCreadorRecurso = tokenSPAdminDocument;
                         bool estaAlineadoConSharepoint = spController.ComprobarSiEstaAlineadoConSharepoint(Documento.Enlace);
@@ -7446,6 +7533,66 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                 GuardarLogError(ex);
                 throw;
             }
+        }
+
+        [HttpPost]
+        [TypeFilter(typeof(UsuarioLogueadoAttribute), Arguments = new object[] { RolesUsuario.MiembroComunidad }), TypeFilter(typeof(AccesoRecursoAttribute))]
+        [TypeFilter(typeof(LimitarPeticionesAdministracion), Arguments = new object[] { 30, 120, 15 })]
+        public ActionResult TraducirRecurso(string pOriginLang, List<string> pTargetLangs)
+        {
+            try
+            {
+                if (!ModelState.IsValid)
+                {
+                    return GnossResultERROR(UtilIdiomas.GetText("COMMON", "CAMBIOSINCORRECTOS"));
+                }
+
+                string error = ComprobarErroresIdiomasTraducir(pOriginLang, pTargetLangs);
+
+                if (!string.IsNullOrEmpty(error))
+                {
+                    return GnossResultERROR(UtilIdiomas.GetText("DEVTOOLS", error));
+                }
+
+                Guid translationID = Guid.NewGuid();
+                TranslationRabbitModel translationModel = new TranslationRabbitModel
+                {
+                    TranslationID = translationID,
+                    ResourceID = Documento.Clave,
+                    OriginalResourceID = Documento.VersionOriginalID,
+                    ProjectID = ProyectoSeleccionado.Clave,
+                    PublishDate = DateTime.Now,
+                    OriginalLanguage = pOriginLang,
+                    TargetLanguages = pTargetLangs,
+                    UserID = UsuarioActual.UsuarioID
+                };
+
+                ControladorDocumentacion.EnviarRecursoATraduccion(translationModel, mAvailableServices, (byte)PrioridadTraduccion.TraduccionManual);
+
+                return GnossResultOK(UtilIdiomas.GetText("DEVTOOLS", "INFOTRADUCCION"));
+            }
+            catch (Exception ex)
+            {
+                mLoggingService.GuardarLogError(ex, mlogger);
+                return GnossResultERROR("Hubo un error durante el envio de la traducción");
+            }
+        }
+
+        private string ComprobarErroresIdiomasTraducir(string pOriginLang, List<string> pTargetLangs)
+        {
+            string error = "";
+
+            if (string.IsNullOrEmpty(pOriginLang) || !UtilCadenas.RegexPrefijoIdioma.IsMatch(pOriginLang) || !IdiomasPlataforma.Contains(pOriginLang))
+            {
+                return "ERRORIDIOMAORIGENINVALIDO";
+            }
+
+            if (!string.IsNullOrEmpty(UtilTraducciones.ComprobarIdiomasDisponibles(pTargetLangs, IdiomasPlataforma, mLoggingService, mlogger)))
+            {
+                return "ERRORIDIOMADESTINOINVALIDO";
+            }
+
+            return error;
         }
 
         /// <summary>
@@ -7535,8 +7682,8 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                 {
                     if (!string.IsNullOrEmpty(lecturaAumentada.TopicsInfo) && !string.IsNullOrEmpty(lecturaAumentada.EntitiesInfo))
                     {
-                        List<SherlockEntityInfoModel> litaTopicsSherlock = JsonConvert.DeserializeObject<List<SherlockEntityInfoModel>>(lecturaAumentada.TopicsInfo);
-                        List<SherlockEntityInfoModel> litaEntitySherlock = JsonConvert.DeserializeObject<List<SherlockEntityInfoModel>>(lecturaAumentada.EntitiesInfo);
+                        List<SherlockEntityInfoModel> litaTopicsSherlock = JsonSerializer.Deserialize<List<SherlockEntityInfoModel>>(lecturaAumentada.TopicsInfo);
+                        List<SherlockEntityInfoModel> litaEntitySherlock = JsonSerializer.Deserialize<List<SherlockEntityInfoModel>>(lecturaAumentada.EntitiesInfo);
                         foreach (SherlockEntityInfoModel topic in litaTopicsSherlock.ToList())
                         {
                             if (!AugmentedDescription.Contains(topic.WikipediaUri))
@@ -7551,8 +7698,8 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                                 litaEntitySherlock.Remove(entity);
                             }
                         }
-                        lecturaAumentada.EntitiesInfo = JsonConvert.SerializeObject(litaEntitySherlock);
-                        lecturaAumentada.TopicsInfo = JsonConvert.SerializeObject(litaTopicsSherlock);
+                        lecturaAumentada.EntitiesInfo = JsonSerializer.Serialize(litaEntitySherlock);
+                        lecturaAumentada.TopicsInfo = JsonSerializer.Serialize(litaTopicsSherlock);
                     }
                     lecturaAumentada.DescripcionAumentada = AugmentedDescription;
                 }
@@ -7591,7 +7738,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                 {
                     documentoID = RequestParams("docID");
                 }
-                SharepointController sharepointController = new SharepointController(documentoID, mLoggingService, mConfigService, mEntityContext, mRedisCacheWrapper, mGnossCache, mVirtuosoAD, mHttpContextAccessor, mViewEngine, mEntityContextBASE, mEnv, mActionContextAccessor, mUtilServicioIntegracionContinua, mServicesUtilVirtuosoAndReplication, mOAuth, _appLifetime, mAvailableServices, mLoggerFactory.CreateLogger<SharepointController>(), mLoggerFactory);
+                SharepointController sharepointController = new SharepointController(documentoID, mLoggingService, mConfigService, mEntityContext, mRedisCacheWrapper, mGnossCache, mVirtuosoAD, mHttpContextAccessor, mViewEngine, mEntityContextBASE, mEnv, mUtilServicioIntegracionContinua, mServicesUtilVirtuosoAndReplication, mOAuth, _appLifetime, mAvailableServices, mLoggerFactory.CreateLogger<SharepointController>(), mLoggerFactory);
                 DocumentacionCN docCN = new DocumentacionCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<DocumentacionCN>(), mLoggerFactory);
                 string enlace = docCN.ObtenerEnlaceDocumentoPorDocumentoID(new Guid(documentoID));
                 if (!string.IsNullOrEmpty(pEnlace))
@@ -8248,9 +8395,9 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
         private bool ComprobarSiDocumentoEstaTraducidoConIAEnIdiomaActual()
         {
             using (DocumentacionCN docCN = new DocumentacionCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<DocumentacionCN>(), mLoggerFactory))
-			{
+            {
                 return docCN.ComprobarSiDocumentoEstaTraducidoConIAEnIdioma(Documento.Clave, UtilIdiomas.LanguageCode);
-            }                
+            }
         }
 
         private List<GrafoRecurso> CargarGrafosRecurso()
@@ -8770,6 +8917,45 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
             return Documento.TienePermisosEdicionIdentidad(IdentidadActual, IdentidadOrganizacionBROrg, ProyectoSeleccionado, UsuarioActual.UsuarioID, EsIdentidadActualAdministradorOrganizacion) || ControladorDocumentacion.EsEditorPerfilDeDocumento(IdentidadActual.PerfilID, Documento, true, UsuarioActual.UsuarioID) || permisoRestaurarVersion || permisoEliminarVersion;
         }
 
+        private bool ComprobarPermisoEdicion()
+        {
+            UtilPermisos utilPermisos = new UtilPermisos(mEntityContext, mLoggingService, mConfigService, mLoggerFactory.CreateLogger<UtilPermisos>(), mLoggerFactory);
+            bool permisoEditar = false;
+
+            switch (Documento.TipoDocumentacion)
+            {
+                case TiposDocumentacion.Hipervinculo:
+                    permisoEditar = utilPermisos.IdentidadTienePermiso((ulong)PermisoRecursos.EditarRecursoTipoEnlace, IdentidadActual.Clave, IdentidadActual.IdentidadMyGNOSS.Clave, TipoDePermiso.Recursos);
+                    break;
+                case TiposDocumentacion.Nota:
+                    permisoEditar = utilPermisos.IdentidadTienePermiso((ulong)PermisoRecursos.EditarNota, IdentidadActual.Clave, IdentidadActual.IdentidadMyGNOSS.Clave, TipoDePermiso.Recursos);
+                    break;
+                case TiposDocumentacion.FicheroServidor:
+                case TiposDocumentacion.Video:
+                case TiposDocumentacion.Imagen:
+                case TiposDocumentacion.Audio:
+                    permisoEditar = utilPermisos.IdentidadTienePermiso((ulong)PermisoRecursos.EditarRecursoTipoAdjunto, IdentidadActual.Clave, IdentidadActual.IdentidadMyGNOSS.Clave, TipoDePermiso.Recursos);
+                    break;
+                case TiposDocumentacion.Encuesta:
+                    permisoEditar = utilPermisos.IdentidadTienePermiso((ulong)PermisoRecursos.EditarEncuesta, IdentidadActual.Clave, IdentidadActual.IdentidadMyGNOSS.Clave, TipoDePermiso.Recursos);
+                    break;
+                case TiposDocumentacion.ReferenciaADoc:
+                    permisoEditar = utilPermisos.IdentidadTienePermiso((ulong)PermisoRecursos.EditarRecursoTipoReferenciaADocumentoFisico, IdentidadActual.Clave, IdentidadActual.IdentidadMyGNOSS.Clave, TipoDePermiso.Recursos);
+                    break;
+                case TiposDocumentacion.Pregunta:
+                    permisoEditar = utilPermisos.IdentidadTienePermiso((ulong)PermisoRecursos.EditarPregunta, IdentidadActual.Clave, IdentidadActual.IdentidadMyGNOSS.Clave, TipoDePermiso.Recursos);
+                    break;
+                case TiposDocumentacion.Debate:
+                    permisoEditar = utilPermisos.IdentidadTienePermiso((ulong)PermisoRecursos.EditarDebate, IdentidadActual.Clave, IdentidadActual.IdentidadMyGNOSS.Clave, TipoDePermiso.Recursos);
+                    break;
+                case TiposDocumentacion.Semantico:
+                    permisoEditar = utilPermisos.IdentidadTienePermisoRecursoSemantico(IdentidadActual.Clave, IdentidadActual.IdentidadMyGNOSS.Clave, TipoPermisoRecursosSemanticos.Modificar, Documento.ElementoVinculadoID);
+                    break;
+            }
+
+            return Documento.TienePermisosEdicionIdentidad(IdentidadActual, IdentidadOrganizacionBROrg, ProyectoSeleccionado, UsuarioActual.UsuarioID, EsIdentidadActualAdministradorOrganizacion) || ControladorDocumentacion.EsEditorPerfilDeDocumento(IdentidadActual.PerfilID, Documento, true, UsuarioActual.UsuarioID) || permisoEditar;
+        }
+
         private string CargarUrlVistaPrevia(Documento pDocumento)
         {
             string urlVistaPrevia = "";
@@ -9049,8 +9235,6 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                     try
                     {
                         XmlDocument docXml = new XmlDocument();
-                        //Problema para los TLS
-                        System.Net.ServicePointManager.SecurityProtocol = System.Net.SecurityProtocolType.Tls12;
                         docXml.Load(ruta);
 
                         string id = docXml.SelectSingleNode("oembed/slideshow-id").InnerText;
@@ -9508,18 +9692,18 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
         }
 
         private EstadoModel ObtenerEstadoUltimaVersionDocumento(Guid pDocumentoID)
-        {			
+        {
             FlujosCN flujosCN = new FlujosCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<FlujosCN>(), mLoggerFactory);
             Guid estadoID = flujosCN.ObtenerEstadoIDDeContenido(pDocumentoID, TipoContenidoFlujo.Recurso);
             flujosCN.Dispose();
             if (estadoID != Guid.Empty)
             {
-				UtilFlujos utilFlujos = new UtilFlujos(mEntityContext, mLoggingService, mConfigService, mLoggerFactory.CreateLogger<UtilFlujos>(), mLoggerFactory);
+                UtilFlujos utilFlujos = new UtilFlujos(mEntityContext, mLoggingService, mConfigService, mLoggerFactory.CreateLogger<UtilFlujos>(), mLoggerFactory);
                 return utilFlujos.ObtenerEstadoDeContenido(estadoID, IdentidadActual.Clave, UtilIdiomas.LanguageCode, ParametrosGeneralesRow.IdiomaDefecto);
-			}
+            }
 
             return null;
-		}
+        }
 
         public ActionResult RealizarTransicionEstado(Guid pTransicionID, string pComentario)
         {
@@ -9555,15 +9739,18 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                         publicarModificarEliminarRecursoModel.ImprovementLink = urlMejora;
                         urlDocumento = urlMejora;
                     }
-                    
+
                     gestorNotificaciones.EnviarCorreoAvisoCambioDeEstado(pTransicionID, Documento.ProyectoID, pComentario, urlDocumento, Documento.Titulo, IdentidadActual.Nombre());
                     notificacionCN.ActualizarNotificacion(mAvailableServices);
                     // Actualizar GnossLive
-                    ActualizarGnossLiveTransicionEstado(estadoDocumento.EstadoID, estadoDestino);
+                    if (!esMejora)
+                    {
+                        ActualizarGnossLiveTransicionEstado(estadoDocumento.EstadoID, estadoDestino);
+                    }
                     // Invalidar ficha del recurso
                     ControladorDocumentacion.BorrarCacheControlFichaRecursos(Documento.UltimaVersionID);
                     // Enviar evento
-                    
+
                     publicarModificarEliminarRecursoModel.Transition = UtilCadenas.ObtenerTextoDeIdioma(flujosCN.ObtenerNombreTransicion(pTransicionID), UtilIdiomas.LanguageCode, ParametrosGeneralesRow.IdiomaDefecto);
                     publicarModificarEliminarRecursoModel.SourceStatus = UtilCadenas.ObtenerTextoDeIdioma(flujosCN.ObtenerNombreEstadoOrigenTransicion(pTransicionID), UtilIdiomas.LanguageCode, ParametrosGeneralesRow.IdiomaDefecto);
                     publicarModificarEliminarRecursoModel.TargetStatus = UtilCadenas.ObtenerTextoDeIdioma(flujosCN.ObtenerNombreEstadoDestinoTransicion(pTransicionID), UtilIdiomas.LanguageCode, ParametrosGeneralesRow.IdiomaDefecto);
@@ -9574,7 +9761,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                     facetadoCN.Dispose();
                     flujosCN.Dispose();
                     docCN.Dispose();
-                }                
+                }
                 return GnossResultOK(UtilIdiomas.GetText("FLUJOS", "TRANSICIONREALIZADA"));
             }
             catch (Exception ex)
@@ -10054,6 +10241,51 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
             }
 
             return subversiones;
+        }
+
+        private List<string> ObtenerIdiomasRecursoSemantico()
+        {
+            FacetadoCN facetadoCN = new FacetadoCN(UrlIntragnoss, mEntityContext, mLoggingService, mConfigService, mVirtuosoAD, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<FacetadoCN>(), mLoggerFactory);
+
+            return facetadoCN.ObtenerIdiomasTriplesDeRecurso(new FacetadoDS(), Documento.VersionOriginalID.ToString());
+        }
+
+        private List<string> ObtenerIdiomasRecursoNoSemantico()
+        {
+            HashSet<string> idiomas = new HashSet<string>();
+
+            ExtraerIdiomas(Documento.Titulo, idiomas);
+            ExtraerIdiomas(Documento.Descripcion, idiomas);
+
+            if (idiomas.Count == 0)
+            {
+                idiomas.Add(IdiomaUsuario);
+            }
+
+            return idiomas.ToList();
+        }
+
+        private void ExtraerIdiomas(string texto, HashSet<string> idiomas)
+        {
+            if (string.IsNullOrEmpty(texto))
+                return;
+
+            string[] bloques = texto.Split("|||");
+
+            foreach (string bloque in bloques)
+            {
+                int indice = bloque.IndexOf('@');
+
+                if (indice >= 0 && indice < bloque.Length - 1)
+                {
+                    string idioma = bloque.Substring(indice + 1).Trim();
+
+                    if (!string.IsNullOrEmpty(idioma))
+                    {
+                        idiomas.Add(idioma);
+                    }
+                }
+            }
         }
 
         #region Propiedades

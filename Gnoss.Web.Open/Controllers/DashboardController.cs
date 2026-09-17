@@ -1,91 +1,28 @@
 ﻿using Es.Riam.AbstractsOpen;
-using Es.Riam.Gnoss.AD.Documentacion;
 using Es.Riam.Gnoss.AD.EncapsuladoDatos;
 using Es.Riam.Gnoss.AD.EntityModel;
-using Es.Riam.Gnoss.AD.EntityModel.Models.Faceta;
 using Es.Riam.Gnoss.AD.EntityModel.Models.ProyectoDS;
 using Es.Riam.Gnoss.AD.EntityModelBASE;
-using Es.Riam.Gnoss.AD.Facetado;
-using Es.Riam.Gnoss.AD.Facetado.Model;
-using Es.Riam.Gnoss.AD.Identidad;
-using Es.Riam.Gnoss.AD.MetaBuscadorAD;
-using Es.Riam.Gnoss.AD.ParametrosProyecto;
-using Es.Riam.Gnoss.AD.ServiciosGenerales;
-using Es.Riam.Gnoss.AD.Usuarios;
 using Es.Riam.Gnoss.AD.Virtuoso;
 using Es.Riam.Gnoss.CL;
-using Es.Riam.Gnoss.CL.Facetado;
-using Es.Riam.Gnoss.CL.ParametrosProyecto;
-using Es.Riam.Gnoss.CL.Seguridad;
-using Es.Riam.Gnoss.CL.ServiciosGenerales;
-using Es.Riam.Gnoss.CL.Tesauro;
-using Es.Riam.Gnoss.Elementos;
-using Es.Riam.Gnoss.Elementos.Comentario;
-using Es.Riam.Gnoss.Elementos.Documentacion;
-using Es.Riam.Gnoss.Elementos.Facetado;
 using Es.Riam.Gnoss.Elementos.Identidad;
-using Es.Riam.Gnoss.Elementos.ListaResultados;
-using Es.Riam.Gnoss.Elementos.ServiciosGenerales;
-using Es.Riam.Gnoss.Elementos.Tesauro;
-using Es.Riam.Gnoss.ExportarImportar;
-using Es.Riam.Gnoss.ExportarImportar.ElementosOntologia;
-using Es.Riam.Gnoss.ExportarImportar.Exportadores;
-using Es.Riam.Gnoss.Logica.Comentario;
-using Es.Riam.Gnoss.Logica.Documentacion;
-using Es.Riam.Gnoss.Logica.Facetado;
-using Es.Riam.Gnoss.Logica.Identidad;
-using Es.Riam.Gnoss.Logica.MetaBuscador;
 using Es.Riam.Gnoss.Logica.ServiciosGenerales;
-using Es.Riam.Gnoss.Logica.Usuarios;
-using Es.Riam.Gnoss.Logica.Voto;
-using Es.Riam.Gnoss.Recursos;
-using Es.Riam.Gnoss.Servicios;
-using Es.Riam.Gnoss.Servicios.ControladoresServiciosWeb;
 using Es.Riam.Gnoss.Util.Configuracion;
 using Es.Riam.Gnoss.Util.General;
-using Es.Riam.Gnoss.Util.Seguridad;
-using Es.Riam.Gnoss.UtilServiciosWeb;
-using Es.Riam.Gnoss.Web.Controles.Documentacion;
-using Es.Riam.Gnoss.Web.Controles.Exportaciones;
-using Es.Riam.Gnoss.Web.Controles.GeneradorPlantillasOWL;
-using Es.Riam.Gnoss.Web.MVC.Controles.Controladores;
-using Es.Riam.Gnoss.Web.MVC.Controllers.Administracion;
 using Es.Riam.Gnoss.Web.MVC.Filters;
-using Es.Riam.Gnoss.Web.MVC.Models;
-using Es.Riam.Gnoss.Web.MVC.Models.Administracion;
 using Es.Riam.Gnoss.Web.MVC.Models.ViewModels;
-using Es.Riam.Gnoss.Web.RSS.RSS20;
-using Es.Riam.Interfaces;
 using Es.Riam.Interfaces.InterfacesOpen;
 using Es.Riam.InterfacesOpen;
-using Es.Riam.Metagnoss.ExportarImportar.Exportadores;
-using Es.Riam.Semantica.OWL;
-using Es.Riam.Semantica.Plantillas;
 using Es.Riam.Util;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Http.Extensions;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Mvc.Infrastructure;
 using Microsoft.AspNetCore.Mvc.ViewEngines;
-using Microsoft.AspNetCore.Mvc.ViewFeatures;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
-using Newtonsoft.Json;
-using Serilog.Core;
-using System;
 using System.Collections.Generic;
 using System.Data;
-using System.Diagnostics;
-using System.IO;
 using System.Linq;
-using System.Net;
-using System.Text;
-using System.Text.RegularExpressions;
-using System.Threading;
-using System.Web;
-using static Es.Riam.Gnoss.Web.Controles.ControladorBase;
-using static Es.Riam.Gnoss.Web.MVC.Models.Administracion.TabModel.DashboardTabModel;
 
 namespace Es.Riam.Gnoss.Web.MVC.Controllers
 {
@@ -126,8 +63,8 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
 
         #endregion
 
-        public DashboardController(LoggingService loggingService, ConfigService configService, EntityContext entityContext, RedisCacheWrapper redisCacheWrapper, GnossCache gnossCache, VirtuosoAD virtuosoAD, IHttpContextAccessor httpContextAccessor, ICompositeViewEngine viewEngine, EntityContextBASE entityContextBASE, Microsoft.AspNetCore.Hosting.IHostingEnvironment env, IActionContextAccessor actionContextAccessor, IUtilServicioIntegracionContinua utilServicioIntegracionContinua, IServicesUtilVirtuosoAndReplication servicesUtilVirtuosoAndReplication, IOAuth oAuth, IHostApplicationLifetime appLifetime, IAvailableServices availableServices, ILogger<DashboardController> logger, ILoggerFactory loggerFactory)
-            : base(loggingService, configService, entityContext, redisCacheWrapper, gnossCache, virtuosoAD, httpContextAccessor, viewEngine, entityContextBASE, env, actionContextAccessor, utilServicioIntegracionContinua, servicesUtilVirtuosoAndReplication, oAuth, appLifetime, availableServices,logger,loggerFactory)
+        public DashboardController(LoggingService loggingService, ConfigService configService, EntityContext entityContext, RedisCacheWrapper redisCacheWrapper, GnossCache gnossCache, VirtuosoAD virtuosoAD, IHttpContextAccessor httpContextAccessor, ICompositeViewEngine viewEngine, EntityContextBASE entityContextBASE, IWebHostEnvironment env, IUtilServicioIntegracionContinua utilServicioIntegracionContinua, IServicesUtilVirtuosoAndReplication servicesUtilVirtuosoAndReplication, IOAuth oAuth, IHostApplicationLifetime appLifetime, IAvailableServices availableServices, ILogger<DashboardController> logger, ILoggerFactory loggerFactory)
+            : base(loggingService, configService, entityContext, redisCacheWrapper, gnossCache, virtuosoAD, httpContextAccessor, viewEngine, entityContextBASE, env,utilServicioIntegracionContinua, servicesUtilVirtuosoAndReplication, oAuth, appLifetime, availableServices,logger,loggerFactory)
         {
             mUtilWeb = new UtilWeb(httpContextAccessor);
             mlogger = logger;

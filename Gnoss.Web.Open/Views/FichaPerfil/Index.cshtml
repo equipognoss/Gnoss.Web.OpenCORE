@@ -8,8 +8,8 @@ Variables
 ----------------------------------------------------------------
 *@
 @{
-//Html.GetListaJS().Add(Html.GetBaseUrlStatic() + "/ckeditor/ckeditor.js?v=" + Html.GetVersion());
-//Html.GetListaJS().Add(Html.GetBaseUrlStatic() + "/ckeditor/adapters/jquery.js?v=" + Html.GetVersion());
+//Html.GetListaJS().Add(Html.GetBaseUrlStatic() + "/ckeditor/ckeditor.js?v=" + Comunidad.VersionJSEcosistema);
+//Html.GetListaJS().Add(Html.GetBaseUrlStatic() + "/ckeditor/adapters/jquery.js?v=" + Comunidad.VersionJSEcosistema);
 
 ProfileModel Perfil = Model.Profile;
 CommunityModel Comunidad = Html.GetComunidad();
@@ -254,6 +254,15 @@ else
                         <ul class="lista-redes-sociales no-list-style">
                             @foreach (ProfileModel.SocialNetworkProfileModel redSocialPerfil in Perfil.SocialNetworks)
                             {
+                                Uri uriRedSocial = new Uri(redSocialPerfil.UrlProfile);
+                                string hostRedSocial = uriRedSocial.Host;
+                                string hostComunidad = new Uri(Comunidad.UrlPropia).Host;
+                                bool enlaceExterno = true;
+                                string htmlPropiedadesEnlace = "";
+                                if (hostRedSocial.Equals(hostComunidad))
+                                {
+                                    enlaceExterno = false;
+                                }
                                 string clase = redSocialPerfil.Name.ToLower();                                                                
                                 @* Controlar que si no son redes sociales, habrá que pintar el icono de la url mostrada *@
                                     if (clase.Contains("twitter") || clase.Contains("facebook") || clase.Contains("linkedin") )
@@ -264,8 +273,17 @@ else
                                         containsSocialUrlIcon = false;
                                     }                                   
                                 <li class="@clase">
+                                    @if (enlaceExterno)
+                                    {
+                                        htmlPropiedadesEnlace = $"data-toggle=\"modal\" data-target=\"#modal-redsocial-{clase}\" href=\"#\"";
+                                    }
+                                    else
+                                    {
+                                        htmlPropiedadesEnlace = $"href=\"{redSocialPerfil.UrlProfile}\" target = \"_blank\"";
+                                    }
                                     @if (containsSocialUrlIcon){
-                                        <a title="@redSocialPerfil.Name" href="@redSocialPerfil.UrlProfile" target="_blank">
+                                        
+                                        <a title="@redSocialPerfil.Name" @Html.Raw(htmlPropiedadesEnlace)>
                                             @if (clase.Equals("twitter"))
                                             {
                                                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 30 30" width="30" height="30">
@@ -283,12 +301,48 @@ else
                                     }else {
                                         string urlSocialImage = "https://www.google.com/s2/favicons?domain=" + @redSocialPerfil.Url;
 
-                                        <a title="@redSocialPerfil.Name" href="@redSocialPerfil.UrlProfile" target="_blank">
+                                        <a title="@redSocialPerfil.Name" @Html.Raw(htmlPropiedadesEnlace)>
                                             <img src=@urlSocialImage width="30px">
                                         </a>                                                                        
                                     }
 
                                 </li>
+                                @if (enlaceExterno)
+                                {
+                                    <div id="modal-redsocial-@clase" class="modal modal-top fade" role="dialog" aria-modal="true">
+
+                                        <div class="modal-dialog" role="document">
+                                            <div class="modal-content">
+                                                <div class="modal-header">
+                                                    @* Título del Modal *@
+                                                    <p class="modal-title">
+                                                        <span class="material-icons">delete</span>
+                                                        @Html.GetText("PERFIL", "ENLACEEXTERNO")
+                                                    </p>
+                                                    @* Cierre del Modal *@
+                                                    <span class="material-icons cerrar"
+                                                    data-dismiss="modal"
+                                                    aria-label="Close">close</span>
+                                                </div>
+                                                <div class="modal-body">
+                                                    <div class="form-group">
+                                                        <div class="alert alert-warning">
+                                                            <label class="control-label">@Html.GetText("COMMON", "WARNINGENLACEEXTERNO"): <br />
+                                                                <u>@redSocialPerfil.UrlProfile</u>
+                                                            </label>
+                                                        </div>
+                                                    </div>
+                                                    <div class="form-actions">
+                                                        <button data-dismiss="modal" class="btn btn-outline-primary">@Html.GetText("COMMON", "CANCELAR")</button>
+                                                        <a title="@redSocialPerfil.Name" class="btn btn-primary" href="@redSocialPerfil.UrlProfile" target="_blank">
+                                                            @Html.GetText("COMMON", "ACCEDER")
+                                                        </a>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                }
                             }
                         </ul>
                     </div>                

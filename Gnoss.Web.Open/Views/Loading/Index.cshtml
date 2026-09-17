@@ -17,6 +17,7 @@ string urlLogo = Html.GetBaseUrlStatic() + "/img/entradaSalida.gif";
 string urlLogoGnoss = Html.GetBaseUrlStatic() + "/img/entradaSalida.gif";
 // Nombre de la comunidad por defecto
 string nombreComunidad = "GNOSS";
+CommunityModel Comunidad = Html.GetComunidad();
 }
 
 @{
@@ -39,17 +40,17 @@ if (!string.IsNullOrEmpty(Model.NombreComunidad))
     <title>@Html.GetText("LOGOUT", "TITULOPAGINA")</title>
     @* BOOTSTRAP 4 + PROPELLER *@
     <link rel="stylesheet"
-      href="@Html.GetBaseUrlStatic()/responsive/theme/libraries/bootstrap/bootstrap.min.css?v=@Html.GetVersion()"
+      href="@Html.GetBaseUrlStatic()/responsive/theme/libraries/bootstrap/bootstrap.min.css?v=@Comunidad.VersionCSSEcosistema"
       type="text/css" />  
       
     @* PERSONALIZACION TEMA *@
     <link type="text/css"
           rel="stylesheet"
-          href="@Html.GetBaseUrlStatic()/responsive/theme/theme.css?v=@Html.GetVersion()" />                                  
+          href="@Html.GetBaseUrlStatic()/responsive/theme/theme.css?v=@Comunidad.VersionCSSEcosistema" />                                  
 
     @* Google no cookies *@
     <script type="text/javascript"
-            src="@Html.GetBaseUrlStatic()/responsive/theme/cookies/googleNoCookies.js?v=@Html.GetVersion()"></script>
+            src="@Html.GetBaseUrlStatic()/responsive/theme/cookies/googleNoCookies.js?v=@Comunidad.VersionJSEcosistema"></script>
 </head>
 
     <body>

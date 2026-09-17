@@ -1,11 +1,12 @@
 ﻿@model AdministrarPlantillasOntologicasViewModel
 
 @{
-    Html.GetListaJS().Add(Html.GetBaseUrlStatic() + "/ckeditor/ckeditor.js?v=" + Html.GetVersion());
-    Html.GetListaJS().Add(Html.GetBaseUrlStatic() + "/ckeditor/adapters/jquery.js?v=" + Html.GetVersion());
+    CommunityModel Comunidad = Html.GetComunidad();
+    Html.GetListaJS().Add(Html.GetBaseUrlStatic() + "/ckeditor/ckeditor.js?v=" + Comunidad.VersionJSEcosistema);
+    Html.GetListaJS().Add(Html.GetBaseUrlStatic() + "/ckeditor/adapters/jquery.js?v=" + Comunidad.VersionJSEcosistema);
     Html.GetListaJS().Add("https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/1.3.3/FileSaver.min.js");
 
-    Html.GetListaCSS().Add(Html.GetBaseUrlStatic() + "/cssNuevo/administracion.css?v=" + Html.GetVersion());
+    Html.GetListaCSS().Add(Html.GetBaseUrlStatic() + "/cssNuevo/administracion.css?v=" + Comunidad.VersionCSSEcosistema);
     Layout = "~/Views/Shared/Layout/_Layout_AnteriorEAD.cshtml";
 
     bool editando = Model.SelectedOntology.OntologyID != Guid.Empty;
@@ -90,8 +91,8 @@
     </div>
 </div>
 
-@*<script type="text/javascript" src="@Html.GetBaseUrlStatic()/jsUnificar/jquery.ui.tooltip.js?v=@Html.GetVersion()"></script>
-    <script type="text/javascript" src="@Html.GetBaseUrlStatic()/jsNuevo/jquery.demo.js?v=@Html.GetVersion()"></script>*@
+@*<script type="text/javascript" src="@Html.GetBaseUrlStatic()/jsUnificar/jquery.ui.tooltip.js?v=@Comunidad.VersionJSEcosistema"></script>
+    <script type="text/javascript" src="@Html.GetBaseUrlStatic()/jsNuevo/jquery.demo.js?v=@Comunidad.VersionJSEcosistema"></script>*@
 
 <script type="text/javascript">
     function CompartirPlantilla(urlCompartir, enlace, id) {

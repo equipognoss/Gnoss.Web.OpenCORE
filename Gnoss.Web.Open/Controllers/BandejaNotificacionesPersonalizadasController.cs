@@ -23,14 +23,15 @@ using AspNetCoreGeneratedDocument;
 using Es.Riam.Gnoss.Web.MVC.Models.Notificaciones;
 using Es.Riam.Gnoss.Web.MVC.Controllers.Administracion;
 using Microsoft.Extensions.Logging;
+using Microsoft.AspNetCore.Hosting;
 namespace Gnoss.Web.Open.Controllers
 {
     public class BandejaNotificacionesPersonalizadasController : ControllerBaseWeb
     {
         private ILogger mlogger;
         private ILoggerFactory mLoggerFactory;
-        public BandejaNotificacionesPersonalizadasController(LoggingService loggingService, ConfigService configService, EntityContext entityContext, RedisCacheWrapper redisCacheWrapper, GnossCache gnossCache, VirtuosoAD virtuosoAD, IHttpContextAccessor httpContextAccessor, ICompositeViewEngine viewEngine, EntityContextBASE entityContextBASE, Microsoft.AspNetCore.Hosting.IHostingEnvironment env, IActionContextAccessor actionContextAccessor, IUtilServicioIntegracionContinua utilServicioIntegracionContinua, IServicesUtilVirtuosoAndReplication servicesUtilVirtuosoAndReplication, IOAuth oAuth, IHostApplicationLifetime appLifetime, IAvailableServices availableServices, ILogger<BandejaNotificacionesPersonalizadasController> logger, ILoggerFactory loggerFactory)
-           : base(loggingService, configService, entityContext, redisCacheWrapper, gnossCache, virtuosoAD, httpContextAccessor, viewEngine, entityContextBASE, env, actionContextAccessor, utilServicioIntegracionContinua, servicesUtilVirtuosoAndReplication, oAuth, appLifetime, availableServices,logger,loggerFactory)
+        public BandejaNotificacionesPersonalizadasController(LoggingService loggingService, ConfigService configService, EntityContext entityContext, RedisCacheWrapper redisCacheWrapper, GnossCache gnossCache, VirtuosoAD virtuosoAD, IHttpContextAccessor httpContextAccessor, ICompositeViewEngine viewEngine, EntityContextBASE entityContextBASE, IWebHostEnvironment env, IUtilServicioIntegracionContinua utilServicioIntegracionContinua, IServicesUtilVirtuosoAndReplication servicesUtilVirtuosoAndReplication, IOAuth oAuth, IHostApplicationLifetime appLifetime, IAvailableServices availableServices, ILogger<BandejaNotificacionesPersonalizadasController> logger, ILoggerFactory loggerFactory)
+           : base(loggingService, configService, entityContext, redisCacheWrapper, gnossCache, virtuosoAD, httpContextAccessor, viewEngine, entityContextBASE, env,utilServicioIntegracionContinua, servicesUtilVirtuosoAndReplication, oAuth, appLifetime, availableServices,logger,loggerFactory)
         {
             mlogger = logger;
             mLoggerFactory = loggerFactory;

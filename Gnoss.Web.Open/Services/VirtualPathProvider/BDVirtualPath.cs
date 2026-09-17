@@ -50,11 +50,6 @@ namespace Gnoss.Web.Services.VirtualPathProvider
 
         public string FindPage(string virtualPath)
         {
-            //if (virtualPath.Contains("/Views/") && !virtualPath.Contains("$$$"))
-            //{
-            //    virtualPath = virtualPath.Replace("Views", DirectorioVistas);
-            //}
-
             _loggingService.AgregarEntrada($"FindPage {virtualPath}");
             string html = string.Empty;
 
@@ -125,11 +120,6 @@ namespace Gnoss.Web.Services.VirtualPathProvider
                                 }
 
                                 html = vistaVirtualCN.ObtenerHtmlParaVistaDePersonalizacion(personalizacionID, realPath);
-
-                                //if (string.IsNullOrEmpty(html) && virtualPath.Contains("/Views/") && !virtualPath.Contains("$$$"))
-                                //{
-                                //    virtualPath = virtualPath.Replace("Views", DirectorioVistas);
-                                //}
                             }
 
                             try

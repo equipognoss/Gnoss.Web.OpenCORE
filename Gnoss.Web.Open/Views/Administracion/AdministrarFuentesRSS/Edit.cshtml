@@ -1,8 +1,9 @@
 ﻿@model FuenteViewModel
     
 @{
-    Html.GetListaCSS().Add(Html.GetBaseUrlStatic() + "/cssNuevo/administracion.css?v=" + Html.GetVersion());
-    Html.GetListaJS().Add(Html.GetBaseUrlStatic() + "/jsUnificar/MVC.EditarRecurso.js?v=" + Html.GetVersion());
+    CommunityModel Comunidad = Html.GetComunidad();
+    Html.GetListaCSS().Add(Html.GetBaseUrlStatic() + "/cssNuevo/administracion.css?v=" + Comunidad.VersionCSSEcosistema);
+    Html.GetListaJS().Add(Html.GetBaseUrlStatic() + "/jsUnificar/MVC.EditarRecurso.js?v=" + Comunidad.VersionJSEcosistema);
 
     string UrlNuevaFuente = Html.GetComunidad().Url + "/" + Html.GetText("URLSEM", "ADMINISTRARCOMUNIDADFUENTE");
 }

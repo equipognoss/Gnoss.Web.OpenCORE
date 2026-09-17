@@ -66,7 +66,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
             try
             {
 
-                string urlPeticionOauth = Es.Riam.Util.UtilOAuth.ObtenerUrlGetDePeticionOAuth(Request);
+                string urlPeticionOauth = Es.Riam.Util.UtilOAuth.ObtenerUrlGetDePeticionOAuth(Request, mConfigService.ObtenerUrlApi());
                 
                 CallOauthService servicioOauth = new CallOauthService(mConfigService);
 

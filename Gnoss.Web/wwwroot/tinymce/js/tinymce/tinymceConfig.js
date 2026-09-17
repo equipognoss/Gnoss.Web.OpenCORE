@@ -259,7 +259,9 @@ const operativaTinyMceConfig = {
             allow_html_in_named_anchor: true,
             external_plugins: this.additionalPlugins,            
             // Permitir cualquier elemento
-            valid_elements: '',                                               
+            valid_elements: '',
+            // Habilitar la revisión ortográfica del navegador
+            browser_spellcheck: true,
             // No permitir Barra de Menú
             menubar: false,
             // Estilos personalizados para previsualizar contenido

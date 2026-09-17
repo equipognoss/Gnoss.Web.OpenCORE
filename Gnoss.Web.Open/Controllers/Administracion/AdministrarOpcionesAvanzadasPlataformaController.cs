@@ -16,28 +16,24 @@ using Es.Riam.Gnoss.Recursos;
 using Es.Riam.Gnoss.Util.Configuracion;
 using Es.Riam.Gnoss.Util.General;
 using Es.Riam.Gnoss.Web.Controles.Proyectos;
-using Es.Riam.Gnoss.Web.MVC.Filters;
 using Es.Riam.Gnoss.Web.MVC.Models.Administracion;
 using Es.Riam.Interfaces.InterfacesOpen;
 using Es.Riam.InterfacesOpen;
 using Es.Riam.Util;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Mvc.Infrastructure;
 using Microsoft.AspNetCore.Mvc.ViewEngines;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
-using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net;
 using System.Net.Http;
 using System.Text;
-using Es.Riam.Gnoss.AD.ServiciosGenerales;
 using Gnoss.Web.Open.Filters;
-using Microsoft.Extensions.Logging;
-using Serilog.Core;
+using Microsoft.AspNetCore.Hosting;
+using System.Text.Json;
 
 namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
 {
@@ -49,15 +45,15 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
     {
         private ILogger mlogger;
         private ILoggerFactory mLoggerFactory;
-        public AdministrarOpcionesAvanzadasPlataformaController(LoggingService loggingService, ConfigService configService, EntityContext entityContext, RedisCacheWrapper redisCacheWrapper, GnossCache gnossCache, VirtuosoAD virtuosoAD, IHttpContextAccessor httpContextAccessor, ICompositeViewEngine viewEngine, EntityContextBASE entityContextBASE, Microsoft.AspNetCore.Hosting.IHostingEnvironment env, IActionContextAccessor actionContextAccessor, IUtilServicioIntegracionContinua utilServicioIntegracionContinua, IServicesUtilVirtuosoAndReplication servicesUtilVirtuosoAndReplication, IOAuth oAuth, IHostApplicationLifetime appLifetime, IAvailableServices availableServices, ILogger<AdministrarOpcionesAvanzadasPlataformaController> logger, ILoggerFactory loggerFactory)
-             : base(loggingService, configService, entityContext, redisCacheWrapper, gnossCache, virtuosoAD, httpContextAccessor, viewEngine, entityContextBASE, env, actionContextAccessor, utilServicioIntegracionContinua, servicesUtilVirtuosoAndReplication, oAuth, appLifetime, availableServices, logger, loggerFactory)
+        public AdministrarOpcionesAvanzadasPlataformaController(LoggingService loggingService, ConfigService configService, EntityContext entityContext, RedisCacheWrapper redisCacheWrapper, GnossCache gnossCache, VirtuosoAD virtuosoAD, IHttpContextAccessor httpContextAccessor, ICompositeViewEngine viewEngine, EntityContextBASE entityContextBASE, IWebHostEnvironment env, IUtilServicioIntegracionContinua utilServicioIntegracionContinua, IServicesUtilVirtuosoAndReplication servicesUtilVirtuosoAndReplication, IOAuth oAuth, IHostApplicationLifetime appLifetime, IAvailableServices availableServices, ILogger<AdministrarOpcionesAvanzadasPlataformaController> logger, ILoggerFactory loggerFactory)
+             : base(loggingService, configService, entityContext, redisCacheWrapper, gnossCache, virtuosoAD, httpContextAccessor, viewEngine, entityContextBASE, env,utilServicioIntegracionContinua, servicesUtilVirtuosoAndReplication, oAuth, appLifetime, availableServices, logger, loggerFactory)
         {
             mlogger = logger;
             mLoggerFactory = loggerFactory;
             _appLifetime = appLifetime;
         }
 
-        private static string[] LISTA_IDIOMAS = { "es", "en", "pt", "ca", "ca-valencia","eu", "gl", "fr", "de", "it" };
+        private static string[] LISTA_IDIOMAS = { "es", "en", "pt", "ca", "ca-valencia", "eu", "gl", "fr", "de", "it" };
 
         #region Miembros
 
@@ -98,7 +94,8 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
         /// <returns>ActionResult</returns>
         [HttpPost]
 		[TypeFilter(typeof(PermisosAdministracionEcosistema), Arguments = new object[] { new ulong[] { (ulong)PermisoEcosistema.GestionarLaConfiguracionPlataforma } })]
-		public ActionResult Guardar(AdministrarOpcionesAvanzadasPlataformaViewModel Options)
+        [TypeFilter(typeof(LimitarPeticionesAdministracion), Arguments = new object[] { 30, 120, 15 })]
+        public ActionResult Guardar(AdministrarOpcionesAvanzadasPlataformaViewModel Options)
         {
             GuardarLogAuditoria();
             try
@@ -126,7 +123,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
                 if (iniciado)
                 {
 
-                    HttpResponseMessage response = InformarCambioAdministracion("OpcionesAvanzadasEcosistema", JsonConvert.SerializeObject(Options, Formatting.Indented));
+                    HttpResponseMessage response = InformarCambioAdministracion("OpcionesAvanzadasEcosistema", JsonSerializer.Serialize(Options, new JsonSerializerOptions { WriteIndented = true }));
                     if (!response.StatusCode.Equals(HttpStatusCode.OK))
                     {
                         throw new ExcepcionWeb("Contacte con el administrador del Proyecto, no es posible atender la petición.");

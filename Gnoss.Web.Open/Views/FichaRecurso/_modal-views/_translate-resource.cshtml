@@ -1,0 +1,71 @@
+﻿@model ResourceViewModel
+@{
+    ResourceModel fichaRecurso = Model.Resource;
+    CommunityModel Comunidad = Html.GetComunidad();
+    string urlTraducirRecurso = $"{fichaRecurso.ListActions.UrlTranslate}";
+    string idiomaUsuario = ViewBag.IdiomaUsuario;
+}
+<div class="modal-header">
+    <p class="modal-title">
+        @fichaRecurso.Title - @Html.GetText("DEVTOOLS", "TRADUCIRRECURSO")
+    </p>
+    <span class="material-icons cerrar" data-dismiss="modal" aria-label="Close">close</span>
+</div>
+
+<div class="modal-body">
+
+    <div class="form-group">
+        <label class="control-label">
+            @Html.GetText("DEVTOOLS", "INFOTRADUCIRRECURSO")
+        </label>
+    </div>
+
+    @* Select idioma origen *@
+    <div class="form-group">
+        <label for="idiomaOrigen" class="control-label d-block"><strong>@Html.GetText("DEVTOOLS", "IDIOMAORIGINALRECURSOS")</strong></label>
+        <select id="idiomaOrigen" name="cmbIdiomaOrigen" class="js-select2 cmbIdiomaOrigen" tabindex="0" aria-hidden="false">
+            @foreach (var idioma in Model.IdiomasOrigen)
+            {
+                <option value="@idioma.Key" @(idioma.Key == idiomaUsuario ? "selected" : "")>
+                    @idioma.Value
+                </option>
+            }
+        </select>
+    </div>
+
+    @* Select idiomas destino *@
+    <div class="form-group">
+        <label for="idiomasDestino" class="control-label d-block"><strong>@Html.GetText("DEVTOOLS", "IDIOMADESTINORECURSOS")</strong></label>
+        <select id="idiomasDestino" class="js-select2 cmbIdiomaDestino" name="cmbIdiomaDestino" tabindex="0" aria-hidden="false">
+            <option value="">@Html.GetText("DEVTOOLS", "SELECCIONAUNIDIOMA")</option>
+            @foreach (var idioma in Model.IdiomasDestino)
+            {
+                <option value="@idioma.Key" data-name="@idioma.Value">
+                    @idioma.Value
+                </option>
+            }
+        </select>
+    </div>
+
+    <div class="tag-list mt-4" id="contenedorIdiomasSeleccionados">
+        @* Con la operativa se pintarán los idiomas seleccionados *@
+    </div>
+
+    <div class="form-actions pt-1 pb-1">
+        <div class="form-actions">
+            <button data-dismiss="modal" class="btn btn-outline-primary">@Html.GetText("COMMON", "CANCELAR")</button>
+            <a class="btn btn-primary btnTranslateResource">@Html.GetText("COMMON", "ACEPTAR")</a>
+        </div>
+    </div>
+</div>
+@* Carga de operativa *@
+<script type="text/javascript">
+    (function ($) {
+        const pParams =
+        {
+            urlTranslateResource: "@urlTraducirRecurso",
+        }
+        opertativaTraducirRecurso.init(pParams);
+
+    })();
+</script>

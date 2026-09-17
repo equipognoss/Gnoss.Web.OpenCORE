@@ -1,4 +1,3 @@
-using DocumentFormat.OpenXml.Office.CustomUI;
 using Es.Riam.AbstractsOpen;
 using Es.Riam.Gnoss.AD.Documentacion;
 using Es.Riam.Gnoss.AD.EncapsuladoDatos;
@@ -16,12 +15,10 @@ using Es.Riam.Gnoss.CL.Documentacion;
 using Es.Riam.Gnoss.CL.Facetado;
 using Es.Riam.Gnoss.CL.ParametrosAplicacion;
 using Es.Riam.Gnoss.CL.ServiciosGenerales;
-using Es.Riam.Gnoss.Elementos.Amigos;
 using Es.Riam.Gnoss.Elementos.Documentacion;
 using Es.Riam.Gnoss.Logica.Documentacion;
 using Es.Riam.Gnoss.Logica.Facetado;
 using Es.Riam.Gnoss.Logica.Identidad;
-using Es.Riam.Gnoss.Logica.ParametroAplicacion;
 using Es.Riam.Gnoss.Logica.ServiciosGenerales;
 using Es.Riam.Gnoss.RabbitMQ;
 using Es.Riam.Gnoss.Recursos;
@@ -37,7 +34,6 @@ using Es.Riam.Gnoss.Web.MVC.Controles.Controladores;
 using Es.Riam.Gnoss.Web.MVC.Filters;
 using Es.Riam.Gnoss.Web.MVC.Models;
 using Es.Riam.Gnoss.Web.MVC.Models.Administracion;
-using Es.Riam.Gnoss.Web.MVC.Models.ViewModels;
 using Es.Riam.Gnoss.Web.UtilDownloadOntologyDlls;
 using Es.Riam.Interfaces.InterfacesOpen;
 using Es.Riam.InterfacesOpen;
@@ -48,14 +44,12 @@ using Gnoss.Web.Open.Filters;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Mvc.Infrastructure;
 using Microsoft.AspNetCore.Mvc.ViewEngines;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
-using Newtonsoft.Json;
+using NetVips;
 using OntologiaAClase;
-using SixLabors.ImageSharp;
 using System;
 using System.Collections.Generic;
 using System.Data;
@@ -66,6 +60,7 @@ using System.Linq;
 using System.Net;
 using System.Net.Http;
 using System.Text;
+using System.Text.Json;
 using System.Text.RegularExpressions;
 using System.Threading;
 using System.Web;
@@ -98,8 +93,8 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
 		public PlantillaOntologicaUtil mPlantillaOntologicaUtil;
         private ILogger mLogger;
         private ILoggerFactory mLoggerFactory;
-        public AdministrarObjetosConocimientoController(LoggingService loggingService, ConfigService configService, EntityContext entityContext, RedisCacheWrapper redisCacheWrapper, GnossCache gnossCache, VirtuosoAD virtuosoAD, IHttpContextAccessor httpContextAccessor, ICompositeViewEngine viewEngine, EntityContextBASE entityContextBASE, Microsoft.AspNetCore.Hosting.IHostingEnvironment env, IActionContextAccessor actionContextAccessor, IUtilServicioIntegracionContinua utilServicioIntegracionContinua, IServicesUtilVirtuosoAndReplication servicesUtilVirtuosoAndReplication, IOAuth oAuth, IMassiveOntologyToClass massiveOntologyToClass, IHostApplicationLifetime appLifetime, IAvailableServices availableServices, ILogger<AdministrarObjetosConocimientoController> logger, ILoggerFactory loggerFactory)
-            : base(loggingService, configService, entityContext, redisCacheWrapper, gnossCache, virtuosoAD, httpContextAccessor, viewEngine, entityContextBASE, env, actionContextAccessor, utilServicioIntegracionContinua, servicesUtilVirtuosoAndReplication, oAuth, appLifetime, availableServices, logger, loggerFactory)
+        public AdministrarObjetosConocimientoController(LoggingService loggingService, ConfigService configService, EntityContext entityContext, RedisCacheWrapper redisCacheWrapper, GnossCache gnossCache, VirtuosoAD virtuosoAD, IHttpContextAccessor httpContextAccessor, ICompositeViewEngine viewEngine, EntityContextBASE entityContextBASE, IWebHostEnvironment env, IUtilServicioIntegracionContinua utilServicioIntegracionContinua, IServicesUtilVirtuosoAndReplication servicesUtilVirtuosoAndReplication, IOAuth oAuth, IMassiveOntologyToClass massiveOntologyToClass, IHostApplicationLifetime appLifetime, IAvailableServices availableServices, ILogger<AdministrarObjetosConocimientoController> logger, ILoggerFactory loggerFactory)
+            : base(loggingService, configService, entityContext, redisCacheWrapper, gnossCache, virtuosoAD, httpContextAccessor, viewEngine, entityContextBASE, env,utilServicioIntegracionContinua, servicesUtilVirtuosoAndReplication, oAuth, appLifetime, availableServices, logger, loggerFactory)
         {
             mMassiveOntologyToClass = massiveOntologyToClass;
             mLogger = logger;
@@ -253,7 +248,8 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
         [HttpPost]        
 		[TypeFilter(typeof(PermisosContenidos), Arguments = new object[] { new ulong[] { (ulong)PermisoContenidos.AnyadirValorEntidadSecundaria, (ulong)PermisoContenidos.GestionarOC } })]
 		[TypeFilter(typeof(AccesoIntegracionAttribute))]
-		public ActionResult CrearOntologia(EditOntologyViewModel Ontologia)
+        [TypeFilter(typeof(LimitarPeticionesAdministracion), Arguments = new object[] { 30, 120, 15 })]
+        public ActionResult CrearOntologia(EditOntologyViewModel Ontologia)
         {
             bool iniciado = false;
             try
@@ -486,7 +482,8 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
         [HttpPost]
 		[TypeFilter(typeof(PermisosContenidos), Arguments = new object[] { new ulong[] { (ulong)PermisoContenidos.GestionarOC, (ulong)PermisoContenidos.AnyadirValorEntidadSecundaria, (ulong)PermisoContenidos.ModificarValorEntidadSecundaria } })]
 		[TypeFilter(typeof(AccesoIntegracionAttribute))]
-		public ActionResult GuardarEdicionObjetoConocimiento(EditarObjetoConocimientoYOntologiaModel ObjetoConocimiento)
+        [TypeFilter(typeof(LimitarPeticionesAdministracion), Arguments = new object[] { 30, 120, 15 })]
+        public ActionResult GuardarEdicionObjetoConocimiento(EditarObjetoConocimientoYOntologiaModel ObjetoConocimiento)
         {
             GuardarLogAuditoria();
 			CargarPermisosAdministrarOC();
@@ -522,7 +519,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
 
                     if (iniciado)
                     {
-                        HttpResponseMessage resultado = InformarCambioAdministracion("ObjetosConocimiento", JsonConvert.SerializeObject(ObjetoConocimiento.ObjetoConocimiento, Newtonsoft.Json.Formatting.Indented));
+                        HttpResponseMessage resultado = InformarCambioAdministracion("ObjetosConocimiento", JsonSerializer.Serialize(ObjetoConocimiento.ObjetoConocimiento, new JsonSerializerOptions { WriteIndented = true }));
 
                         if (!resultado.StatusCode.Equals(HttpStatusCode.OK))
                         {
@@ -601,14 +598,14 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
                 
                 if (iniciado)
                 {
-                    HttpResponseMessage resultado = InformarCambioAdministracion("Ontologias", JsonConvert.SerializeObject(ontologyBorrar, Newtonsoft.Json.Formatting.Indented));
+                    HttpResponseMessage resultado = InformarCambioAdministracion("Ontologias", JsonSerializer.Serialize(ontologyBorrar, new JsonSerializerOptions { WriteIndented = true }));
 
                     if (!resultado.StatusCode.Equals(HttpStatusCode.OK))
                     {
                         throw new Exception("Contacte con el administrador del Proyecto, no es posible atender la petición.");
                     }
 
-                    resultado = InformarCambioAdministracion("ObjetosConocimiento", JsonConvert.SerializeObject(objetoConocimiento, Newtonsoft.Json.Formatting.Indented));
+                    resultado = InformarCambioAdministracion("ObjetosConocimiento", JsonSerializer.Serialize(objetoConocimiento, new JsonSerializerOptions { WriteIndented = true }));
                     if (!resultado.StatusCode.Equals(HttpStatusCode.OK))
                     {
                         throw new Exception("Contacte con el administrador del Proyecto, no es posible atender la petición.");
@@ -625,6 +622,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
         }
 
         [TypeFilter(typeof(PermisosContenidos), Arguments = new object[] { new ulong[] { (ulong)PermisoContenidos.AnyadirValorEntidadSecundaria, (ulong)PermisoContenidos.ModificarValorEntidadSecundaria, (ulong)PermisoContenidos.GestionarOC } })]
+        [TypeFilter(typeof(LimitarPeticionesAdministracion), Arguments = new object[] { 30, 120, 15 })]
         //Descargar todas las clases del ecosistema
         public ActionResult DownloadClasses()
         {
@@ -698,6 +696,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
         //}
 
         [TypeFilter(typeof(PermisosContenidos), Arguments = new object[] { new ulong[] { (ulong)PermisoContenidos.AnyadirValorEntidadSecundaria, (ulong)PermisoContenidos.ModificarValorEntidadSecundaria, (ulong)PermisoContenidos.GestionarOC } })]
+        [TypeFilter(typeof(LimitarPeticionesAdministracion), Arguments = new object[] { 30, 120, 15 })]
         public ActionResult DownloadClassesJava()
         {
             /*Dictionary<string, string> dicPref = new Dictionary<string, string>();
@@ -887,6 +886,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
         /// <param name="Grafo">Grafo de la entidad secundaria indicada</param>
         /// <returns>Devuelve vista con todos los elementos pertenecientes a la entidad secundaria indicada<returns>
         [TypeFilter(typeof(PermisosContenidos), Arguments = new object[] { new ulong[] { (ulong)PermisoContenidos.AnyadirValorEntidadSecundaria, (ulong)PermisoContenidos.ModificarValorEntidadSecundaria, (ulong)PermisoContenidos.GestionarOC } })]
+        [TypeFilter(typeof(LimitarPeticionesAdministracion), Arguments = new object[] { 30, 120, 15 })]
         public ActionResult CargarElementosEntidadSecundaria(string Grafo)
         {
 			CargarPermisosAdministrarOC();
@@ -904,7 +904,8 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
 		/// <param name="Grafo">Grafo del elemento a cargar</param>
 		/// <returns>Vista con las propiedades del tipo de la entidad secundaria vacías</returns>
 		[TypeFilter(typeof(PermisosContenidos), Arguments = new object[] { new ulong[] { (ulong)PermisoContenidos.AnyadirValorEntidadSecundaria, (ulong)PermisoContenidos.ModificarValorEntidadSecundaria, (ulong)PermisoContenidos.GestionarOC } })]
-		public ActionResult NuevoElementoEntidadSecundaria(string Grafo)
+        [TypeFilter(typeof(LimitarPeticionesAdministracion), Arguments = new object[] { 30, 120, 15 })]
+        public ActionResult NuevoElementoEntidadSecundaria(string Grafo)
         {
 			CargarPermisosAdministrarOC();
 			EliminarPersonalizacionVistas();
@@ -925,7 +926,8 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
 		/// <param name="SujetoEntidad">Sujeto del elemento a mostrar</param>
 		/// <returns>Vista con las propiedades del elemento de la entidad secundaria y sus datos</returns>
 		[TypeFilter(typeof(PermisosContenidos), Arguments = new object[] { new ulong[] { (ulong)PermisoContenidos.AnyadirValorEntidadSecundaria, (ulong)PermisoContenidos.ModificarValorEntidadSecundaria, (ulong)PermisoContenidos.GestionarOC } })]
-		public ActionResult EditarElementoEntidadSecundaria(string Grafo, string SujetoEntidad)
+        [TypeFilter(typeof(LimitarPeticionesAdministracion), Arguments = new object[] { 30, 120, 15 })]
+        public ActionResult EditarElementoEntidadSecundaria(string Grafo, string SujetoEntidad)
         {
 			CargarPermisosAdministrarOC();
 			EliminarPersonalizacionVistas();
@@ -947,7 +949,8 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
 		/// <param name="Rdf">Valor del rdf del elemento</param>
 		/// <returns></returns>
 		[TypeFilter(typeof(PermisosContenidos), Arguments = new object[] { new ulong[] { (ulong)PermisoContenidos.AnyadirValorEntidadSecundaria, (ulong)PermisoContenidos.ModificarValorEntidadSecundaria, (ulong)PermisoContenidos.GestionarOC } })]
-		public ActionResult GuardarElementoEntidadSecundaria(string SujetoEntidad, string Grafo, bool ElementoNuevo, string Rdf)
+        [TypeFilter(typeof(LimitarPeticionesAdministracion), Arguments = new object[] { 30, 120, 15 })]
+        public ActionResult GuardarElementoEntidadSecundaria(string SujetoEntidad, string Grafo, bool ElementoNuevo, string Rdf)
         {
 			CargarPermisosAdministrarOC();
 			GuardarLogAuditoria();
@@ -1592,7 +1595,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
                 bool archivoOWLValido = string.IsNullOrEmpty(extensionArchivo1) || (extensionArchivo1.ToLower() == ".owl" && ControladorDocumentacion.ComprobarBuenFormatoPlantillaOWL(buffer1));
                 bool archivoXMLValido = string.IsNullOrEmpty(extensionArchivo3) || extensionArchivo3.ToLower() == ".xml";
                 bool archivoCSSValido = string.IsNullOrEmpty(extensionArchivo2) || extensionArchivo2.ToLower() == ".css";
-                bool archivoIMGValido = string.IsNullOrEmpty(extensionArchivo4) || extensionArchivo4.ToLower() == ".jpg" || extensionArchivo4.ToLower() == ".png" || extensionArchivo4.ToLower() == ".gif" || extensionArchivo4.ToLower() == ".jpeg";
+                bool archivoIMGValido = string.IsNullOrEmpty(extensionArchivo4) || extensionArchivo4.ToLower() == ".webp" || extensionArchivo4.ToLower() == ".jpg" || extensionArchivo4.ToLower() == ".png" || extensionArchivo4.ToLower() == ".gif" || extensionArchivo4.ToLower() == ".jpeg";
                 bool archivoJSValido = extensionArchivo5 == null || extensionArchivo5.ToLower() == ".js";
 
                 if (archivoOWLValido && archivoCSSValido && archivoXMLValido && archivoIMGValido && archivoJSValido)
@@ -1659,23 +1662,18 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
                                 reader4.Close();
                             }
 
-                            Image imagen = Image.Load(new MemoryStream(buffer4));
+                            using var imagen = Image.NewFromBuffer(buffer4);
 
                             if (extensionArchivo4 != ".jpg")
                             {
-                                MemoryStream ms = new MemoryStream();
-                                imagen.SaveAsJpeg(ms);
-                                buffer4 = ms.ToArray();
+                                buffer4 = imagen.JpegsaveBuffer();
                                 extensionArchivo4 = ".jpg";
                             }
 
                             if (imagen.Height > 240 || imagen.Width > 240)
                             {
-                                Image imagenPeque = UtilImages.AjustarImagen(imagen, 240, 240);
-                                MemoryStream ms = new MemoryStream();
-                                imagenPeque.SaveAsJpeg(ms);
-                                buffer4 = ms.ToArray();
-                                imagenPeque.Dispose();
+                                using var imagenPeque = UtilImages.AjustarImagen(imagen, 240, 240);
+                                buffer4 = imagenPeque.JpegsaveBuffer();
                             }
 
                             imagen.Dispose();
@@ -1912,7 +1910,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
                     contrObjetosConocim.AgregarObjetoConocimientoNuevo(pOntologiaID, pObjetoConocimiento);
                     if (HayIntegracionContinua)
                     {
-                        HttpResponseMessage resultado = InformarCambioAdministracion("ObjetosConocimiento", JsonConvert.SerializeObject(pObjetoConocimiento, Newtonsoft.Json.Formatting.Indented));
+                        HttpResponseMessage resultado = InformarCambioAdministracion("ObjetosConocimiento", JsonSerializer.Serialize(pObjetoConocimiento, new JsonSerializerOptions { WriteIndented = true }));
 
                         if (!resultado.StatusCode.Equals(HttpStatusCode.OK))
                         {
@@ -2107,7 +2105,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
                 }
                 //Esto es para notificar las ontologias en la IC correctamente.
                 Ontologia.NameOWL = nombreOnto;
-                return InformarCambioAdministracion("Ontologias", JsonConvert.SerializeObject(Ontologia, Newtonsoft.Json.Formatting.Indented));
+                return InformarCambioAdministracion("Ontologias", JsonSerializer.Serialize(Ontologia, new JsonSerializerOptions { WriteIndented = true }));
             }
             else
             {

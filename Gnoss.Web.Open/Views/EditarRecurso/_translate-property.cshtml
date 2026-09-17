@@ -1,0 +1,66 @@
+﻿@model ConfiguracionTraduccion
+@{
+    CommunityModel Comunidad = Html.GetComunidad();
+    string urlTranslateProperty = Model.UrlTraduccion;
+}
+<div class="modal-header">
+    <p class="modal-title">
+        @Html.GetText("DEVTOOLS", "TRADUCIRPROPIEDAD") - @Model.Propiedad.NombrePropiedad
+    </p>
+    <span class="material-icons cerrar" data-dismiss="modal" aria-label="Close">close</span>
+</div>
+
+<div class="modal-body">
+
+    <div class="form-group">
+        <label class="control-label">
+            @Html.GetText("DEVTOOLS", "INFOTRADUCIRPROPIEDAD")
+        </label>
+    </div>
+
+    @* Select idioma origen *@
+    <div class="form-group">
+        <label for="idiomaOrigen" class="control-label d-block"><strong>@Html.GetText("DEVTOOLS", "IDIOMAORIGINALPROPIEDAD")</strong></label>
+        <select id="idiomaOrigen" name="cmbIdiomaOrigen" class="js-select2 cmbIdiomaOrigen" tabindex="0" aria-hidden="false">
+            @foreach (var idioma in Model.IdiomasOrigen)
+            {
+                <option value="@idioma.Key" @(idioma.Key == Model.IdiomaActual ? "selected" : "")>
+                    @idioma.Value
+                </option>
+            }
+        </select>
+    </div>
+
+    @* Select idiomas destino *@
+    <div class="form-group">
+        <label for="idiomasDestino" class="control-label d-block"><strong>@Html.GetText("DEVTOOLS", "IDIOMADESTINOPROPIEDAD")</strong></label>
+        <select id="idiomasDestino" class="js-select2 cmbIdiomaDestino" name="cmbIdiomaDestino" tabindex="0" aria-hidden="false">
+            <option value="">@Html.GetText("DEVTOOLS", "SELECCIONAUNIDIOMA")</option>
+            @foreach (var idioma in Model.IdiomasDestino)
+            {
+                <option value="@idioma.Key" data-name="@idioma.Value">
+                    @idioma.Value
+                </option>
+            }
+        </select>
+    </div>
+
+    <div class="tag-list mt-4" id="contenedorIdiomasSeleccionados">
+        @* Con la operativa se pintarán los idiomas seleccionados *@
+    </div>
+
+    <div class="form-actions pt-1 pb-1">
+        <div class="form-actions">
+            <button data-dismiss="modal" class="btn btn-outline-primary">@Html.GetText("COMMON", "CANCELAR")</button>
+            <button class="btn btn-primary btnTranslateProperty" onclick="TraducirPropiedad('@urlTranslateProperty', '@Model.Propiedad.Entidad', '@Model.Propiedad.Propiedad', @Model.Propiedad.EsMultiValor.ToString().ToLower())">@Html.GetText("COMMON", "ACEPTAR")</button>
+        </div>
+    </div>
+</div>
+@* Carga de operativa *@
+<script type="text/javascript">
+    (function ($) {
+        const pParams = { }
+        opertativaTraducirRecurso.init(pParams);
+
+    })();
+</script>

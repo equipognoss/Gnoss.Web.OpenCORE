@@ -6,6 +6,7 @@ using Es.Riam.Gnoss.AD.EntityModel.Models.CMS;
 using Es.Riam.Gnoss.AD.EntityModel.Models.ParametroGeneralDS;
 using Es.Riam.Gnoss.AD.EntityModel.Models.VistaVirtualDS;
 using Es.Riam.Gnoss.AD.EntityModelBASE;
+using Es.Riam.Gnoss.AD.Parametro;
 using Es.Riam.Gnoss.AD.ServiciosGenerales;
 using Es.Riam.Gnoss.AD.Virtuoso;
 using Es.Riam.Gnoss.CL;
@@ -50,8 +51,8 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
 	{
         private ILogger mlogger;
         private ILoggerFactory mLoggerFactory;
-        public AdministrarOpcionesMetaAdministradorController(LoggingService loggingService, ConfigService configService, EntityContext entityContext, RedisCacheWrapper redisCacheWrapper, GnossCache gnossCache, VirtuosoAD virtuosoAD, IHttpContextAccessor httpContextAccessor, ICompositeViewEngine viewEngine, EntityContextBASE entityContextBASE, Microsoft.AspNetCore.Hosting.IHostingEnvironment env, IActionContextAccessor actionContextAccessor, IUtilServicioIntegracionContinua utilServicioIntegracionContinua, IServicesUtilVirtuosoAndReplication servicesUtilVirtuosoAndReplication, IOAuth oAuth, IHostApplicationLifetime appLifetime, IAvailableServices availableServices, ILogger<AdministrarOpcionesMetaAdministradorController> logger, ILoggerFactory loggerFactory )
-			: base(loggingService, configService, entityContext, redisCacheWrapper, gnossCache, virtuosoAD, httpContextAccessor, viewEngine, entityContextBASE, env, actionContextAccessor, utilServicioIntegracionContinua, servicesUtilVirtuosoAndReplication, oAuth, appLifetime, availableServices, logger, loggerFactory)
+        public AdministrarOpcionesMetaAdministradorController(LoggingService loggingService, ConfigService configService, EntityContext entityContext, RedisCacheWrapper redisCacheWrapper, GnossCache gnossCache, VirtuosoAD virtuosoAD, IHttpContextAccessor httpContextAccessor, ICompositeViewEngine viewEngine, EntityContextBASE entityContextBASE, IWebHostEnvironment env,IUtilServicioIntegracionContinua utilServicioIntegracionContinua, IServicesUtilVirtuosoAndReplication servicesUtilVirtuosoAndReplication, IOAuth oAuth, IHostApplicationLifetime appLifetime, IAvailableServices availableServices, ILogger<AdministrarOpcionesMetaAdministradorController> logger, ILoggerFactory loggerFactory )
+			: base(loggingService, configService, entityContext, redisCacheWrapper, gnossCache, virtuosoAD, httpContextAccessor, viewEngine, entityContextBASE, env,utilServicioIntegracionContinua, servicesUtilVirtuosoAndReplication, oAuth, appLifetime, availableServices, logger, loggerFactory)
 		{
             mlogger = logger;
             mLoggerFactory = loggerFactory;
@@ -605,6 +606,8 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
 			ControladorProyecto.GuardarParametroString(ParametrosGeneralesDS, "ServiceBusSegundos", pOptions.ServiceBusSegundos > 0 ? pOptions.ServiceBusSegundos.ToString() : null);
 			ControladorProyecto.GuardarParametroString(ParametrosGeneralesDS, "ServiceBusReintentos", pOptions.ServiceBusReintentos > 0 ? pOptions.ServiceBusReintentos.ToString() : null);
 
+			ControladorProyecto.GuardarParametroString(ParametrosGeneralesDS, ParametroAD.NumeroMaximoVersionesRecurso, pOptions.NumeroMaximoVersionesRecurso > 0 ? pOptions.NumeroMaximoVersionesRecurso.ToString() : ParametroAD.NumeroMaximoVersionesRecursoPorDefecto.ToString());
+
 			// Parámetros string
 			ControladorProyecto.GuardarParametroString(ParametrosGeneralesDS, "loginFacebook", pOptions.LoginFacebook);
 			ControladorProyecto.GuardarParametroString(ParametrosGeneralesDS, "loginGoogle", pOptions.LoginGoogle);
@@ -895,8 +898,8 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
 			mPaginaModel.FilasPorPagina = ControladorProyecto.ObtenerParametroInt(ParametroProyecto, "FilasPorPagina");
 			mPaginaModel.ServiceBusSegundos = ControladorProyecto.ObtenerParametroInt(ParametroProyecto, "ServiceBusSegundos");
 			mPaginaModel.ServiceBusReintentos = ControladorProyecto.ObtenerParametroInt(ParametroProyecto, "ServiceBusReintentos");
-
-
+			// Sin configurar explícitamente, se aplica el valor por defecto (100)
+			mPaginaModel.NumeroMaximoVersionesRecurso = ParametroProyecto.ContainsKey(ParametroAD.NumeroMaximoVersionesRecurso) ? ControladorProyecto.ObtenerParametroInt(ParametroProyecto, ParametroAD.NumeroMaximoVersionesRecurso) : ParametroAD.NumeroMaximoVersionesRecursoPorDefecto;
 			// Parametros string
 			mPaginaModel.LoginFacebook = ControladorProyecto.ObtenerParametroString(ParametroProyecto, "loginFacebook");
 			mPaginaModel.LoginGoogle = ControladorProyecto.ObtenerParametroString(ParametroProyecto, "loginGoogle");
@@ -912,7 +915,6 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
 			mPaginaModel.ProyectosRegistroObligatorio = CargarProyectosRegistroObligatorio(ProyectoSeleccionado.Clave);
 			mPaginaModel.RutaEstilos = ControladorProyecto.ObtenerParametroString(ParametroProyecto, "RutaEstilos");
 			ObtenerParametroCapturasImgSize();
-
 		}
 
 		private void ObtenerParametroCapturasImgSize()

@@ -2,9 +2,10 @@
 using Es.Riam.Gnoss.AD.EntityModel;
 using Es.Riam.Gnoss.AD.EntityModel.Models.UsuarioDS;
 using Es.Riam.Gnoss.AD.EntityModelBASE;
-using MySql.Data.MySqlClient;
+using Es.Riam.Gnoss.AD.ServiciosGenerales;
 using Es.Riam.Gnoss.AD.Virtuoso;
 using Es.Riam.Gnoss.CL;
+using Es.Riam.Gnoss.Elementos.Amigos;
 using Es.Riam.Gnoss.Logica.ServiciosGenerales;
 using Es.Riam.Gnoss.Logica.Usuarios;
 using Es.Riam.Gnoss.Util.Configuracion;
@@ -13,27 +14,28 @@ using Es.Riam.Gnoss.Web.MVC.Filters;
 using Es.Riam.Gnoss.Web.MVC.Models.Administracion;
 using Es.Riam.Interfaces.InterfacesOpen;
 using Es.Riam.InterfacesOpen;
+using Es.Riam.Util;
 using Es.Riam.Web.Util;
+using Gnoss.Web.Open.Filters;
+using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Infrastructure;
 using Microsoft.AspNetCore.Mvc.ViewEngines;
-using static Es.Riam.Web.Util.UtilMatomo;
-using Es.Riam.Util;
-using System.IO;
-using System.Web;
-using System.Net;
-using System;
-using System.Collections.Generic;
+using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
+using MySql.Data.MySqlClient;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Converters;
+using System;
+using System.Collections.Generic;
 using System.Globalization;
+using System.IO;
 using System.Linq;
-using Microsoft.Extensions.Hosting;
-using Es.Riam.Gnoss.AD.ServiciosGenerales;
-using Gnoss.Web.Open.Filters;
-using Microsoft.Extensions.Logging;
-using Es.Riam.Gnoss.Elementos.Amigos;
+using System.Net;
+using System.Net.Http;
+using System.Web;
+using static Es.Riam.Web.Util.UtilMatomo;
 
 namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
 {
@@ -46,8 +48,8 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
     {
         private ILogger mlogger;
         private ILoggerFactory mLoggerFactory;
-        public AdministrarMatomoController(LoggingService loggingService, ConfigService configService, EntityContext entityContext, RedisCacheWrapper redisCacheWrapper, GnossCache gnossCache, VirtuosoAD virtuosoAD, IHttpContextAccessor httpContextAccessor, ICompositeViewEngine viewEngine, EntityContextBASE entityContextBASE, Microsoft.AspNetCore.Hosting.IHostingEnvironment env, IActionContextAccessor actionContextAccessor, IUtilServicioIntegracionContinua utilServicioIntegracionContinua, IServicesUtilVirtuosoAndReplication servicesUtilVirtuosoAndReplication, IOAuth oAuth, IHostApplicationLifetime appLifetime, IAvailableServices availableServices, ILogger<AdministrarMatomoController> logger, ILoggerFactory loggerFactory)
-            : base(loggingService, configService, entityContext, redisCacheWrapper, gnossCache, virtuosoAD, httpContextAccessor, viewEngine, entityContextBASE, env, actionContextAccessor, utilServicioIntegracionContinua, servicesUtilVirtuosoAndReplication, oAuth, appLifetime, availableServices, logger, loggerFactory)
+        public AdministrarMatomoController(LoggingService loggingService, ConfigService configService, EntityContext entityContext, RedisCacheWrapper redisCacheWrapper, GnossCache gnossCache, VirtuosoAD virtuosoAD, IHttpContextAccessor httpContextAccessor, ICompositeViewEngine viewEngine, EntityContextBASE entityContextBASE, IWebHostEnvironment env, IUtilServicioIntegracionContinua utilServicioIntegracionContinua, IServicesUtilVirtuosoAndReplication servicesUtilVirtuosoAndReplication, IOAuth oAuth, IHostApplicationLifetime appLifetime, IAvailableServices availableServices, ILogger<AdministrarMatomoController> logger, ILoggerFactory loggerFactory)
+            : base(loggingService, configService, entityContext, redisCacheWrapper, gnossCache, virtuosoAD, httpContextAccessor, viewEngine, entityContextBASE, env, utilServicioIntegracionContinua, servicesUtilVirtuosoAndReplication, oAuth, appLifetime, availableServices, logger, loggerFactory)
         {
             mlogger = logger;
             mLoggerFactory = loggerFactory;
@@ -431,15 +433,12 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
                 if (ModelState.IsValid)
                 {
                     UtilMatomo utilMatomo = new UtilMatomo(mConfigService.ObtenerOAuthMatomo(), mConfigService.ObtenerUrlMatomo());
-                    WebResponse response = utilMatomo.MatomoRequest(RequestParams("matomopage"), Request.QueryString.Value);
+                    HttpResponseMessage response = utilMatomo.MatomoRequest(RequestParams("matomopage"), Request.QueryString.Value);
 
-                    string content = null;
-                    using (var stream = response.GetResponseStream())
-                    {
-                        content = new StreamReader(stream).ReadToEnd();
-                    }
+                    string content = response.Content.ReadAsStringAsync().GetAwaiter().GetResult();
+                    string contentType = response.Content.Headers.ContentType?.ToString() ?? "";
 
-                    return Content(content, response.ContentType);
+                    return Content(content, contentType);
                 }
                 else
                 {
@@ -509,9 +508,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
             if (!string.IsNullOrEmpty(mConfigService.ObtenerUrlMatomo()))
             {
                 string url = $"http://matomo_hash_generator/HashGenerator.php?password={pPassword}";
-                StreamReader streamReader = new StreamReader(UtilWeb.HacerPeticionGetDevolviendoWebResponse(url).GetResponseStream());
-
-                string hashNewPassword = streamReader.ReadToEnd();
+                string hashNewPassword = UtilWeb.WebRequest("GET", url, null);
 
                 MySqlConnection connection = new MySqlConnection(mConfigService.ObtenerCadenaConexionMatomo());
                 connection.Open();

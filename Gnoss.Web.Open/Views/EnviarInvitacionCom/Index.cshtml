@@ -5,15 +5,15 @@
     UserIdentityModel IdentidadActual = Html.GetIdentidadActual();
 
     Html.SetBodyClass("layout04 comGnoss");
-    Html.GetListaJS().Add(Html.GetBaseUrlStatic() + "/ckeditor/ckeditor.js?v=" + Html.GetVersion());
-    Html.GetListaJS().Add(Html.GetBaseUrlStatic() + "/ckeditor/adapters/jquery.js?v=" + Html.GetVersion());
+    Html.GetListaJS().Add(Html.GetBaseUrlStatic() + "/ckeditor/ckeditor.js?v=" + Comunidad.VersionJSEcosistema);
+    Html.GetListaJS().Add(Html.GetBaseUrlStatic() + "/ckeditor/adapters/jquery.js?v=" + Comunidad.VersionJSEcosistema);
 
     if (!string.IsNullOrEmpty(Context.Request.Query["new-community-wizard"]))
     {
-        Html.GetListaCSS().Add(Html.GetBaseUrlStatic() + "/cssNuevo/administracion.css?v=" + Html.GetVersion());
-        Html.GetListaCSS().Add(Html.GetBaseUrlStatic() + "/jsUnificar/JCrop/css/Jcrop.css?v=" + Html.GetVersion());
-        Html.GetListaJS().Add(Html.GetBaseUrlStatic() + "/ckeditor/ckeditor.js?v=" + Html.GetVersion());
-        Html.GetListaJS().Add(Html.GetBaseUrlStatic() + "/ckeditor/adapters/jquery.js?v=" + Html.GetVersion());
+        Html.GetListaCSS().Add(Html.GetBaseUrlStatic() + "/cssNuevo/administracion.css?v=" + Comunidad.VersionCSSEcosistema);
+        Html.GetListaCSS().Add(Html.GetBaseUrlStatic() + "/jsUnificar/JCrop/css/Jcrop.css?v=" + Comunidad.VersionCSSEcosistema);
+        Html.GetListaJS().Add(Html.GetBaseUrlStatic() + "/ckeditor/ckeditor.js?v=" + Comunidad.VersionJSEcosistema);
+        Html.GetListaJS().Add(Html.GetBaseUrlStatic() + "/ckeditor/adapters/jquery.js?v=" + Comunidad.VersionJSEcosistema);
     }
 }
 

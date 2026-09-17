@@ -738,22 +738,6 @@
 			<value>perfilBioProfesionalEditar.aspx</value>
 		</pagina>
 		<pagina>
-			<key>request_token</key>
-			<value>OauthLogin/RequestToken</value>
-		</pagina>
-		<pagina>
-			<key>authorize</key>
-			<value>OauthLogin/Authorize</value>
-		</pagina>
-		<pagina>
-			<key>authorized</key>
-			<value>OauthLogin/Authorized</value>
-		</pagina>
-		<pagina>
-			<key>access_token</key>
-			<value>OauthLogin/AccessToken</value>
-		</pagina>
-		<pagina>
 			<key>user/email</key>
 			<value>UserData/Email</value>
 		</pagina>
@@ -3644,6 +3628,10 @@
 			<value>UpgradeVersion/Index?metodo=ADMINISTRARTRADUCTOR</value>
 		</pagina>
 		<pagina>
+			<key>@#@@URLSEM,|,TRADUCIRRECURSOS@@#@</key>
+			<value>UpgradeVersion/Index?metodo=TRADUCIRRECURSOS</value>
+		</pagina>
+		<pagina>
 			<key>@#@@URLSEM,|,ADMINISTRARASISTENTES@@#@</key>
 			<value>UpgradeVersion/Index?metodo=ADMINISTRARASISTENTES</value>
 		</pagina>
@@ -3745,7 +3733,7 @@
 		<pagina>
 			<key>{nombreRecurso}/{docID}/unlink-resource</key>
 			<value>FichaRecurso/UnLinkResource</value>
-		</pagina>>
+		</pagina>
 		<pagina>
 			<key>{nombreRecurso}/{docID}/report-page</key>
 			<value>FichaRecurso/ReportPage</value>

@@ -190,7 +190,7 @@ var form = {
     tagsPropuestos: 'Etiquetes proposades:',
     cargando: 'Carregant...',
     selectImg: 'Selecciona una imatge',
-    validExtensions: 'Extensions vàlides: .jpg, .jpeg, .gif, .png',
+    validExtensions: 'Extensions vàlides: .jpg, .jpeg, .gif, .png, .webp',
     cargando: 'Carregant',
     htmlincrustado: 'Html incrustat',
     html: 'Html',

@@ -2016,6 +2016,7 @@ const operativaGestionTraducciones = {
         // Url base para gestión de traducciones
         this.urlBase = refineURL();
         this.urlDeleteTranslate = `${this.urlBase}/borrartraduccion`;
+        this.urlTraducir = `${this.urlBase}/traducir`;
     },    
 
     /*
@@ -2075,6 +2076,11 @@ const operativaGestionTraducciones = {
         this.translateId = '';
         // Flag para detectar si hay que borrar o no la traducción
         this.confirmDeleteTranslate = false;
+        this.cmbTargetLanguageClassName = 'cmbIdiomaDestino';
+        this.cmbOriginLanguageClassName = 'cmbIdiomaOrigen';
+        this.deleteTargetLanguageClassName = 'tag-remove';
+        this.optionTargetLanguage = '';     
+        this.btnTraducir = $('#btnTraducir');
     },   
     
     /**
@@ -2170,7 +2176,31 @@ const operativaGestionTraducciones = {
                 comprobarInputNoVacio($input, true, false, "El id de la traducción no puede estar vacío.", 0);
             });	    
         });
-        
+
+         configEventByClassName(that.cmbTargetLanguageClassName, function (element) {
+             const $jqueyryElement = $(element);
+             $jqueyryElement.on("change", (e) => {
+                 that.handleAddTargetLanguage(e.target);
+             });
+         });
+
+         configEventByClassName(that.cmbOriginLanguageClassName, function (element) {
+             const $jqueyryElement = $(element);
+             $jqueyryElement.on("change", (e) => {
+                 that.handleManageLanguages(e.target);
+             });
+         });
+
+         configEventByClassName(that.deleteTargetLanguageClassName, function (element) {
+             const $jqueyryElement = $(element);
+             $jqueyryElement.on("click", (e) => {
+                 that.handleDeleteTargetLanguage(e.target);
+             });
+         });
+
+         this.btnTraducir.on("click", function (e) {             
+             that.handleTranslateText(e);
+         });
 
         // Botón para crear una nueva traducción
         this.btnAddTranslation.on("click", function(){
@@ -2198,6 +2228,121 @@ const operativaGestionTraducciones = {
                 that.handleSearchTranslateItem(input);                                         
             }, 500);
         });         
+    },
+
+    handleAddTargetLanguage: function (select) {
+        const $select = $(select);
+        const selectedOption = $select.find("option:selected");
+
+        const id = selectedOption.val();
+        const text = selectedOption.text();
+
+        if (!id) return;
+
+        // Crear tag
+        const tagHtml = `
+        <div class="tag" data-id="${id}" title="${text}">
+            <div class="tag-wrap">
+                <span class="tag-text">
+                    <span class="tag-label">${text}</span>
+                </span>
+                <span class="tag-remove custom material-icons">delete</span>
+            </div>
+        </div>
+    `;
+
+        $(".tag-list").append(tagHtml);
+
+        // Eliminar opción del select
+        selectedOption.remove();
+
+        // Resetear select
+        $select.val("");
+    },
+
+    handleDeleteTargetLanguage: function (tag) {
+        const $tag = $(tag).closest(".tag");
+
+        const id = $tag.data("id");
+        const text = $tag.find(".tag-label").text();
+
+        // Volver a añadir al select
+        const optionHtml = `<option value="${id}">${text}</option>`;
+        $("select[name='cmbIdiomaDestino']").append(optionHtml);
+
+        // Eliminar tag
+        $tag.remove();
+    },
+
+    handleManageLanguages: function (select) {
+        const $select = $(select);
+        const selectedOption = $select.find("option:selected");
+
+        const id = selectedOption.val();
+        const text = selectedOption.text();
+
+        if (!id) return;
+
+        // Volver a añadir al select
+        $("select[name='cmbIdiomaDestino']").append(this.optionTargetLanguage);
+
+        //Guardar el borrado
+        const optionHtml = `<option value="${id}">${text}</option>`;
+        this.optionTargetLanguage = optionHtml;
+        const textoIdioma = $(`.idioma_${id}`).val();
+        $("#textoTraducir").val(textoIdioma);
+        // Eliminar opción del select
+        $("select[name='cmbIdiomaDestino']").find(`option[value="${id}"]`).remove();
+
+        //Eliminar opcion de tag list
+        $(".tag-list").find(`.tag[data-id="${id}"]`).remove();
+
+    },
+
+    getSelectedTargetLanguage: function () {
+        const that = this;
+        const idiomas = [];
+
+        that.find('.tag-list .tag').each(function () {
+            idiomas.push($(this).data('id'));
+        })
+
+        return idiomas;
+    },
+
+    handleTranslateText: function (e) {
+        const that = this;
+
+        loadingMostrar();
+
+        const idiomasDestino = Array.from(document.querySelectorAll('.tag')).map(tag => tag.dataset.id);
+
+        const dataPost = {
+            pTexto: $('#textoTraducir').val(),
+            pIdiomaOrigen: $('#cmbIdiomaOrigen').find(":selected").val(),
+            pIdiomasDestino: idiomasDestino,
+        };
+
+        GnossPeticionAjax(
+            that.urlTraducir,
+            dataPost,
+            true
+        ).done(function (data) {
+            mostrarNotificacion("success", "OK");
+            const valores = data.$values;
+
+            $.each(valores, function (index, item) {
+                const clase = `.idioma_${item.idioma}`;
+
+                $(`textarea${clase}`).val(item.texto);
+
+                //$(`input[type="hidden"]${clase}`).val(item.texto);
+            });
+        }).fail(function () {
+            mostrarNotificacion("error", "ERROR: Compruebe que todos los datos del formulario sean correctos.");
+        }).always(function (data) {
+            loadingOcultar();            
+        });
     },
 
     /**
@@ -2312,13 +2457,26 @@ const operativaGestionTraducciones = {
             }
         }
 
-        if (error == false){
-            // Ejecutar submit del formulario para el envío de la información de la traducción Editada/Nueva                        
-            $(`#${that.formCreateEditTranslateIdName}`).submit();
-            setTimeout(function(){
-                dismissVistaModal();
-            },1500);               
-        }else{
+        if (error == false) {
+            const $form = $(`#${that.formCreateEditTranslateIdName}`);
+            const urlAccion = $form.attr("action");
+            const datosFormulario = $form.serialize();
+
+            getVistaFromUrl(urlAccion, "modal-dinamic-content", datosFormulario, function (result, html) {
+                loadingOcultar();
+                if (result == requestFinishResult.ok) {
+                    if (html) {
+                        $("#modal-dinamic-content").html(html);
+                    } else {
+                        mostrarNotificacion("success", "La traducción se ha guardado correctamente");
+                        dismissVistaModal();
+                        location.reload();
+                    }
+                } else {
+                    mostrarNotificacion("error", "Ha surgido un error al guardar la traducción");
+                }
+            }, false, false);
+        } else {
             loadingOcultar();
         }      
     },
@@ -4058,25 +4216,32 @@ const operativaDescargaConfiguracion = {
         ajax.open("POST", that.urlDownloadConfig, true);
         ajax.responseType = "blob";
         ajax.onreadystatechange = function () {
-            if (this.readyState == 4) {
-                if (this.status == 200) {
-                    const respuesta = this.statusText;
-                    if (respuesta.indexOf("Error") > -1 || respuesta == null || this.response.size == 0) {
-                        // KO
-                        mostrarNotificacion("error", "Se ha producido un error en la descarga del fichero zip");
-                        loadingOcultar();
-                    }
-                    else {
-                        //OK
-                        var blob = new Blob([this.response], { type: "application/octet-stream" });
-                        saveAs(blob, 'configuraciones.zip');
-                        mostrarNotificacion("success", "Descarga completada");
-                        loadingOcultar();
-                    }
-                }
+            if (this.readyState != 4) {
+                return;
+            }
+
+            loadingOcultar();
+
+            if (this.status >= 200 && this.status < 300 && this.response != null && this.response.size > 0) {
+                //OK
+                var blob = new Blob([this.response], { type: "application/octet-stream" });
+                saveAs(blob, 'configuraciones.zip');
+                mostrarNotificacion("success", "Descarga completada");
+                return;
+            }
+
+            // KO. El cuerpo de la respuesta lleva el motivo real del fallo, pero como responseType es "blob"
+            // hay que leerlo como texto en vez de tratarlo como el zip
+            if (this.response instanceof Blob && this.response.size > 0) {
+                this.response.text().then(function (mensaje) {
+                    mostrarNotificacion("error", mensaje);
+                });
+            }
+            else {
+                mostrarNotificacion("error", "Se ha producido un error en la descarga del fichero zip");
             }
         };
-        ajax.send(pListaConfiguracion); 
+        ajax.send(pListaConfiguracion);
     },
 
     /**
@@ -4098,29 +4263,32 @@ const operativaDescargaConfiguracion = {
         ajax.open("POST", that.urlDownloadConfig, true);
         ajax.responseType = "blob";
         ajax.onreadystatechange = function () {
-            if (this.readyState == 4) {
-                if (this.status == 200) {
-                    const respuesta = this.statusText;
-                    if (respuesta.indexOf("Error") > -1 || respuesta == null || this.response.size == 0) {
-                        // KO
-                        mostrarNotificacion("error", "Se ha producido un error en la descarga del fichero zip");
-                        loadingOcultar();
-                    }
-                    else {
-                        //OK
-                        var blob = new Blob([this.response], { type: "application/octet-stream" });
-                        saveAs(blob, 'configuraciones.zip');
-                        mostrarNotificacion("success", "Descarga completada");
-                        loadingOcultar();
-                    }
-                }
-                else if (this.status == 500)
-                {
-                    mostrarNotificacion("error", "Se ha producido un error en la descarga del fichero zip");
-                }
+            if (this.readyState != 4) {
+                return;
+            }
+
+            loadingOcultar();
+
+            if (this.status >= 200 && this.status < 300 && this.response != null && this.response.size > 0) {
+                //OK
+                var blob = new Blob([this.response], { type: "application/octet-stream" });
+                saveAs(blob, 'configuraciones.zip');
+                mostrarNotificacion("success", "Descarga completada");
+                return;
+            }
+
+            // KO. El cuerpo de la respuesta lleva el motivo real del fallo, pero como responseType es "blob"
+            // hay que leerlo como texto en vez de tratarlo como el zip
+            if (this.response instanceof Blob && this.response.size > 0) {
+                this.response.text().then(function (mensaje) {
+                    mostrarNotificacion("error", mensaje);
+                });
+            }
+            else {
+                mostrarNotificacion("error", "Se ha producido un error en la descarga del fichero zip");
             }
         };
-        ajax.send(pListaConfiguracion); 
+        ajax.send(pListaConfiguracion);
     },
 
 
@@ -6435,8 +6603,8 @@ const operativaGestionConfiguracionBuzonCorreo = {
         this.pParams = pParams;
         this.config(pParams);
         this.configEvents();
-        this.configRutas(); 
-        this.triggerEvents();            
+        this.configRutas();
+        this.triggerEvents();
     },
 
     /**
@@ -6444,28 +6612,28 @@ const operativaGestionConfiguracionBuzonCorreo = {
      */
     triggerEvents: function(){
         const that = this;
-                       
+
         // Inicializar comportamientos de select2
-        comportamientoInicial.iniciarSelects2();     
-    },   
+        comportamientoInicial.iniciarSelects2();
+    },
 
     /**
      * Configuración de las rutas de acciones necesarias para hacer peticiones a backend
      */
     configRutas: function (pParams) {
         // Url para editar un certificado
-        this.urlBase = refineURL(); 
+        this.urlBase = refineURL();
         this.urlSaveConfiguration = `${this.urlBase}/save`;
         this.urlValidarCorreo = `${this.urlBase}/validarCorreo`;
         // Objeto donde se guardarán las opciones para su guardado
         this.Options = {};
-    },  
+    },
 
     /*
     * Inicializar elementos de la vista
     * */
     config: function (pParams) {
-        
+
         // Input de email
         this.email = $("#Email");
         // Input de SMTP
@@ -6482,36 +6650,185 @@ const operativaGestionConfiguracionBuzonCorreo = {
         this.ssl_si = $("#SSL_SI");
         this.ssl_no = $("#SSL_NO");
         // Input de email de sugerencias
-        this.suggestEmail = $("#SuggestEmail");  
-        
-        // Botón para guardado
-        //this.btnSave = $("#btnSave");
+        this.suggestEmail = $("#SuggestEmail");
+        // Input del correo al que se enviará el email de prueba (Está dentro del modal de validación)
+        this.destinatario = $("#txtCorreoValidar");
+
+        // Modal donde se pide el correo al que enviar el email de prueba
+        this.modalValidarCorreo = $("#validar-correo");
+
+        // Botón que abre el modal de validación
+        this.btnAbrirValidarCorreo = $("#btnAbrirValidarCorreo");
+        // Botón para validar el correo y guardar la configuración
         this.btnValidarEmail = $("#btnValidarEmail");
-        
-    },   
+
+        // Textos de los mensajes de error. Llegan desde la vista para que estén en el idioma de la comunidad
+        this.textos = (pParams != undefined && pParams.textos != undefined) ? pParams.textos : {};
+    },
 
     /**
-     * Configuración de eventos de elementos del Dom (Botones, Inputs...)     
+     * Configuración de eventos de elementos del Dom (Botones, Inputs...)
      */
     configEvents: function (pParams) {
         const that = this;
-        
-        /*
-        // Botón para guardar los datos de configuración del buzón
-        this.btnSave.off().on("click", function(){   
-            that.crearModalEmail();                                       
-            //that.handleSave();
-        });    */    
-        
-        // Botón para validar el email y guardar los datos
-        this.btnValidarEmail.off().on("click", function(){   
-            that.handleObtenerdatos();
-            that.handleValidarEmail();                                       
-            
+
+        // Comprobar cada campo del formulario en cuanto el usuario sale de él
+        $.each(that.obtenerCamposFormulario(), function(index, campo){
+            campo.input.off("blur").on("blur", function(){
+                that.comprobarCampo(campo, true);
+            });
         });
-        
+
+        // Comprobar el correo de prueba en cuanto el usuario sale del campo
+        this.destinatario.off("blur").on("blur", function(){
+            that.comprobarCampo(that.obtenerCampoDestinatario(), true);
+        });
+
+        // Botón que abre el modal. Sólo se abre si toda la configuración del buzón es correcta
+        this.btnAbrirValidarCorreo.off().on("click", function(){
+            if (!that.comprobarFormulario()){
+                return;
+            }
+            // Limpiar el correo de prueba de una validación anterior
+            hideInputsWithErrors(that.destinatario);
+            that.modalValidarCorreo.modal("show");
+        });
+
+        // Botón para validar el email y guardar los datos
+        this.btnValidarEmail.off().on("click", function(){
+            // Volver a comprobar el formulario por si se ha modificado con el modal abierto
+            if (!that.comprobarFormulario()){
+                that.modalValidarCorreo.modal("hide");
+                return;
+            }
+            // Comprobar el correo al que se enviará el email de prueba
+            if (that.comprobarCampo(that.obtenerCampoDestinatario(), true).length > 0){
+                return;
+            }
+
+            that.handleObtenerdatos();
+            that.handleValidarEmail();
+
+        });
+
     },
 
+    /**
+     * Definición de los campos obligatorios de la configuración del buzón junto con la comprobación que debe superar cada uno.
+     * @returns Array de objetos con el input, el mensaje de obligatoriedad y, opcionalmente, una comprobación de formato con su mensaje.
+     */
+    obtenerCamposFormulario: function(){
+        const that = this;
+        const textos = that.textos;
+
+        return [
+            {
+                input: that.email,
+                mensajeVacio: textos.emailObligatorio,
+                comprobarFormato: function(valor){ return isEmail(valor); },
+                mensajeFormato: textos.emailNoValido
+            },
+            {
+                input: that.smtp,
+                mensajeVacio: textos.smtpObligatorio
+            },
+            {
+                input: that.port,
+                mensajeVacio: textos.puertoObligatorio,
+                // El puerto se guarda como short, por lo que el valor máximo admitido es 32767
+                comprobarFormato: function(valor){ return /^\d+$/.test(valor) && parseInt(valor, 10) >= 1 && parseInt(valor, 10) <= 32767; },
+                mensajeFormato: textos.puertoNoValido
+            },
+            {
+                input: that.user,
+                mensajeVacio: textos.usuarioObligatorio
+            },
+            {
+                input: that.password,
+                mensajeVacio: textos.passwordObligatoria
+            },
+            {
+                input: that.serverType,
+                mensajeVacio: textos.tipoServidorObligatorio
+            },
+            {
+                input: that.suggestEmail,
+                mensajeVacio: textos.emailSugerenciasObligatorio,
+                comprobarFormato: function(valor){ return isEmail(valor); },
+                mensajeFormato: textos.emailSugerenciasNoValido
+            }
+        ];
+    },
+
+    /**
+     * Definición del campo del correo al que se enviará el email de prueba. Está en el modal de validación, por eso se comprueba aparte.
+     * @returns Objeto con el input y los mensajes de error del correo de prueba.
+     */
+    obtenerCampoDestinatario: function(){
+        const that = this;
+
+        return {
+            input: that.destinatario,
+            mensajeVacio: that.textos.emailPruebaObligatorio,
+            comprobarFormato: function(valor){ return isEmail(valor); },
+            mensajeFormato: that.textos.emailPruebaNoValido
+        };
+    },
+
+    /**
+     * Comprobar que un campo está relleno y que su valor es válido, marcándolo en pantalla si no lo está.
+     * @param {object} pCampo : Campo a comprobar, con el formato devuelto por 'obtenerCamposFormulario'.
+     * @param {bool} pMostrarError : Indica si se desea marcar el input y mostrar el mensaje del error debajo de él.
+     * @returns Devuelve el mensaje del error encontrado o una cadena vacía si el campo es correcto.
+     */
+    comprobarCampo: function(pCampo, pMostrarError){
+        const valor = pCampo.input.val() == undefined ? "" : pCampo.input.val().trim();
+        let error = "";
+
+        if (valor.length == 0){
+            error = pCampo.mensajeVacio;
+        }else if (pCampo.comprobarFormato != undefined && !pCampo.comprobarFormato(valor)){
+            error = pCampo.mensajeFormato;
+        }
+
+        if (pMostrarError){
+            // Quitar el error anterior para que siempre se muestre el mensaje correspondiente al valor actual
+            displayInputWithErrors(pCampo.input, false, "");
+            if (error.length > 0){
+                displayInputWithErrors(pCampo.input, true, error);
+            }
+        }
+
+        return error;
+    },
+
+    /**
+     * Comprobar que toda la configuración del buzón está completa antes de enviar el correo de prueba.
+     * Marca todos los campos incorrectos y avisa al usuario con el primer error encontrado.
+     * @returns Devuelve true si la configuración es correcta.
+     */
+    comprobarFormulario: function(){
+        const that = this;
+        let primerError = "";
+        let primerInputConError = undefined;
+
+        $.each(that.obtenerCamposFormulario(), function(index, campo){
+            const error = that.comprobarCampo(campo, true);
+            if (error.length > 0 && primerError.length == 0){
+                primerError = error;
+                primerInputConError = campo.input;
+            }
+        });
+
+        if (primerError.length > 0){
+            // Llevar al usuario al primer campo que debe corregir
+            primerInputConError.focus();
+            mostrarNotificacion("error", primerError);
+            return false;
+        }
+
+        return true;
+    },
 
     /**
      * Método para recoger los datos de la configuración para el guardado.
@@ -6525,49 +6842,48 @@ const operativaGestionConfiguracionBuzonCorreo = {
         // Prefijo para el guardado de los datos
         const prefijoConfCorreo = "ConfiguracionCorreo";
         // Recogida de datos para guardado
-        that.Options[prefijoConfCorreo + '.Email'] = that.email.val();
-        that.Options[prefijoConfCorreo + '.SMTP'] = that.smtp.val();
-        that.Options[prefijoConfCorreo + '.Port'] = that.port.val();
-        that.Options[prefijoConfCorreo + '.User'] = that.user.val();
+        that.Options[prefijoConfCorreo + '.Email'] = that.email.val().trim();
+        that.Options[prefijoConfCorreo + '.SMTP'] = that.smtp.val().trim();
+        that.Options[prefijoConfCorreo + '.Port'] = that.port.val().trim();
+        that.Options[prefijoConfCorreo + '.User'] = that.user.val().trim();
         that.Options[prefijoConfCorreo + '.Password'] = that.password.val();
         that.Options[prefijoConfCorreo + '.Type'] = that.serverType.val();
         that.Options[prefijoConfCorreo + '.SSL'] = that.ssl_si.is(':checked');
-        that.Options[prefijoConfCorreo + '.SuggestEmail'] = that.suggestEmail.val();
-        that.Options[prefijoConfCorreo + '.Destinatario'] = document.getElementById("txtCorreoValidar").value;                  
+        that.Options[prefijoConfCorreo + '.SuggestEmail'] = that.suggestEmail.val().trim();
+        that.Options[prefijoConfCorreo + '.Destinatario'] = that.destinatario.val().trim();
     },
 
-    
+
      /**
       * Método para validar el email
       */
      handleValidarEmail: function(){
-        const that = this;  
-           
-        loadingMostrar();            
-    
+        const that = this;
+
+        loadingMostrar();
+
         GnossPeticionAjax(
             this.urlValidarCorreo,
             that.Options,
             true
         ).done(function (response) {
             // Ocultar modal
-            pJqueryModalView = $("#validar-correo");
-            dismissVistaModal(pJqueryModalView);
-            mostrarNotificacion("success","El correo electrónico se ha configurado con éxito");
+            dismissVistaModal(that.modalValidarCorreo);
+            mostrarNotificacion("success", that.textos.correoConfigurado);
         }).fail(function (error) {
-            // KO                        
-            mostrarNotificacion("error", error);            
-        }).always(function () {            
+            // KO. El modal se mantiene abierto para poder reintentar el envío tras corregir la configuración
+            mostrarNotificacion("error", error);
+        }).always(function () {
             loadingOcultar();
         });
 
-        
+
 
      },
 
     /**
      * Método para guardar los datos de la configuración.
-     */    
+     */
     handleSave: function(){
         const that = this;
 
@@ -6580,10 +6896,10 @@ const operativaGestionConfiguracionBuzonCorreo = {
         that.Options,
         true
         ).done(function (data) {
-            mostrarNotificacion("success","El correo electrónico se ha configurado con éxito");
+            mostrarNotificacion("success", that.textos.correoConfigurado);
         }).fail(function (data) {
-            // KO en el guardado de datos                        
-            mostrarNotificacion("error", data);            
+            // KO en el guardado de datos
+            mostrarNotificacion("error", data);
         }).always(function () {
             // Ocultar loading
             loadingOcultar();
@@ -6711,6 +7027,7 @@ operativaGestionConfiguracionMetaAdministrador = {
         this.TextoInvariableTesauroSemantico = $("#TextoInvariableTesauroSemantico");
         this.NumeroFacetasPrimeraPeticion = $("#NumeroFacetasPrimeraPeticion");
         this.NumeroFacetasSegundaPeticion = $("#NumeroFacetasSegundaPeticion");
+        this.NumeroMaximoVersionesRecurso = $("#NumeroMaximoVersionesRecurso");
         this.AlgoritmoPersonasRecomendadas = $("#AlgoritmoPersonasRecomendadas");
         this.FacetasCostosasTerceraPeticion = $("#FacetasCostosasTerceraPeticion");
         this.PropiedadContenidoMultiIdioma = $("#PropiedadContenidoMultiIdioma");
@@ -6908,6 +7225,7 @@ operativaGestionConfiguracionMetaAdministrador = {
 
         that.Options['NumeroFacetasPrimeraPeticion'] = that.NumeroFacetasPrimeraPeticion.val();
         that.Options['NumeroFacetasSegundaPeticion'] = that.NumeroFacetasSegundaPeticion.val();
+        that.Options['NumeroMaximoVersionesRecurso'] = that.NumeroMaximoVersionesRecurso.val();
 
         that.Options['LoginFacebook'] = that.LoginFacebook.val();
         that.Options['LoginGoogle'] = that.LoginGoogle.val();
@@ -7572,7 +7890,7 @@ operativaGestionConfiguracionPlataforma = {
             }
         });
         // Eliminar los 3 últimos caracteres sobrantes (&&&) y establecer valor por defecto si no hay ninguno
-        that.Options['ExtensionesImagenesCMSMultimedia'] = extensionesImagenesCmsMultimediaValue.trim().length > 0 ? extensionesImagenesCmsMultimediaValue.slice(0,-3) : ".jpg&&&.jpeg&&&.png&&&.gif";
+        that.Options['ExtensionesImagenesCMSMultimedia'] = extensionesImagenesCmsMultimediaValue.trim().length > 0 ? extensionesImagenesCmsMultimediaValue.slice(0,-3) : ".jpg&&&.jpeg&&&.png&&&.gif&&&.webp";
         
         // Documentos compatibles. Recorrer checkbox 
         // that.Options['ExtensionesDocumentosCMSMultimedia'] = that.ExtensionesDocumentosCMSMultimedia.val().trim().length == 0? ".pdf&&&.txt&&&.doc&&&.docx" : that.ExtensionesDocumentosCMSMultimedia.val().trim();
@@ -8834,4 +9152,146 @@ const operativaGestionAsistentes = {
             }
         });
     },
+}
+
+/**
+ * Operativa para la administracion de carga masiva
+ */
+const operarivaGestionCargaMasiva = {
+    /**
+     * Inicializar la operativa
+     */
+    init: function (pParams) {
+        this.pParams = pParams;
+        this.config(pParams);
+        this.configEvents();
+        this.configRutas();
+        iniciarTooltipsTruncados(this.whitelistContainer);
+    },
+
+    configRutas: function () {
+        // Url para editar un certificado
+        this.urlBase = refineURL();
+
+        // Url para guardar los cambios de un evento
+        this.urlSaveUrl = `${this.urlBase}/save`
+        this.urlDeleteUrl = `${this.urlBase}/delete`
+        this.urlLoadModalDelete = `${this.urlBase}/load-delete`
+    },
+
+    config: function (pParams) {
+        // Input donde se introduce el dominio
+        this.inptDomainClassName = "txtDomains";
+        // Boton para guardar el dominio introducido en el input
+        this.btnAddDomainClassName = 'btnAddDomain';
+        // Boton para eliminar un dominio de la lista
+        this.btnDeleteDomainClassName = 'btnDeleteDomain';
+        // Boton para confirmar el borrado
+        this.btnConfirmDeleteDomainClassName = 'btnConfirmDeleteDomain';
+        // Boton rechazar el borrado
+        this.btnRejectDeleteDomainClassName = 'btnRejectDeleteDomain';
+        // Fila que se seleccionara para eliminar
+        this.filaDominio = undefined;
+        // Contenedor de la lista blanca
+        this.whitelistContainer = $('#added-domains-whitelist');
+        // Modal dinamico
+        this.modalContainer = $('#modal-container');
+        // Flag para marcar la fila a eliminar
+        this.confirmDelete = false;
+    },
+
+    configEvents: function () {
+        const that = this;
+
+        configEventByClassName(that.btnAddDomainClassName, function (element) {
+            const input = $(element);
+            input.off().on("click", function () {
+                let domain = $(`.${that.inptDomainClassName}`).val();
+                if (domain == '') {
+                    return;
+                }
+                that.handleSaveDomain(domain);
+            });
+        });
+
+        configEventByClassName(that.btnDeleteDomainClassName, function (element) {
+            const input = $(element);
+            input.off().on("click", function () {
+                that.filaDominio = $(this).parents('li.domain-row').addClass("deleted");
+                that.confirmDelete = true;
+                getVistaFromUrl(that.urlLoadModalDelete, 'modal-dinamic-content', '')
+            });
+        });
+
+        configEventByClassName(that.btnConfirmDeleteDomainClassName, function (element) {
+            const input = $(element);
+            input.off().on("click", function () {
+                let domain = that.filaDominio.find('.component-url').data('tooltip-full');
+                that.handleDeleteDomain(domain);
+            });
+        });
+
+        configEventByClassName(that.btnRejectDeleteDomainClassName, function (element) {
+            const input = $(element);
+            input.off().on("click", function () {
+                that.confirmDelete = false;
+            });
+        });
+
+        this.modalContainer.off().on('hidden.bs.modal', (e) => {
+
+            // Comprobar si al cerrar el modal, se desea eliminar la redirección (El modal de eliminación se carga aquí)
+            if (that.confirmDelete == false) {
+                that.filaDominio.removeClass("deleted");
+            }
+
+            resetearModalContainer();
+
+            });
+    },
+
+    handleSaveDomain: function (pUrl) {
+        const that = this;
+
+        dataPost = {
+            pUrl: pUrl
+        }
+
+        loadingMostrar();
+        GnossPeticionAjax(
+            that.urlSaveUrl,
+            dataPost,
+            true
+        ).done(function (data) {
+            loadingOcultar();
+            mostrarNotificacion("success", "La url se ha guardado correctamente");
+            location.reload();
+        }).fail(function (data) {
+            loadingOcultar();
+            mostrarNotificacion("error", data)
+        });
+    },
+
+    handleDeleteDomain: function (pUrl) {
+        const that = this;
+
+        dataPost = {
+            pUrl: pUrl
+        }
+        loadingMostrar();
+        GnossPeticionAjax(
+            that.urlDeleteUrl,
+            dataPost,
+            true
+        ).done(function (data) {
+            loadingOcultar();
+            dismissVistaModal();
+            mostrarNotificacion("success", "La url se ha guardado correctamente");
+            that.filaDominio.addClass("d-none");
+            that.filaDominio.remove();
+        }).fail(function (data) {
+            loadingOcultar();
+            mostrarNotificacion("error", data)
+        });
+    }
 }

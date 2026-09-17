@@ -8,6 +8,7 @@ Variables
 *@
 
 @{
+    CommunityModel Comunidad = Html.GetComunidad();
 // Layout a cargar
 Layout = "~/Views/Shared/Layout/_Layout_Admin.cshtml";
 }
@@ -47,7 +48,7 @@ Layout = "~/Views/Shared/Layout/_Layout_Admin.cshtml";
 @Html.PartialView("../AdministrarPestanyas/_partial-views/_home-community-section-insights")
 
 @section operativaScript{    
-    <script type="text/javascript" src="@Html.GetBaseUrlStatic()/responsive/theme/logic/comunidad.js?v=@Html.GetVersion()"></script>
+    <script type="text/javascript" src="@Html.GetBaseUrlStatic()/responsive/theme/logic/comunidad.js?v=@Comunidad.VersionJSEcosistema"></script>
     <script type="text/javascript">
         (function ($) {
             const pParams = {

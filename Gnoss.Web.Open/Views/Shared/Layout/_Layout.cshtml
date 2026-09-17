@@ -31,7 +31,7 @@
     @Html.PartialView("../Shared/Layout/_partial-views/_layout-head-section")
 </head>
 
-<body class="@Html.GetBodyClass() @(IdentidadActual == null || IdentidadActual.IsGuestUser ? " invitado" : "") @Html.GetBodyClassPestanya()">
+<body class="@Html.GetBodyClass() @(IdentidadActual == null || IdentidadActual.IsGuestUser ? " invitado" : "") @Html.GetBodyClassPestanya()" style="@Html.GetCapturasImgSizeCssVars()">
 
     @* Cargar elementos Extra (BeginBody) del proyecto *@
     @if (Comunidad != null && Comunidad.ProjectExtraHTMLList != null)

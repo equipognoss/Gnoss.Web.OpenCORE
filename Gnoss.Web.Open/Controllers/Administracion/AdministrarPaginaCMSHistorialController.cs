@@ -17,17 +17,17 @@ using Es.Riam.InterfacesOpen;
 using Gnoss.Web.Open.Filters;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Mvc.Infrastructure;
 using Microsoft.AspNetCore.Mvc.ViewEngines;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
-using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using static Es.Riam.Gnoss.Web.MVC.Models.Administracion.AdministrarPaginasCMSViewModel;
 using static Es.Riam.Gnoss.Web.MVC.Models.Administracion.AdministrarPaginasCMSViewModel.RowCMSModel;
 using static Es.Riam.Gnoss.Web.MVC.Models.Administracion.AdministrarPaginasCMSViewModel.RowCMSModel.ColCMSModel;
+using Microsoft.AspNetCore.Hosting;
+using System.Text.Json;
 
 namespace Gnoss.Web.Open.Controllers.Administracion
 {
@@ -42,7 +42,7 @@ namespace Gnoss.Web.Open.Controllers.Administracion
 
         #region Constructores
 
-        public AdministrarPaginaCMSHistorialController(LoggingService loggingService, ConfigService configService, EntityContext entityContext, RedisCacheWrapper redisCacheWrapper, GnossCache gnossCache, VirtuosoAD virtuosoAD, IHttpContextAccessor httpContextAccessor, ICompositeViewEngine viewEngine, EntityContextBASE entityContextBASE, Microsoft.AspNetCore.Hosting.IHostingEnvironment env, IActionContextAccessor actionContextAccessor, IUtilServicioIntegracionContinua utilServicioIntegracionContinua, IServicesUtilVirtuosoAndReplication servicesUtilVirtuosoAndReplication, IOAuth oAuth, IHostApplicationLifetime appLifetime, IAvailableServices availableServices, ILogger<ControllerAdministrationWeb> logger, ILoggerFactory loggerFactory) : base(loggingService, configService, entityContext, redisCacheWrapper, gnossCache, virtuosoAD, httpContextAccessor, viewEngine, entityContextBASE, env, actionContextAccessor, utilServicioIntegracionContinua, servicesUtilVirtuosoAndReplication, oAuth, appLifetime, availableServices, logger, loggerFactory)
+        public AdministrarPaginaCMSHistorialController(LoggingService loggingService, ConfigService configService, EntityContext entityContext, RedisCacheWrapper redisCacheWrapper, GnossCache gnossCache, VirtuosoAD virtuosoAD, IHttpContextAccessor httpContextAccessor, ICompositeViewEngine viewEngine, EntityContextBASE entityContextBASE, IWebHostEnvironment env, IUtilServicioIntegracionContinua utilServicioIntegracionContinua, IServicesUtilVirtuosoAndReplication servicesUtilVirtuosoAndReplication, IOAuth oAuth, IHostApplicationLifetime appLifetime, IAvailableServices availableServices, ILogger<ControllerAdministrationWeb> logger, ILoggerFactory loggerFactory) : base(loggingService, configService, entityContext, redisCacheWrapper, gnossCache, virtuosoAD, httpContextAccessor, viewEngine, entityContextBASE, env, utilServicioIntegracionContinua, servicesUtilVirtuosoAndReplication, oAuth, appLifetime, availableServices, logger, loggerFactory)
         {
             mlogger = logger;
             mLoggerFactory = loggerFactory;
@@ -68,7 +68,7 @@ namespace Gnoss.Web.Open.Controllers.Administracion
 		public ActionResult Compare(string documentosComparar, Guid pPestanyaID, bool pRestaurar = false)
         {
             string[] guids = documentosComparar.Split(new char[] { '&' }, StringSplitOptions.RemoveEmptyEntries);
-            AdministrarPaginaCMSComparadorViewModel modelo = CargarComparadorEstructuraPaginaCMS(Guid.Parse(guids[0]), Guid.Parse(guids[1]), pPestanyaID, pRestaurar);
+            AdministrarPaginaCMSComparadorViewModel modelo = CargarComparadorEstructuraPaginaCMS(Guid.Parse(guids[0]), Guid.Parse(guids[1]), pPestanyaID);
             modelo.Restaurando = pRestaurar;
 
             return PartialView("_comparator", modelo);
@@ -98,7 +98,7 @@ namespace Gnoss.Web.Open.Controllers.Administracion
             return modelo;
         }
 
-        private AdministrarPaginaCMSComparadorViewModel CargarComparadorEstructuraPaginaCMS(Guid pVersion1, Guid pVersion2, Guid pComponenteID, bool pRestaurar)
+        private AdministrarPaginaCMSComparadorViewModel CargarComparadorEstructuraPaginaCMS(Guid pVersion1, Guid pVersion2, Guid pComponenteID)
         {
             AdministrarPaginaCMSComparadorViewModel modelo = new AdministrarPaginaCMSComparadorViewModel();
 
@@ -111,12 +111,12 @@ namespace Gnoss.Web.Open.Controllers.Administracion
                     if (versionPaginaCMS.Equals(pVersion1))
                     {
                         ProyectoPestanyaVersionCMS version1 = CMSCN.ObtenerVersionEstructuraPaginaCMS(pVersion1);
-                        modelo.Modelo1 = new AdministrarPaginaCMSVersionViewModel(JsonConvert.DeserializeObject<AdministrarPaginasCMSViewModel>(version1.ModeloJSON), versionPaginaCMS, contadorVersion, versionesPaginaCMS.Last().Equals(pVersion1), version1.Fecha, version1.Comentario, "");
+                        modelo.Modelo1 = new AdministrarPaginaCMSVersionViewModel(JsonSerializer.Deserialize<AdministrarPaginasCMSViewModel>(version1.ModeloJSON), versionPaginaCMS, contadorVersion, versionesPaginaCMS.Last().Equals(pVersion1), version1.Fecha, version1.Comentario, "");
                     }
                     else if (versionPaginaCMS.Equals(pVersion2))
                     {
                         ProyectoPestanyaVersionCMS version2 = CMSCN.ObtenerVersionEstructuraPaginaCMS(pVersion2);
-                        modelo.Modelo2 = new AdministrarPaginaCMSVersionViewModel(JsonConvert.DeserializeObject<AdministrarPaginasCMSViewModel>(version2.ModeloJSON), versionPaginaCMS, contadorVersion, versionesPaginaCMS.Last().Equals(pVersion2), version2.Fecha, version2.Comentario, "");
+                        modelo.Modelo2 = new AdministrarPaginaCMSVersionViewModel(JsonSerializer.Deserialize<AdministrarPaginasCMSViewModel>(version2.ModeloJSON), versionPaginaCMS, contadorVersion, versionesPaginaCMS.Last().Equals(pVersion2), version2.Fecha, version2.Comentario, "");
                     }
                     contadorVersion++;
                 }

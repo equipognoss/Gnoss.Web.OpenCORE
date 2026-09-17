@@ -125,6 +125,9 @@ Variables
     {
         showDocumentationByDefault = false;
     }
+
+    // Usuario actual es meta administrador
+    bool esUsuarioMetaAdministrador = Html.GetEsMetaAdministrador();
 }
 @*
 ----------------------------------------------------------------
@@ -464,6 +467,18 @@ Variables
                                             </a>
                                         </li>
                                     }
+
+                                    @if (IdentidadActual.IsProyectAdmin)
+                                    {
+                                        <li>
+                                            <a href="@Comunidad.Url/@Html.GetText("URLSEM", "ADMINISTRARCARGAMASIVA")"
+                                                   data-searchable="carga, carga masiva, masiva, datos"
+                                                   class="carga-masiva-configuracion @((subSeccionDevTools == AdministracionSeccionesDevTools.SubSeccionesDevTools.Configuracion_CargaMasiva) ? "activo" : null)">
+                                                @Html.GetText("ADMINCARGAMASIVA", "CARGAMASIVA")
+                                            </a>
+                                        </li>
+                                    }
+                                    
                                     @if (administrarFTP)
                                     {
                                         @* Configurar FTP *@
@@ -703,8 +718,17 @@ Variables
                                         </li>
                                     }
 
-                                }
-
+                                    @if (esUsuarioMetaAdministrador)
+                                    {
+                                        <li>
+                                            <a href="@Comunidad.Url/@Html.GetText("URLSEM", "ADMINISTRARCARGAMASIVAECOSISTEMA")"
+                                                   data-searchable="carga, carga masiva, masiva, datos"
+                                                   class="carga-masiva-configuracion @((subSeccionDevTools == AdministracionSeccionesDevTools.SubSeccionesDevTools.Configuracion_CargaMasiva) ? "activo" : null)">
+                                                @Html.GetText("ADMINCARGAMASIVA", "CARGAMASIVA")
+                                            </a>
+                                        </li>
+                                    }
+                                }                 
                                 @* Opciones MetaAdministrador*@
                                 @if (!isInEcosistemaPlatform && administrarOpcionesMetaAdmin)
                                 {
@@ -869,6 +893,17 @@ Variables
                                                data-searchable="borrar, borrado masivo, masivo"
                                                class="borrado-grafo @((subSeccionDevTools == AdministracionSeccionesDevTools.SubSeccionesDevTools.GrafoConocimiento_BorradoMasivo) ? "activo" : null)">
                                                 @Html.GetText("COMADMINCOMUNIDAD", "ADMINISTRABORRADOMASIVO")
+                                            </a>
+                                        </li>
+                                    }
+                                    @if (administrarTraducciones)
+                                    {
+                                        @* Opción Traducir recursos *@
+                                        <li>
+                                            <a href="@Comunidad.Url/@Html.GetText("URLSEM", "TRADUCIRRECURSOS")"
+                                               data-searchable="traduccion, traducir recurso, masivo, multiidioma, idiomas, multilenguaje, recurso"
+                                               class="traducir-recursos @((subSeccionDevTools == AdministracionSeccionesDevTools.SubSeccionesDevTools.GrafoConocimiento_TraducirRecursos) ? "activo" : null)">
+                                                @Html.GetText("COMADMINCOMUNIDAD", "TRADUCIRRECURSOS")
                                             </a>
                                         </li>
                                     }

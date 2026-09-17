@@ -31,6 +31,7 @@ using Es.Riam.Gnoss.Logica.MVC;
 using Es.Riam.Gnoss.Recursos;
 using Microsoft.Extensions.Logging;
 using Es.Riam.Gnoss.Web.MVC.Controllers.Administracion;
+using Microsoft.AspNetCore.Hosting;
 
 namespace Es.Riam.Gnoss.Web.MVC.Controllers
 {
@@ -41,8 +42,8 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
         private ILoggerFactory mLoggerFactory;
         #region Constructores
 
-        public MisComunidadesController(LoggingService loggingService, ConfigService configService, EntityContext entityContext, RedisCacheWrapper redisCacheWrapper, GnossCache gnossCache, VirtuosoAD virtuosoAD, IHttpContextAccessor httpContextAccessor, ICompositeViewEngine viewEngine, EntityContextBASE entityContextBASE, Microsoft.AspNetCore.Hosting.IHostingEnvironment env, IActionContextAccessor actionContextAccessor, IUtilServicioIntegracionContinua utilServicioIntegracionContinua, IServicesUtilVirtuosoAndReplication servicesUtilVirtuosoAndReplication, IOAuth oAuth, IHostApplicationLifetime appLifetime, IAvailableServices availableServices, ILogger<MisComunidadesController> logger, ILoggerFactory loggerFactory)
-            : base(loggingService, configService, entityContext, redisCacheWrapper, gnossCache, virtuosoAD, httpContextAccessor, viewEngine, entityContextBASE, env, actionContextAccessor, utilServicioIntegracionContinua, servicesUtilVirtuosoAndReplication, oAuth, appLifetime, availableServices, logger, loggerFactory)
+        public MisComunidadesController(LoggingService loggingService, ConfigService configService, EntityContext entityContext, RedisCacheWrapper redisCacheWrapper, GnossCache gnossCache, VirtuosoAD virtuosoAD, IHttpContextAccessor httpContextAccessor, ICompositeViewEngine viewEngine, EntityContextBASE entityContextBASE, IWebHostEnvironment env, IUtilServicioIntegracionContinua utilServicioIntegracionContinua, IServicesUtilVirtuosoAndReplication servicesUtilVirtuosoAndReplication, IOAuth oAuth, IHostApplicationLifetime appLifetime, IAvailableServices availableServices, ILogger<MisComunidadesController> logger, ILoggerFactory loggerFactory)
+            : base(loggingService, configService, entityContext, redisCacheWrapper, gnossCache, virtuosoAD, httpContextAccessor, viewEngine, entityContextBASE, env, utilServicioIntegracionContinua, servicesUtilVirtuosoAndReplication, oAuth, appLifetime, availableServices, logger, loggerFactory)
         {
             mlogger = logger;
             mLoggerFactory = loggerFactory;
@@ -147,7 +148,15 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                     if (string.IsNullOrEmpty(nombreImagenSmall) || nombreImagenSmall.Equals("peque"))
                     {
                         urlFoto = $"{BaseURLStatic}/img/{UtilArchivos.ContentImgIconos}/{UtilArchivos.ContentImagenesProyectos}/anonimo_peque.png";
-                        comunidad.Logo = mControladorBase.CargarImagenSup(filaProy.ProyectoID);
+                        try
+                        {
+                            comunidad.Logo = mControladorBase.CargarImagenSup(filaProy.ProyectoID);
+                        }
+                        catch(Exception ex)
+                        {
+                            mLoggingService.GuardarLogError(ex, mlogger);
+                            comunidad.Logo = urlFoto;
+                        }
 
                         if (string.IsNullOrEmpty(comunidad.Logo))
                         {

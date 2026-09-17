@@ -2,14 +2,14 @@
 
 @{
     int NumInvitacionesPendientes = Model;
-    
+    CommunityModel Comunidad = Html.GetComunidad();
     Html.SetBodyClass("layout02 listadoMyGnoss listadoContactosMyGnoss ");
     
     UserProfileModel Perfil = Html.GetPerfil();
     UserIdentityModel Identidad = Html.GetIdentidadActual();
 
-    Html.GetListaJS().Add(Html.GetBaseUrlStatic() + "/ckeditor/ckeditor.js?v=" + Html.GetVersion());
-    Html.GetListaJS().Add(Html.GetBaseUrlStatic() + "/ckeditor/adapters/jquery.js?v=" + Html.GetVersion());
+    Html.GetListaJS().Add(Html.GetBaseUrlStatic() + "/ckeditor/ckeditor.js?v=" + Comunidad.VersionJSEcosistema);
+    Html.GetListaJS().Add(Html.GetBaseUrlStatic() + "/ckeditor/adapters/jquery.js?v=" + Comunidad.VersionJSEcosistema);
 }
 <div id="col01">
     <div class="facetedSearch">

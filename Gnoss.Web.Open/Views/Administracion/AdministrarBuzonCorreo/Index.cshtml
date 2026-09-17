@@ -59,40 +59,47 @@ Variables
 </div>
 
 @* Contenido Central *@
-<div class="formulario-edicion background-blanco">       
+<div class="formulario-edicion background-blanco">
 	<h2>@Html.GetText("DEVTOOLS","BUZONDECORREO")</h2>
 	<p>
 		@Html.GetText("DEVTOOLS","CONFIGURACIONDELBUZONDECORREODELACOMUNIDADESTEBUZONRECIBIRA")
+	</p>
+	<p class="form-text">
+		@Html.GetText("DEVTOOLS","TODOSLOSCAMPOSDELBUZONSONOBLIGATORIOS")
 	</p>
 
 
 	@* Correo electrónico de la comunidad *@
 	<div class="form-group mb-3">
-		<label class="control-label d-block">@Html.GetText("COMMON","CORREOELECTRONICO")</label>
+		<label class="control-label d-block" for="Email">@Html.GetText("COMMON","CORREOELECTRONICO")</label>
 		<input
 			placeholder="@Html.GetText("DEVTOOLS","INTRODUCEELCORREOELECTRONICO")"
-			type="text"				
-			value="@(Model.ConfiguracionCorreo?.Email)" 
-			id="Email"				
+			type="text"
+			value="@(Model.ConfiguracionCorreo?.Email)"
+			id="Email"
 			class="form-control not-outline"
+			required
+			aria-required="true"
 		/>
 	</div>
 
 	@* SMTP *@
 	<div class="form-group mb-3">
-		<label class="control-label d-block">SMTP</label>
+		<label class="control-label d-block" for="SMTP">SMTP</label>
 		<input
 			placeholder="Introduce el SMTP"
-			type="text"				
+			type="text"
 			value="@(Model.ConfiguracionCorreo?.SMTP)"
 			id="SMTP"
 			class="form-control not-outline"
+			required
+			aria-required="true"
 		/>
 	</div>
 
 	@* Puerto *@
 	<div class="form-group mb-3">
-		<label class="control-label d-block">@Html.GetText("ADMINISTRACIONBASICA","PUERTO")</label>
+		<label class="control-label d-block" for="Port">@Html.GetText("ADMINISTRACIONBASICA","PUERTO")</label>
 		<input
 			placeholder="Introduce el puerto"
 			type="number"
@@ -100,56 +107,71 @@ Variables
 			id="Port"
 			data-bind="value:replyNumber"
 			class="form-control not-outline"
-		/>		
+			min="1"
+			max="32767"
+			step="1"
+			required
+			aria-required="true"
+		/>
 	</div>
 
 	@* Usuario *@
 	<div class="form-group mb-3">
-		<label class="control-label d-block">Usuario</label>
+		<label class="control-label d-block" for="User">Usuario</label>
 		<input
 			placeholder="@Html.GetText("DEVTOOLS","INTRODUCEELUSUARIO")"
 			type="text"
-			value="@(Model.ConfiguracionCorreo?.User)" 
+			value="@(Model.ConfiguracionCorreo?.User)"
 			id="User"
 			class="form-control not-outline"
+			required
+			aria-required="true"
 		/>
 	</div>
 
 	@* Contraseña *@
 	<div class="form-group mb-3">
-		<label class="control-label d-block">@Html.GetText("ADMINISTRACIONBASICA","CONTRASEÑA")</label>
+		<label class="control-label d-block" for="Password">@Html.GetText("ADMINISTRACIONBASICA","CONTRASEÑA")</label>
 		<input
 			placeholder="@Html.GetText("DEVTOOLS","INTRODUCELACONTRASEÑA")"
 			type="password"
 			id="Password"
 			class="form-control not-outline"
+			autocomplete="new-password"
+			required
+			aria-required="true"
 		/>
+		<small class="form-text text-mute">
+			@Html.GetText("DEVTOOLS","LACONTRASENYANOSEMUESTRA")
+		</small>
 	</div>
 
 	@* Tipo de servidor de envío *@
 	<div class="form-group mb-3 tipoServidorEnvio">
-		<label class="control-label d-block">@Html.GetText("ADMINISTRACIONBASICA","TIPODESERVIDORDEENVIO")</label>
+		<label class="control-label d-block" for="Type">@Html.GetText("ADMINISTRACIONBASICA","TIPODESERVIDORDEENVIO")</label>
 		@* Select de Tipo de privacidad de página *@
-		<select 
+		<select
 				id="Type"
 				name="Type"
 				class="cmbEditarPrivacidad js-select2"
 				tabindex="0"
 				aria-hidden="false">
-                 
-				<option @(Model.ConfiguracionCorreo?.Type == "smtp" ? "selected" : "") value="smtp">smtp</option>              				
+
+				<option @(Model.ConfiguracionCorreo?.Type == "smtp" ? "selected" : "") value="smtp">smtp</option>
 		</select>
 	</div>
 
 	@* Email de sugerencias *@
 	<div class="form-group mb-3">
-		<label class="control-label d-block">@Html.GetText("ADMINISTRACIONBASICA","EMAILDESUGERENCIAS")</label>
+		<label class="control-label d-block" for="SuggestEmail">@Html.GetText("ADMINISTRACIONBASICA","EMAILDESUGERENCIAS")</label>
 		<input
 			placeholder="@Html.GetText("DEVTOOLS","INTRODUCEELEMAILPARASUGERENCIAS")"
 			type="text"
 			value="@(Model.ConfiguracionCorreo?.SuggestEmail)"
 			id="SuggestEmail"
 			class="form-control not-outline"
+			required
+			aria-required="true"
 		/>
 	</div>
 
@@ -163,9 +185,9 @@ Variables
 				name="SSL"
 				data-value="si"
 				id="SSL_SI"
-				@(useSSL == true ? "checked" : "")					
+				@(useSSL == true ? "checked" : "")
 			/>
-			<label class="form-check-label" for="TabUsarServidorSeguro_SI">@Html.GetText("COMMON","SI")</label>
+			<label class="form-check-label" for="SSL_SI">@Html.GetText("COMMON","SI")</label>
 		</div>
 		<div class="form-check form-check-inline">
 			<input
@@ -176,23 +198,22 @@ Variables
 				id="SSL_NO"
 				@(!useSSL == true ? "checked" : "")
 			/>
-			<label class="form-check-label" for="TabUsarServidorSeguro_NO">@Html.GetText("COMMON","NO")</label>
+			<label class="form-check-label" for="SSL_NO">@Html.GetText("COMMON","NO")</label>
 		</div>
 	</div>
 
 	<p class="form-text alert alert-warning pb-3"><span class="material-icons">info</span>Si estas usando el servidor SMTP de Google, consulta <a href="https://support.google.com/mail/thread/146949535/the-server-response-was-5-7-0-authentication-required?hl=en">estas recomendaciones</a></p>
-	
-	@* Botón guardado (Si lo permite CI/CD) *@	
+
+	@* Botón guardado (Si lo permite CI/CD) *@
 	@if (Html.GetComunidad().DeshabilitarGuardarAdministracionIC)
 	{
 		@* No permitir guardar *@
 		<input type="button" disabled title="@Html.GetComunidad().MensajeAvisoAdministracionIC" class="btn btn-primary uppercase" value="@Html.GetText("COMMON","GUARDAR")" />
 	}
 	else
-	{		
-		@* Permitir guardar *@
-		@* <input id="btnSave" type="button" class="btn btn-primary uppercase" value="@Html.GetText("COMMON","GUARDAR")"/> *@
-		<a class="btn btn-primary uppercase" data-toggle="modal" data-target="#validar-correo">@Html.GetText("PERSONAS","VALIDAR")</a>
+	{
+		@* Permitir guardar. El modal de validación sólo se abre si el formulario es correcto, de ahí que no se use data-toggle *@
+		<input id="btnAbrirValidarCorreo" type="button" class="btn btn-primary uppercase" value="@Html.GetText("PERSONAS","VALIDAR")" />
 	}
 
 </div>
@@ -201,12 +222,33 @@ Variables
 
 @* Carga de operativa *@
 @section operativaScript{
-    <script type="text/javascript" src="@Html.GetBaseUrlStatic()/responsive/theme/logic/configuracion.js?v=@Html.GetVersion()"></script>
+    <script type="text/javascript" src="@Html.GetBaseUrlStatic()/responsive/theme/logic/configuracion.js?v=@Comunidad.VersionJSEcosistema"></script>
     <script type="text/javascript">
 
         (function ($) {
+            // Textos de los errores de validación del formulario del buzón de correo
+            const pParams =
+            {
+                textos:
+                {
+                    emailObligatorio: "@Html.Raw(Html.GetText("DEVTOOLS", "CORREOBUZONOBLIGATORIO"))",
+                    emailNoValido: "@Html.Raw(Html.GetText("DEVTOOLS", "CORREOBUZONNOVALIDO"))",
+                    smtpObligatorio: "@Html.Raw(Html.GetText("DEVTOOLS", "SMTPOBLIGATORIO"))",
+                    puertoObligatorio: "@Html.Raw(Html.GetText("DEVTOOLS", "PUERTOOBLIGATORIO"))",
+                    puertoNoValido: "@Html.Raw(Html.GetText("DEVTOOLS", "PUERTONOVALIDO"))",
+                    usuarioObligatorio: "@Html.Raw(Html.GetText("DEVTOOLS", "USUARIOCORREOOBLIGATORIO"))",
+                    passwordObligatoria: "@Html.Raw(Html.GetText("DEVTOOLS", "CONTRASENYACORREOOBLIGATORIA"))",
+                    tipoServidorObligatorio: "@Html.Raw(Html.GetText("DEVTOOLS", "TIPOSERVIDOROBLIGATORIO"))",
+                    emailSugerenciasObligatorio: "@Html.Raw(Html.GetText("DEVTOOLS", "EMAILSUGERENCIASOBLIGATORIO"))",
+                    emailSugerenciasNoValido: "@Html.Raw(Html.GetText("DEVTOOLS", "EMAILSUGERENCIASNOVALIDO"))",
+                    emailPruebaObligatorio: "@Html.Raw(Html.GetText("DEVTOOLS", "EMAILPRUEBAOBLIGATORIO"))",
+                    emailPruebaNoValido: "@Html.Raw(Html.GetText("DEVTOOLS", "EMAILPRUEBANOVALIDO"))",
+                    correoConfigurado: "@Html.Raw(Html.GetText("DEVTOOLS", "CORREOCONFIGURADOCONEXITO"))"
+                }
+            }
+
             // Operativa funcionamiento de Configuración buzón de correo
-            operativaGestionConfiguracionBuzonCorreo.init();
+            operativaGestionConfiguracionBuzonCorreo.init(pParams);
         })();
     </script>
 }

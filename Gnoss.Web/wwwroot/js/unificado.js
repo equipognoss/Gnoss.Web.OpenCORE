@@ -1,4 +1,4 @@
-/*global.js*/
+﻿/*global.js*/
 /*
 ..........................................................................
 :: Links en ventana nueva                                               ::
@@ -9443,12 +9443,19 @@ const operativaEditarPerfilUsuario = {
         this.classBorrarURL = pParams.redesSociales.idBtnBorrarUrl;
         this.btnBorrarUrl = $(`.${pParams.redesSociales.idBtnBorrarUrl}`);
 
+        // edición sección Configurar notificaciones (avisos por correo del usuario)
+        this.contactRequests = $(`#${pParams.configuracionNotificaciones.idContactRequests}`);
+        this.internalMessages = $(`#${pParams.configuracionNotificaciones.idInternalMessages}`);
+        this.resourceComments = $(`#${pParams.configuracionNotificaciones.idResourceComments}`);
+        this.newFollowers = $(`#${pParams.configuracionNotificaciones.idNewFollowers}`);
+
         // Otros (Paneles, botones, url)
         this.divPanelInfo = $(`#${pParams.others.idDivPanelInfo}`);
         this.saveButton = $(`#${pParams.others.idSaveButton}`);
         this.urlPersonalProfileSaveProfile = pParams.others.urlPersonalProfileSaveProfile;
         this.urlPersonalProfileSaveBio = pParams.others.urlPersonalProfileSaveBio;
         this.urlPersonalProfileSaveSocialWebs = pParams.others.urlPersonalProfileSaveSocialWebs;
+        this.urlPersonalProfileSaveNotifications = pParams.others.urlPersonalProfileSaveNotifications;
         this.urlImagenAnonima = pParams.others.urlImagenAnonima;
 
         // Inputs que NO podrán quedar vacíos
@@ -9553,6 +9560,8 @@ const operativaEditarPerfilUsuario = {
                 that.savePersonalDataProfile();
                 // Guardar sección de Curriculum (Tags, Descripcion)
                 that.saveBioUserProfile(false);
+                // Guardar sección de Configurar notificaciones (avisos por correo)
+                that.saveNotificationSettings();
             }
         });
 
@@ -9768,6 +9777,34 @@ const operativaEditarPerfilUsuario = {
                 //GuardadoCVRapido('KO');            
             }).always(function () {
                 OcultarUpdateProgress();
+            });
+    },
+
+    /**
+     * Acción de guardar los datos del perfil del usuario, sección 'Configurar notificaciones'.
+     * Cada check indica si el usuario desea (true) o no (false) recibir por correo el aviso correspondiente.
+     * */
+    saveNotificationSettings: function () {
+        const that = this;
+
+        // Controlar que la sección exista en la web (Organización no la carga)
+        if (this.contactRequests.length == 0 || this.internalMessages.length == 0
+            || this.resourceComments.length == 0 || this.newFollowers.length == 0) {
+            return;
+        }
+
+        // Construcción del objeto POST
+        const dataPost = {
+            callback: "GuardarNotificaciones",
+            "NotificationSettings.ContactRequests": that.contactRequests.is(':checked'),
+            "NotificationSettings.InternalMessages": that.internalMessages.is(':checked'),
+            "NotificationSettings.ResourceComments": that.resourceComments.is(':checked'),
+            "NotificationSettings.NewFollowers": that.newFollowers.is(':checked')
+        }
+
+        GnossPeticionAjax(this.urlPersonalProfileSaveNotifications, dataPost, true, false)
+            .fail(function (data) {
+                mostrarNotificacion('error', data);
             });
     },
 
@@ -11614,11 +11651,13 @@ function DeployActionInModalPanel(urlAccion, pBoton, pPanelID, pArg) {
             CerrarPanelAccion(pPanelID);
         } else {
             // Mostrar mensaje de error
+            OcultarUpdateProgress();
             panelMessagesResult.css("display", "block");
             panelContent.css("display", "none");
             panelMessagesResult.children(".ok").css("display", "none");
             panelMessagesResult.children(".ok").css("display", "block");
             panelMessagesResult.children(".ok").html('error');
+            mostrarNotificacion("error", data);
         }
     });
 }
@@ -16101,6 +16140,179 @@ const operativaMisComunidades = {
 }
 
 /**
+ * Operativa para el comportamiento del modal al traducir un recurso
+ */
+const opertativaTraducirRecurso = {
+
+    init: function (pParams) {
+        this.config(pParams);
+        this.configRutas(pParams);
+        this.configEvents();
+        this.triggerEvents();
+    },
+
+    config: function (pParams) {
+        this.pParams = pParams;
+        this.selectOriginLang = $("#idiomaOrigen");
+        this.selectTargetLang = $("#idiomasDestino");
+        this.cmbOriginLanguage = $(".cmbIdiomaOrigen");
+        this.divLangList = $("#contenedorIdiomasSeleccionados");
+        this.btnTranslateResource = $(".btnTranslateResource");
+    },
+
+    configRutas: function (pParams) {
+        this.urlTranslateResource = pParams.urlTranslateResource;
+    },
+
+    configEvents: function () {
+        const that = this;
+
+        this.selectTargetLang.off("change").on("change", function (e) {
+            that.handleAddTargetLang(e.target)
+        });
+
+        this.divLangList.on("click", ".tag-remove", function () {
+            that.handleDeleteTargetLang(this);
+        });
+
+        this.btnTranslateResource.on("click", function () {
+            that.handleTranslateResource();
+        });
+
+        $("#modal-container").on('hidden.bs.modal', () => {
+            resetearModalContainer();
+        });
+
+        this.cmbOriginLanguage.on('change', function () {
+            that.handleManageLanguages(this);
+        });
+    },
+
+    triggerEvents: function () {
+
+        const idiomaOrigenInicial = $("select[name='cmbIdiomaOrigen']");
+
+        this.handleManageLanguages(idiomaOrigenInicial);
+
+        this.defaultOptions = {
+            minimumResultsForSearch: 10,
+            width: '100%'
+        };
+
+        let select2 = $("body").find('.js-select2');
+        select2.select2(this.defaultOptions);
+
+    },
+
+    handleAddTargetLang: function (input) {
+        const that = this;
+        const $select = $(input);
+        const optionSelected = $select.find("option:selected");
+        if (!optionSelected.val()) return;
+
+        const value = optionSelected.val();
+        const text = optionSelected.data("name") || optionSelected.text();
+
+        const tagHtml = `
+                <div class="tag" data-lang="${value}" title="${text}">
+                    <div class="tag-wrap">
+                        <span class="tag-text">
+                            <span class="tag-label">${text}</span>
+                        </span>
+                        <span class="tag-remove custom material-icons">delete</span>
+                    </div>
+                </div>
+            `;
+
+        that.divLangList.append(tagHtml);
+
+        // Eliminar opción del select
+        optionSelected.remove();
+
+        // Resetear select
+        $select.val("");
+    },
+
+    handleDeleteTargetLang: function (tag) {
+        const that = this;
+        const $tag = $(tag).closest(".tag");
+
+        const lang = $tag.data("lang");
+        const text = $tag.find(".tag-label").text();
+
+        // Volver a añadir al select
+        const optionHtml = `<option value="${lang}" data-name="${text}">${text}</option>`;
+        that.selectTargetLang.append(optionHtml);
+
+        // Eliminar tag
+        $tag.remove();
+    },
+
+    handleTranslateResource: function () {
+        const that = this;
+        loadingMostrar();
+        let originLang = that.selectOriginLang.find("option:selected").val();
+        let targetLangs = [];
+        $(".tag-list .tag").each(function () {
+            targetLangs.push($(this).data("lang"));
+        });
+
+        if (originLang.length < 2) {
+            mostrarNotificacion("error", "Tienes que elegir un idioma de origen");
+            return;
+        }
+
+        if (targetLangs.length < 1) {
+            mostrarNotificacion("error", "Tienes que elegir por lo menos 1 idioma de destino")
+            return;
+        }
+
+        let dataPost = {
+            pOriginLang: originLang,
+            pTargetLangs: targetLangs
+        };
+
+        GnossPeticionAjax(
+            that.urlTranslateResource,
+            dataPost,
+            true
+        ).done(function (data) {
+            loadingOcultar();
+            $("#modal-container").modal("hide");
+            mostrarNotificacion("success", data);
+        }).fail(function (data) {
+            loadingOcultar();
+            mostrarNotificacion("error", data);
+        });
+    },
+
+    handleManageLanguages: function (select) {
+        const $select = $(select);
+        const selectedOption = $select.find("option:selected");
+
+        const id = selectedOption.val();
+        const text = selectedOption.text();
+
+        if (!id) return;
+
+        // Volver a añadir al select
+        $("select[name='cmbIdiomaDestino']").append(this.optionTargetLanguage);
+
+        //Guardar el borrado
+        const optionHtml = `<option value="${id}">${text}</option>`;
+        this.optionTargetLanguage = optionHtml;
+
+
+        // Eliminar opción del select
+        $("select[name='cmbIdiomaDestino']").find(`option[value="${id}"]`).remove();
+
+        //Eliminar opcion de tag list
+        $(".tag-list").find(`.tag[data-lang="${id}"]`).remove();
+
+    },
+}
+
+/**
  * Renderiza un elemento de la lista de resultados del servicio de autocomplete.
  * 
  * @param {Object} item - Objeto que representa el ítem a renderizar, típicamente contiene datos como imagen, título, peso, etc.
@@ -16215,3 +16427,26 @@ function initCustomDatePicker(selector, options = {}) {
         $(selector).datetimepicker(config);        
     }, 3000);
 }
+
+function resetearModalContainer() {
+    const $modalContainer = $("#modal-container");
+
+    // Añadir la clase por defecto para que se muestre en el top de la página
+    $modalContainer.addClass("modal-top");
+    // Panel que hay que resetear/rellenar con el initialContainerContent
+    let panelToReset = $modalContainer.find("#modal-dinamic-content");
+    // HTML que cargaremos de nuevo una vez se cierre el formulario (resetearlo de inicio)
+    let initialContainerContent = '';
+    initialContainerContent += '<div id="content">';
+    initialContainerContent += '<div class="modal-header">';
+    initialContainerContent += '<p class="modal-title">';
+    initialContainerContent += '<span class="spinner-border white-color mr-2"></span>';
+    initialContainerContent += 'Cargando ...';
+    initialContainerContent += '</p>';
+    initialContainerContent += '<span class="material-icons cerrar" data-dismiss="modal" aria-label="Close">close</span>';
+    initialContainerContent += '</div>';
+    initialContainerContent += '<div class="modal-body"></div>';
+    initialContainerContent += '</div>';
+    // Incluir el panel inicial para ser reutilizado
+    panelToReset.html(initialContainerContent).fadeIn();
+};

@@ -181,7 +181,7 @@ var form = {
     tagsPropuestos: 'Etiquetas propostas:',
     cargando: 'Cargando...',
     selectImg: 'Selecciona unha imaxe',
-    validExtensions: 'Extensións válidas: .jpg, .jpeg, .gif, .png',
+    validExtensions: 'Extensións válidas: .jpg, .jpeg, .gif, .png .webp',
     cargando: 'Cargando',
     htmlincrustado: 'Html incrustado',
     html: 'Html',

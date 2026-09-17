@@ -1425,22 +1425,23 @@ const operativaGestionPaginas = {
         const that = this;
 
         setTimeout(function () {
-            // Html de los optionItems que se actualizará cuando haya cambios
-            let pageOptionHtml = '';
+            // Elementos <option> que se actualizarán cuando haya cambios
+            const pageOptions = [];
 
             $(`.${that.pageRowClassName}`).each(function () {
                 const id = $(this).prop('id');
                 const dataName = $($(this).find(`.${that.componentPageNameClassName}:not(.d-none)`)[0]).text().trim();
-                pageOptionHtml += `
-                    <option class="pagina-item"
-                        value="${dataName}"
-                        name="${id}">
-                        ${dataName}                                        
-                    </option>`;
+                pageOptions.push(
+                    $('<option>')
+                        .addClass('pagina-item')
+                        .attr('value', dataName)
+                        .attr('name', id)
+                        .text(dataName)
+                );
             });
 
-            // Agrega las opciones generadas dinámicamente al select        
-            that.cmbListaPaginas.html(pageOptionHtml);
+            // Agrega las opciones generadas dinámicamente al select
+            that.cmbListaPaginas.empty().append(pageOptions);
             comportamientoInicial.iniciarSelects2();
         }, 1000);
     },
@@ -1616,7 +1617,7 @@ const operativaGestionPaginas = {
         }
 
         // Actualizar el contenido de la faceta
-        componentPageName.html(value);
+        componentPageName.text(value);
     },
 
     /**
@@ -1645,7 +1646,7 @@ const operativaGestionPaginas = {
         }
 
         // Actualizar el contenido de la faceta
-        componentUrlPageName.html(value);
+        componentUrlPageName.text(value);
     },
 
 
@@ -10503,7 +10504,7 @@ const operativaGestionFlujos = {
         }
 
         // Actualizar el contenido de la faceta
-        componentPageName.html(value);
+        componentPageName.text(value);
     },
 
     handleSelectAutocompleteItem: function (input, dataName, dataId) {
@@ -11017,7 +11018,7 @@ const operativaGestionRedirecciones = {
         // Nombre del parámetro a cambiar al hacer keyUp
         const parameterNameValue = filaParameter.find(".component-parameterName");
         // Asignar lo tecleado (Nuevo nombre del parámetro)
-        parameterNameValue.html(newParameterValue.trim());
+        parameterNameValue.text(newParameterValue.trim());
     },
 
 
@@ -11037,7 +11038,7 @@ const operativaGestionRedirecciones = {
         const urlDestinoRowValue = that.filaRedireccion.find(that.componentUrlDestino);
         // Establecer el valor
         const valorUrlDestino = input.val().trim();
-        urlDestinoRowValue.html(valorUrlDestino);
+        urlDestinoRowValue.text(valorUrlDestino);
         urlDestinoRowValue.attr("data-tooltip-full", valorUrlDestino);
         iniciarTooltipsTruncados(urlDestinoRowValue);
 
@@ -11061,7 +11062,7 @@ const operativaGestionRedirecciones = {
         const urlOrigenRowValue = that.filaRedireccion.find(that.componentUrlOrigen);
         // Establecer el valor
         const valorUrlOrigen = input.val().trim();
-        urlOrigenRowValue.html(valorUrlOrigen);
+        urlOrigenRowValue.text(valorUrlOrigen);
         urlOrigenRowValue.attr("data-tooltip-full", valorUrlOrigen);
         iniciarTooltipsTruncados(urlOrigenRowValue);
     },
@@ -11308,7 +11309,7 @@ const operativaGestionRedirecciones = {
         }).fail(function (data) {
             // KO en guardado de datos
             const error = data.split('|||');
-            mostrarNotificacion("error", "Se ha producido un error al tratar de guardar la redirección. Por favor contacta con el administrador.");
+            mostrarNotificacion("error", error[0]);
             // Con errores -> KO
             completion != undefined && completion(false);
 

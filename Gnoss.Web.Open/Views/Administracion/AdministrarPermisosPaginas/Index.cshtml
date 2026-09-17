@@ -1,7 +1,8 @@
 ﻿@model List<PermisosPaginaViewModel>
 
 @{
-    Html.GetListaCSS().Add(Html.GetBaseUrlStatic() + "/cssNuevo/administracion.css?v=" + Html.GetVersion());
+    CommunityModel Comunidad = Html.GetComunidad();
+    Html.GetListaCSS().Add(Html.GetBaseUrlStatic() + "/cssNuevo/administracion.css?v=" + Comunidad.VersionCSSEcosistema);
     Layout = "~/Views/Shared/Layout/_Layout_AnteriorEAD.cshtml";
 }
 

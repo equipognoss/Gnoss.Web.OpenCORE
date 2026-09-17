@@ -44,14 +44,16 @@ using Microsoft.AspNetCore.Mvc.ViewEngines;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
+using NetVips;
 using Serilog.Core;
-using SixLabors.ImageSharp;
 using System;
 using System.Collections.Generic;
 using System.Data;
+using System.Drawing;
 using System.IO;
 using System.Linq;
 using System.Text.Json;
+using Image = NetVips.Image;
 
 namespace Es.Riam.Gnoss.Web.MVC.Controllers
 {
@@ -59,8 +61,8 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
     {
         private ILogger mlogger;
         private ILoggerFactory mLoggerFactory;
-        public RegistroDatosController(LoggingService loggingService, ConfigService configService, EntityContext entityContext, RedisCacheWrapper redisCacheWrapper, GnossCache gnossCache, VirtuosoAD virtuosoAD, IHttpContextAccessor httpContextAccessor, ICompositeViewEngine viewEngine, EntityContextBASE entityContextBASE, Microsoft.AspNetCore.Hosting.IHostingEnvironment env, IActionContextAccessor actionContextAccessor, IUtilServicioIntegracionContinua utilServicioIntegracionContinua, IServicesUtilVirtuosoAndReplication servicesUtilVirtuosoAndReplication, IOAuth oAuth, IHostApplicationLifetime appLifetime, IAvailableServices availableServices, ILogger<RegistroDatosController> logger, ILoggerFactory loggerFactory)
-            : base(loggingService, configService, entityContext, redisCacheWrapper, gnossCache, virtuosoAD, httpContextAccessor, viewEngine, entityContextBASE, env, actionContextAccessor, utilServicioIntegracionContinua, servicesUtilVirtuosoAndReplication, oAuth, appLifetime, availableServices, logger, loggerFactory)
+        public RegistroDatosController(LoggingService loggingService, ConfigService configService, EntityContext entityContext, RedisCacheWrapper redisCacheWrapper, GnossCache gnossCache, VirtuosoAD virtuosoAD, IHttpContextAccessor httpContextAccessor, ICompositeViewEngine viewEngine, EntityContextBASE entityContextBASE, IWebHostEnvironment env, IUtilServicioIntegracionContinua utilServicioIntegracionContinua, IServicesUtilVirtuosoAndReplication servicesUtilVirtuosoAndReplication, IOAuth oAuth, IHostApplicationLifetime appLifetime, IAvailableServices availableServices, ILogger<RegistroDatosController> logger, ILoggerFactory loggerFactory)
+            : base(loggingService, configService, entityContext, redisCacheWrapper, gnossCache, virtuosoAD, httpContextAccessor, viewEngine, entityContextBASE, env,utilServicioIntegracionContinua, servicesUtilVirtuosoAndReplication, oAuth, appLifetime, availableServices, logger, loggerFactory)
         {
             mlogger = logger;
             mLoggerFactory = loggerFactory;
@@ -234,7 +236,6 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
 
             int tamanoMini = 60;
             int tamanoMaxi = 240;
-
             int minSize = 240;
             int maxSize = 450;
 
@@ -248,129 +249,100 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
             servicioImagenes.BorrarImagen("Personas/" + mControladorBase.UsuarioActual.PersonaID.ToString() + "_temp2" + ".png");
 
             //Límite de 10 MB
-            if (ficheroImagen.Length <= 10 * 1024 * 1024)
-            {
-                byte[] bytesFichero = new byte[ficheroImagen.Length];
-                ((System.IO.Stream)ficheroImagen.OpenReadStream()).Read(bytesFichero, 0, (int)ficheroImagen.Length);
-
-                Image imagePerfilOriginal = UtilImages.ConvertirArrayBytesEnImagen(bytesFichero);
-
-                float proporcion = 0;
-                if (imagePerfilOriginal.Height > imagePerfilOriginal.Width)
-                {
-                    proporcion = (float)imagePerfilOriginal.Height / imagePerfilOriginal.Width;
-                }
-                else
-                {
-                    proporcion = (float)imagePerfilOriginal.Width / imagePerfilOriginal.Height;
-                }
-
-                if (proporcion < 1.8)
-                {
-                    if (imagePerfilOriginal.Height >= minSize && imagePerfilOriginal.Width >= minSize)
-                    {
-                        //la redimensionamos
-                        SizeF tamañoProporcional = UtilImages.CalcularTamanioProporcionado(imagePerfilOriginal, maxSize, maxSize);
-                        imagePerfilOriginal = UtilImages.AjustarImagen(imagePerfilOriginal, tamañoProporcional.Width, tamañoProporcional.Height);
-
-                        //Imagen Original
-                        MemoryStream ms = new MemoryStream();
-                        imagePerfilOriginal.SaveAsPng(ms);
-                        servicioImagenes.AgregarImagen(ms.ToArray(), "Personas/" + mControladorBase.UsuarioActual.PersonaID.ToString(), ".png");
-
-                        int w = 0;
-                        int h = 0;
-                        int x = 0;
-                        int y = 0;
-
-                        if (imagePerfilOriginal.Height > imagePerfilOriginal.Width)
-                        {
-                            w = imagePerfilOriginal.Width;
-                            h = imagePerfilOriginal.Width;
-                            y = imagePerfilOriginal.Height / 2 - imagePerfilOriginal.Width / 2;
-                        }
-                        else if (imagePerfilOriginal.Height < imagePerfilOriginal.Width)
-                        {
-                            w = imagePerfilOriginal.Height;
-                            h = imagePerfilOriginal.Height;
-                            x = imagePerfilOriginal.Width / 2 - imagePerfilOriginal.Height / 2;
-                        }
-                        else
-                        {
-                            w = imagePerfilOriginal.Width;
-                            h = imagePerfilOriginal.Height;
-                        }
-
-                        byte[] bytesImagenCortada = UtilImages.CropImageFile(ms.ToArray(), w, h, x, y);
-                        Image imagenCortada = UtilImages.ConvertirArrayBytesEnImagen(bytesImagenCortada);
-
-                        Image imagenCortadaGrande = UtilImages.AjustarImagen(imagenCortada, tamanoMaxi, tamanoMaxi, false);
-
-                        //convertimos la imagen a png
-                        MemoryStream msGrande = new MemoryStream();
-                        imagenCortadaGrande.SaveAsPng(msGrande);
-
-                        servicioImagenes.AgregarImagen(msGrande.ToArray(), "Personas/" + mControladorBase.UsuarioActual.PersonaID.ToString() + "_grande", ".png");
-
-                        Image imagenCortadaMini = UtilImages.AjustarImagen(imagenCortada, tamanoMini, tamanoMini, false);
-
-                        //convertimos la imagen a png
-                        MemoryStream msMini = new MemoryStream();
-                        imagenCortadaMini.SaveAsPng(msMini);
-
-                        servicioImagenes.AgregarImagen(msMini.ToArray(), "Personas/" + mControladorBase.UsuarioActual.PersonaID.ToString() + "_peque", ".png");
-
-                        if (mEntityContext.Entry(IdentidadActual.Persona.FilaPersona).State.Equals(EntityState.Detached))
-                        {
-                            IdentidadActual.Persona.FilaPersona = mEntityContext.Persona.FirstOrDefault(pers => pers.PersonaID.Equals(IdentidadActual.Persona.FilaPersona.PersonaID));
-                        }
-
-                        if (!IdentidadActual.Persona.FilaPersona.VersionFoto.HasValue)
-                        {
-                            IdentidadActual.Persona.FilaPersona.VersionFoto = 1;
-                        }
-                        else
-                        {
-                            IdentidadActual.Persona.FilaPersona.VersionFoto++;
-                        }
-
-                        IdentidadActual.Persona.FilaPersona.CoordenadasFoto = "[ " + x.ToString() + ", " + y.ToString() + ", " + (x + w).ToString() + ", " + (y + h).ToString() + " ]";
-                        IdentidadActual.Persona.FilaPersona.FechaAnadidaFoto = DateTime.Now;
-                        mEntityContext.SaveChanges();
-                        IdentidadCN identidadCN = new IdentidadCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<IdentidadCN>(), mLoggerFactory);
-                        identidadCN.ActualizarFotoIdentidadesPersona(IdentidadActual.PersonaID.Value, false);
-                        identidadCN.Dispose();
-
-                        //Borramos Cache de la Identidad actual
-                        IdentidadCL identidadCL = new IdentidadCL(mEntityContext, mLoggingService, mRedisCacheWrapper, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<IdentidadCL>(), mLoggerFactory);
-                        identidadCL.EliminarCacheGestorIdentidad(IdentidadActual.Clave, IdentidadActual.PersonaID.Value);
-                        identidadCL.Dispose();
-
-                    }
-                    else
-                    {
-                        error = UtilIdiomas.GetText("PERFIL", "ERRORIMAGENPEQUEÑA", minSize + " px.");
-                    }
-                }
-                else
-                {
-                    error = UtilIdiomas.GetText("PERFIL", "ERRORIMAGENCUADRADA");
-                }
-            }
-            else
+            if (ficheroImagen.Length > 10 * 1024 * 1024)
             {
                 error = UtilIdiomas.GetText("PERFIL", "ERRORTAMAÑOIMAGEN");
             }
-            EliminarCaches();
-
-            if (error.Equals(string.Empty))
-            {
-                return Content(UtilArchivos.ContentImagenes + "/" + UtilArchivos.ContentImagenesPersonas + "/" + mControladorBase.UsuarioActual.PersonaID.ToString().ToLower() + "_grande.png?" + Guid.NewGuid().ToString());
-            }
             else
             {
-                return StatusCode(400, error);
+                byte[] bytesFichero = new byte[ficheroImagen.Length];
+                ficheroImagen.OpenReadStream().Read(bytesFichero, 0, (int)ficheroImagen.Length);
+
+                bool esJpeg = ficheroImagen.ContentType.Contains("jpeg") || ficheroImagen.ContentType.Contains("jpg");
+
+                using Image imagePerfilOriginal = Image.NewFromBuffer(bytesFichero);
+
+                float proporcion = imagePerfilOriginal.Height > imagePerfilOriginal.Width
+                    ? (float)imagePerfilOriginal.Height / imagePerfilOriginal.Width
+                    : (float)imagePerfilOriginal.Width / imagePerfilOriginal.Height;
+
+                if (proporcion >= 1.8f)
+                {
+                    error = UtilIdiomas.GetText("PERFIL", "ERRORIMAGENCUADRADA");
+                }
+                else if (imagePerfilOriginal.Height < minSize || imagePerfilOriginal.Width < minSize)
+                {
+                    error = UtilIdiomas.GetText("PERFIL", "ERRORIMAGENPEQUEÑA", minSize + " px.");
+                }
+                else
+                {
+                    
+                    using Image imagenRedimensionada = UtilImages.AjustarImagen(imagePerfilOriginal, maxSize, maxSize);
+
+
+                    byte[] bytesOriginal = esJpeg
+                         ? imagenRedimensionada.JpegsaveBuffer(q: 85)
+                         : imagenRedimensionada.PngsaveBuffer(compression: 6);
+
+                    servicioImagenes.AgregarImagen(bytesOriginal,
+                        "Personas/" + mControladorBase.UsuarioActual.PersonaID.ToString(), ".png");
+
+                    
+                    int w, h, x = 0, y = 0;
+                    if (imagenRedimensionada.Height > imagenRedimensionada.Width)
+                    {
+                        w = h = imagenRedimensionada.Width;
+                        y = (imagenRedimensionada.Height - imagenRedimensionada.Width) / 2;
+                    }
+                    else if (imagenRedimensionada.Height < imagenRedimensionada.Width)
+                    {
+                        w = h = imagenRedimensionada.Height;
+                        x = (imagenRedimensionada.Width - imagenRedimensionada.Height) / 2;
+                    }
+                    else
+                    {
+                        w = imagenRedimensionada.Width;
+                        h = imagenRedimensionada.Height;
+                    }
+
+                    using Image imagenCortada = imagenRedimensionada.Crop(x, y, w, h);
+
+                    using Image imagenCortadaGrande = UtilImages.AjustarImagen(imagenCortada, tamanoMaxi, tamanoMaxi);
+                    servicioImagenes.AgregarImagen(
+                        imagenCortadaGrande.JpegsaveBuffer(q: 85),
+                        "Personas/" + mControladorBase.UsuarioActual.PersonaID.ToString() + "_grande", ".png");
+
+                    using Image imagenCortadaMini = UtilImages.AjustarImagen(imagenCortada, tamanoMini, tamanoMini);
+                    servicioImagenes.AgregarImagen(
+                        imagenCortadaMini.JpegsaveBuffer(q: 80),
+                        "Personas/" + mControladorBase.UsuarioActual.PersonaID.ToString() + "_peque", ".png");
+
+                    if (mEntityContext.Entry(IdentidadActual.Persona.FilaPersona).State.Equals(EntityState.Detached))
+                    {
+                        IdentidadActual.Persona.FilaPersona = mEntityContext.Persona
+                            .FirstOrDefault(pers => pers.PersonaID.Equals(IdentidadActual.Persona.FilaPersona.PersonaID));
+                    }
+
+                    IdentidadActual.Persona.FilaPersona.VersionFoto = (IdentidadActual.Persona.FilaPersona.VersionFoto ?? 0) + 1;
+                    IdentidadActual.Persona.FilaPersona.CoordenadasFoto = $"[ {x}, {y}, {x + w}, {y + h} ]";
+                    IdentidadActual.Persona.FilaPersona.FechaAnadidaFoto = DateTime.Now;
+                    mEntityContext.SaveChanges();
+
+                    using IdentidadCN identidadCN = new IdentidadCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<IdentidadCN>(), mLoggerFactory);
+                    identidadCN.ActualizarFotoIdentidadesPersona(IdentidadActual.PersonaID.Value, false);
+
+                    using IdentidadCL identidadCL = new IdentidadCL(mEntityContext, mLoggingService, mRedisCacheWrapper, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<IdentidadCL>(), mLoggerFactory);
+                    identidadCL.EliminarCacheGestorIdentidad(IdentidadActual.Clave, IdentidadActual.PersonaID.Value);
+                }
             }
+
+            EliminarCaches();
+
+            return error == string.Empty
+                ? Content(UtilArchivos.ContentImagenes + "/" + UtilArchivos.ContentImagenesPersonas + "/"
+                    + mControladorBase.UsuarioActual.PersonaID.ToString().ToLower()
+                    + "_grande.png?" + Guid.NewGuid().ToString())
+                : StatusCode(400, error);
         }
 
         [HttpGet]

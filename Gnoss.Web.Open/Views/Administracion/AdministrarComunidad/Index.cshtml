@@ -1,6 +1,7 @@
 ﻿@model PermisosPaginasAdministracionViewModel
 @{
-    Html.GetListaCSS().Add(Html.GetBaseUrlStatic() + "/cssNuevo/administracion.css?v=" + Html.GetVersion());
+    CommunityModel Comunidad = Html.GetComunidad();
+    Html.GetListaCSS().Add(Html.GetBaseUrlStatic() + "/cssNuevo/administracion.css?v=" + Comunidad.VersionCSSEcosistema);
 
     Layout = "~/Views/Shared/Layout/_Layout_AnteriorEAD.cshtml";
 }
@@ -9,9 +10,6 @@
     <h1>@Html.GetText("COMADMINCOMUNIDAD", "TITULO")</h1>
     <div>
         <ul class="principal">
-            @{
-                CommunityModel Comunidad = Html.GetComunidad();
-            }
 
             <li>
                 Administración básica

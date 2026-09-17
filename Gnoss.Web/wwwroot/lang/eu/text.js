@@ -181,7 +181,7 @@ var form = {
     tagsPropuestos: 'Proposatutako etiketak:',
     cargando: 'Kargatzen...',
     selectImg: 'Aukeratu irudi bat',
-    validExtensions: 'Balio duten luzapenak: .jpg, .jpeg, .gif, .png',
+    validExtensions: 'Balio duten luzapenak: .jpg, .jpeg, .gif, .png .webp',
     cargando: 'Kargatzen',
     htmlincrustado: 'Html txertatua',
     html: 'Html',

@@ -1,0 +1,12 @@
+﻿@model SharedSemCms
+
+@{
+    Es.Riam.Semantica.OWL.Propiedad mPropiedad = Model.semanticPropertyModel.Element.Propiedad;
+    string idControl = Model.semanticPropertyModel.OntologyPropInfo.ControlID;
+    string idBtnTraducir = idControl.Replace("Campo_", "lbTraducir_");
+    string mensajeTraducir = Html.GetText("PERFILBASERECURSOSFICHA", "TRADUCIR");
+    List<string> idiomasDisponiblesRecurso = Model.semanticPropertyModel.OntologyPropInfo.PropertyLanguageValues.Keys.ToList();
+    string urlLoadModal = $"{Html.GetComunidad().Url}/{Html.GetText("URLSEM", "EDITARRECURSO")}/load-translate-modal";
+    bool esMultiValue = !Model.semanticPropertyModel.OntologyPropInfo.UniqueValue;
+}
+<input id="@idBtnTraducir" class="btn btn-outline-primary mt-2" type="button" value="@mensajeTraducir" onclick="CargarModalTraducirProp(this, '@urlLoadModal', '@mPropiedad.ElementoOntologia.TipoEntidad', '@mPropiedad.Nombre', '@esMultiValue.ToString().ToLower()')" />

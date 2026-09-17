@@ -15,7 +15,7 @@ Variables
     CommunityModel Comunidad = Html.GetComunidad();
 
     Html.SetBodyClass("edicionRecurso usuarioConectado comunidad page-modal no-clonarMenuUsuario");
-    Html.GetListaJS().Add(Html.GetBaseUrlStatic() + "/jsUnificar/MVC.EditarRecurso.js?v=" + Html.GetVersion());
+    Html.GetListaJS().Add(Html.GetBaseUrlStatic() + "/jsUnificar/MVC.EditarRecurso.js?v=" + Comunidad.VersionJSEcosistema);
 
     string titulo = "";
     string tipoRecurso = "recurso";
@@ -94,7 +94,8 @@ Variables
             @* Modal subir recurso de tipo "File"*@
             if (Model.CreateResourceModel.FileAvailable) { @Html.PartialView("../Shared/_cabecera/_modal-views/_add-resource-file") }
             @* Modal subir recurso de tipo "Url"*@    
-            if (Model.CreateResourceModel.LinkAvailable) { @Html.PartialView("../Shared/_cabecera/_modal-views/_add-resource-url") }                       
+            if (Model.CreateResourceModel.LinkAvailable) { @Html.PartialView("../Shared/_cabecera/_modal-views/_add-resource-url") } 
+            if (Model.CreateResourceModel.DocReference) { @Html.PartialView("../Shared/_cabecera/_modal-views/_add-resource-reference") }
         }
         else
         { @* Crear un recurso desde 0 *@            

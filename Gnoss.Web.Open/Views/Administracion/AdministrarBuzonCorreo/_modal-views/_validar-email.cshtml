@@ -1,8 +1,7 @@
-﻿
-@*
+﻿@*
  Descripción
  -----------------------------------------------
- Vista modal que se usará dentro de un contenedor de bootstrap 
+ Vista modal que se usará dentro de un contenedor de bootstrap
  Variables
  ----------------------------------------------------------------
 *@
@@ -29,14 +28,14 @@
 			</div>
 			<div class="modal-body">
 
-                <form>
+                <form novalidate>
 
-                    
+
 				        <div class="form-group">
                             @* Input para el correo *@
                             <div class="form-group mb-3">
-                            <label class="control-label d-block">@Html.GetText("COMMON","CORREOELECTRONICO")</label>
-                            <input type="text" class="form-control" name="txtCorreoValidar" id="txtCorreoValidar" />
+                            <label class="control-label d-block" for="txtCorreoValidar">@Html.GetText("COMMON","CORREOELECTRONICO")</label>
+                            <input type="email" class="form-control" name="txtCorreoValidar" id="txtCorreoValidar" required aria-required="true" />
                             <small class="form-text text-mute">
                                 @Html.GetText("COMMON","CORREOELECTRONICOALQUESEENVIARAELEMAILDEPRUEBA")
                             </small>
@@ -44,8 +43,8 @@
 
                             @* Botón de guardado y cierre del modal *@
                             <div class="panelBotonera">
-                                <input type="button" class="btn btn-primary uppercase" id="btnValidarEmail" value="@Html.GetText("COMMON","GUARDAR")"/>                                               
-                            </div> 
+                                <input type="button" class="btn btn-primary uppercase" id="btnValidarEmail" value="@Html.GetText("COMMON","GUARDAR")"/>
+                            </div>
                     </div>
 
                 </form>

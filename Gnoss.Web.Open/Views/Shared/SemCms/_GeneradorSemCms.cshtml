@@ -1,6 +1,7 @@
 ﻿@model SemanticResourceModel
 
 @{
+    CommunityModel Comunidad = Html.GetComunidad();
     string classPrincipal = null;
 
     if (Model.ReadMode)
@@ -19,7 +20,7 @@
     }
     else
     {
-        Html.GetListaJS().Add(Html.GetBaseUrlStatic() + "/jsUnificar/MVC.EditarSEMCMS.js?v=" + Html.GetVersion());
+        Html.GetListaJS().Add(Html.GetBaseUrlStatic() + "/jsUnificar/MVC.EditarSEMCMS.js?v=" + Comunidad.VersionJSEcosistema);
         classPrincipal = "formSemEdicion";
 
         if (Model.RootEntities != null && Model.RootEntities.Count > 0)
@@ -29,8 +30,8 @@
 
         if (Model.DateWithTimeAvailable)
         {
-            Html.GetListaJS().Add(Html.GetBaseUrlStatic() + "/jsNuevo/datetime/jquery.datetimepicker.js?v=" + Html.GetVersion());
-            Html.GetListaCSS().Add(Html.GetBaseUrlStatic() + "/jsNuevo/datetime/jquery.datetimepicker.css?v=" + Html.GetVersion());
+            Html.GetListaJS().Add(Html.GetBaseUrlStatic() + "/jsNuevo/datetime/jquery.datetimepicker.js?v=" + Comunidad.VersionJSEcosistema);
+            Html.GetListaCSS().Add(Html.GetBaseUrlStatic() + "/jsNuevo/datetime/jquery.datetimepicker.css?v=" + Comunidad.VersionCSSEcosistema);
         }
     }
 
@@ -42,6 +43,30 @@
     if (!string.IsNullOrEmpty(Model.OntologyCSS))
     {
         Html.GetListaCSS().Add(Model.OntologyCSS);
+    }
+    if (TienePropsOpenSD(Model.RootEntities))
+    {
+        Html.GetListaJS().Add("https://cdnjs.cloudflare.com/ajax/libs/openseadragon/4.1.0/openseadragon.min.js");
+    }
+    @functions {
+        bool TienePropsOpenSD(List<SemanticEntityModel> entidades)
+        {
+            if (entidades == null) return false;
+            foreach (var entidad in entidades)
+            {
+                if (entidad.Properties != null)
+                {
+                    foreach (var prop in entidad.Properties)
+                    {
+                        if (prop.OntologyPropInfo != null && HtmlHelpers.EsTipoOpenSD(prop.OntologyPropInfo.FieldType))
+                            return true;
+                    }
+                }
+                if (TienePropsOpenSD(entidad.SubEntities))
+                    return true;
+            }
+            return false;
+        }
     }
 }
 

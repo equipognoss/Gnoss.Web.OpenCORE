@@ -28,7 +28,7 @@ string urlPagina = Html.GetUrlPagina();
 @{ 
     @* Establecer nombre al body para comportamiento JS (espacio-personal) *@
     Html.SetBodyClass("layout02 listadoComunidad comGnoss listadoMisFavoritos espacio-personal showResultsScrolling listado");
-    Html.GetListaJS().Add(Html.GetBaseUrlStatic() + "/jsUnificar/MVC.EditarRecurso.js?v=" + Html.GetVersion());
+    Html.GetListaJS().Add(Html.GetBaseUrlStatic() + "/jsUnificar/MVC.EditarRecurso.js?v=" + Comunidad.VersionJSEcosistema);
     string jsExtra = Html.GetJSExtra();
 }
 

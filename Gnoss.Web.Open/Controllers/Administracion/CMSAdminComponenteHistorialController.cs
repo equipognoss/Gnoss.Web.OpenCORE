@@ -18,14 +18,14 @@ using Es.Riam.Util;
 using Gnoss.Web.Open.Filters;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Mvc.Infrastructure;
 using Microsoft.AspNetCore.Mvc.ViewEngines;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
-using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using Microsoft.AspNetCore.Hosting;
+using System.Text.Json;
 
 namespace Gnoss.Web.Open.Controllers.Administracion
 {
@@ -39,8 +39,8 @@ namespace Gnoss.Web.Open.Controllers.Administracion
 
         #region Constructor
 
-        public CMSAdminComponenteHistorialController(LoggingService loggingService, ConfigService configService, EntityContext entityContext, RedisCacheWrapper redisCacheWrapper, GnossCache gnossCache, VirtuosoAD virtuosoAD, IHttpContextAccessor httpContextAccessor, ICompositeViewEngine viewEngine, EntityContextBASE entityContextBASE, Microsoft.AspNetCore.Hosting.IHostingEnvironment env, IActionContextAccessor actionContextAccessor, IUtilServicioIntegracionContinua utilServicioIntegracionContinua, IServicesUtilVirtuosoAndReplication servicesUtilVirtuosoAndReplication, IOAuth oAuth, IHostApplicationLifetime appLifetime, IAvailableServices availableServices, ILogger<CMSAdminComponenteHistorialController> logger, ILoggerFactory loggerFactory)
-            : base(loggingService, configService, entityContext, redisCacheWrapper, gnossCache, virtuosoAD, httpContextAccessor, viewEngine, entityContextBASE, env, actionContextAccessor, utilServicioIntegracionContinua, servicesUtilVirtuosoAndReplication, oAuth, appLifetime, availableServices, logger, loggerFactory)
+        public CMSAdminComponenteHistorialController(LoggingService loggingService, ConfigService configService, EntityContext entityContext, RedisCacheWrapper redisCacheWrapper, GnossCache gnossCache, VirtuosoAD virtuosoAD, IHttpContextAccessor httpContextAccessor, ICompositeViewEngine viewEngine, EntityContextBASE entityContextBASE, IWebHostEnvironment env, IUtilServicioIntegracionContinua utilServicioIntegracionContinua, IServicesUtilVirtuosoAndReplication servicesUtilVirtuosoAndReplication, IOAuth oAuth, IHostApplicationLifetime appLifetime, IAvailableServices availableServices, ILogger<CMSAdminComponenteHistorialController> logger, ILoggerFactory loggerFactory)
+            : base(loggingService, configService, entityContext, redisCacheWrapper, gnossCache, virtuosoAD, httpContextAccessor, viewEngine, entityContextBASE, env,utilServicioIntegracionContinua, servicesUtilVirtuosoAndReplication, oAuth, appLifetime, availableServices, logger, loggerFactory)
         {
             mAvailableServices = availableServices;
         }
@@ -115,7 +115,7 @@ namespace Gnoss.Web.Open.Controllers.Administracion
                         modelo.ComponenteVersion1.Version = version;
                         modelo.ComponenteVersion1.VersionActual = versionesAux.Last().VersionID.Equals(pVersion1);
                         modelo.ComponenteVersion1.Fecha = versionAux.Fecha;
-                        modelo.ComponenteVersion1.Propiedades = JsonConvert.DeserializeObject<CMSAdminComponenteEditarViewModel>(versionAux.ModeloJSON);
+                        modelo.ComponenteVersion1.Propiedades = JsonSerializer.Deserialize<CMSAdminComponenteEditarViewModel>(versionAux.ModeloJSON);
                     }
                     else if (versionAux.VersionID.Equals(pVersion2))
                     {
@@ -124,7 +124,7 @@ namespace Gnoss.Web.Open.Controllers.Administracion
                         modelo.ComponenteVersion2.Version = version;
                         modelo.ComponenteVersion2.VersionActual = versionesAux.Last().VersionID.Equals(pVersion2);
                         modelo.ComponenteVersion2.Fecha = versionAux.Fecha;
-                        modelo.ComponenteVersion2.Propiedades = JsonConvert.DeserializeObject<CMSAdminComponenteEditarViewModel>(versionAux.ModeloJSON);
+                        modelo.ComponenteVersion2.Propiedades = JsonSerializer.Deserialize<CMSAdminComponenteEditarViewModel>(versionAux.ModeloJSON);
                     }
                     version++;
                 }

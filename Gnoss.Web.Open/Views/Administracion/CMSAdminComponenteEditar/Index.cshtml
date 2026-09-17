@@ -3,11 +3,12 @@
 @model CMSAdminComponenteEditarViewModel
 
 @{
-    Html.GetListaCSS().Add(Html.GetBaseUrlStatic() + "/cssNuevo/administracion.css?v=" + Html.GetVersion());
-    Html.GetListaCSS().Add(Html.GetBaseUrlStatic() + "/cssNuevo/demo.css?v=" + Html.GetVersion());
+    CommunityModel Comunidad = Html.GetComunidad();
+    Html.GetListaCSS().Add(Html.GetBaseUrlStatic() + "/cssNuevo/administracion.css?v=" + Comunidad.VersionCSSEcosistema);
+    Html.GetListaCSS().Add(Html.GetBaseUrlStatic() + "/cssNuevo/demo.css?v=" + Comunidad.VersionCSSEcosistema);
 
-    Html.GetListaJS().Add(Html.GetBaseUrlStatic() + "/ckeditor/ckeditor.js?v=" + Html.GetVersion());
-    Html.GetListaJS().Add(Html.GetBaseUrlStatic() + "/ckeditor/adapters/jquery.js?v=" + Html.GetVersion());
+    Html.GetListaJS().Add(Html.GetBaseUrlStatic() + "/ckeditor/ckeditor.js?v=" + Comunidad.VersionJSEcosistema);
+    Html.GetListaJS().Add(Html.GetBaseUrlStatic() + "/ckeditor/adapters/jquery.js?v=" + Comunidad.VersionJSEcosistema);
 
     Layout = "~/Views/Shared/Layout/_Layout_AnteriorEAD.cshtml";
 }
@@ -304,7 +305,7 @@
         </form>
     </div>
 </div>
-<script type="text/javascript" src="@Html.GetBaseUrlStatic()/jsNuevo/jquery.demo.js?v=@Html.GetVersion()"></script>
+<script type="text/javascript" src="@Html.GetBaseUrlStatic()/jsNuevo/jquery.demo.js?v=@Comunidad.VersionJSEcosistema"></script>
 
 <script type="text/javascript">
 

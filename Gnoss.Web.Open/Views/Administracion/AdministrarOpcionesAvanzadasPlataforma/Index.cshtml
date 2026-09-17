@@ -22,7 +22,7 @@ Variables
         idiomasPersonalizados = Model.IdiomasPersonalizados.Split("&&&");
     }
     @* Extensiones válidas para imágenes CMS - Controlar que si no hay ninguna añadir las de por defecto *@
-    string[] imageExtensions = Model.ExtensionesImagenesCMSMultimedia.Split("&&&").Length == 0 || string.IsNullOrEmpty(Model.ExtensionesImagenesCMSMultimedia) ? ".jpg&&&.jpeg&&&.png&&&.gif".Split("&&&") : Model.ExtensionesImagenesCMSMultimedia.Split("&&&");
+    string[] imageExtensions = Model.ExtensionesImagenesCMSMultimedia.Split("&&&").Length == 0 || string.IsNullOrEmpty(Model.ExtensionesImagenesCMSMultimedia) ? ".jpg&&&.jpeg&&&.png&&&.gif&&&.webp".Split("&&&") : Model.ExtensionesImagenesCMSMultimedia.Split("&&&");
     @* Extensiones válidas para documentos - Controlar que si no hay ninguna añadir las de por defecto *@
     string[] documentExtensions = Model.ExtensionesDocumentosCMSMultimedia.Split("&&&").Length == 0 || string.IsNullOrEmpty(Model.ExtensionesDocumentosCMSMultimedia) ? ".pdf&&&.txt&&&.doc&&&.docx".Split("&&&") : Model.ExtensionesDocumentosCMSMultimedia.Split("&&&");
     // Controlar si se está en Administración del Ecosistema
@@ -236,7 +236,7 @@ Variables
                     </div>
 
                     <div class="form-group mb-3">
-                        <label class="control-label d-block">Edad mínima con la que los usuarios pueden registrarse en la plataforma. (Por defecto 18 años).</label>
+                        <label class="control-label d-block" for="EdadLimiteRegistroEcosistema">Edad mínima con la que los usuarios pueden registrarse en la plataforma. (Por defecto 18 años).</label>
                         <input id="EdadLimiteRegistroEcosistema"
                                type="number"
                                value="@(Model.EdadLimiteRegistroEcosistema > 0 ? Model.EdadLimiteRegistroEcosistema.ToString() : "18")"
@@ -247,7 +247,7 @@ Variables
                     </div>
 
                     <div class="form-group mb-3">
-                        <label class="control-label d-block">URL a la que se le va a redireccionar al usuario tras el login. Puede ser una url absoluta, una url que exista en el archivo de idiomas, o una url de una página del CMS.</label>
+                        <label class="control-label d-block" for="UrlHomeConectado">URL a la que se le va a redireccionar al usuario tras el login. Puede ser una url absoluta, una url que exista en el archivo de idiomas, o una url de una página del CMS.</label>
                         <input id="UrlHomeConectado"
                                type="text"
                                value="@Model.UrlHomeConectado"
@@ -257,7 +257,7 @@ Variables
                     </div>
 
                     <div class="form-group mb-3">
-                        <label class="control-label d-block">Ontologías que no deben ir a la actividad reciente de los usuarios.</label>
+                        <label class="control-label d-block" for="OntologiasNoLive">Ontologías que no deben ir a la actividad reciente de los usuarios.</label>
                         <input id="OntologiasNoLive"
                                type="text"
                                value="@Model.OntologiasNoLive"
@@ -318,7 +318,7 @@ Variables
                 <div class="card-body">
 
                     <div class="form-group mb-3">
-                        <label class="control-label d-block">Código de Google Analytics que se le va a asignar a cada proyecto nuevo según su tipo.</label>
+                        <label class="control-label d-block" for="CodigoGoogleAnalyticsProyecto">Código de Google Analytics que se le va a asignar a cada proyecto nuevo según su tipo.</label>
                         <input id="CodigoGoogleAnalyticsProyecto"
                                type="text"
                                value="@Model.CodigoGoogleAnalyticsProyecto"
@@ -329,14 +329,14 @@ Variables
 
                     @* Url Web Inicial / Web de proyectos públicos *@
                     <div class="form-group mb-3">
-                        <label class="control-label d-block">@Html.GetText("DEVTOOLS", "DIRECCIONWEBDEPROYECTOSPUBLICOS")</label>
+                        <label class="control-label d-block" for="txtUrlWeb">@Html.GetText("DEVTOOLS", "DIRECCIONWEBDEPROYECTOSPUBLICOS")</label>
                         <input type="text" class="form-control" id="txtUrlWeb" placeholder="https://domain.es" value="@Model.UrlProyectosPublicos">
                         <small class="form-text text-muted">@Html.GetText("DEVTOOLS", "DOMINIODONDEESTARANALOJADOSLOSPROYECTOSPUBLICOSODEACCESOREST")</small>
                     </div>
 
                     @* RadioButton de uso de misma URL para proyectos públicos y privados *@
                     <div class="form-group mb-3 panelUseSameProjectsUrl">
-                        <label class="control-label d-block">@Html.GetText("DEVTOOLS", "USARLAMISMAURLDEPROYECTOS")</label>
+                        <label class="control-label d-block" for="rbUseSameProjectsUrl_SI">@Html.GetText("DEVTOOLS", "USARLAMISMAURLDEPROYECTOS")</label>
                         <div class="form-check form-check-inline">
                             <input id="rbUseSameProjectsUrl_SI" class="form-check-input rbUseSameProjectsUrl" data-value="si" type="radio" name="useSameProjectsUrl" checked>
                             <label class="form-check-label" for="rbUseSameProjectsUrl_SI">@Html.GetText("COMMON", "SI")</label>
@@ -350,14 +350,14 @@ Variables
 
                     @* Web de Proyectos / Web de proyectos privados *@
                     <div id="panelUrlPrivateProjects" class="form-group mb-3 d-none">
-                        <label class="control-label d-block">@Html.GetText("DEVTOOLS", "DIRECCIONWEBDEPROYECTOSPRIVADOS")</label>
+                        <label class="control-label d-block" for="txtUrlProjects">@Html.GetText("DEVTOOLS", "DIRECCIONWEBDEPROYECTOSPRIVADOS")</label>
                         <input type="text" class="form-control" id="txtUrlProjects" placeholder="https://domain.es" value="@Model.UrlProyectosPrivados">
                         <small class="form-text text-muted">@Html.GetText("DEVTOOLS", "URLODIRECCIONWEBDELOSPROYECTOS")</small>
                     </div>
 
                     @*URL de aplicaciones web externas (Wordpress, Liferay, etc.) que usan por AJAX los servicios de búsqueda de esta plataforma: *@
                     <div class="form-group mb-3">
-                        <label class="control-label d-block">@Html.GetText("DEVTOOLS", "URLDEAPLICACIONESWEBEXTERNAS(WORDPRESS,LIFERAY,ETC)QUEUSANP")</label>
+                        <label class="control-label d-block" for="DominiosPermitidosCORS">@Html.GetText("DEVTOOLS", "URLDEAPLICACIONESWEBEXTERNAS(WORDPRESS,LIFERAY,ETC)QUEUSANP")</label>
                         <input id="DominiosPermitidosCORS"
                                type="text"
                                value="@Model.DominiosPermitidosCORS"
@@ -397,7 +397,7 @@ Variables
                     </div>
 
                     <div class="form-group mb-3">
-                        <label class="control-label d-block">@Html.GetText("DEVTOOLS", "LISTADEIDIOMASDISPONIBLESENLAPLATAFORMA")</label>
+                        <label class="control-label d-block" for="">@Html.GetText("DEVTOOLS", "LISTADEIDIOMASDISPONIBLESENLAPLATAFORMA")</label>
                         @* Lista de Checkbox de idiomas de la plataforma *@
                         <form>
                             <div>
@@ -423,7 +423,7 @@ Variables
                             @* Botón para añadir un idioma *@
 
                             <div class="d-flex align-items-center justify-content-between mb-3">
-                                <label class="control-label">@Html.GetText("DEVTOOLS", "LISTAIDIOMASPERSONALIZADOSECOSISTEMA")</label>
+                                <label class="control-label" for="btnAddLanguage">@Html.GetText("DEVTOOLS", "LISTAIDIOMASPERSONALIZADOSECOSISTEMA")</label>
                                 <button id="btnAddLanguage" type="button" class="btn btn-primary btn-sm" data-toggle="modal" data-target="#modal-add-language" style="height:30px">
                                     @Html.GetText("DEVTOOLS", "AÑADIRIDIOMAPERSONALIZADOECOSISTEMA")
                                 </button>
@@ -458,7 +458,7 @@ Variables
                     </div>
 
                     <div class="form-group mb-3">
-                        <label class="control-label d-block">Lista de extensiones de imágenes permitidas en la plataforma para la edición de componentes multimedia.</label>
+                        <label class="control-label d-block" for="extensionImageOptionJpg">Lista de extensiones de imágenes permitidas en la plataforma para la edición de componentes multimedia.</label>
                         @* Lista de Checkbox de Extensiones de imágenes permitidas en la plataforma *@
                         <form>
                             <div class="form-row align-items-center">
@@ -498,13 +498,22 @@ Variables
                                                class="custom-control-input extensionImageOption" />
                                         <label class="custom-control-label" for="extensionImageOptionGif">GIF</label>
                                     </div>
+
+                                    <div class="custom-control custom-checkbox mr-3">
+                                        <input type="checkbox"
+                                               id="extensionImageOptionWebp"
+                                               data-extension=".webp"
+                                        @(imageExtensions.Any(".webp".Contains) ? "checked" : "")
+                                               class="custom-control-input extensionImageOption" />
+                                        <label class="custom-control-label" for="extensionImageOptionWebp">WEBP</label>
+                                    </div>
                                 </div>
                             </div>
                         </form>
                     </div>
 
                     <div class="form-group mb-3">
-                        <label class="control-label d-block">Lista de extensiones de documentos permitidas en la plataforma para la edición de componentes multimedia.</label>
+                        <label class="control-label d-block" for="extensionDocumentOptionPdf">Lista de extensiones de documentos permitidas en la plataforma para la edición de componentes multimedia.</label>
                         @* Lista de Checkbox de Extensiones de documentos permitidos en la plataforma *@
                         <form>
                             <div class="form-row align-items-center">
@@ -567,7 +576,7 @@ Variables
                     </div>
 
                     <div class="form-group mb-3">
-                        <label class="control-label d-block">Copyright de la plataforma.</label>
+                        <label class="control-label d-block" for="Copyright">Copyright de la plataforma.</label>
                         <input id="Copyright"
                                type="text"
                                value="@Model.Copyright"
@@ -599,7 +608,7 @@ Variables
                 <div class="card-body">
 
                     <div class="form-group mb-3">
-                        <label class="control-label d-block">Url de Intragnoss.</label>
+                        <label class="control-label d-block" for="UrlIntragnoss">Url de Intragnoss.</label>
                         <input id="UrlIntragnoss"
                                type="text"
                                value="@Model.UrlIntragnoss"
@@ -609,7 +618,7 @@ Variables
                     </div>
 
                     <div class="form-group mb-3">
-                        <label class="control-label d-block">@Html.GetText("DEVTOOLS", "URLBASEPARAALOJARLOSSERVICIOS")</label>
+                        <label class="control-label d-block" for="UrlBaseService">@Html.GetText("DEVTOOLS", "URLBASEPARAALOJARLOSSERVICIOS")</label>
                         <input id="UrlBaseService"
                                type="text"
                                value="@Model.UrlBaseService"
@@ -619,7 +628,7 @@ Variables
                     </div>
 
                     <div class="form-group mb-3">
-                        <label class="control-label d-block">@Html.GetText("DEVTOOLS", "DOMINIOPAGINASADMINISTRACION")</label>
+                        <label class="control-label d-block" for="DominioPaginasAdministracion">@Html.GetText("DEVTOOLS", "DOMINIOPAGINASADMINISTRACION")</label>
                         <input id="DominioPaginasAdministracion"
                                type="text"
                                value="@Model.DominioPaginasAdministracion"
@@ -651,7 +660,7 @@ Variables
                 <div class="card-body">
 
                     <div class="form-group mb-3">
-                        <label class="control-label d-block">Indicar si el ecosistema tiene una personalizacion de vistas</label>
+                        <label class="control-label d-block" for="ComunidadesExcluidaPersonalizacion">Indicar si el ecosistema tiene una personalizacion de vistas</label>
                         <input id="ComunidadesExcluidaPersonalizacion"
                                type="text"
                                value="@Model.ComunidadesExcluidaPersonalizacion"
@@ -683,7 +692,7 @@ Variables
                 <div class="card-body">
 
                     <div class="form-group mb-3">
-                        <label class="control-label d-block">Indica la version del JS del Ecosistema</label>
+                        <label class="control-label d-block" for="VersionJSEcosistema">Indica la version del JS del Ecosistema</label>
                         <input id="VersionJSEcosistema"
                                type="text"
                                value="@(Model.VersionJSEcosistema > 0 ? Model.VersionJSEcosistema.ToString() : "")"
@@ -693,7 +702,7 @@ Variables
                     </div>
 
                     <div class="form-group mb-3">
-                        <label class="control-label d-block">Indica la version del CSS del Ecosistema</label>
+                        <label class="control-label d-block" for="VersionCSSEcosistema">Indica la version del CSS del Ecosistema</label>
                         <input id="VersionCSSEcosistema"
                                type="text"
                                value="@(Model.VersionCSSEcosistema > 0 ? Model.VersionCSSEcosistema.ToString() : "")"
@@ -733,7 +742,7 @@ Variables
                     </div>
 
                     <div class="form-group mb-3">
-                        <label class="control-label d-block">Indica los usuarios que están excluidos de tener un login único</label>
+                        <label class="control-label d-block" for="LoginUnicoUsuariosExcluidos">Indica los usuarios que están excluidos de tener un login único</label>
                         <input id="LoginUnicoUsuariosExcluidos"
                                type="text"
                                value="@Model.LoginUnicoUsuariosExcluidos"
@@ -743,7 +752,7 @@ Variables
                     </div>
 
                     <div class="form-group mb-3">
-                        <label class="control-label d-block">Cuentas válidas para hacer login con redes sociales. Si la cuenta de email con la que se han logueado no es una de las especificadas aquí, no se logueará al usuario.</label>
+                        <label class="control-label d-block" for="DominiosEmailLoginRedesSociales">Cuentas válidas para hacer login con redes sociales. Si la cuenta de email con la que se han logueado no es una de las especificadas aquí, no se logueará al usuario.</label>
                         <input id="DominiosEmailLoginRedesSociales"
                                type="text"
                                value="@Model.DominiosEmailLoginRedesSociales"
@@ -801,7 +810,7 @@ Variables
                     </div>
 
                     <div class="form-group mb-3">
-                        <label class="control-label d-block">Grafo en el que se debe insertar los proyectos para la metabusqueda si se trata de un ecosistema sin metaproyecto</label>
+                        <label class="control-label d-block" for="GrafoMetaBusquedaComunidades">Grafo en el que se debe insertar los proyectos para la metabusqueda si se trata de un ecosistema sin metaproyecto</label>
                         <input id="GrafoMetaBusquedaComunidades"
                                type="text"
                                value="@Model.GrafoMetaBusquedaComunidades"
@@ -823,7 +832,7 @@ Variables
 
 @* Carga de operativa *@
 @section operativaScript {
-    <script type="text/javascript" src="@Html.GetBaseUrlStatic()/responsive/theme/logic/configuracion.js?v=@Html.GetVersion()"></script>
+    <script type="text/javascript" src="@Html.GetBaseUrlStatic()/responsive/theme/logic/configuracion.js?v=@Comunidad.VersionJSEcosistema"></script>
     <script type="text/javascript">
 
         (function ($) {

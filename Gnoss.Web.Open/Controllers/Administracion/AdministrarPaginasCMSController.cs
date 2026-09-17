@@ -21,8 +21,6 @@ using Es.Riam.Gnoss.Web.Controles.Administracion;
 using Es.Riam.Gnoss.Web.Controles.ServiciosGenerales;
 using Es.Riam.Gnoss.Web.MVC.Filters;
 using Es.Riam.Gnoss.Web.MVC.Models.Administracion;
-using Es.Riam.Gnoss.Web.MVC.Models.Flujos;
-using Es.Riam.Gnoss.Web.MVC.Models.ViewModels;
 using Es.Riam.Interfaces.InterfacesOpen;
 using Es.Riam.InterfacesOpen;
 using Es.Riam.InterfacesOpen.Model;
@@ -31,16 +29,15 @@ using Gnoss.Web.Open.Filters;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Mvc.Infrastructure;
 using Microsoft.AspNetCore.Mvc.ViewEngines;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
-using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net;
 using System.Net.Http;
+using System.Text.Json;
 
 namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
 {
@@ -52,8 +49,8 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
         private ILogger mlogger;
         private ILoggerFactory mLoggerFactory;
         private readonly IPublishEvents mIPublishEvents;
-        public AdministrarPaginasCMSController(LoggingService loggingService, ConfigService configService, EntityContext entityContext, RedisCacheWrapper redisCacheWrapper, GnossCache gnossCache, VirtuosoAD virtuosoAD, IHttpContextAccessor httpContextAccessor, ICompositeViewEngine viewEngine, EntityContextBASE entityContextBASE, Microsoft.AspNetCore.Hosting.IHostingEnvironment env, IActionContextAccessor actionContextAccessor, IUtilServicioIntegracionContinua utilServicioIntegracionContinua, IServicesUtilVirtuosoAndReplication servicesUtilVirtuosoAndReplication, IOAuth oAuth, IHostApplicationLifetime appLifetime, IPublishEvents publishEvents, IAvailableServices availableServices, ILogger<AdministrarPaginasCMSController> logger, ILoggerFactory loggerFactory)
-            : base(loggingService, configService, entityContext, redisCacheWrapper, gnossCache, virtuosoAD, httpContextAccessor, viewEngine, entityContextBASE, env, actionContextAccessor, utilServicioIntegracionContinua, servicesUtilVirtuosoAndReplication, oAuth, appLifetime, availableServices, logger, loggerFactory)
+        public AdministrarPaginasCMSController(LoggingService loggingService, ConfigService configService, EntityContext entityContext, RedisCacheWrapper redisCacheWrapper, GnossCache gnossCache, VirtuosoAD virtuosoAD, IHttpContextAccessor httpContextAccessor, ICompositeViewEngine viewEngine, EntityContextBASE entityContextBASE, IWebHostEnvironment env, IUtilServicioIntegracionContinua utilServicioIntegracionContinua, IServicesUtilVirtuosoAndReplication servicesUtilVirtuosoAndReplication, IOAuth oAuth, IHostApplicationLifetime appLifetime, IPublishEvents publishEvents, IAvailableServices availableServices, ILogger<AdministrarPaginasCMSController> logger, ILoggerFactory loggerFactory)
+            : base(loggingService, configService, entityContext, redisCacheWrapper, gnossCache, virtuosoAD, httpContextAccessor, viewEngine, entityContextBASE, env, utilServicioIntegracionContinua, servicesUtilVirtuosoAndReplication, oAuth, appLifetime, availableServices, logger, loggerFactory)
         {
             mlogger = logger;
             mLoggerFactory = loggerFactory;
@@ -215,6 +212,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
 
         [HttpPost]
 		[TypeFilter(typeof(PermisosContenidos), Arguments = new object[] { new ulong[] { (ulong)PermisoContenidos.RestaurarVersionPagina } })]
+        [TypeFilter(typeof(LimitarPeticionesAdministracion), Arguments = new object[] { 30, 120, 15 })]
 		public ActionResult RestaurarVersion(Guid pVersionID, string pComentario = null)
         {
             bool iniciado = false;
@@ -234,7 +232,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
 
 				if (iniciado)
                 {
-                    HttpResponseMessage resultado = InformarCambioAdministracion("PaginasCMS", JsonConvert.SerializeObject(modeloRestaurar, Formatting.Indented));
+                    HttpResponseMessage resultado = InformarCambioAdministracion("PaginasCMS", JsonSerializer.Serialize(modeloRestaurar, new JsonSerializerOptions { WriteIndented = true }));
 
                     if (!resultado.StatusCode.Equals(HttpStatusCode.OK))
                     {
@@ -276,6 +274,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
         [HttpPost]
 		[TypeFilter(typeof(PermisosContenidos), Arguments = new object[] { new ulong[] { (ulong)PermisoContenidos.PublicarPagina } })]
 		[TypeFilter(typeof(AccesoIntegracionAttribute))]
+        [TypeFilter(typeof(LimitarPeticionesAdministracion), Arguments = new object[] { 30, 120, 15 })]
         public ActionResult Publicar(string Estructura, string OpcionesPropiedades, bool MostrarSoloCuerpo, DateTime FechaModificacion)
         {
             bool iniciado = false;
@@ -309,7 +308,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
 
                 if (iniciado)
                 {
-                    HttpResponseMessage resultado = InformarCambioAdministracion("PaginasCMS", JsonConvert.SerializeObject(PaginaModel, Formatting.Indented));
+                    HttpResponseMessage resultado = InformarCambioAdministracion("PaginasCMS", JsonSerializer.Serialize(PaginaModel, new JsonSerializerOptions { WriteIndented = true }));
 
                     if (!resultado.StatusCode.Equals(HttpStatusCode.OK))
                     {

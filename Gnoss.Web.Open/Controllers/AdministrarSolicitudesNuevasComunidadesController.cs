@@ -42,10 +42,12 @@ using Es.Riam.Gnoss.Web.MVC.Filters;
 using Es.Riam.Gnoss.Web.MVC.Models;
 using Es.Riam.Interfaces.InterfacesOpen;
 using Es.Riam.InterfacesOpen;
+using Es.Riam.Util;
 using Gnoss.Web.Open.Filters;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.Filters;
 using Microsoft.AspNetCore.Mvc.Infrastructure;
 using Microsoft.AspNetCore.Mvc.ViewEngines;
 using Microsoft.Extensions.Hosting;
@@ -65,11 +67,12 @@ namespace Gnoss.Web.Controllers
         private IAvailableServices mAvailableServices;
         private ILogger mlogger;
         private ILoggerFactory mLoggerFactory;
-        public AdministrarSolicitudesNuevasComunidadesController(LoggingService loggingService, ConfigService configService, EntityContext entityContext, RedisCacheWrapper redisCacheWrapper, GnossCache gnossCache, VirtuosoAD virtuosoAD, IHttpContextAccessor httpContextAccessor, ICompositeViewEngine viewEngine, EntityContextBASE entityContextBASE, Microsoft.AspNetCore.Hosting.IHostingEnvironment env, IActionContextAccessor actionContextAccessor, IUtilServicioIntegracionContinua utilServicioIntegracionContinua, IServicesUtilVirtuosoAndReplication servicesUtilVirtuosoAndReplication, IOAuth oAuth, IHostApplicationLifetime appLifetime, IAvailableServices availableServices, ILogger<AdministrarSolicitudesNuevasComunidadesController> logger, ILoggerFactory loggerFactory)
-           : base(loggingService, configService, entityContext, redisCacheWrapper, gnossCache, virtuosoAD, httpContextAccessor, viewEngine, entityContextBASE, env, actionContextAccessor, utilServicioIntegracionContinua, servicesUtilVirtuosoAndReplication, oAuth, appLifetime, availableServices,logger,loggerFactory)
+        public AdministrarSolicitudesNuevasComunidadesController(LoggingService loggingService, ConfigService configService, EntityContext entityContext, RedisCacheWrapper redisCacheWrapper, GnossCache gnossCache, VirtuosoAD virtuosoAD, IHttpContextAccessor httpContextAccessor, ICompositeViewEngine viewEngine, EntityContextBASE entityContextBASE, IWebHostEnvironment env, IUtilServicioIntegracionContinua utilServicioIntegracionContinua, IServicesUtilVirtuosoAndReplication servicesUtilVirtuosoAndReplication, IOAuth oAuth, IHostApplicationLifetime appLifetime, IAvailableServices availableServices, ILogger<AdministrarSolicitudesNuevasComunidadesController> logger, ILoggerFactory loggerFactory)
+           : base(loggingService, configService, entityContext, redisCacheWrapper, gnossCache, virtuosoAD, httpContextAccessor, viewEngine, entityContextBASE, env, utilServicioIntegracionContinua, servicesUtilVirtuosoAndReplication, oAuth, appLifetime, availableServices,logger,loggerFactory)
         {
             mlogger = logger;
             mLoggerFactory = loggerFactory;
+            mAvailableServices = availableServices;
         }
 
         [HttpGet]
@@ -159,7 +162,7 @@ namespace Gnoss.Web.Controllers
                 DataWrapperUsuario dataWrapperUsuario = null;
                 DataWrapperIdentidad identidadadDW = null;
 
-                Es.Riam.Gnoss.Elementos.ServiciosGenerales.Proyecto proyecto = controladorProyecto.CrearNuevoProyecto(peticion.Nombre, peticion.NombreCorto, peticion.Descripcion, null, peticion.Tipo, 1, peticion.IdiomaDefecto,peticion.Peticion.UsuarioID.Value, peticion.PerfilCreadorID, organizacionID, idPadre, true, true, true, true, false, imagenLogo, out orgDW, out dataWrapperProyecto, out paramDS, out tesauroDW, out dataWrapperDocumentacion, out dataWrapperUsuario, out identidadadDW, true, null, null, mAvailableServices);
+                Es.Riam.Gnoss.Elementos.ServiciosGenerales.Proyecto proyecto = controladorProyecto.CrearNuevoProyecto(peticion.Nombre, peticion.NombreCorto, peticion.Descripcion, null, peticion.Tipo, 1, peticion.IdiomaDefecto,peticion.Peticion.UsuarioID.Value, peticion.PerfilCreadorID, organizacionID, idPadre, true, true, true, true, false, imagenLogo, out orgDW, out dataWrapperProyecto, out paramDS, out tesauroDW, out dataWrapperDocumentacion, out dataWrapperUsuario, out identidadadDW, true, null, DominioConfigurado, mAvailableServices);
 
                 peticion.Peticion.Estado = (short)EstadoPeticion.Aceptada;
                 peticion.Peticion.FechaProcesado = DateTime.Now;
@@ -199,10 +202,7 @@ namespace Gnoss.Web.Controllers
                 {
                     versionDocConfiguracion = busqueda.First().Valor;
                     urlDocConfigComunidad = BaseURLContent + "/Documentacion/Configuracion/ConfiguracionComunidadDefecto.xml?v=" + versionDocConfiguracion;
-                    using (WebClient webClient = new WebClient())
-                    {
-                        xml = webClient.DownloadString(urlDocConfigComunidad);
-                    }
+                    xml = UtilWeb.WebRequest("GET", urlDocConfigComunidad, null);
                 }
 
 

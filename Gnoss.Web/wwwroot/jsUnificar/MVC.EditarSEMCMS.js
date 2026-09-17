@@ -577,6 +577,174 @@ function AgregarValorADataNoFuncionalProp(pEntidad, pPropiedad, pControlContValo
     }
 }
 
+function CargarModalTraducirProp(event, url, pEntidad, pPropiedad, pMultiValor)
+{
+    $("#modal-container").modal("show");
+    let boton = $(event);
+
+    let panelMultiIdioma = obtenerPanelIdioma(pEntidad, pPropiedad);
+    let idiomaSeleccionado = obtenerIdiomaSeleccionado(panelMultiIdioma);
+
+    let valoresProp = panelMultiIdioma.attr('langactual');
+    let inputActual = $("#" + ObtenerControlEntidadProp(pEntidad + ',' + pPropiedad, TxtRegistroIDs));
+
+    if (valoresProp.length == 0 && inputActual.val() != 0) {
+        valoresProp = IncluirTextoIdiomaEnCadena('', GetValorEncode(inputActual.val()), idiomaSeleccionado);
+        // Actualizamos el valor final
+        panelMultiIdioma.attr("langactual", valoresProp)
+    }
+
+    // Se ha editado el input, hay que actualizarlo
+    if (GetValorDecode(ExtraerTextoIdioma(valoresProp, idiomaSeleccionado)) != inputActual.val()) {
+        valoresProp = IncluirTextoIdiomaEnCadena('', GetValorEncode(inputActual.val()), idiomaSeleccionado);
+        panelMultiIdioma.attr("langactual", valoresProp)
+        DarValorControl(pEntidad + ',' + pPropiedad, TxtRegistroIDs, TxtCaracteristicasElem, inputActual.val());
+    }
+
+    let idiomasProp = [...valoresProp.matchAll(/@([^[]+)/g)].map(m => m[1]);
+
+    if (idiomasProp.length < 1) {
+        setTimeout(() => {
+            mostrarNotificacion("error", "Esta propiedad no tiene valores válidos para traducir");
+            $("#modal-container").modal("hide");
+        }, 1000);
+        return;
+    }
+
+    let propiedadATraducir = {
+        nombrePropiedad: boton.parent().find('label.lb').text(),
+        propiedad: pPropiedad,
+        esMultiValor: pMultiValor,
+        entidad: pEntidad
+    };
+
+    let arg = {
+        pIdiomas: idiomasProp,
+        pIdiomaActual: idiomaSeleccionado,
+        pPropiedad: propiedadATraducir,
+    }
+
+    GnossPeticionAjax(url, arg, true).done(function (data) {
+        let panel = $("#modal-dinamic-content");
+        let panelContent = panel.children('#content')
+        panelContent.html(data);
+    }).fail(function (data) {
+        mostrarNotificacion("error", data);
+        $("#modal-container").modal("hide");
+    })
+}
+
+function TraducirPropiedad(pUrl, pEntidad, pPropiedad, pMultiValor) {
+    loadingMostrar();
+
+    let originLang = obtenerIdiomaOrigen();
+    let targetLangs = obtenerIdiomasDestino();
+
+    if (!validarIdiomas(originLang, targetLangs)) {
+        loadingOcultar();
+        return;
+    }
+
+    let panelMultiIdioma = obtenerPanelIdioma(pEntidad, pPropiedad);
+    let idiomaSeleccionado = obtenerIdiomaSeleccionado(panelMultiIdioma);
+
+    let propiedadesATraducir = construirPropiedades(pEntidad, pPropiedad, panelMultiIdioma, idiomaSeleccionado, originLang, pMultiValor);
+
+    let arg = {
+        pPropiedades: propiedadesATraducir,
+        pIdiomaOrigen: originLang,
+        pIdiomasDestino: targetLangs
+    }
+
+    GnossPeticionAjax(pUrl, arg, true).done(function (data) {
+
+        data.$values.forEach(item => {
+            item.traducciones.$values.forEach(item => {
+                // Se van actualizando por cada idioma traducido
+                let valorActual = panelMultiIdioma.attr("langactual");
+                valorActual = IncluirTextoIdiomaEnCadena(valorActual, GetValorEncode(item.texto), item.idioma);
+                // Actualizamos el valor final
+                panelMultiIdioma.attr("langactual", valorActual)
+            });
+        });
+
+        panelMultiIdioma.find(`li[rel="${targetLangs[0]}"] a`).trigger("click");
+
+        loadingOcultar();
+
+        mostrarNotificacion("success", "La propiedad se ha traducido correctamente");
+
+        $("#modal-container").modal("hide");
+
+    }).fail(function (data) {
+        loadingOcultar();
+        mostrarNotificacion("error", data)
+    });
+}
+
+function obtenerIdiomaOrigen() {
+    return $("#idiomaOrigen").find("option:selected").val();
+}
+
+function obtenerIdiomasDestino() {
+    const langs = [];
+    $("#contenedorIdiomasSeleccionados .tag").each(function () {
+        langs.push($(this).data("lang"));
+    });
+    return langs;
+}
+
+function validarIdiomas(pOriginLang, pTargetLangs) {
+    const regexPrefijoIdioma = new RegExp("^[a-zA-z]{2}(-[a-zA-z]{2,10}){0,2}$")
+
+    if (!regexPrefijoIdioma.test(pOriginLang)) {
+        mostrarNotificacion("error", "La clave de idioma no cumple con el formato");
+        return false;
+    }
+
+    if (pTargetLangs.length < 1 || pTargetLangs.some(lang => !regexPrefijoIdioma.test(lang))) {
+        mostrarNotificacion("error", "Tienes que elegir por lo menos 1 idioma de destino")
+        return false;
+    }
+
+    return true;
+}
+
+function obtenerPanelIdioma(pEntidad, pPropiedad) {
+    const id = ObtenerControlEntidadProp(pEntidad + ',' + pPropiedad, TxtRegistroIDs)
+        .replace('Campo_', 'divContPesIdioma_');
+
+    return $("#" + id);
+}
+
+function obtenerIdiomaSeleccionado(pPanel) {
+    return pPanel.find('li.active').attr("rel");
+}
+
+function construirPropiedades(pEntidad, pPropiedad, pPanel, pIdiomaSel, pOriginLang, pEsMultiValor) {
+    const propiedades = [];
+
+    const texto = obtenerTexto(pPanel, pIdiomaSel, pOriginLang);
+
+    propiedades.push({
+        Entidad: pEntidad,
+        Propiedad: pPropiedad,
+        Texto: GetValorDecode(texto)
+    });
+
+    return propiedades;
+}
+
+function obtenerTexto(panel, idiomaSel, originLang) {
+    const idBase = panel.attr("id");
+
+    if (idiomaSel === originLang) {
+        return $("#" + idBase.replace("divContPesIdioma", "Campo")).val();
+    }
+
+    return ExtraerTextoIdioma(panel.attr("langactual"), originLang);
+}
+
 function GuardarValorADataNoFuncionalProp(pEntidad, pPropiedad, pControlContValores, pTxtValores, pTxtIDs, pTxtCaract, pTxtElemEditados)
 {
     var entidadAlmacenar = pEntidad;

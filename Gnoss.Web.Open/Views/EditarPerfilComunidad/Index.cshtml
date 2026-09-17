@@ -111,6 +111,16 @@ string inputDescription = "Curriculum.Description";
 string idTags = "Curriculum_Tags";
 string inputTags= "Curriculum.Tags";
 
+@* CONFIGURAR NOTIFICACIONES *@
+@* ID del check de solicitudes de contacto *@
+string idContactRequests = "NotificationSettings_ContactRequests";
+@* ID del check de mensajes recibidos en la comunidad *@
+string idInternalMessages = "NotificationSettings_InternalMessages";
+@* ID del check de comentarios a los recursos del usuario *@
+string idResourceComments = "NotificationSettings_ResourceComments";
+@* ID del check de nuevos seguidores del perfil *@
+string idNewFollowers = "NotificationSettings_NewFollowers";
+
 @* ID del panel de errores/ok *@
 string idDivPanelInfo = "divPanelInfo";
 @* ID del botón para guardar los datos *@
@@ -121,6 +131,8 @@ string urlPersonalProfileSaveProfile = $"{@Html.GetUrlPagina()}/save-profile";
 string urlPersonalProfileSaveBio = $"{@Html.GetUrlPagina()}/save-bio";
 // URL para guardado de redes sociales
 string urlPersonalProfileSaveSocialWebs = @Html.GetUrlPagina();
+// URL para guardado de la configuración de notificaciones (callback de la propia página)
+string urlPersonalProfileSaveNotifications = @Html.GetUrlPagina();
 
 // Id input para escribir una determinada URL
 string idUrlUsuario = "UrlUsuario";
@@ -157,8 +169,8 @@ string nombreTabDatos = "";
     Html.SetBodyClass(bodyClass);
 
     @* Añadir CKEditor *@
-    //Html.GetListaJS().Add(Html.GetBaseUrlStatic() + "/ckeditor/ckeditor.js?v=" + Html.GetVersion());
-    //Html.GetListaJS().Add(Html.GetBaseUrlStatic() + "/ckeditor/adapters/jquery.js?v=" + Html.GetVersion());
+    //Html.GetListaJS().Add(Html.GetBaseUrlStatic() + "/ckeditor/ckeditor.js?v=" + Comunidad.VersionJSEcosistema);
+    //Html.GetListaJS().Add(Html.GetBaseUrlStatic() + "/ckeditor/adapters/jquery.js?v=" + Comunidad.VersionJSEcosistema);
 
     @* Configuración de URL en caso de cancelar y salir del editor del perfil *@
     if (!string.IsNullOrEmpty(Context.Request?.Headers["Referer"].ToString())) {
@@ -234,6 +246,18 @@ string nombreTabDatos = "";
                         aria-controls="ver-redes-sociales"
                         aria-selected="false">@Html.GetText("PERFIL", "PERFILENWEB")</a>
                     </li>
+                    @if (Model.NotificationSettings != null)
+                    {
+                        <li class="nav-item">
+                            <a class="nav-link"
+                            id="configurar-notificaciones-tab"
+                            data-toggle="tab"
+                            href="#ver-configurar-notificaciones"
+                            role="tab"
+                            aria-controls="ver-configurar-notificaciones"
+                            aria-selected="false">@Html.GetText("PERFIL", "CONFIGURARNOTIFICACIONES")</a>
+                        </li>
+                    }
                 </ul>
                 @* Contenido de las Tabs*@
                 <div class="tab-content">
@@ -329,6 +353,14 @@ string nombreTabDatos = "";
                         @* Perfil en la Web: Redes Sociales *@
                         @Html.PartialView("_RedesSociales", Model)
                     </div>
+                    @* Tab - Configurar notificaciones, avisos por correo del usuario *@
+                    @if (Model.NotificationSettings != null)
+                    {
+                        <div class="tab-pane fade" id="ver-configurar-notificaciones" role="tabpanel" aria-labelledby="ver-configurar-notificaciones-tab">
+                            @* Configurar notificaciones: Avisos por correo electrónico *@
+                            @Html.PartialView("_ConfigurarNotificaciones", Model)
+                        </div>
+                    }
                 </div>
 
                 @* Mensajes OK/Error en el guardado *@
@@ -385,12 +417,19 @@ string nombreTabDatos = "";
                 idFacebookSocial: "@idFacebookSocial",
                 idLinkedinSocial: "@idLinkedinSocial",
             },
+            configuracionNotificaciones: {
+                idContactRequests: "@idContactRequests",
+                idInternalMessages: "@idInternalMessages",
+                idResourceComments: "@idResourceComments",
+                idNewFollowers: "@idNewFollowers",
+            },
             others: {
                 idDivPanelInfo: "@idDivPanelInfo",
                 idSaveButton: "@idSaveButton",
                 urlPersonalProfileSaveProfile: "@urlPersonalProfileSaveProfile",
                 urlPersonalProfileSaveBio: "@urlPersonalProfileSaveBio",
                 urlPersonalProfileSaveSocialWebs: "@urlPersonalProfileSaveSocialWebs",
+                urlPersonalProfileSaveNotifications: "@urlPersonalProfileSaveNotifications",
                 urlImagenAnonima: `@Html.GetBaseUrlStatic()/img/iconos/Personas/anonimo_grande.png`
 
             }

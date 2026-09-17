@@ -9,7 +9,7 @@ Variables
 ----------------------------------------------------------------
 *@
 @{
-
+    var comunidad = Html.GetComunidad();
 }
 
 @if (!Model.semanticPropertyModel.ReadMode && Model.semanticPropertyModel.OntologyPropInfo.MultiLanguage && !Model.semanticPropertyModel.OntologyPropInfo.MultiLanguageWithTabs)
@@ -62,4 +62,9 @@ else
 @if (!Model.semanticPropertyModel.ReadMode && !Model.semanticPropertyModel.OntologyPropInfo.UniqueValue)
 {
     @Html.PartialView("../Shared/SemCMS/_AddMultivalueButtons", Model)
+}
+
+@if (!Model.semanticPropertyModel.ReadMode && Model.semanticPropertyModel.OntologyPropInfo.MultiLanguage && comunidad.TranslatorAvailable)
+{
+    @Html.PartialView("../Shared/SemCMS/_AddTranslateButton", Model)
 }

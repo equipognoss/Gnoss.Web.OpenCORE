@@ -19,6 +19,7 @@ using Es.Riam.Gnoss.Elementos.Identidad;
 using Es.Riam.Gnoss.Elementos.ParametroAplicacion;
 using Es.Riam.Gnoss.Elementos.ServiciosGenerales;
 using Es.Riam.Gnoss.Elementos.Suscripcion;
+using Es.Riam.Gnoss.Logica.Amigos;
 using Es.Riam.Gnoss.Logica.Identidad;
 using Es.Riam.Gnoss.Logica.ServiciosGenerales;
 using Es.Riam.Gnoss.Logica.Suscripcion;
@@ -30,7 +31,6 @@ using Es.Riam.Gnoss.Web.Controles.GeneradorPlantillasOWL;
 using Es.Riam.Gnoss.Web.Controles.ServicioImagenesWrapper;
 using Es.Riam.Gnoss.Web.Controles.ServiciosGenerales;
 using Es.Riam.Gnoss.Web.MVC.Controles;
-using Es.Riam.Gnoss.Web.MVC.Controllers.Administracion;
 using Es.Riam.Gnoss.Web.MVC.Filters;
 using Es.Riam.Gnoss.Web.MVC.Models;
 using Es.Riam.Gnoss.Web.MVC.Models.ViewModels;
@@ -39,23 +39,25 @@ using Es.Riam.InterfacesOpen;
 using Es.Riam.Semantica.OWL;
 using Es.Riam.Semantica.Plantillas;
 using Es.Riam.Util;
+using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Filters;
-using Microsoft.AspNetCore.Mvc.Infrastructure;
 using Microsoft.AspNetCore.Mvc.ViewEngines;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
+using NetVips;
 using Serilog.Core;
-using SixLabors.ImageSharp;
 using System;
 using System.Collections.Generic;
 using System.Data;
+using System.Drawing;
 using System.IO;
 using System.Linq;
 using System.Text;
 using static Es.Riam.Gnoss.Web.MVC.Models.ViewModels.EditProfileViewModel;
+using Image = NetVips.Image;
 
 namespace Es.Riam.Gnoss.Web.MVC.Controllers
 {
@@ -75,13 +77,13 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
         /// Clausulas adicionales del registro
         /// </summary>
         private List<AdditionalClause> mClausulasRegistro = null;
-        private ILogger mlogger;
-        private ILoggerFactory mLoggerFactory;
+        private readonly ILogger mlogger;
+        private readonly ILoggerFactory mLoggerFactory;
 
         #endregion
 
-        public EditarPerfilComunidadController(LoggingService loggingService, ConfigService configService, EntityContext entityContext, RedisCacheWrapper redisCacheWrapper, GnossCache gnossCache, VirtuosoAD virtuosoAD, IHttpContextAccessor httpContextAccessor, ICompositeViewEngine viewEngine, EntityContextBASE entityContextBASE, Microsoft.AspNetCore.Hosting.IHostingEnvironment env, IActionContextAccessor actionContextAccessor, IUtilServicioIntegracionContinua utilServicioIntegracionContinua, IServicesUtilVirtuosoAndReplication servicesUtilVirtuosoAndReplication, IOAuth oAuth, IHostApplicationLifetime appLifetime, IAvailableServices availableServices, ILogger<EditarPerfilComunidadController> logger, ILoggerFactory loggerFactory)
-            : base(loggingService, configService, entityContext, redisCacheWrapper, gnossCache, virtuosoAD, httpContextAccessor, viewEngine, entityContextBASE, env, actionContextAccessor, utilServicioIntegracionContinua, servicesUtilVirtuosoAndReplication, oAuth, appLifetime, availableServices,logger,loggerFactory)
+        public EditarPerfilComunidadController(LoggingService loggingService, ConfigService configService, EntityContext entityContext, RedisCacheWrapper redisCacheWrapper, GnossCache gnossCache, VirtuosoAD virtuosoAD, IHttpContextAccessor httpContextAccessor, ICompositeViewEngine viewEngine, EntityContextBASE entityContextBASE, IWebHostEnvironment env, IUtilServicioIntegracionContinua utilServicioIntegracionContinua, IServicesUtilVirtuosoAndReplication servicesUtilVirtuosoAndReplication, IOAuth oAuth, IHostApplicationLifetime appLifetime, IAvailableServices availableServices, ILogger<EditarPerfilComunidadController> logger, ILoggerFactory loggerFactory)
+            : base(loggingService, configService, entityContext, redisCacheWrapper, gnossCache, virtuosoAD, httpContextAccessor, viewEngine, entityContextBASE, env, utilServicioIntegracionContinua, servicesUtilVirtuosoAndReplication, oAuth, appLifetime, availableServices,logger,loggerFactory)
         {
             mlogger = logger;
             mLoggerFactory = loggerFactory;
@@ -140,6 +142,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
             if (paginaModel.ProfileOrganization == null)
             {
                 CargarCurriculum();
+                CargarConfiguracionNotificaciones();
             }
 
             CargarRedesSociales();
@@ -251,6 +254,10 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                 else if (RequestParams("callback").ToLower() == "EditarRedSocial".ToLower())
                 {
                     EditarRedSocial(RequestParams("url"), RequestParams("nombreRed"));
+                }
+                else if (RequestParams("callback").ToLower() == "GuardarNotificaciones".ToLower())
+                {
+                    return GuardarConfiguracionNotificaciones(pPaginaModel?.NotificationSettings);
                 }
             }
             return new EmptyResult();
@@ -557,158 +564,133 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
             }
 
             string error = string.Empty;
-
             int tamanoMini = 60;
             int tamanoMaxi = 240;
-
             int minSize = 240;
             int maxSize = 450;
 
             ServicioImagenes servicioImagenes = new ServicioImagenes(mLoggingService, mConfigService, mLoggerFactory.CreateLogger<ServicioImagenes>(), mLoggerFactory);
             servicioImagenes.Url = UrlIntragnossServicios;
 
-            //Si se sube un fichero nuevo se borra la foto temporal
             servicioImagenes.BorrarImagen($"{urlFicheroImagen}_temp.png");
             servicioImagenes.BorrarImagen($"{urlFicheroImagen}_temp2.png");
 
-            //Límite de 10 MB
-            if (FicheroImagen.Length <= 10 * 1024 * 1024)
+            if (FicheroImagen.Length > 10 * 1024 * 1024)
+            {
+                error = UtilIdiomas.GetText("PERFIL", "ERRORTAMAÑOIMAGEN");
+            }
+            else
             {
                 byte[] bytesFichero = new byte[FicheroImagen.Length];
                 FicheroImagen.OpenReadStream().Read(bytesFichero, 0, (int)FicheroImagen.Length);
 
-                Image imagePerfilOriginal = UtilImages.ConvertirArrayBytesEnImagen(bytesFichero);
+                bool esJpeg = FicheroImagen.ContentType.Contains("jpeg") || FicheroImagen.ContentType.Contains("jpg");
 
-                float proporcion = 0;
-                if (imagePerfilOriginal.Height > imagePerfilOriginal.Width)
-                {
-                    proporcion = (float)imagePerfilOriginal.Height / imagePerfilOriginal.Width;
-                }
-                else
-                {
-                    proporcion = (float)imagePerfilOriginal.Width / imagePerfilOriginal.Height;
-                }
+                using Image imagePerfilOriginal = Image.NewFromBuffer(bytesFichero);
 
-                if (proporcion < 1.8)
-                {
-                    if (imagePerfilOriginal.Height >= minSize && imagePerfilOriginal.Width >= minSize)
-                    {
-                        //la redimensionamos
-                        SizeF tamañoProporcional = UtilImages.CalcularTamanioProporcionado(imagePerfilOriginal, maxSize, maxSize);
-                        imagePerfilOriginal = UtilImages.AjustarImagen(imagePerfilOriginal, tamañoProporcional.Width, tamañoProporcional.Height);
+                float proporcion = imagePerfilOriginal.Height > imagePerfilOriginal.Width
+                    ? (float)imagePerfilOriginal.Height / imagePerfilOriginal.Width
+                    : (float)imagePerfilOriginal.Width / imagePerfilOriginal.Height;
 
-                        //Imagen Original
-                        MemoryStream ms = new MemoryStream();
-                        imagePerfilOriginal.SaveAsPng(ms);
-                        servicioImagenes.AgregarImagen(ms.ToArray(), urlFicheroImagen, ".png");
-
-                        int w = 0;
-                        int h = 0;
-                        int x = 0;
-                        int y = 0;
-
-                        if (imagePerfilOriginal.Height > imagePerfilOriginal.Width)
-                        {
-                            w = imagePerfilOriginal.Width;
-                            h = imagePerfilOriginal.Width;
-                            y = imagePerfilOriginal.Height / 2 - imagePerfilOriginal.Width / 2;
-                        }
-                        else if (imagePerfilOriginal.Height < imagePerfilOriginal.Width)
-                        {
-                            w = imagePerfilOriginal.Height;
-                            h = imagePerfilOriginal.Height;
-                            x = imagePerfilOriginal.Width / 2 - imagePerfilOriginal.Height / 2;
-                        }
-                        else
-                        {
-                            w = imagePerfilOriginal.Width;
-                            h = imagePerfilOriginal.Height;
-                        }
-
-                        byte[] bytesImagenCortada = UtilImages.CropImageFile(ms.ToArray(), w, h, x, y);
-                        Image imagenCortada = UtilImages.ConvertirArrayBytesEnImagen(bytesImagenCortada);
-
-                        Image imagenCortadaGrande = UtilImages.AjustarImagen(imagenCortada, tamanoMaxi, tamanoMaxi, false);
-
-                        //convertimos la imagen a png
-                        MemoryStream msGrande = new MemoryStream();
-                        imagenCortadaGrande.SaveAsPng(msGrande);
-
-                        servicioImagenes.AgregarImagen(msGrande.ToArray(), urlFicheroImagen + "_grande", ".png");
-
-                        Image imagenCortadaMini = UtilImages.AjustarImagen(imagenCortada, tamanoMini, tamanoMini, false);
-
-                        //convertimos la imagen a png
-                        MemoryStream msMini = new MemoryStream();
-                        imagenCortadaMini.SaveAsPng(msMini);
-
-                        servicioImagenes.AgregarImagen(msMini.ToArray(), urlFicheroImagen + "_peque", ".png");
-
-                        string coordenadasFoto = $"[ {x}, {y}, {x + w}, {y + h} ]";
-                        versionFoto = versionFoto + 1;
-
-                        using (IdentidadCN identidadCN = new IdentidadCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<IdentidadCN>(), mLoggerFactory))
-                        {
-                            if (RequestParams("organizacion") != null && RequestParams("organizacion") == "true")
-                            {
-                                if (mEntityContext.Entry(IdentidadActual.OrganizacionPerfil.FilaOrganizacion).State.Equals(EntityState.Detached))
-                                {
-                                    IdentidadActual.OrganizacionPerfil.FilaElementoEntity = mEntityContext.Organizacion.FirstOrDefault(orga => orga.OrganizacionID.Equals(IdentidadActual.OrganizacionPerfil.FilaOrganizacion.OrganizacionID));
-                                }
-                                IdentidadActual.OrganizacionPerfil.FilaOrganizacion.VersionLogo = versionFoto;
-                                IdentidadActual.OrganizacionPerfil.FilaOrganizacion.CoordenadasLogo = coordenadasFoto;
-
-                                identidadCN.ActualizarFotoIdentidadesOrganizacion(IdentidadActual.OrganizacionID.Value, false);
-                            }
-                            else if (IdentidadActual.TrabajaConOrganizacion)
-                            {
-                                PersonaVinculoOrganizacion filaPersona = IdentidadActual.OrganizacionPerfil.GestorOrganizaciones.OrganizacionDW.ListaPersonaVinculoOrganizacion.Find(item => item.PersonaID.Equals(IdentidadActual.Persona.Clave) && item.OrganizacionID.Equals(IdentidadActual.OrganizacionID.Value));
-                                if (mEntityContext.Entry(filaPersona).State.Equals(EntityState.Detached))
-                                {
-                                    filaPersona = mEntityContext.PersonaVinculoOrganizacion.FirstOrDefault(item => item.PersonaID.Equals(IdentidadActual.Persona.Clave) && item.OrganizacionID.Equals(IdentidadActual.OrganizacionID.Value));
-                                }
-                                filaPersona.VersionFoto = versionFoto;
-                                filaPersona.CoordenadasFoto = coordenadasFoto;
-                                filaPersona.FechaAnadidaFoto = DateTime.Now;
-                                filaPersona.UsarFotoPersonal = false;
-
-                                identidadCN.ActualizarFotoIdentidadesDePersonaDeOrganizacion(IdentidadActual.PersonaID.Value, filaPersona.OrganizacionID, false, false);
-                            }
-                            else if (IdentidadActual.ModoPersonal)
-                            {
-                                if (mEntityContext.Entry(IdentidadActual.Persona.FilaPersona).State.Equals(EntityState.Detached))
-                                {
-                                    IdentidadActual.Persona.FilaPersona = mEntityContext.Persona.FirstOrDefault(pers => pers.PersonaID.Equals(IdentidadActual.Persona.FilaPersona.PersonaID));
-                                }
-                                IdentidadActual.Persona.FilaPersona.VersionFoto = versionFoto;
-                                IdentidadActual.Persona.FilaPersona.CoordenadasFoto = coordenadasFoto;
-                                IdentidadActual.Persona.FilaPersona.FechaAnadidaFoto = DateTime.Now;
-
-                                identidadCN.ActualizarFotoIdentidadesPersona(IdentidadActual.PersonaID.Value, false);
-                            }
-
-                            mEntityContext.SaveChanges();
-                        }
-                    }
-                    else
-                    {
-                        error = UtilIdiomas.GetText("PERFIL", "ERRORIMAGENPEQUEÑA", minSize + " px.");
-                    }
-                }
-                else
+                if (proporcion >= 1.8f)
                 {
                     error = UtilIdiomas.GetText("PERFIL", "ERRORIMAGENCUADRADA");
                 }
-            }
-            else
-            {
-                error = UtilIdiomas.GetText("PERFIL", "ERRORTAMAÑOIMAGEN");
+                else if (imagePerfilOriginal.Height < minSize || imagePerfilOriginal.Width < minSize)
+                {
+                    error = UtilIdiomas.GetText("PERFIL", "ERRORIMAGENPEQUEÑA", minSize + " px.");
+                }
+                else
+                {
+                    using Image imagenRedimensionada = UtilImages.AjustarImagen(imagePerfilOriginal, maxSize, maxSize);
+
+                    servicioImagenes.AgregarImagen(
+                        imagenRedimensionada.JpegsaveBuffer(q: 85),
+                        urlFicheroImagen, ".png");
+
+                    int w, h, x = 0, y = 0;
+                    if (imagenRedimensionada.Height > imagenRedimensionada.Width)
+                    {
+                        w = h = imagenRedimensionada.Width;
+                        y = (imagenRedimensionada.Height - imagenRedimensionada.Width) / 2;
+                    }
+                    else if (imagenRedimensionada.Height < imagenRedimensionada.Width)
+                    {
+                        w = h = imagenRedimensionada.Height;
+                        x = (imagenRedimensionada.Width - imagenRedimensionada.Height) / 2;
+                    }
+                    else
+                    {
+                        w = imagenRedimensionada.Width;
+                        h = imagenRedimensionada.Height;
+                    }
+
+                    using Image imagenCortada = imagenRedimensionada.Crop(x, y, w, h);
+
+                    using Image imagenCortadaGrande = UtilImages.AjustarImagen(imagenCortada, tamanoMaxi, tamanoMaxi);
+                    servicioImagenes.AgregarImagen(
+                        imagenCortadaGrande.JpegsaveBuffer(q: 85),
+                        urlFicheroImagen + "_grande", ".png");
+
+                    using Image imagenCortadaMini = UtilImages.AjustarImagen(imagenCortada, tamanoMini, tamanoMini);
+                    servicioImagenes.AgregarImagen(
+                        imagenCortadaMini.JpegsaveBuffer(q: 80),
+                        urlFicheroImagen + "_peque", ".png");
+
+                    // 7. Actualizar BD
+                    string coordenadasFoto = $"[ {x}, {y}, {x + w}, {y + h} ]";
+                    versionFoto++;
+
+                    using IdentidadCN identidadCN = new IdentidadCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<IdentidadCN>(), mLoggerFactory);
+
+                    if (RequestParams("organizacion") != null && RequestParams("organizacion") == "true")
+                    {
+                        if (mEntityContext.Entry(IdentidadActual.OrganizacionPerfil.FilaOrganizacion).State.Equals(EntityState.Detached))
+                            IdentidadActual.OrganizacionPerfil.FilaElementoEntity = mEntityContext.Organizacion
+                                .FirstOrDefault(orga => orga.OrganizacionID.Equals(IdentidadActual.OrganizacionPerfil.FilaOrganizacion.OrganizacionID));
+
+                        IdentidadActual.OrganizacionPerfil.FilaOrganizacion.VersionLogo = versionFoto;
+                        IdentidadActual.OrganizacionPerfil.FilaOrganizacion.CoordenadasLogo = coordenadasFoto;
+                        mEntityContext.SaveChanges();
+                        identidadCN.ActualizarFotoIdentidadesOrganizacion(IdentidadActual.OrganizacionID.Value, false);
+                    }
+                    else if (IdentidadActual.TrabajaConOrganizacion)
+                    {
+                        PersonaVinculoOrganizacion filaPersona = IdentidadActual.OrganizacionPerfil.GestorOrganizaciones.OrganizacionDW.ListaPersonaVinculoOrganizacion
+                            .Find(item => item.PersonaID.Equals(IdentidadActual.Persona.Clave) && item.OrganizacionID.Equals(IdentidadActual.OrganizacionID.Value));
+
+                        if (mEntityContext.Entry(filaPersona).State.Equals(EntityState.Detached))
+                            filaPersona = mEntityContext.PersonaVinculoOrganizacion
+                                .FirstOrDefault(item => item.PersonaID.Equals(IdentidadActual.Persona.Clave) && item.OrganizacionID.Equals(IdentidadActual.OrganizacionID.Value));
+
+                        filaPersona.VersionFoto = versionFoto;
+                        filaPersona.CoordenadasFoto = coordenadasFoto;
+                        filaPersona.FechaAnadidaFoto = DateTime.Now;
+                        filaPersona.UsarFotoPersonal = false;
+                        mEntityContext.SaveChanges();
+                        identidadCN.ActualizarFotoIdentidadesDePersonaDeOrganizacion(IdentidadActual.PersonaID.Value, filaPersona.OrganizacionID, false, false);
+                    }
+                    else if (IdentidadActual.ModoPersonal)
+                    {
+                        if (mEntityContext.Entry(IdentidadActual.Persona.FilaPersona).State.Equals(EntityState.Detached))
+                            IdentidadActual.Persona.FilaPersona = mEntityContext.Persona
+                                .FirstOrDefault(pers => pers.PersonaID.Equals(IdentidadActual.Persona.FilaPersona.PersonaID));
+
+                        IdentidadActual.Persona.FilaPersona.VersionFoto = versionFoto;
+                        IdentidadActual.Persona.FilaPersona.CoordenadasFoto = coordenadasFoto;
+                        IdentidadActual.Persona.FilaPersona.FechaAnadidaFoto = DateTime.Now;
+                        mEntityContext.SaveChanges();
+                        identidadCN.ActualizarFotoIdentidadesPersona(IdentidadActual.PersonaID.Value, false);
+                    }
+
+                    mEntityContext.SaveChanges();
+                }
             }
 
             if (string.IsNullOrEmpty(error))
             {
                 EliminarCaches();
-                return GnossResultOK($"{UtilArchivos.ContentImagenes}/{urlFicheroImagen}_grande.png?{Guid.NewGuid().ToString()}");
+                return GnossResultOK($"{UtilArchivos.ContentImagenes}/{urlFicheroImagen}_grande.png?{Guid.NewGuid()}");
             }
             else
             {
@@ -936,7 +918,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                 organizacion.FilaOrganizacion.Web = pPerfilOrganizacion.WebSite;
                 organizacion.FilaOrganizacion.Alias = pPerfilOrganizacion.Alias;
 
-                AmigosDS amigosDS;
+                AmigosCN amigosCN = new AmigosCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<AmigosCN>(), mLoggerFactory);
 
                 bool organizacionEsClase = organizacion is OrganizacionClase;
                 paginaModel.ProfileOrganization.IsClass = organizacionEsClase;
@@ -945,11 +927,8 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                 {
                     if (cambiadoAlias)
                     {
-                        /*TODO Javier migrar
-                        AmigosCN amigosCN = new AmigosCN(mEntityContext, mLoggingService, mConfigService);
-                        amigosDS = amigosCN.ObtenerGrupoAmigosAutomatico(organizacion.Clave);
-                        AmigosDS.GrupoAmigosRow filaGrupoAmigos = (AmigosDS.GrupoAmigosRow)amigosDS.GrupoAmigos.Rows[0];
-                        filaGrupoAmigos.Nombre = UtilIdiomas.GetText("CONTACTOS", "GRUPOMIEMBROSORGANIZACION", organizacion.FilaOrganizacion.Alias);*/
+                        AD.EntityModel.Models.IdentidadDS.GrupoAmigos grupoAmigos = amigosCN.ObtenerGrupoAmigosPorOrganizacionID(organizacion.Clave);
+                        grupoAmigos.Nombre = UtilIdiomas.GetText("CONTACTOS", "GRUPOMIEMBROSORGANIZACION", organizacion.FilaOrganizacion.Alias);
                     }
                 }
                 else
@@ -963,14 +942,12 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
 
                     if (cambiadoAlias)
                     {
-                        /*TODO Javier migrar
-                        AmigosCN amigosCN = new AmigosCN(mEntityContext, mLoggingService, mConfigService);
-                        amigosDS = amigosCN.ObtenerGrupoAmigosAutomatico(organizacion.Clave);
-                        AmigosDS.GrupoAmigosRow filaGrupoAmigos = (AmigosDS.GrupoAmigosRow)amigosDS.GrupoAmigos.Rows[0];
-                        filaGrupoAmigos.Nombre = UtilIdiomas.GetText("CONTACTOS", "GRUPOMIEMBROSCLASE", organizacion.FilaOrganizacion.Alias);
-                    */
+                        AD.EntityModel.Models.IdentidadDS.GrupoAmigos grupoAmigos = amigosCN.ObtenerGrupoAmigosPorOrganizacionID(organizacion.Clave);
+                        grupoAmigos.Nombre = UtilIdiomas.GetText("CONTACTOS", "GRUPOMIEMBROSCLASE", organizacion.FilaOrganizacion.Alias);
                     }
                 }
+
+                amigosCN.Dispose();
 
                 organizacion.FilaOrganizacion.PaisID = pPerfilOrganizacion.Country;
 
@@ -2714,6 +2691,90 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                 paginaModel.Curriculum.Description = curriculum.Description;
                 paginaModel.Curriculum.Tags = curriculum.Tags;
             }
+        }
+
+        /// <summary>
+        /// Carga en el modelo la configuración de los avisos por correo de la persona conectada (tabla ConfiguracionGnossPersona)
+        /// </summary>
+        private void CargarConfiguracionNotificaciones()
+        {
+            if (!IdentidadActual.PersonaID.HasValue)
+            {
+                return;
+            }
+
+            paginaModel.NotificationSettings = new NotificationSettingsViewModel();
+
+            ConfiguracionGnossPersona filaConfiguracion = ObtenerConfiguracionGnossPersona();
+
+            if (filaConfiguracion != null)
+            {
+                paginaModel.NotificationSettings.ContactRequests = filaConfiguracion.SolicitudesContacto;
+                paginaModel.NotificationSettings.InternalMessages = filaConfiguracion.MensajesGnoss;
+                paginaModel.NotificationSettings.ResourceComments = filaConfiguracion.ComentariosRecursos;
+                paginaModel.NotificationSettings.NewFollowers = filaConfiguracion.NuevosSeguidores;
+            }
+            else
+            {
+                // Todavía no tiene fila de configuración, se muestran los valores con los que se creará (recibir todos los avisos)
+                paginaModel.NotificationSettings.ContactRequests = true;
+                paginaModel.NotificationSettings.InternalMessages = true;
+                paginaModel.NotificationSettings.ResourceComments = true;
+                paginaModel.NotificationSettings.NewFollowers = true;
+            }
+        }
+
+        /// <summary>
+        /// Guarda la configuración de los avisos por correo de la persona conectada (tabla ConfiguracionGnossPersona)
+        /// </summary>
+        /// <param name="pNotificationSettings">Configuración de avisos seleccionada por el usuario</param>
+        /// <returns>Acción resultante</returns>
+        private ActionResult GuardarConfiguracionNotificaciones(NotificationSettingsViewModel pNotificationSettings)
+        {
+            if (pNotificationSettings == null || !IdentidadActual.PersonaID.HasValue)
+            {
+                return GnossResultERROR(UtilIdiomas.GetText("COMMON", "CAMBIOSINCORRECTOS"));
+            }
+
+            try
+            {
+                ConfiguracionGnossPersona filaConfiguracion = ObtenerConfiguracionGnossPersona();
+
+                if (filaConfiguracion == null)
+                {
+                    // La persona no tiene fila de configuración todavía, hay que crearla antes de poder guardar los avisos
+                    using PersonaCN personaCN = new PersonaCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<PersonaCN>(), mLoggerFactory);
+                    DataWrapperPersona dataWrapperPersona = personaCN.ObtenerPersonaPorID(IdentidadActual.PersonaID.Value);
+                    GestionPersonas gestorPersonas = new GestionPersonas(dataWrapperPersona, mLoggingService, mEntityContext);
+                    filaConfiguracion = gestorPersonas.AgregarConfiguracionGnossPersona(IdentidadActual.PersonaID.Value);
+                }
+
+                filaConfiguracion.SolicitudesContacto = pNotificationSettings.ContactRequests;
+                filaConfiguracion.MensajesGnoss = pNotificationSettings.InternalMessages;
+                filaConfiguracion.ComentariosRecursos = pNotificationSettings.ResourceComments;
+                filaConfiguracion.NuevosSeguidores = pNotificationSettings.NewFollowers;
+
+                mEntityContext.SaveChanges();
+
+                EliminarCaches();
+
+                return GnossResultOK(UtilIdiomas.GetText("COMADMINCMS", "COMPONENTEGUARDADOOK"));
+            }
+            catch (Exception ex)
+            {
+                mLoggingService.GuardarLogError(ex, mlogger);
+                return GnossResultERROR(UtilIdiomas.GetText("COMMON", "CAMBIOSINCORRECTOS"));
+            }
+        }
+
+        /// <summary>
+        /// Obtiene la fila de configuración de la persona conectada, NULL si todavía no tiene ninguna
+        /// </summary>
+        /// <returns>Fila de ConfiguracionGnossPersona de la persona conectada</returns>
+        private ConfiguracionGnossPersona ObtenerConfiguracionGnossPersona()
+        {
+            using PersonaCN personaCN = new PersonaCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<PersonaCN>(), mLoggerFactory);
+            return personaCN.ObtenerConfiguracionPersonaPorID(IdentidadActual.PersonaID.Value);
         }
 
         private void CargarRedesSociales()

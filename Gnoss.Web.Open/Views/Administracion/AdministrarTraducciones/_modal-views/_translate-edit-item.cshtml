@@ -9,23 +9,28 @@ Variables
 *@
 
 @{
-// Url de la traducción guardada temporalmente en ViewBag
-string urlEditTranslate = ViewBag.urlEditTranslate;
-bool isInEditMode = false;
-// Título del modal por (Creación o Edición)
-string modalTitle = "";
-bool isEditingMode = false;
+    // Url de la traducción guardada temporalmente en ViewBag
+    string urlEditTranslate = ViewBag.urlEditTranslate;
+    bool isInEditMode = false;
+    // Título del modal por (Creación o Edición)
+    string modalTitle = "";
+    bool isEditingMode = false;
+    CommunityModel comunidad = Html.GetComunidad();
 
+    // Calcular la urlBase para el guardado
+    string urlBase = this.Context.Request.Path.ToString().ToLower();
+    if(urlBase.LastIndexOf("/editar") > 0)
+    {
+        isEditingMode = true;
+        urlBase = urlBase.Substring(0,urlBase.LastIndexOf("/editar"));
+        urlBase = string.Concat(urlBase, "/editar");
+    }
 
-// Calcular la urlBase para el guardado
-string urlBase = this.Context.Request.Path.ToString().ToLower();
-if(urlBase.LastIndexOf("/editar") > 0)
-{
-    isEditingMode = true;
-    urlBase = urlBase.Substring(0,urlBase.LastIndexOf("/editar"));
-    urlBase = string.Concat(urlBase, "/editar");
-}
-
+    string textoTraduccionAutomatica = "";
+    if (Model.Traducciones != null && Model.Traducciones.Count > 0)
+    {
+        textoTraduccionAutomatica = Model.Traducciones[0].Texto;
+    }
 }
 
 
@@ -35,7 +40,6 @@ if(urlBase.LastIndexOf("/editar") > 0)
 *@
 
 <form action="@urlBase" method="post" id="formCreateEditTranslate">
-@* @Html.ValidationSummary() *@
 @* Crear Nuevo o Editar traducción *@
 @if (this.Context.Request.Path.ToString().ToLower().Contains("/crear"))
 {    
@@ -71,21 +75,101 @@ else {
                         <small id="TextoIDAyuda" class="form-text text-muted">@Html.GetText("DEVTOOLS","INTRODUCEUNIDENTIFICADORUNICOPARALATRADUCCIONACREAR")</small>
                     </div>
                 }
+                @if (comunidad.TranslatorAvailable)
+                {
+                    <div class="traduccion-automatica">
+                        <div id="accordion" class="tabla-test">
+                            <div class="card">
+                                <div class="card-header">
+                                    <h3 class="mb-0">
+                                        <a class="btn btn-link collapsed"
+                                                data-toggle="collapse"
+                                                data-target="#secciontest"
+                                                aria-expanded="false"
+                                                aria-controls="secciontest">
+                                            @Html.GetText("DEVTOOLS", "TRADUCIRTEXTO")
+                                            <span class="material-icons">keyboard_arrow_down</span>
+                                        </a>
+                                    </h3>
+                                </div>
+                                <div id="secciontest"
+                                     class="collapse"
+                                     data-parent="#accordion">
+                                    <div class="card-body">
+                                        @* Texto a traducir *@
+                                        <div class="form-group mb-3">
+                                            <label class="control-label d-block" for="textoTraducir">@Html.GetText("DEVTOOLS", "PROBARTRADUCTOR") *</label>
+                                            <input placeholder="@Html.GetText("DEVTOOLS", "INTRODUCETESTTRADUCTOR")"
+                                                   type="text"
+                                                   value="@textoTraduccionAutomatica"
+                                                   id="textoTraducir"
+                                                   name="textoTraducir"
+                                                   class="form-control not-outline" />
+                                        </div>
 
+                                        @* Idioma origen *@
+                                        <div class="form-group mb-3">
+                                            <label class="control-label d-block" for="cmbIdiomaOrigen">@Html.GetText("DEVTOOLS", "IDIOMAORIGINALRECURSOS")</label>
+                                            <select id="cmbIdiomaOrigen"
+                                                    name="cmbIdiomaOrigen"
+                                                    class="cmbIdiomaOrigen js-select2"
+                                                    tabindex="0"
+                                                    aria-hidden="false">
+                                                @foreach (string code in Model.IdiomasDisponiblesTraducir.Keys)
+                                                {
+                                                    <option value="@code">@Model.IdiomasDisponiblesTraducir[code]</option>
+                                                }
+                                            </select>
+                                        </div>
+
+                                        @* Idiomas destino *@
+                                        <div class="form-group mb-3">
+                                            <label class="control-label d-block" for="cmbIdiomaDestino">@Html.GetText("DEVTOOLS", "IDIOMADESTINORECURSOS")</label>
+                                            <select id="cmbIdiomaDestino"
+                                                    name="cmbIdiomaDestino"
+                                                    class="js-select2 cmbIdiomaDestino"
+                                                    tabindex="0"
+                                                    aria-hidden="false">
+                                                <option value="">@Html.GetText("DEVTOOLS", "SELECCIONIDIOMADESTINO")</option>
+                                                @{
+                                                    foreach (string code in Model.IdiomasDisponiblesTraducir.Keys)
+                                                    {
+                                                        <option value="@code">@Model.IdiomasDisponiblesTraducir[code]</option>
+                                                    }
+                                                }
+                                            </select>
+                                            <div class="tag-list mb-3 mt-3">
+                                                <!-- aqui van las tags de los roles -->
+                                            </div>
+                                        </div>
+
+                                        <a class="btn btn-outline-primary uppercase" id="btnTraducir"><span>@Html.GetText("DEVTOOLS", "TRADUCIRTEXTO")</span></a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <hr />
+                }
+                
                 @* Input para traducción en Idiomas *@
                 @for (int i = 0; i < Model.Traducciones.Count; i++)
                 {
                     string idioma = string.Empty;
+                    string id = $"Traducciones_{i}__Texto";
+                    string name = $"Traducciones[{i}].Texto";
+                    string clase = $"idioma_{Model.Traducciones[i].Idioma}";
                     Model.Idiomas.TryGetValue((string)Model.Traducciones[i].Idioma, out idioma);
                         
                         <div class="form-group mb-4">
                             <label class="control-label d-block">@idioma</label>
                             @* TextArea para el contenido de la traducción *@
-                            @Html.TextAreaFor(m => m.Traducciones[i].Texto, new { cols = "30", rows = "5" })  @Html.ValidationMessageFor(m => m.Traducciones[i].Texto)
+                            <textarea class="@clase" cols="30" rows="5" id="@id" name="@name">@Model.Traducciones[i].Texto</textarea>                            
                         </div>                        
-                    <input type="hidden" name="Traducciones[@i].Idioma" value="@Model.Traducciones[i].Idioma" />            
+                    <input type="hidden" class="@clase" name="Traducciones[@i].Idioma" value="@Model.Traducciones[i].Idioma" />            
                 }
-
+                @* Seccion de informe de errores del modal*@
+                @Html.ValidationSummary()
                 @* Botón para guardar la traduducción *@
                 <div class="panelBotonera">
                     @if (Html.GetComunidad().DeshabilitarGuardarAdministracionIC)
@@ -103,5 +187,11 @@ else {
         </div>
     </div>
 </form>
+<script type="text/javascript">
 
+    (function ($) {
+        @* Operativa funcionamiento de Gestión de Traducciones *@
+        operativaGestionTraducciones.init();
+    })();
+</script>
 

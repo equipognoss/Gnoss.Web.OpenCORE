@@ -122,6 +122,122 @@ CommunityModel Comunidad = Html.GetComunidad();
                                 </div>
                             </article>
                         }
+                        @if (Model.DocReference)
+                        {
+                            <article class="resource">
+                                <div class="wrap">
+                                    <div class="user-miniatura">
+                                        <div class="imagen-usuario-wrap">
+                                            <div class="imagen">
+                                                <span class="material-icons texto-primario"
+                                                      style="font-size: 3rem">bookmark_border</span>
+                                            </div>
+                                        </div>
+                                        <div class="nombre-usuario-wrap">
+                                            <p class="nombre">@Html.GetText("PERFILBASESUBIR", "REFERENCIAADOC")</p>
+                                        </div>
+                                        <div class="acciones-usuario-wrap">
+                                            <ul class="no-list-style">
+                                                <li>
+                                                    <a class="btn btn-outline-grey"
+                                                           data-toggle="modal" data-target="#modal-add-resource-reference" aria-label="@Html.GetText("PERFILBASESUBIR", "REFERENCIAADOC")">
+                                                        <span class="material-icons">create</span>
+                                                        <span>Crear</span>
+                                                    </a>
+                                                </li>
+                                            </ul>
+                                        </div>
+                                    </div>
+                                </div>
+                            </article>                            
+                        }
+                        @if (Model.CreateQuestion)
+                        {
+                            <article class="resource">
+                                <div class="wrap">
+                                    <div class="user-miniatura">
+                                        <div class="imagen-usuario-wrap">
+                                            <div class="imagen">
+                                                <span class="material-icons texto-primario"
+                                                      style="font-size: 3rem">contact_support</span>
+                                            </div>
+                                        </div>
+                                        <div class="nombre-usuario-wrap">
+                                            <p class="nombre">@Html.GetText("QUEPUEDOHACER", "CREAPREGUNTA")</p>
+                                        </div>
+                                        <div class="acciones-usuario-wrap">
+                                            <ul class="no-list-style">
+                                                <li>
+                                                    <a class="btn btn-outline-grey"
+                                                           href="@Comunidad.Url/@Html.GetText("URLSEM", "SUBIRPREGUNTA")/@Guid.NewGuid()/15" aria-label="@Html.GetText("QUEPUEDOHACER", "CREAPREGUNTA")">
+                                                        <span class="material-icons">create</span>
+                                                        <span>Crear</span>
+                                                    </a>
+                                                </li>
+                                            </ul>
+                                        </div>
+                                    </div>
+                                </div>
+                            </article>
+                        }
+                        @if (Model.CreateDebate)
+                        {
+                            <article class="resource">
+                                <div class="wrap">
+                                    <div class="user-miniatura">
+                                        <div class="imagen-usuario-wrap">
+                                            <div class="imagen">
+                                                <span class="material-icons texto-primario"
+                                                      style="font-size: 3rem">question_answer</span>
+                                            </div>
+                                        </div>
+                                        <div class="nombre-usuario-wrap">
+                                            <p class="nombre">@Html.GetText("QUEPUEDOHACER", "CREADEBATE")</p>
+                                        </div>
+                                        <div class="acciones-usuario-wrap">
+                                            <ul class="no-list-style">
+                                                <li>
+                                                    <a class="btn btn-outline-grey"
+                                                           href="@Comunidad.Url/@Html.GetText("URLSEM", "SUBIRDEBATE")/@Guid.NewGuid()/16" aria-label="@Html.GetText("QUEPUEDOHACER", "CREADEBATE")">
+                                                        <span class="material-icons">create</span>
+                                                        <span>Crear</span>
+                                                    </a>
+                                                </li>
+                                            </ul>
+                                        </div>
+                                    </div>
+                                </div>
+                            </article>
+                        }
+                        @if (Model.CreatePoll)
+                        {
+                            <article class="resource">
+                                <div class="wrap">
+                                    <div class="user-miniatura">
+                                        <div class="imagen-usuario-wrap">
+                                            <div class="imagen">
+                                                <span class="material-icons texto-primario"
+                                                      style="font-size: 3rem">how_to_vote</span>
+                                            </div>
+                                        </div>
+                                        <div class="nombre-usuario-wrap">
+                                            <p class="nombre">@Html.GetText("QUEPUEDOHACER", "CREAENCUESTA")</p>
+                                        </div>
+                                        <div class="acciones-usuario-wrap">
+                                            <ul class="no-list-style">
+                                                <li>
+                                                    <a class="btn btn-outline-grey"
+                                                           href="@Comunidad.Url/@Html.GetText("URLSEM", "SUBIRENCUESTA")/@Guid.NewGuid()/18" aria-label="@Html.GetText("QUEPUEDOHACER", "CREAENCUESTA")">
+                                                        <span class="material-icons">create</span>
+                                                        <span>Crear</span>
+                                                    </a>
+                                                </li>
+                                            </ul>
+                                        </div>
+                                    </div>
+                                </div>
+                            </article>
+                        }
                         @if (Model.SemanticResourceAvailable)
                         {
                             foreach (string nombreOnto in Model.OntologyNameUrls.Keys)

@@ -1,12 +1,9 @@
 ﻿using Es.Riam.AbstractsOpen;
-using Es.Riam.Gnoss.AD;
-using Es.Riam.Gnoss.AD.CMS;
 using Es.Riam.Gnoss.AD.EncapsuladoDatos;
 using Es.Riam.Gnoss.AD.EntityModel;
 using Es.Riam.Gnoss.AD.EntityModel.Models.VistaVirtualDS;
 using Es.Riam.Gnoss.AD.EntityModelBASE;
 using Es.Riam.Gnoss.AD.Flujos;
-using Es.Riam.Gnoss.AD.Live;
 using Es.Riam.Gnoss.AD.Parametro;
 using Es.Riam.Gnoss.AD.ServiciosGenerales;
 using Es.Riam.Gnoss.AD.Virtuoso;
@@ -22,7 +19,6 @@ using Es.Riam.Gnoss.Logica.Documentacion;
 using Es.Riam.Gnoss.Logica.Facetado;
 using Es.Riam.Gnoss.Logica.Flujos;
 using Es.Riam.Gnoss.Logica.Notificacion;
-using Es.Riam.Gnoss.Logica.ParametroAplicacion;
 using Es.Riam.Gnoss.Logica.ServiciosGenerales;
 using Es.Riam.Gnoss.Util.Configuracion;
 using Es.Riam.Gnoss.Util.General;
@@ -31,7 +27,6 @@ using Es.Riam.Gnoss.Web.Controles.Administracion;
 using Es.Riam.Gnoss.Web.MVC.Filters;
 using Es.Riam.Gnoss.Web.MVC.Models.Administracion;
 using Es.Riam.Gnoss.Web.MVC.Models.Flujos;
-using Es.Riam.Gnoss.Web.MVC.Models.ViewModels;
 using Es.Riam.Interfaces.InterfacesOpen;
 using Es.Riam.InterfacesOpen;
 using Es.Riam.InterfacesOpen.Model;
@@ -40,12 +35,9 @@ using Gnoss.Web.Open.Filters;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Mvc.Infrastructure;
 using Microsoft.AspNetCore.Mvc.ViewEngines;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
-using Newtonsoft.Json;
-using Serilog.Core;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -61,8 +53,8 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
     /// </summary>
     public class CMSAdminComponenteEditarController : ControllerAdministrationWeb
 	{
-        public CMSAdminComponenteEditarController(LoggingService loggingService, ConfigService configService, EntityContext entityContext, RedisCacheWrapper redisCacheWrapper, GnossCache gnossCache, VirtuosoAD virtuosoAD, IHttpContextAccessor httpContextAccessor, ICompositeViewEngine viewEngine, EntityContextBASE entityContextBASE, Microsoft.AspNetCore.Hosting.IHostingEnvironment env, IActionContextAccessor actionContextAccessor, IUtilServicioIntegracionContinua utilServicioIntegracionContinua, IServicesUtilVirtuosoAndReplication servicesUtilVirtuosoAndReplication, IOAuth oAuth, IHostApplicationLifetime appLifetime, IPublishEvents publishEvents, IAvailableServices availableServices, ILogger<CMSAdminComponenteEditarController> logger, ILoggerFactory loggerFactory)
-            : base(loggingService, configService, entityContext, redisCacheWrapper, gnossCache, virtuosoAD, httpContextAccessor, viewEngine, entityContextBASE, env, actionContextAccessor, utilServicioIntegracionContinua, servicesUtilVirtuosoAndReplication, oAuth, appLifetime, availableServices, logger, loggerFactory)
+        public CMSAdminComponenteEditarController(LoggingService loggingService, ConfigService configService, EntityContext entityContext, RedisCacheWrapper redisCacheWrapper, GnossCache gnossCache, VirtuosoAD virtuosoAD, IHttpContextAccessor httpContextAccessor, ICompositeViewEngine viewEngine, EntityContextBASE entityContextBASE, IWebHostEnvironment env, IUtilServicioIntegracionContinua utilServicioIntegracionContinua, IServicesUtilVirtuosoAndReplication servicesUtilVirtuosoAndReplication, IOAuth oAuth, IHostApplicationLifetime appLifetime, IPublishEvents publishEvents, IAvailableServices availableServices, ILogger<CMSAdminComponenteEditarController> logger, ILoggerFactory loggerFactory)
+            : base(loggingService, configService, entityContext, redisCacheWrapper, gnossCache, virtuosoAD, httpContextAccessor, viewEngine, entityContextBASE, env,utilServicioIntegracionContinua, servicesUtilVirtuosoAndReplication, oAuth, appLifetime, availableServices, logger, loggerFactory)
         { 
             mIPublishEvents = publishEvents;
         }
@@ -139,6 +131,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
         [HttpPost]
         [TypeFilter(typeof(PermisosContenidos), Arguments = new object[] { new ulong[] { (ulong)PermisoContenidos.EditarComponenteCMS, (ulong)PermisoContenidos.CrearComponenteCMS } })]
         [TypeFilter(typeof(AccesoIntegracionAttribute))]
+        [TypeFilter(typeof(LimitarPeticionesAdministracion), Arguments = new object[] { 30, 120, 15 })]
         public ActionResult Guardar(CMSAdminComponenteEditarViewModel Componente)
         {
             return GuardarComponente(Componente);
@@ -287,7 +280,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
                         {
                             contrCMS.BorrarComponenteCrearFilasIntegracionContinua(ComponenteID, cmsCN, gestorCMS);
                             CMSAdminComponenteEditarViewModel componente = null;
-                            InformarCambioAdministracion("ComponentesCMS", JsonConvert.SerializeObject(new KeyValuePair<Guid, CMSAdminComponenteEditarViewModel>(ComponenteID, componente), Formatting.Indented));
+                            InformarCambioAdministracion("ComponentesCMS", Newtonsoft.Json.JsonConvert.SerializeObject(new KeyValuePair<Guid, CMSAdminComponenteEditarViewModel>(ComponenteID, componente), Newtonsoft.Json.Formatting.Indented));
                             PublicarEventoExternoComponenteCMS(ComponenteID, ActionTypeExternalEvent.Delete);
                             return GnossResultOK();
                         }
@@ -351,13 +344,14 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
 
         [HttpPost]
 		[TypeFilter(typeof(PermisosContenidos), Arguments = new object[] { new ulong[] { (ulong)PermisoContenidos.RestaurarVersionCMS, (ulong)PermisoContenidos.EliminarVersionCMS } })]
-		public ActionResult Restore(Guid idComponente, Guid versionIdComponente)
+        [TypeFilter(typeof(LimitarPeticionesAdministracion), Arguments = new object[] { 30, 120, 15 })]
+        public ActionResult Restore(Guid idComponente, Guid versionIdComponente)
         {
             CMSAdminComponenteEditarViewModel componenteRestaurar;
 
             using (CMSCN CMSCN = new CMSCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<CMSCN>(), mLoggerFactory))
             {
-                componenteRestaurar = JsonConvert.DeserializeObject<CMSAdminComponenteEditarViewModel>(CMSCN.ObtenerVersionComponenteCMS(idComponente, versionIdComponente).ModeloJSON);
+                componenteRestaurar = JsonSerializer.Deserialize<CMSAdminComponenteEditarViewModel>(CMSCN.ObtenerVersionComponenteCMS(idComponente, versionIdComponente).ModeloJSON);
                 componenteRestaurar.FechaModificacion = DateTime.Now;
             }
 
@@ -647,9 +641,9 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
                                             string nombreFichero = UtilCadenas.RemoveAccentsWithRegEx(fichero[0]);
                                             string base64Image = fichero[1];
 
-                                            List<string> listaExtensiones = new List<string>() { "jpg", "jpeg", "png", "gif" };
+                                            List<string> listaExtensiones = new List<string>() { "jpg", "jpeg", "png", "gif", "webp" };
 
-                                            if (listaExtensiones.Contains(nombreFichero.Substring(nombreFichero.LastIndexOf('.')).ToLower()))
+                                            if (listaExtensiones.Contains(nombreFichero.Substring(nombreFichero.LastIndexOf('.')).Trim('.').ToLower()))
                                             {
                                                 byte[] byteImage = Convert.FromBase64String(base64Image);
                                                 HttpResponseMessage resultadoImagen = InformarCambioAdministracionCMS("ObjetosMultimedia", Convert.ToBase64String(byteImage), nombreFichero);
@@ -664,7 +658,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
                                 }
                             }
 
-                            HttpResponseMessage resultado = InformarCambioAdministracion("ComponentesCMS", JsonConvert.SerializeObject(new KeyValuePair<Guid, CMSAdminComponenteEditarViewModel>(componenteEdicion.Clave, pComponente), Formatting.Indented));
+                            HttpResponseMessage resultado = InformarCambioAdministracion("ComponentesCMS", JsonSerializer.Serialize(new KeyValuePair<Guid, CMSAdminComponenteEditarViewModel>(componenteEdicion.Clave, pComponente), new JsonSerializerOptions { WriteIndented = true}));
                             if (!resultado.StatusCode.Equals(HttpStatusCode.OK))
                             {
                                 throw new ExcepcionWeb("Ha ocurrido un error al registrar los cambios con la integración continua.");
@@ -838,7 +832,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
         {
             pControladorComponenteCMS.CrearFilasPropiedadesIntegracionContinua(pComponenteViewModel);
 
-            if (EntornoActualEsPruebas && pHayIntegracionContinua)
+            if (pHayIntegracionContinua && EntornoActualEsPruebas)
             {
                 pControladorComponenteCMS.ModificarFilasIntegracionContinuaEntornoSiguiente(pComponenteViewModel, UrlApiEntornoSeleccionado("pre"), UsuarioActual.UsuarioID);
                 pControladorComponenteCMS.ModificarFilasIntegracionContinuaEntornoSiguiente(pComponenteViewModel, UrlApiEntornoSeleccionado("pro"), UsuarioActual.UsuarioID);

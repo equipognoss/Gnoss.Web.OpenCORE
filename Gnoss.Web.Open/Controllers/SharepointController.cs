@@ -62,8 +62,8 @@ namespace Gnoss.Web.Controllers
             set { mTokenCreadorRecurso = value; }
         }
 
-        public SharepointController(string documentoID, LoggingService loggingService, ConfigService configService, EntityContext entityContext, RedisCacheWrapper redisCacheWrapper, GnossCache gnossCache, VirtuosoAD virtuosoAD, IHttpContextAccessor httpContextAccessor, ICompositeViewEngine viewEngine, EntityContextBASE entityContextBASE, Microsoft.AspNetCore.Hosting.IHostingEnvironment env, IActionContextAccessor actionContextAccessor, IUtilServicioIntegracionContinua utilServicioIntegracionContinua, IServicesUtilVirtuosoAndReplication servicesUtilVirtuosoAndReplication, IOAuth oAuth, IHostApplicationLifetime appLifetime, IAvailableServices availableServices, ILogger<SharepointController> logger, ILoggerFactory loggerFactory)
-            : base(loggingService, configService, entityContext, redisCacheWrapper, gnossCache, virtuosoAD, httpContextAccessor, viewEngine, entityContextBASE, env, actionContextAccessor, utilServicioIntegracionContinua, servicesUtilVirtuosoAndReplication, oAuth, appLifetime, availableServices,logger,loggerFactory)
+        public SharepointController(string documentoID, LoggingService loggingService, ConfigService configService, EntityContext entityContext, RedisCacheWrapper redisCacheWrapper, GnossCache gnossCache, VirtuosoAD virtuosoAD, IHttpContextAccessor httpContextAccessor, ICompositeViewEngine viewEngine, EntityContextBASE entityContextBASE, IWebHostEnvironment env, IUtilServicioIntegracionContinua utilServicioIntegracionContinua, IServicesUtilVirtuosoAndReplication servicesUtilVirtuosoAndReplication, IOAuth oAuth, IHostApplicationLifetime appLifetime, IAvailableServices availableServices, ILogger<SharepointController> logger, ILoggerFactory loggerFactory)
+            : base(loggingService, configService, entityContext, redisCacheWrapper, gnossCache, virtuosoAD, httpContextAccessor, viewEngine, entityContextBASE, env, utilServicioIntegracionContinua, servicesUtilVirtuosoAndReplication, oAuth, appLifetime, availableServices,logger,loggerFactory)
         {
             mlogger = logger;
             mLoggerFactory = loggerFactory;
@@ -90,7 +90,7 @@ namespace Gnoss.Web.Controllers
                 string peticion = $"{microsoftLoginEndpoint}";
                 string requestParameters = $"client_id={clientID}&grant_type=refresh_token&refresh_token={pRefreshToken}&client_secret={clientSecret}";
                 byte[] byteData = Encoding.UTF8.GetBytes(requestParameters);
-                string response = UtilGeneral.WebRequest("POST", peticion, byteData);
+                string response = UtilWeb.WebRequest("POST", peticion, byteData);
                 dynamic respuestaObj = JsonConvert.DeserializeObject(response);
                 //Almacenamos los nuevos tokens en BD (los tokens de refresco duran 90 dias)
                 string token = respuestaObj.access_token;
@@ -123,7 +123,7 @@ namespace Gnoss.Web.Controllers
         public bool ComprobarValidezToken(string token)
         {
             string peticionComprobarToken = $"{baseUrl}me";
-            string response = UtilGeneral.WebRequest("GET", peticionComprobarToken, token, null);
+            string response = UtilWeb.WebRequest("GET", peticionComprobarToken, token, null);
 
             if (response != "")
             {
@@ -152,7 +152,7 @@ namespace Gnoss.Web.Controllers
         public string ExtraerNombreFichero(string urlCodificada)
         {
             string peticion = $"{baseUrl}shares/{urlCodificada}";
-            string response = UtilGeneral.WebRequest("GET", peticion, mToken, null);
+            string response = UtilWeb.WebRequest("GET", peticion, mToken, null);
             dynamic respuestaObj = JsonConvert.DeserializeObject(response);
             string nombre = respuestaObj.name;
 
@@ -163,7 +163,7 @@ namespace Gnoss.Web.Controllers
         {
             string urlCodificada = CodificarUrl(url);
             string peticion = $"{baseUrl}shares/{urlCodificada}";
-            string response = UtilGeneral.WebRequest("GET", peticion, mToken, null);
+            string response = UtilWeb.WebRequest("GET", peticion, mToken, null);
             dynamic respuestaObj = JsonConvert.DeserializeObject(response);
             string nombre = respuestaObj.name;
 
@@ -184,7 +184,7 @@ namespace Gnoss.Web.Controllers
         {
             string urlCodificada = CodificarUrl(url);
             string peticion = $"{baseUrl}shares/{urlCodificada}";
-            string response = UtilGeneral.WebRequest("GET", peticion, mToken, null);
+            string response = UtilWeb.WebRequest("GET", peticion, mToken, null);
             dynamic respuestaObj = JsonConvert.DeserializeObject(response);
             string nombreCompleto = respuestaObj.name;
             int punto = nombreCompleto.LastIndexOf(".");
@@ -208,28 +208,13 @@ namespace Gnoss.Web.Controllers
             }
 
             string peticion = $"{baseUrl}shares/{urlCodificada}/root/content";
-            HttpWebRequest webRequest = null;
-
-            webRequest = System.Net.WebRequest.Create(peticion) as HttpWebRequest;
-            webRequest.Method = "GET";
-            webRequest.ServicePoint.Expect100Continue = false;
-            webRequest.Timeout = 600000;
-            webRequest.ContentType = "application/json";
-            webRequest.Headers.Add("Authorization", "Bearer " + mToken);
-            webRequest.UserAgent = UtilWeb.GenerarUserAgent();
 
             FileInfo archivoInfo = new FileInfo(nombreFichero);
             string extensionArchivo = Path.GetExtension(archivoInfo.Name).ToLower();
             GestionDocumental gd = new GestionDocumental(mLoggingService, mConfigService, mLoggerFactory.CreateLogger<GestionDocumental>(), mLoggerFactory);
             gd.Url = UrlServicioWebDocumentacion;
-            Stream streamFichero = webRequest.GetResponse().GetResponseStream();
-            byte[] buffer1;
-
-            using (var memoryStream = new MemoryStream())
-            {
-                streamFichero.CopyTo(memoryStream);
-                buffer1 = memoryStream.ToArray();
-            }
+            
+            byte[] buffer1 = UtilWeb.WebRequestBytes("GET", peticion, null, "application/json", mToken);
 
             gd.AdjuntarDocumento(buffer1, TipoEntidadVinculadaDocumentoTexto.BASE_RECURSOS, mControladorBase.UsuarioActual.OrganizacionID, mControladorBase.UsuarioActual.ProyectoID, documentoID, extensionArchivo);
 
@@ -244,7 +229,7 @@ namespace Gnoss.Web.Controllers
 				string urlCodificada = CodificarUrl(pUrl);
 				string peticion = $"{baseUrl}shares/{urlCodificada}/root";
 
-				string response = UtilGeneral.WebRequest("GET", peticion, token, null);
+				string response = UtilWeb.WebRequest("GET", peticion, token, null);
 				if (string.IsNullOrEmpty(response))
 				{
 					return false;
@@ -297,7 +282,7 @@ namespace Gnoss.Web.Controllers
 
             string urlCodificada = CodificarUrl(url);
             string peticion = $"{baseUrl}shares/{urlCodificada}/root";
-            string response = UtilGeneral.WebRequest("GET", peticion, token, null);
+            string response = UtilWeb.WebRequest("GET", peticion, token, null);
             if (string.IsNullOrEmpty(response))
             {
                 return false;

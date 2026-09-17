@@ -12,6 +12,7 @@ using Es.Riam.Gnoss.Web.MVC.Models.Administracion;
 using Es.Riam.Interfaces.InterfacesOpen;
 using Es.Riam.InterfacesOpen;
 using Gnoss.Web.Open.Filters;
+using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Infrastructure;
@@ -25,7 +26,7 @@ namespace Gnoss.Web.Open.Controllers.Administracion
     public class UpgradeVersionController : ControllerAdministrationWeb
     {
         private UtilIdiomas mUtilIdiomas;
-        public UpgradeVersionController(LoggingService loggingService, ConfigService configService, EntityContext entityContext, RedisCacheWrapper redisCacheWrapper, GnossCache gnossCache, VirtuosoAD virtuosoAD, IHttpContextAccessor httpContextAccessor, ICompositeViewEngine viewEngine, EntityContextBASE entityContextBASE, Microsoft.AspNetCore.Hosting.IHostingEnvironment env, IActionContextAccessor actionContextAccessor, IUtilServicioIntegracionContinua utilServicioIntegracionContinua, IServicesUtilVirtuosoAndReplication servicesUtilVirtuosoAndReplication, IOAuth oAuth, IHostApplicationLifetime appLifetime, IAvailableServices availableServices, ILogger<ControllerAdministrationWeb> logger, ILoggerFactory loggerFactory) : base(loggingService, configService, entityContext, redisCacheWrapper, gnossCache, virtuosoAD, httpContextAccessor, viewEngine, entityContextBASE, env, actionContextAccessor, utilServicioIntegracionContinua, servicesUtilVirtuosoAndReplication, oAuth, appLifetime, availableServices, logger, loggerFactory)
+        public UpgradeVersionController(LoggingService loggingService, ConfigService configService, EntityContext entityContext, RedisCacheWrapper redisCacheWrapper, GnossCache gnossCache, VirtuosoAD virtuosoAD, IHttpContextAccessor httpContextAccessor, ICompositeViewEngine viewEngine, EntityContextBASE entityContextBASE, IWebHostEnvironment env, IActionContextAccessor actionContextAccessor, IUtilServicioIntegracionContinua utilServicioIntegracionContinua, IServicesUtilVirtuosoAndReplication servicesUtilVirtuosoAndReplication, IOAuth oAuth, IHostApplicationLifetime appLifetime, IAvailableServices availableServices, ILogger<ControllerAdministrationWeb> logger, ILoggerFactory loggerFactory) : base(loggingService, configService, entityContext, redisCacheWrapper, gnossCache, virtuosoAD, httpContextAccessor, viewEngine, entityContextBASE, env, utilServicioIntegracionContinua, servicesUtilVirtuosoAndReplication, oAuth, appLifetime, availableServices, logger, loggerFactory)
         {
         }
 
@@ -34,7 +35,7 @@ namespace Gnoss.Web.Open.Controllers.Administracion
 		/// </summary>
 		/// <returns>ActionResult</returns>
 		[TypeFilter(typeof(PermisosAdministracion), Arguments = new object[] { new ulong[] { (ulong)PermisoComunidad.GestionarTraducciones, (ulong)PermisoComunidad.GestionarPesosAutocompletado, (ulong)PermisoComunidad.AccederAlEstadoDeLosServicios, (ulong)PermisoComunidad.GestionarEventosExternos, (ulong)PermisoComunidad.AccederAEstadisticasDeLaComunidad, (ulong)PermisoComunidad.ConsultarCargasMasivas, (ulong)PermisoComunidad.GestionarIntegracionContinua, (ulong)PermisoContenidos.CrearFaceta, (ulong)PermisoComunidad.EjecutarReprocesadosDeRecursos, (ulong)PermisoComunidad.AccesoSparqlEndpoint, (ulong)PermisoComunidad.AccederAlFTP, (ulong)PermisoComunidad.GestionarCache, (ulong)PermisoComunidad.DescargarConfiguracionOAuth, (ulong)PermisoComunidad.GestionarTrazas, (ulong)PermisoComunidad.GestionarAsistentes, (ulong)PermisoComunidad.GestionarAplicacionesEspecificas } })]
-        [TypeFilter(typeof(PermisosAdministracionEcosistema), Arguments = new object[] { new ulong[] { (ulong)PermisoEcosistema.GestionarTraduccionesEcosistema, (ulong)PermisoEcosistema.GestionarEventosExternosEcosistema, (ulong)PermisoEcosistema.AdministrarIntegracionContinua } })]
+        [TypeFilter(typeof(PermisosAdministracionEcosistema), Arguments = new object[] { new ulong[] { (ulong)PermisoEcosistema.GestionarTraduccionesEcosistema, (ulong)PermisoEcosistema.GestionarEventosExternosEcosistema, (ulong)PermisoEcosistema.AdministrarIntegracionContinua} })]
         public IActionResult Index(string metodo)
         {
             EliminarPersonalizacionVistas();
@@ -192,6 +193,13 @@ namespace Gnoss.Web.Open.Controllers.Administracion
                     ViewBag.ActiveSubSection = AdministracionSeccionesDevTools.SubSeccionesDevTools.Comunidad_Asistentes;
                     ViewBag.HeaderParentTitle = UtilIdiomas.GetText("DEVTOOLS", "COMUNIDAD");
                     ViewBag.HeaderTitle = UtilIdiomas.GetText("COMADMINCOMUNIDAD", "ADMINISTRARASISTENTES");
+                    ViewBag.IdiomaPorDefecto = IdiomaPorDefecto;
+                    break;
+                case "TRADUCIRRECURSOS":
+                    ViewBag.ActiveSection = AdministracionSeccionesDevTools.SeccionesDevTools.GrafoConocimiento;
+                    ViewBag.ActiveSubSection = AdministracionSeccionesDevTools.SubSeccionesDevTools.GrafoConocimiento_TraducirRecursos;
+                    ViewBag.HeaderParentTitle = UtilIdiomas.GetText("DEVTOOLS", "GRAFODECONOCIMIENTO");
+                    ViewBag.HeaderTitle = UtilIdiomas.GetText("COMADMINCOMUNIDAD", "TRADUCIRRECURSOS");
                     ViewBag.IdiomaPorDefecto = IdiomaPorDefecto;
                     break;
             }

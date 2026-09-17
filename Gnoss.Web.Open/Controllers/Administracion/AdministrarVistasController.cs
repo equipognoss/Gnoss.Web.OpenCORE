@@ -17,7 +17,6 @@ using Es.Riam.Gnoss.CL.ParametrosProyecto;
 using Es.Riam.Gnoss.CL.ServiciosGenerales;
 using Es.Riam.Gnoss.Elementos.CMS;
 using Es.Riam.Gnoss.Elementos.ParametroGeneralDSEspacio;
-using Es.Riam.Gnoss.Elementos.ServiciosGenerales;
 using Es.Riam.Gnoss.Logica.CMS;
 using Es.Riam.Gnoss.Logica.Facetado;
 using Es.Riam.Gnoss.Logica.ParametrosProyecto;
@@ -37,11 +36,9 @@ using Gnoss.Web.Open.Filters;
 using Gnoss.Web.Services.VirtualPathProvider;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Mvc.Infrastructure;
 using Microsoft.AspNetCore.Mvc.ViewEngines;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
-using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.Data;
@@ -50,6 +47,8 @@ using System.Linq;
 using System.Net;
 using System.Net.Http;
 using System.Text.RegularExpressions;
+using Microsoft.AspNetCore.Hosting;
+using System.Text.Json;
 using Es.Riam.Util;
 
 namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
@@ -73,8 +72,8 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
         private const string VIEWS_DIRECTORY = "Views";
         private ILogger mlogger;
         private ILoggerFactory mLoggerFactory;
-        public AdministrarVistasController(LoggingService loggingService, ConfigService configService, EntityContext entityContext, RedisCacheWrapper redisCacheWrapper, GnossCache gnossCache, VirtuosoAD virtuosoAD, IHttpContextAccessor httpContextAccessor, ICompositeViewEngine viewEngine, EntityContextBASE entityContextBASE, Microsoft.AspNetCore.Hosting.IHostingEnvironment env, IActionContextAccessor actionContextAccessor, IUtilServicioIntegracionContinua utilServicioIntegracionContinua, IServicesUtilVirtuosoAndReplication servicesUtilVirtuosoAndReplication, IOAuth oAuth, IHostApplicationLifetime appLifetime, IAvailableServices availableServices, ILogger<AdministrarVistasController> logger, ILoggerFactory loggerFactory)
-            : base(loggingService, configService, entityContext, redisCacheWrapper, gnossCache, virtuosoAD, httpContextAccessor, viewEngine, entityContextBASE, env, actionContextAccessor, utilServicioIntegracionContinua, servicesUtilVirtuosoAndReplication, oAuth, appLifetime, availableServices, logger, loggerFactory)
+        public AdministrarVistasController(LoggingService loggingService, ConfigService configService, EntityContext entityContext, RedisCacheWrapper redisCacheWrapper, GnossCache gnossCache, VirtuosoAD virtuosoAD, IHttpContextAccessor httpContextAccessor, ICompositeViewEngine viewEngine, EntityContextBASE entityContextBASE, IWebHostEnvironment env, IUtilServicioIntegracionContinua utilServicioIntegracionContinua, IServicesUtilVirtuosoAndReplication servicesUtilVirtuosoAndReplication, IOAuth oAuth, IHostApplicationLifetime appLifetime, IAvailableServices availableServices, ILogger<AdministrarVistasController> logger, ILoggerFactory loggerFactory)
+            : base(loggingService, configService, entityContext, redisCacheWrapper, gnossCache, virtuosoAD, httpContextAccessor, viewEngine, entityContextBASE, env,utilServicioIntegracionContinua, servicesUtilVirtuosoAndReplication, oAuth, appLifetime, availableServices, logger, loggerFactory)
         {
             mViews = "Views";
             pathResourceDefault = $"/{VIEWS_DIRECTORY}/CMSPagina/ListadoRecursos/Vistas/";
@@ -128,7 +127,8 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
         [HttpPost]
 		[TypeFilter(typeof(PermisosAdministracion), Arguments = new object[] { new ulong[] { (ulong)PermisoComunidad.GestionarVistas } })]
 		[TypeFilter(typeof(PermisosAdministracionEcosistema), Arguments = new object[] { new ulong[] { (ulong)PermisoEcosistema.GestionarVistasEcosistema } })]
-		public ActionResult Web(string PaginasPersonalizables, string FormulariosSemanticos, IFormFile Fichero, ManageViewsViewModel.Action Accion)
+        [TypeFilter(typeof(LimitarPeticionesAdministracion), Arguments = new object[] { 30, 120, 15 })]
+        public ActionResult Web(string PaginasPersonalizables, string FormulariosSemanticos, IFormFile Fichero, ManageViewsViewModel.Action Accion)
         {
             CargarDatos();
             string error = "";
@@ -278,7 +278,8 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
 		[TypeFilter(typeof(PermisosAdministracion), Arguments = new object[] { new ulong[] { (ulong)PermisoComunidad.GestionarVistas } })]
 		[TypeFilter(typeof(PermisosAdministracionEcosistema), Arguments = new object[] { new ulong[] { (ulong)PermisoEcosistema.GestionarVistasEcosistema } })]
 		[TypeFilter(typeof(AccesoIntegracionAttribute))]
-		public ActionResult Resultados(string PaginasPersonalizables, IFormFile Fichero, ManageViewsViewModel.Action Accion)
+        [TypeFilter(typeof(LimitarPeticionesAdministracion), Arguments = new object[] { 30, 120, 15 })]
+        public ActionResult Resultados(string PaginasPersonalizables, IFormFile Fichero, ManageViewsViewModel.Action Accion)
         {
             string PaginaResultados = PaginasPersonalizables;
             CargarDatos();
@@ -458,7 +459,8 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
 		[TypeFilter(typeof(PermisosAdministracion), Arguments = new object[] { new ulong[] { (ulong)PermisoComunidad.GestionarVistas } })]
 		[TypeFilter(typeof(PermisosAdministracionEcosistema), Arguments = new object[] { new ulong[] { (ulong)PermisoEcosistema.GestionarVistasEcosistema } })]
 		[TypeFilter(typeof(AccesoIntegracionAttribute))]
-		public ActionResult Facetas(string PaginasPersonalizables, IFormFile Fichero, ManageViewsViewModel.Action Accion)
+        [TypeFilter(typeof(LimitarPeticionesAdministracion), Arguments = new object[] { 30, 120, 15 })]
+        public ActionResult Facetas(string PaginasPersonalizables, IFormFile Fichero, ManageViewsViewModel.Action Accion)
         {
             string PaginaFacetas = PaginasPersonalizables;
 
@@ -532,7 +534,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
                                 {
                                     CargadorFacetas cargadorFacetas = new CargadorFacetas();
                                     cargadorFacetas.Url = mConfigService.ObtenerUrlServicioFacetas();
-                                    cargadorFacetas.InvalidarVistas(UsuarioActual.IdentidadID);
+                                    cargadorFacetas.InvalidarVistas(UsuarioActual.IdentidadID, ProyectoSeleccionado.Clave);
                                 }
                                 else
                                 {
@@ -583,7 +585,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
                 {
                     CargadorFacetas cargadorFacetas = new CargadorFacetas();
                     cargadorFacetas.Url = mConfigService.ObtenerUrlServicioFacetas();
-                    cargadorFacetas.InvalidarVistas(UsuarioActual.IdentidadID);
+                    cargadorFacetas.InvalidarVistas(UsuarioActual.IdentidadID, ProyectoSeleccionado.Clave);
                 }
                 else
                 {
@@ -618,7 +620,8 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
 		[TypeFilter(typeof(PermisosAdministracion), Arguments = new object[] { new ulong[] { (ulong)PermisoComunidad.GestionarVistas } })]
 		[TypeFilter(typeof(PermisosAdministracionEcosistema), Arguments = new object[] { new ulong[] { (ulong)PermisoEcosistema.GestionarVistasEcosistema } })]
 		[TypeFilter(typeof(AccesoIntegracionAttribute))]
-		public ActionResult CMS(string ComponentePersonalizable, Guid idPersonalizacion, string Nombre, IFormFile Fichero, ManageViewsViewModel.Action Accion)
+        [TypeFilter(typeof(LimitarPeticionesAdministracion), Arguments = new object[] { 30, 120, 15 })]
+        public ActionResult CMS(string ComponentePersonalizable, Guid idPersonalizacion, string Nombre, IFormFile Fichero, ManageViewsViewModel.Action Accion)
         {
             CargarDatos();
             string error = "";
@@ -737,7 +740,8 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
 		[TypeFilter(typeof(PermisosAdministracion), Arguments = new object[] { new ulong[] { (ulong)PermisoComunidad.GestionarVistas } })]
 		[TypeFilter(typeof(PermisosAdministracionEcosistema), Arguments = new object[] { new ulong[] { (ulong)PermisoEcosistema.GestionarVistasEcosistema } })]
 		[TypeFilter(typeof(AccesoIntegracionAttribute))]
-		public ActionResult CMSExtra(string ComponentePersonalizable, Guid idPersonalizacion, bool ResourcesExtra, bool Identities, bool IdentitiesExtra, ManageViewsViewModel.Action Accion, IFormFile Fichero, string Nombre)
+        [TypeFilter(typeof(LimitarPeticionesAdministracion), Arguments = new object[] { 30, 120, 15 })]
+        public ActionResult CMSExtra(string ComponentePersonalizable, Guid idPersonalizacion, bool ResourcesExtra, bool Identities, bool IdentitiesExtra, ManageViewsViewModel.Action Accion, IFormFile Fichero, string Nombre)
         {
             CargarDatos();
             string error = "";
@@ -847,7 +851,8 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
         [HttpPost]
 		[TypeFilter(typeof(PermisosAdministracion), Arguments = new object[] { new ulong[] { (ulong)PermisoComunidad.GestionarVistas } })]
 		[TypeFilter(typeof(PermisosAdministracionEcosistema), Arguments = new object[] { new ulong[] { (ulong)PermisoEcosistema.GestionarVistasEcosistema } })]
-		public ActionResult CompartirVistasEnDominio(string pDominio)
+        [TypeFilter(typeof(LimitarPeticionesAdministracion), Arguments = new object[] { 30, 120, 15 })]
+        public ActionResult CompartirVistasEnDominio(string pDominio)
         {
             string error = string.Empty;
 
@@ -879,7 +884,8 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
         [HttpPost]
 		[TypeFilter(typeof(PermisosAdministracion), Arguments = new object[] { new ulong[] { (ulong)PermisoComunidad.GestionarVistas } })]
 		[TypeFilter(typeof(PermisosAdministracionEcosistema), Arguments = new object[] { new ulong[] { (ulong)PermisoEcosistema.GestionarVistasEcosistema } })]
-		public ActionResult DejarDeCompartirVistasEnDominio(string pDominios)
+        [TypeFilter(typeof(LimitarPeticionesAdministracion), Arguments = new object[] { 30, 120, 15 })]
+        public ActionResult DejarDeCompartirVistasEnDominio(string pDominios)
         {
             string error = string.Empty;
 
@@ -1701,7 +1707,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
                         pagina = $"CMS/{pagina.Replace($"/{VIEWS_DIRECTORY}/CMSPagina", "").TrimStart('/').Replace(".cshtml", $"_{modelo.Nombre}$$${modelo.PersonalizacionComponenteID}.cshtml")}";
                         modelo.Ruta = pagina;
 
-                        HttpResponseMessage resultado = InformarCambioAdministracion("VistasCMS", JsonConvert.SerializeObject(modelo));
+                        HttpResponseMessage resultado = InformarCambioAdministracion("VistasCMS", JsonSerializer.Serialize(modelo));
                         if (!resultado.StatusCode.Equals(HttpStatusCode.OK))
                         {
                             throw new ExcepcionWeb("Contacte con el administrador del Proyecto, no es posible atender la petición.");
@@ -1780,7 +1786,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
                             nombre = $"/Recursos/{pagina}.cshtml";
                         }
 
-                        HttpResponseMessage resultado = InformarCambioAdministracion("Vistas", JsonConvert.SerializeObject(new KeyValuePair<string, string>(nombre, "")));
+                        HttpResponseMessage resultado = InformarCambioAdministracion("Vistas", JsonSerializer.Serialize(new KeyValuePair<string, string>(nombre, "")));
                         if (!resultado.StatusCode.Equals(HttpStatusCode.OK))
                         {
                             throw new ExcepcionWeb("Contacte con el administrador del Proyecto, no es posible atender la petición.");
@@ -1841,7 +1847,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
                     {
                         string nombre = pVista;
 
-                        HttpResponseMessage resultado = InformarCambioAdministracion("VistasCMS", JsonConvert.SerializeObject(new KeyValuePair<string, string>(nombre, "")));
+                        HttpResponseMessage resultado = InformarCambioAdministracion("VistasCMS", JsonSerializer.Serialize(new KeyValuePair<string, string>(nombre, "")));
 
                         if (!resultado.StatusCode.Equals(HttpStatusCode.OK))
                         {
@@ -1943,7 +1949,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
 
             CargadorFacetas cargadorFacetas = new CargadorFacetas();
             cargadorFacetas.Url = mConfigService.ObtenerUrlServicioFacetas();
-            cargadorFacetas.InvalidarVistas(UsuarioActual.IdentidadID);
+            cargadorFacetas.InvalidarVistas(UsuarioActual.IdentidadID, ProyectoSeleccionado.Clave);
         }
 
         private void LimpiarCacheVista(string pVista, bool pEsRdfType)
