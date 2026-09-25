@@ -58,7 +58,7 @@
 		<Content Remove="wwwroot\img\configuracionOC\string.png" />
 	</ItemGroup>
 	<ItemGroup>
-		<PackageReference Include="GnossApiWrapper.NetCore" Version="8.0.6" />
+		<PackageReference Include="GnossApiWrapper.NetCore" Version="8.0.7" />
 		<PackageReference Include="Microsoft.AspNetCore.DataProtection.StackExchangeRedis" Version="10.0.7" />
 		<PackageReference Include="Microsoft.AspNetCore.Mvc.Razor.RuntimeCompilation" Version="10.0.7" />
 		<PackageReference Include="Microsoft.Build" Version="18.4.0" />

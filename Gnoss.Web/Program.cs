@@ -11,12 +11,13 @@ using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.FileProviders;
-using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Serilog;
 using System;
-
+using System.Diagnostics;
+using System.IO;
+using System.Runtime.InteropServices.JavaScript;
 
 namespace Gnoss.Web
 {

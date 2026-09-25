@@ -12344,7 +12344,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
             if (gestDoc.ListaDocumentos.ContainsKey(pDocumentoID))
             {
                 Documento doc = gestDoc.ListaDocumentos[pDocumentoID];
-                string urlDoc = mControladorBase.UrlsSemanticas.GetURLBaseRecursosEditarDocumento(BaseURL, UtilIdiomas, NombreProy, UrlPerfil, doc, 0, (IdentidadOrganizacion != null));
+                string urlDoc = mControladorBase.UrlsSemanticas.GetURLBaseRecursosEditarDocumento(BaseURL, UtilIdiomas, NombreProy, UrlPerfil, doc, 1, (IdentidadOrganizacion != null));
                 string titulo = UtilCadenas.ObtenerTextoDeIdioma(doc.Titulo, UtilIdiomas.LanguageCode, ParametrosGeneralesRow.IdiomaDefecto);
                 return GnossResultERROR(UtilIdiomas.GetText("PERFILBASESUBIR", "ERRORSUBIRDOCEXISTE", titulo, urlDoc));
             }
