@@ -1520,15 +1520,15 @@
 		</pagina>
 		<pagina>
 			<key>@#@@URLSEM,|,SOLICITDESACCESOCOM@@#@</key>
-			<value>AdministrarSolicitudesNuevasComunidades</value>
+			<value>AdministrarSolicitudesNuevasComunidades?ecosistema=true</value>
 		</pagina>
 		<pagina>
 			<key>@#@@URLSEM,|,SOLICITDESACCESOCOM@@#@/accept</key>
-			<value>AdministrarSolicitudesNuevasComunidades/aceptar_peticion</value>
+			<value>AdministrarSolicitudesNuevasComunidades/aceptar_peticion?ecosistema=true</value>
 		</pagina>
 		<pagina>
 			<key>@#@@URLSEM,|,SOLICITDESACCESOCOM@@#@/refuse</key>
-			<value>AdministrarSolicitudesNuevasComunidades/rechazar_peticion</value>
+			<value>AdministrarSolicitudesNuevasComunidades/rechazar_peticion?ecosistema=true</value>
 		</pagina>
 		<pagina>
 			<key>@#@@URLSEM,|,MISCONTRIBUCIONES@@#@/{*searchInfo}</key>
@@ -1692,19 +1692,19 @@
 
 		<pagina>
 			<key>@#@@URLSEM,|,ADMINOPCIONESPLATAFORMA@@#@</key>
-			<value>AdministrarOpcionesAvanzadasPlataforma</value>
+			<value>AdministrarOpcionesAvanzadasPlataforma?ecosistema=true</value>
 		</pagina>
 		<pagina>
 			<key>@#@@URLSEM,|,ADMINOPCIONESPLATAFORMA@@#@/save</key>
-			<value>AdministrarOpcionesAvanzadasPlataforma/Guardar</value>
+			<value>AdministrarOpcionesAvanzadasPlataforma/Guardar?ecosistema=true</value>
 		</pagina>
 		<pagina>
 			<key>@#@@URLSEM,|,ADMINOPCIONESPLATAFORMA@@#@/shutdown</key>
-			<value>AdministrarOpcionesAvanzadasPlataforma/Shutdown</value>
+			<value>AdministrarOpcionesAvanzadasPlataforma/Shutdown?ecosistema=true</value>
 		</pagina>
 		<pagina>
 			<key>@#@@URLSEM,|,ADMINOPCIONESPLATAFORMA@@#@/add-custom-language</key>
-			<value>AdministrarOpcionesAvanzadasPlataforma/AddCustomLanguage</value>
+			<value>AdministrarOpcionesAvanzadasPlataforma/AddCustomLanguage?ecosistema=true</value>
 		</pagina>
 		<pagina>
 			<key>@#@@URLSEM,|,ADMINISTRARCATEGORIASECOSISTEMA@@#@</key>
