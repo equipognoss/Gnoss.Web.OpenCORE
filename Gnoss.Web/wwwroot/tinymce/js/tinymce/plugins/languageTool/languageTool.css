@@ -1,0 +1,188 @@
+/* languageTool.css
+ * Estilos del corrector:
+ *  - .lt-marker : subrayado de errores dentro del editor (se carga por content_css)
+ *  - .lt-overlay / .lt-modal... : modal "palabra por palabra" estilo Word
+ */
+
+/* --- Marcador de error en el editor --- */
+.lt-marker {
+    background: transparent;
+    border-radius: 3px;
+    cursor: pointer;
+    border-bottom: 2px solid #ef4444;
+    box-shadow: 0 1px 0 0 rgba(239, 68, 68, 0.35);
+    transition: background-color 0.12s ease;
+}
+.lt-marker:hover {
+    background: rgba(239, 68, 68, 0.12);
+}
+
+/* --- Overlay / modal --- */
+.lt-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(15, 23, 42, 0.45);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 100000;
+    padding: 16px;
+    box-sizing: border-box;
+}
+
+.lt-modal {
+    background: #ffffff;
+    color: #0f172a;
+    border-radius: 10px;
+    width: min(560px, 94vw);
+    max-height: 82vh;
+    display: flex;
+    flex-direction: column;
+    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.30);
+    font-family: system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+}
+
+.lt-modal-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 16px;
+    border-bottom: 1px solid #e2e8f0;
+    flex-shrink: 0;
+}
+
+.lt-modal-title {
+    font-size: 15px;
+    font-weight: 600;
+    color: #0f172a;
+}
+
+.lt-modal-close {
+    border: 0;
+    background: transparent;
+    color: #64748b;
+    font-size: 22px;
+    line-height: 1;
+    cursor: pointer;
+    padding: 4px 8px;
+    border-radius: 6px;
+}
+.lt-modal-close:hover {
+    background: #f1f5f9;
+    color: #0f172a;
+}
+
+.lt-modal-body {
+    padding: 16px;
+    overflow-y: auto;
+    flex: 1;
+}
+
+.lt-progress {
+    font-size: 12px;
+    color: #64748b;
+    margin-bottom: 10px;
+}
+
+.lt-context {
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    padding: 12px;
+    line-height: 1.6;
+    word-break: break-word;
+}
+
+.lt-ctx-word {
+    color: #b91c1c;
+    font-weight: 600;
+    text-decoration: underline wavy #ef4444 1px;
+    text-underline-offset: 4px;
+    padding: 0 2px;
+}
+
+.lt-msg {
+    margin: 12px 0 2px;
+    font-size: 14px;
+    color: #334155;
+    font-weight: 500;
+}
+.lt-msg.lt-empty {
+    color: #16a34a;
+    font-weight: 600;
+}
+
+.lt-cat {
+    font-size: 12px;
+    color: #94a3b8;
+    margin-bottom: 4px;
+}
+
+.lt-suggestions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin: 12px 0;
+}
+
+.lt-suggestion {
+    border: 1px solid #2563eb;
+    color: #2563eb;
+    background: #ffffff;
+    border-radius: 999px;
+    padding: 6px 16px;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 600;
+    font-family: inherit;
+}
+.lt-suggestion:hover {
+    background: #2563eb;
+    color: #ffffff;
+}
+
+.lt-no-sugg {
+    font-size: 13px;
+    color: #94a3b8;
+    font-style: italic;
+}
+
+.lt-actions {
+    display: flex;
+    gap: 8px;
+    margin-top: 8px;
+    flex-wrap: wrap;
+    align-items: center;
+}
+
+.lt-btn {
+    border: 1px solid #cbd5e1;
+    background: #ffffff;
+    color: #0f172a;
+    border-radius: 8px;
+    padding: 8px 14px;
+    font-size: 14px;
+    cursor: pointer;
+    font-family: inherit;
+}
+.lt-btn:hover:not(:disabled) {
+    background: #f1f5f9;
+}
+.lt-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.lt-btn-primary {
+    background: #2563eb;
+    border-color: #2563eb;
+    color: #ffffff;
+    font-weight: 600;
+}
+.lt-btn-primary:hover:not(:disabled) {
+    background: #1d4ed8;
+}
+
+.lt-btn-nav {
+    margin-left: auto;
+}

@@ -12,13 +12,13 @@ const operativaTinyMceConfig = {
         this.config(pParams);
         this.configEvents();
         this.configRutas();
-        this.triggerEvents();     
+        this.triggerEvents();
     },
 
     /*
      * Inicializar elementos de la vista
      * */
-    config: function (pParams) {     
+    config: function (pParams) {
         this.Options = {};
         // Flag que indica que se han descargado las hojas de estilo personalizadas
         this.customCssForTinyMCEditorPreviewDownload = false;
@@ -30,7 +30,7 @@ const operativaTinyMceConfig = {
         this.CUSTOM_CSS_FOR_TINY_MCE_KEY = "CUSTOM_CSS_FOR_TINY_MCE";
         this.CUSTOM_CSS_FOR_TINY_MCE_TIMESTAMP_KEY = "CUSTOM_CSS_FOR_TINY_MCE_TIMESTAMP";
         // Tiempo que se cacheará los ficheros CSS - 7 días en milisegundos
-        this.CUSTOM_CSS_CACHE_EXPIRATION_TIME = 7 * 24 * 60 * 60 * 1000;        
+        this.CUSTOM_CSS_CACHE_EXPIRATION_TIME = 7 * 24 * 60 * 60 * 1000;
         // Dominio para guardado de CSS asignado
         this.currentDomain = $("#inpt_baseUrlBusqueda").val();
         this.widthToDisplayToolbarsInRows = 650;
@@ -44,11 +44,19 @@ const operativaTinyMceConfig = {
         this.allowJSElements = "true";
         // Plugins adicionales a usar // MathJax, MathType
         // this.additionalPlugins = ""; Versión MathType de eqneditor
-        this.additionalPlugins = {};        
+        this.additionalPlugins = {};
         // CSS de comunidad para logar una previsualización de los componentes HTML personalizados
-        this.cssFilesArray = $(".styleForCkEditorPreview"); 
+        this.cssFilesArray = $(".styleForCkEditorPreview");
         // Indicador de que la hoja de estilos para modificar el propio TinyMCE se ha añadido correctamente
         this.isSetLinkCssForTinyInHead = false;
+        // Configuración del corrector ortográfico languageTool (languagetool.enabled para activar)
+        this.languageToolConfig = (pParams && pParams.languageTool) || {};
+        this.useLanguageTool = this.languageToolConfig.enabled !== false;
+        // Carga perezosa por visibilidad: no crear la instancia TinyMCE hasta
+        // que el input sea visible en pantalla (p. ej. una pestaña oculta).
+        // Desactivar con initWhenVisible: false si se requiere creación inmediata.
+        this.initWhenVisible = (pParams && pParams.initWhenVisible) !== false;
+        this.initPollIntervalMs = (pParams && pParams.initPollIntervalMs) || 300;
     },
 
     /**
@@ -60,35 +68,35 @@ const operativaTinyMceConfig = {
     /**
      * Método para configurar las rutas necesarias para el uso de la operativa
      */
-    configRutas: function(){
+    configRutas: function () {
         const that = this;
 
-		this.urlbase = $('input.inpt_baseURL').val();
+        this.urlbase = $('input.inpt_baseURL').val();
 
-		if (document.URL.indexOf('https://') == 0) {
-			if (this.urlbase.indexOf('https://') == -1) {
-				this.urlbase = this.urlbase.replace('http', 'https');
-			}
-		}    
+        if (document.URL.indexOf('https://') == 0) {
+            if (this.urlbase.indexOf('https://') == -1) {
+                this.urlbase = this.urlbase.replace('http', 'https');
+            }
+        }
         // Configuración de las rutas a utilizar para la carga de imágenes    
         this.ImageBrowseUrl = `${this.urlbase}/conector-ckeditor?v=0`;
         this.ImageUploadUrl = `${this.urlbase}/conector-ckeditor?v=0`;
         // Configuración ruta para obtener las hojas de estilo customizadas para previsualización del editor    
-	    this.urlGetHojaDeEstilosPersonalizado = `${$("#inpt_baseUrlBusqueda").val()}/custom-stylesheet/get-custom-css`;
+        this.urlGetHojaDeEstilosPersonalizado = `${$("#inpt_baseUrlBusqueda").val()}/custom-stylesheet/get-custom-css`;
     },
 
     /**
      * Lanzar comportamientos u operativas necesarias para el funcionamiento de la sección
      */
-    triggerEvents: async function(){
+    triggerEvents: async function () {
         const that = this;
 
         // Cargar hoja de estilos personalizada
         this.getBasicCssForTinyMceEditorPreview();
         try {
-        // Intentar cargar los estilos personalizados
-        // Realizar petición para cargar los customizados. Realizar una única comprobación para las inistancias de los TinyMCE        
-        await this.getCustomCssForTinyMceEditorPreview();
+            // Intentar cargar los estilos personalizados
+            // Realizar petición para cargar los customizados. Realizar una única comprobación para las inistancias de los TinyMCE        
+            await this.getCustomCssForTinyMceEditorPreview();
         } catch (error) {
             console.warn("No se pudieron cargar los estilos personalizados para TinyMCE:", error);
             // Se puede continuar sin ellos, cargando solo los básicos
@@ -97,10 +105,10 @@ const operativaTinyMceConfig = {
         // Continuar normalmente con el setup del TinyMCE
         // Observador para editores
         setTimeout(() => {
-            setupObserverForTinyMCE(['cke', 'tcme'], function(element) {
+            setupObserverForTinyMCE(['cke', 'tcme'], function (element) {
                 that.setLoadingForTinyMCEInstance();
             });
-        }, 500);        
+        }, 500);
     },
 
 
@@ -109,18 +117,18 @@ const operativaTinyMceConfig = {
      * y se cargan los ficheros CSS necesarios para la previsualización del editor.     
      * @param {*} jqueryInputsForTinyMceEditor Instancias de los inputs que se van a cargar como TinyMCE
      */
-    setLoadingForTinyMCEInstance: function(){
+    setLoadingForTinyMCEInstance: function () {
         const that = this;
         // Asignación de los inputs TinyMCE a los inputs necesarios        
         const jqueryInputsForTinyMceEditor = $(`.cke:not(.${this.tinyLoadedClassName}), .tcme:not(.${this.tinyLoadedClassName})`);
         // Mostrar pequeño loading
-        $.each(jqueryInputsForTinyMceEditor, function(){            
+        $.each(jqueryInputsForTinyMceEditor, function () {
             const tinyMCEditor = $(this);
             $(this).addClass(that.tinyLoadedClassName);
-            loadingMostrar(tinyMCEditor.parent());                                 
+            loadingMostrar(tinyMCEditor.parent());
         });
-        
-        this.initTinyMCEditor(jqueryInputsForTinyMceEditor);    
+
+        this.initTinyMCEditor(jqueryInputsForTinyMceEditor);
     },
 
     /**
@@ -129,59 +137,181 @@ const operativaTinyMceConfig = {
      * La carga de los ficheros CSS sólo se iniciaría una vez con la carga de la operativa
      * @param {*} jqueryInputsForTinyMceEditor Instancias de los inputs que se van a cargar como TinyMCE
      */
-    initTinyMCEditor: function(jqueryInputsForTinyMceEditor){
+    initTinyMCEditor: function (jqueryInputsForTinyMceEditor) {
         const that = this;
         // Usa la configuración por defecto si no se proporciona una toolbar
         let toolbar = this.pParams?.toolbar;
 
         // Establecer el idioma para el Editor
         this.handleGetCustomLanguageForTinyMCE();
-       
+
         // Aplicar la toolbar a todos los inputs
-        $.each(jqueryInputsForTinyMceEditor, function(){            
-            const tinyMCEditorInput = $(this); 
-            toolbar = that.handleGetTinyMCEditorToolbarForInput(tinyMCEditorInput);                                                                
-            that.createTinyMCEInstanceWithToolbar(tinyMCEditorInput, toolbar);
+        $.each(jqueryInputsForTinyMceEditor, function () {
+            const tinyMCEditorInput = $(this);
+            toolbar = that.handleGetTinyMCEditorToolbarForInput(tinyMCEditorInput);
+
+            // Carga perezosa por visibilidad: si el input está oculto
+            // (p. ej. dentro de una pestaña no activa, display:none), la
+            // instancia TinyMCE se crea cuando llegue a hacerse visible.
+            if (that.initWhenVisible && !that.isElementVisible(tinyMCEditorInput)) {
+                that.createTinyMCEInstanceWhenVisible(tinyMCEditorInput, toolbar);
+            } else {
+                that.createTinyMCEInstanceWithToolbar(tinyMCEditorInput, toolbar);
+            }
         });
 
-    },  
-    
+    },
+
+    /**
+     * Indica si un input (o alguno de sus ancestros) está oculto en pantalla.
+     * Solo se tiene en cuenta display:none / visibility:hidden: NO se considera
+     * "oculto" un contenedor con ancho 0 pero visible, para no aplazar edits
+     * legítimos.
+     * @param {*} $el Elemento jQuery
+     * @returns true si el elemento y sus ancestros son visibles
+     */
+    isElementVisible: function ($el) {
+        const node = $el && $el[0];
+        if (!node || !node.ownerDocument) return true;
+        const defaultView = node.ownerDocument.defaultView;
+        let current = node;
+        while (current && current.nodeType === 1) {
+            const style = defaultView && defaultView.getComputedStyle
+                ? defaultView.getComputedStyle(current)
+                : null;
+            if (style && (style.display === 'none' || style.visibility === 'hidden')) {
+                return false;
+            }
+            current = current.parentNode;
+        }
+        return true;
+    },
+
+    /**
+     * Crea la instancia TinyMCE solo cuando el input sea visible en pantalla.
+     * Mientras permanezca oculto se vigila su visibilidad (initPollIntervalMs);
+     * si el elemento desaparece del DOM sin haberse visto, no se crea.
+     * @param {*} jqueryInputForTinyMceInstance Input/TextArea donde se creará el TinyMCE
+     * @param {*} customToolbar Toolbar a aplicar al editor
+     */
+    createTinyMCEInstanceWhenVisible: function (jqueryInputForTinyMceInstance, customToolbar) {
+        const that = this;
+
+        if (that.isElementVisible(jqueryInputForTinyMceInstance)) {
+            that.createTinyMCEInstanceWithToolbar(jqueryInputForTinyMceInstance, customToolbar);
+            return;
+        }
+
+        const inputNode = jqueryInputForTinyMceInstance[0];
+        const timer = setInterval(function () {
+            // El elemento desapareció del DOM antes de volverse visible: no crear
+            if (!inputNode || !inputNode.ownerDocument || !inputNode.ownerDocument.contains(inputNode)) {
+                clearInterval(timer);
+                return;
+            }
+            if (that.isElementVisible(jqueryInputForTinyMceInstance)) {
+                clearInterval(timer);
+                that.createTinyMCEInstanceWithToolbar(jqueryInputForTinyMceInstance, customToolbar);
+            }
+        }, that.initPollIntervalMs);
+    },
+
     /**
      * Método para construir el toolbar del editor en base al input textArea. Según la clase que tenga ese input, se asociará un toolbar u otro
      * @param {*} tinyMCEditorInput 
      * @returns Devuelve el array con los plugins del toolbar necesarios
      */
-    handleGetTinyMCEditorToolbarForInput: function(tinyMCEditorInput){                
+    handleGetTinyMCEditorToolbarForInput: function (tinyMCEditorInput) {
         let toolbar = [];
         // Obtener las clase del input
         const inputClasses = tinyMCEditorInput.attr('class').split(' ');
         let useMathPlugin = inputClasses.includes('mathJax') ? true : false;
 
-        this.useSingleLineToolbars = (tinyMCEditorInput.parent().outerWidth() > this.widthToDisplayToolbarsInRows) || (tinyMCEditorInput.parent().outerWidth() == 0)  ;
+        this.useSingleLineToolbars = (tinyMCEditorInput.parent().outerWidth() > this.widthToDisplayToolbarsInRows) || (tinyMCEditorInput.parent().outerWidth() == 0);
 
         // Lógica para seleccionar el toolbar basado en las clases del input
         if (inputClasses.includes('editorHtml')) {
-            toolbar = this.getCompleteToolbar();                        
+            toolbar = this.getCompleteToolbar();
         } else if (inputClasses.includes('recursos')) {
             toolbar = this.getResourcesToolbar();
         } else if (inputClasses.includes('comentarios')) {
             toolbar = this.getComentariesToolbar();
-        } else{
+        } else {
             toolbar = this.getBasicToolbar();
         }
 
         // Añadir fórmulas matemáticas si así se precisa
-        if (useMathPlugin)
-        {        
+        if (useMathPlugin) {
             // Licencia Libre: 
             this.useSingleLineToolbars
-            ? toolbar += " formula"
-            : toolbar.push('formula');
-            
+                ? toolbar += " formula"
+                : toolbar.push('formula');
+
+            this.additionalPlugins = this.handleMathJaxExternalPlugin(useMathPlugin);
             // Requerido para el plugin de MathType
             this.validElements = "*[.*]";
         }
 
+        // El corrector por defecto vive en la barra de estado (junto al
+        // "Nº de palabras"). Solo se añade al toolbar en modo 'toolbar'.
+        const ltUi = (this.languageToolConfig && this.languageToolConfig.ui) || 'statusbar';
+        if (this.useLanguageTool && ltUi !== 'statusbar') {
+            toolbar = this.handleAddLanguageToolButtonToToolbar(toolbar);
+        }
+
+        return toolbar;
+    },
+
+    /**
+     * Método que añade el botón "languageTool" (Corrector) al toolbar construido.
+     * Funciona tanto para toolbars en una sola línea (string) como para arrays de filas.
+     * Por defecto se coloca justo después del botón "fontsize" (Tipografía > Tamaño).
+     * Si el toolbar no incluye fontsize, se usa la posición de languageTool.toolbarPosition
+     * ('start' o 'end', por defecto 'end').
+     * @param {*} toolbar Toolbar construido por los métodos get*Toolbar
+     * @returns Devuelve el toolbar con el botón del corrector añadido si procede
+     */
+    handleAddLanguageToolButtonToToolbar: function (toolbar) {
+        if (!this.useLanguageTool) { return toolbar; }
+
+        // Inserta el botón justo después de "fontsize" dentro de la fila indicada
+        const insertAfterFontsize = function (row) {
+            if (typeof row !== 'string') { return row; }
+            const re = /\bfontsize\b/;
+            if (re.test(row)) {
+                return row.replace(re, 'fontsize | languageTool');
+            }
+            return row;
+        };
+
+        if (Array.isArray(toolbar)) {
+            if (toolbar.length > 0) {
+                for (let i = 0; i < toolbar.length; i++) {
+                    if (typeof toolbar[i] === 'string' && /\bfontsize\b/.test(toolbar[i])) {
+                        toolbar[i] = insertAfterFontsize(toolbar[i]);
+                        return toolbar;
+                    }
+                }
+                // Sin fontsize en el toolbar: usar la posición configurada
+                const atStart = this.languageToolConfig.toolbarPosition === 'start';
+                const target = atStart ? 0 : toolbar.length - 1;
+                const row = (toolbar[target] || '').trim();
+                toolbar[target] = atStart
+                    ? (row.length > 0 ? 'languageTool | ' + row : 'languageTool')
+                    : (row.length > 0 ? row + ' | languageTool' : 'languageTool');
+            } else {
+                toolbar.push('languageTool');
+            }
+        } else if (typeof toolbar === 'string') {
+            if (/\bfontsize\b/.test(toolbar)) {
+                toolbar = insertAfterFontsize(toolbar);
+            } else {
+                const atStart = this.languageToolConfig.toolbarPosition === 'start';
+                toolbar = toolbar.trim().length > 0
+                    ? (atStart ? 'languageTool | ' + toolbar : toolbar + ' | languageTool')
+                    : 'languageTool';
+            }
+        }
         return toolbar;
     },
 
@@ -190,62 +320,79 @@ const operativaTinyMceConfig = {
      * @param {*} length 
      * @returns 
      */
-    createRandomId: function(length) {
+    createRandomId: function (length) {
         const caracteres = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz';
         let id = '';
         for (let i = 0; i < length; i++) {
             id += caracteres.charAt(Math.floor(Math.random() * caracteres.length));
         }
         return id;
-    },    
+    },
 
     /**
      * Método para crear el TinyMCE con el toolbar correspondiente
      * @param {*} jqueryInputForTinyMceInstance Input/TextArea donde se creará el TinyMCE
      * @param {*} customToolbar El toolbar asociado que estará disponible para el input/textArea correspondiente
      */
-    createTinyMCEInstanceWithToolbar: function(jqueryInputForTinyMceInstance, customToolbar){       
+    createTinyMCEInstanceWithToolbar: function (jqueryInputForTinyMceInstance, customToolbar) {
         const that = this;
         let previousId = null;
-            
+
 
         // Crear un ID nuevo para evitar problemas de creación de instancias del editor
         const newId = this.createRandomId(6);
         // Comprobar si queryItem tiene un ID asignado
         if (jqueryInputForTinyMceInstance.attr('id')) {
-            previousId = jqueryInputForTinyMceInstance.attr('id');        
+            previousId = jqueryInputForTinyMceInstance.attr('id');
         }
         // Asignar el nuevo ID al elemento y asignarlo a partir del newId
         jqueryInputForTinyMceInstance.attr('id', newId);
         jqueryInputForTinyMceInstance = $(`#${newId}`);
-        
+
         // Formateo correcto del input por si se usa <pre><code></code></pre>
-        const queryItemContent = this.handleConvertPreCodeIntoCompatibleCode(jqueryInputForTinyMceInstance);                     
-        jqueryInputForTinyMceInstance.val(queryItemContent);        
+        const queryItemContent = this.handleConvertPreCodeIntoCompatibleCode(jqueryInputForTinyMceInstance);
+        jqueryInputForTinyMceInstance.val(queryItemContent);
 
         // Input para hacer instancia del Editor
         const queryItem = jqueryInputForTinyMceInstance[0];
 
         // Convierte el array de estilos a una cadena separada por comas
-        const cssFilesString = this.basicCssListFiles.concat(this.customCssListFiles).join(","); 
-        
+        const cssFilesString = this.basicCssListFiles.concat(this.customCssListFiles).join(",");
+
         // Obtener personalizaciones sobre el propio TinyMCE
         this.setLinkCssForTinyInHead();
-                          
+
         tinymce.init({
             target: queryItem,
             // Añadido licencia GPU versión gratuita para V7 - https://www.tiny.cloud/docs/tinymce/latest/license-key/?utm_campaign=console_license_key_message&utm_source=tinymce&utm_medium=referral
             license_key: 'gpl',
             // Método para obtener el idioma para el TinyMCE
-            language: this.tinyMCEditorLanguage,           
-            branding: false,                        
-            plugins: "link, lists, image, table, media, codesample, code, fullscreen, preview, accordion, wordcount, lists advlist, anchor, autolink, formula, quickbars, codeeditor",
+            language: this.tinyMCEditorLanguage,
+            branding: false,
+            plugins: "link, lists, image, table, media, codesample, code, fullscreen, preview, accordion, wordcount, lists advlist, anchor, autolink, formula, quickbars, codeeditor" + (this.useLanguageTool ? ", languageTool" : ""),
             //autosave_ask_before_unload: true,
             //autosave_interval: '20s',
             //autosave_prefix: 'tinymce-autosave-{path}{query}-{id}-',
             //autosave_restore_when_empty: true,
             // autosave_retention: '30m',           
-            toolbar: customToolbar,                        
+            toolbar: customToolbar,
+            // Configuración del corrector LanguageTool (el plugin languageTool lo consume)
+            languageTool: {
+                enabled: this.useLanguageTool,
+                autoCheck: this.languageToolConfig.autoCheck === true,
+                checkOnLoad: this.languageToolConfig.checkOnLoad === true,
+                // Si el servicio no está disponible, se usa el corrector local embebido
+                fallback: this.languageToolConfig.fallback !== false,
+                buttonText: this.languageToolConfig.buttonText || 'Corrector',
+                // Ubicación del control: 'statusbar' (por defecto, junto al nº de
+                // palabras) o 'toolbar' (botón clásico en la barra de herramientas)
+                ui: (this.languageToolConfig && this.languageToolConfig.ui) || 'statusbar',
+                language: this.languageToolConfig.language || this.tinyMCEditorLanguage || 'es',
+                endpoint: this.languageToolConfig.endpoint || '',
+                debounce: this.languageToolConfig.debounce,
+                maxLength: this.languageToolConfig.maxLength,
+                timeoutMs: this.languageToolConfig.timeoutMs
+            },
             // Configurar QuickToolbars para selección de items (Sólo para selección de texto)
             quickbars_insert_toolbar: '',
             quickbars_selection_toolbar: 'bold italic underline | bullist numlist | quicklink',
@@ -257,22 +404,21 @@ const operativaTinyMceConfig = {
             elementpath: false,
             // Anchor plugin
             allow_html_in_named_anchor: true,
-            external_plugins: this.additionalPlugins,            
+            external_plugins: this.additionalPlugins,
             // Permitir cualquier elemento
             valid_elements: '',
-            // Habilitar la revisión ortográfica del navegador
             browser_spellcheck: true,
             // No permitir Barra de Menú
             menubar: false,
             // Estilos personalizados para previsualizar contenido
-            content_css: cssFilesString,
+            content_css: cssFilesString + (this.useLanguageTool ? ",js/tinymce/plugins/languageTool/languageTool.css" : ""),
             // Estilos base para los scrollbars
             content_style: this.contentStyle,
             // Tipo de archivos a aceptar
-            file_picker_types: 'image',                                  
+            file_picker_types: 'image',
             // Método para la subida de imágenes 
-            images_upload_handler: this.handleUploadImageFromTinyMCE,       
-            toolbar_mode: 'sliding',                            
+            images_upload_handler: this.handleUploadImageFromTinyMCE,
+            toolbar_mode: 'sliding',
             // Configurar para actualizar el contenido en input oculto asociado al TinyMCE
             setup: function (editor) {
                 // Añadir propiedad para controlar si se está o no escribiendo en la instancia
@@ -284,13 +430,13 @@ const operativaTinyMceConfig = {
                     // Espaciado al editor
                     editor.getBody().style.padding = '20px';
                     // Ocultar el loading                    
-                    loadingOcultar(jqueryInputForTinyMceInstance.parent());                                        
+                    loadingOcultar(jqueryInputForTinyMceInstance.parent());
                     // Devolver su id previo si existía
-                    jqueryInputForTinyMceInstance.attr('id', previousId); 
+                    jqueryInputForTinyMceInstance.attr('id', previousId);
                     // Asignarle una propiedad para saber el padre de este input (su relacionado)
-                    jqueryInputForTinyMceInstance.data("editorrelated", editor.id);                 
+                    jqueryInputForTinyMceInstance.data("editorrelated", editor.id);
                     // Asignar clase de que ha finalizado la instancia de la clase
-                    jqueryInputForTinyMceInstance.addClass(`${that.tinyLoadedFinishedClassName}`);                                                           
+                    jqueryInputForTinyMceInstance.addClass(`${that.tinyLoadedFinishedClassName}`);
                     // Permitir menú contextual del navegador
                     editor.getBody().addEventListener('contextmenu', function (e) {
                         // Evitar el menú contextual de TinyMCE
@@ -305,7 +451,7 @@ const operativaTinyMceConfig = {
 
                     if (event.type === 'paste') {
                         // Si es un evento de pegado, esperar un corto periodo antes de obtener el contenido
-                        setTimeout(function () {                            
+                        setTimeout(function () {
                             const content = editor.getContent();
                             // Actualizar el valor del input oculto
                             jqueryInputForTinyMceInstance.val(content);
@@ -318,7 +464,7 @@ const operativaTinyMceConfig = {
                                 }
                             }, 500);
                         }, 100); // Esperar 50ms antes de obtener el contenido                        
-                    }else{
+                    } else {
                         // Obtener el contenido del editor
                         const content = editor.getContent();
                         // Actualizar el valor del input oculto
@@ -328,7 +474,7 @@ const operativaTinyMceConfig = {
                             if (editor.isTyping) {
                                 // Disparar el evento 'change' solo si aún se está escribiendo
                                 editor.isTyping = false;
-                                jqueryInputForTinyMceInstance.trigger('change');                            
+                                jqueryInputForTinyMceInstance.trigger('change');
                             }
                         }, 500);
                     }
@@ -340,32 +486,32 @@ const operativaTinyMceConfig = {
                         // Actualizar el valor del input oculto
                         jqueryInputForTinyMceInstance.val(content);
                     }
-                });             
+                });
             },
             // Permitir ocultar el Tab "General" del plugin de Image y dejar activo el de "Cargar"
             init_instance_callback: function (editor) {
-                editor.on("OpenWindow", function(e) {
-                  const uploadBtns = document.querySelectorAll(".tox-dialog__body-nav-item.tox-tab")
-                    if(uploadBtns.length === 2) {
-                      // uploadBtns[0].style.display = "none";
-                      uploadBtns[1].click();
-                     }
-                 })
+                editor.on("OpenWindow", function (e) {
+                    const uploadBtns = document.querySelectorAll(".tox-dialog__body-nav-item.tox-tab")
+                    if (uploadBtns.length === 2) {
+                        // uploadBtns[0].style.display = "none";
+                        uploadBtns[1].click();
+                    }
+                })
             },
 
             // Método para asignar el código disponible
-            codesample_languages: this.handleGetCodeSampleLanguages(),            
+            codesample_languages: this.handleGetCodeSampleLanguages(),
 
             // MathJax Configuración
             // We recommend to set 'draggable_modal' to true to avoid overlapping issues
             // with the different UI modal dialog windows implementations between core and third-party plugins on TinyMCE.
             // @see: https://github.com/wiris/html-integrations/issues/134#issuecomment-905448642
-            draggable_modal: true,                       
+            draggable_modal: true,
             // This option allows you to introduce mathml formulas with wiris plugins.
             // Not enabling this, will provide formulas from beeing created and rendered.
             // extended_valid_elements: '*[.*]',            
             // Por seguridad lo deshabilito. Sólo se habilitará para ToolbarCompleto
-            extended_valid_elements: this.validElements,    
+            extended_valid_elements: this.validElements,
             // Permitir etiquetas style            
             valid_children: '+body[style],+body[link],+body[div],+body[*]',
             // Desactivar la verificación de HTML
@@ -375,7 +521,7 @@ const operativaTinyMceConfig = {
             // No modificar los enlaces
             convert_urls: false,
             paste_as_text: this.getCopyAsTextPlainConfiguration(jqueryInputForTinyMceInstance),
-        });        
+        });
     },
 
     /**
@@ -385,44 +531,57 @@ const operativaTinyMceConfig = {
      * De esta forma se gestiona directamente en la propia operativa.
      * Sólo se añadirá si esta no ha sido añadida con anterioridad
      */
-    setLinkCssForTinyInHead: function(){        
-        if (!this.isSetLinkCssForTinyInHead){
+    setLinkCssForTinyInHead: function () {
+        if (!this.isSetLinkCssForTinyInHead) {
             try {
                 // Fichero de estilos que modifican el propio TinyMCE de forma dinámica y añadirlos al Head        
-                const tinyMceConfigCSS = this.getCurrentScriptUrl().replace("tinymceConfig.js","tinymceConfig.css");                
+                const tinyMceConfigCSS = this.getCurrentScriptUrl().replace("tinymceConfig.js", "tinymceConfig.css");
                 if (tinyMceConfigCSS.trim() !== '') {
                     // Crea un nuevo elemento <link> con los estilos CSS externos
                     var linkTinyMceConfigCSS = $(`<link rel="stylesheet" type="text/css" href="${tinyMceConfigCSS}">`);
-                    linkTinyMceConfigCSS.appendTo('head'); 
+                    linkTinyMceConfigCSS.appendTo('head');
                     this.isSetLinkCssForTinyInHead = true;
                 } else {
                     console.log("El nombre del archivo tinymceConfig.css está vacío.");
                 }
             } catch (error) {
                 console.log("Error al tratar de cargar el fichero tinymceConfig.css");
-            } 
-        }      
+            }
+        }
     },
-    
+
     /**
      * Método que devuelve la ruta en la que se encuentra el fichero Javascript que se está ejecutando.
      * Se utilizará para añadir la hoja CSS para personalizar items del propio TinyMCE de forma dinámica.
      */
-    getCurrentScriptUrl: function(){
+    getCurrentScriptUrl: function () {
         try {
-          throw new Error();
+            throw new Error();
         } catch (error) {
-          const stackTrace = error.stack || '';
-          const match = stackTrace.match(/(https?:\/\/.+\.js)/);
-          return match ? match[1] : '';
+            const stackTrace = error.stack || '';
+            const match = stackTrace.match(/(https?:\/\/.+\.js)/);
+            return match ? match[1] : '';
         }
-    },      
+    },
+
+    /**
+     * Método para devolver el plugin de wiris de MathType. Se ha de cargar en external_plugins
+     * @returns Objeto con la configuración de TinyMCE de Wiris
+     */
+    handleMathJaxExternalPlugin: function (addMathTypePlugin = false) {
+        if (addMathTypePlugin) {
+            return {
+                'tiny_mce_wiris': `plugins/wiris/mathtype-tinymce6/plugin.min.js`,
+            };
+        }
+        return {};
+    },
 
     /**
      * Método que construye un array con los lenguajes disponibles a usar en el plugin de CodeSample
      * @returns Devuelve un array con los lenguajes disponibles. Se añade SPARQL.
      */
-    handleGetCodeSampleLanguages: function(){
+    handleGetCodeSampleLanguages: function () {
         return [
             { text: 'HTML/XML', value: 'markup' },
             { text: 'JavaScript', value: 'javascript' },
@@ -443,12 +602,11 @@ const operativaTinyMceConfig = {
      * Método para obtener el idioma de la página para establecerselo al TinyMCE. Por defecto, si hay algún error, se establecerá el idioma de español "es".
      * @returns 
      */
-    handleGetCustomLanguageForTinyMCE: function(){        
+    handleGetCustomLanguageForTinyMCE: function () {
         const currentLanguage = $("#inpt_Idioma").val().trim();
-        if (currentLanguage.length != 0)
-        {
+        if (currentLanguage.length != 0) {
             this.tinyMCEditorLanguage = currentLanguage;
-        }        
+        }
     },
 
     /**
@@ -461,27 +619,27 @@ const operativaTinyMceConfig = {
         return new Promise((resolve, reject) => {
             const formData = new FormData();
             formData.append('image', blobInfo.blob(), blobInfo.filename());
-    
+
             fetch(operativaTinyMceConfig.ImageBrowseUrl, {
                 method: 'POST',
                 body: formData
             })
-            .then(response => {
-                if (!response.ok) {
-                    throw new Error('HTTP Error: ' + response.status);
-                }
-                return response.json();
-            })
-            .then(data => {
-                if (!data || typeof data.url !== 'string') {
-                    throw new Error('Invalid JSON: ' + JSON.stringify(data));
-                }
-                resolve(data.url);
-            })
-            .catch(error => {
-                reject('Error al subir la imagen: ' + error.message);
-                console.error('Error al subir la imagen:', error);
-            });
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('HTTP Error: ' + response.status);
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    if (!data || typeof data.url !== 'string') {
+                        throw new Error('Invalid JSON: ' + JSON.stringify(data));
+                    }
+                    resolve(data.url);
+                })
+                .catch(error => {
+                    reject('Error al subir la imagen: ' + error.message);
+                    console.error('Error al subir la imagen:', error);
+                });
         });
     },
 
@@ -489,34 +647,34 @@ const operativaTinyMceConfig = {
      * Método para convertir el código existente dentro del Input donde se va a mostrar el TinyMCE en código legible para
      * que el plugin de CodeBlocks lo muestre correctamente en su edición o carga inicializal.
      */
-    handleConvertPreCodeIntoCompatibleCode: function(input){                       
+    handleConvertPreCodeIntoCompatibleCode: function (input) {
         // Encuentra todas las coincidencias de <pre>...</pre> en el texto proporcionado
         var regex = /<pre.*?>[\s\S]*?<code.*?>([\s\S]*?)<\/code><\/pre>/gi;
         let preHTML = input.val();
         var matches = preHTML.match(regex);
-        
+
         // Si no hay coincidencias, devuelve el HTML original sin cambios
         if (!matches) {
             return preHTML;
         }
-        
+
         // Itera sobre todas las coincidencias encontradas
         for (var i = 0; i < matches.length; i++) {
             var preCodeHTML = matches[i];
             // Obtén el contenido HTML dentro de las etiquetas <code>
             var codeContent = preCodeHTML.replace(/<pre.*?>[\s\S]*?<code.*?>([\s\S]*?)<\/code><\/pre>/i, '$1');
             // Realiza las conversiones necesarias en el contenido HTML
-            var convertedContent = codeContent.replace(/<|>/g, function(match) {
+            var convertedContent = codeContent.replace(/<|>/g, function (match) {
                 return (match === '<') ? '&lt;' : '&gt;';
             });
             // Reemplaza el contenido HTML original con el contenido convertido
             preHTML = preHTML.replace(codeContent, convertedContent);
         }
-        
-        // Devuelve el HTML con las conversiones realizadas
-        return preHTML;        
 
-    },   
+        // Devuelve el HTML con las conversiones realizadas
+        return preHTML;
+
+    },
 
     /**
      * Método para cargar las hojas de estilo customizadas por el usuario dentro del editor con el objetivo de poder ver
@@ -525,43 +683,48 @@ const operativaTinyMceConfig = {
      * crea un array con estilos para ser añadidos posteriormente al editor
      * El sistema cachea las vistas 
      * Se utilizará el controller: AdministrarHead/GetHojaDeEstilosPersonalizado
-     */  
+     */
     getCustomCssForTinyMceEditorPreview: function () {
-        const self = this;
         let cssFilesValue = [];
 
+        const that = this;
+
+        // Eliminar posibles entradas antiguas del localStorage
         this.cleanExpiredLocalStorageEntries();
 
-        const cachedCss = localStorage.getItem(`${this.CUSTOM_CSS_FOR_TINY_MCE_KEY}_${this.currentDomain}`);
-        const cachedCssTimestamp = localStorage.getItem(`${this.CUSTOM_CSS_FOR_TINY_MCE_TIMESTAMP_KEY}_${this.currentDomain}`);
+        // Comprobar si los estilos están en el LocalStorage y si son válidos para el dominio actual
+        const isCustomCssForTinyMceInCache = this.checkAndGetCustomCssForTinyMceInCache();
 
-        if (cachedCss && cachedCssTimestamp) {
-            const cacheExpiration = this.CUSTOM_CSS_CACHE_EXPIRATION_TIME;
-            const currentTime = new Date().getTime();
-            if (currentTime - cachedCssTimestamp < cacheExpiration) {
-                cssFilesValue = JSON.parse(cachedCss);
-                return Promise.resolve(cssFilesValue);
-            }
+        // Si están en caché, no es necesario realizar la petición
+        if (isCustomCssForTinyMceInCache) {
+            return Promise.resolve();
         }
 
         return new Promise(function (resolve, reject) {
+            // Realizar la petición
             GnossPeticionAjax(
-                self.urlGetHojaDeEstilosPersonalizado,
+                that.urlGetHojaDeEstilosPersonalizado,
                 null,
                 true
             ).done(function (data) {
+                // Crear un objeto jQuery a partir de la cadena HTML
                 const $html = $(data.trim());
+                // Encontrar todos los elementos <link> dentro del objeto jQuery            
                 const linkElements = $html.filter("link");
-
+                // Añadir los estilos personalizados obtenidos
                 if (linkElements.length > 0) {
                     cssFilesValue = linkElements.map(function () {
                         return $(this).prop("href");
                     }).get();
-                    localStorage.setItem(`${self.CUSTOM_CSS_FOR_TINY_MCE_KEY}_${self.currentDomain}`, JSON.stringify(cssFilesValue));
-                    localStorage.setItem(`${self.CUSTOM_CSS_FOR_TINY_MCE_TIMESTAMP_KEY}_${self.currentDomain}`, new Date().getTime());
+                    // Guardar los estilos en el LocalStorage con el nombre específico del dominio
+                    localStorage.setItem(`${that.CUSTOM_CSS_FOR_TINY_MCE_KEY}_${that.currentDomain}`, JSON.stringify(cssFilesValue));
+                    localStorage.setItem(`${that.CUSTOM_CSS_FOR_TINY_MCE_TIMESTAMP_KEY}_${that.currentDomain}`, new Date().getTime());
                 }
-                resolve(cssFilesValue);
+                // OK Asignación de los estilos personalizados
+                that.customCssListFiles = cssFilesValue;
+                resolve();
             }).fail(function (data) {
+                // KO. Error en la petición.
                 reject(data);
             });
         });
@@ -575,7 +738,7 @@ const operativaTinyMceConfig = {
      * Si no están en caché, devuelve false.
      * @returns {boolean} Devuelve true si los estilos están en caché, false en caso contrario.
      */
-    checkAndGetCustomCssForTinyMceInCache: function(){        
+    checkAndGetCustomCssForTinyMceInCache: function () {
         // Comprobar si los estilos están en el LocalStorage y si son válidos para el dominio actual
         const cachedCss = localStorage.getItem(`${this.CUSTOM_CSS_FOR_TINY_MCE_KEY}_${this.currentDomain}`);
         const cachedCssTimestamp = localStorage.getItem(`${this.CUSTOM_CSS_FOR_TINY_MCE_TIMESTAMP_KEY}_${this.currentDomain}`);
@@ -596,19 +759,19 @@ const operativaTinyMceConfig = {
     /**
      * Método para limpiar el localStorage eliminando las entradas caducadas por dominio para no generar contenido residual del CSS.
      */
-    cleanExpiredLocalStorageEntries: function() {
+    cleanExpiredLocalStorageEntries: function () {
         const that = this;
 
         const currentTime = new Date().getTime();
         const fifteenDaysAgo = currentTime - (15 * 24 * 60 * 60 * 1000); // 15 días en milisegundos
-    
+
         // Recorrer todas las claves del localStorage
         for (let i = 0; i < localStorage.length; i++) {
             const key_TIMESTAMP_KEY = localStorage.key(i);
             // Comprobar si la clave está relacionada con los estilos personalizados y su timestamp es antiguo
-            if (key_TIMESTAMP_KEY.startsWith(`${this.CUSTOM_CSS_FOR_TINY_MCE_TIMESTAMP_KEY}`)) {                                                                
+            if (key_TIMESTAMP_KEY.startsWith(`${this.CUSTOM_CSS_FOR_TINY_MCE_TIMESTAMP_KEY}`)) {
                 // Clave del dominio a eliminar
-                const startIndexDomain = this.CUSTOM_CSS_FOR_TINY_MCE_TIMESTAMP_KEY.length;                
+                const startIndexDomain = this.CUSTOM_CSS_FOR_TINY_MCE_TIMESTAMP_KEY.length;
                 // Obtener el substring que contiene el dominio
                 const domainSubstring = key_TIMESTAMP_KEY.substring(startIndexDomain);
                 const keyDomainTinyMCE = `${this.CUSTOM_CSS_FOR_TINY_MCE_KEY}${domainSubstring}`;
@@ -627,18 +790,18 @@ const operativaTinyMceConfig = {
      * @param {*} jqueryInputForTinyMceInstance 
      * @returns {bool} Devuelve valor booleano indicando si estará o no activado el copiar como texto plano. Por defecto "false".
      */
-    getCopyAsTextPlainConfiguration: function(jqueryInputForTinyMceInstance){
+    getCopyAsTextPlainConfiguration: function (jqueryInputForTinyMceInstance) {
         return jqueryInputForTinyMceInstance.hasClass("cke-copy-plain-text") || jqueryInputForTinyMceInstance.hasClass("tiny-copy-plain-text");
-    },       
+    },
 
     /**
      * Método para cargar las hojas de estilos que se utilizan en la plataforma, tanto para Front como en Backoffice (Bootstrap y librerías similares para lograr una visualización más o menos correcta)
      * Sobre estos css es posible que apliquen personalizaciones realizadas por el usuario las cuales se añadirán en getCustomCssForTinyMceEditorPreview
      */
-    getBasicCssForTinyMceEditorPreview: function(){        
+    getBasicCssForTinyMceEditorPreview: function () {
         // Código CSS para los scrollbars del TinyMCE
-        this.contentStyle = 
-        `
+        this.contentStyle =
+            `
             /* Estilos para el scrollbar vertical */
             /* Cambiar el color del scrollbar */
             ::-webkit-scrollbar {
@@ -663,78 +826,78 @@ const operativaTinyMceConfig = {
             background-color: #c0c0c0;
             }        
         `;
-        
+
         // Comprobar que no es necesario la carga de los CSS ya que ya han sido cargados con anterioridad
-        if (this.basicCssListFiles.length > 0){
+        if (this.basicCssListFiles.length > 0) {
             return;
         }
 
         let cssFilesValue = [];
 
-        if (this.cssFilesArray.length > 0){
-            cssFilesValue = $.map(this.cssFilesArray, function(item) {
+        if (this.cssFilesArray.length > 0) {
+            cssFilesValue = $.map(this.cssFilesArray, function (item) {
                 const link = $(item).prop("href");
                 return link;
             });
             this.basicCssListFiles = cssFilesValue;
-        }    
+        }
     },
 
     /**
      * Método que devuelve la configuración por defecto del toolbar para una configuración completa
      * @returns Array de botones para el toolbar por defecto
      */
-    getCompleteToolbar: function(){        
-        if (this.useSingleLineToolbars){        
-                return `undo redo | fullscreen codeeditor codesample preview | aligncenter alignjustify alignleft alignright | image table media link anchor | forecolor backcolor bold italic underline strikethrough pastetext | hr outdent indent bullist numlist subscript superscript | styles fontfamily fontsize`;            
+    getCompleteToolbar: function () {
+        if (this.useSingleLineToolbars) {
+            return `undo redo | fullscreen codeeditor codesample preview | aligncenter alignjustify alignleft alignright | image table media link anchor | forecolor backcolor bold italic underline strikethrough pastetext | hr outdent indent bullist numlist subscript superscript | styles fontfamily fontsize`;
         }
-        
+
         return ['undo redo | fullscreen codeeditor codesample preview | aligncenter alignjustify alignleft alignright | outdent indent image table media hr link anchor',
-                'styles fontfamily fontsize forecolor backcolor bold italic underline strikethrough | bullist numlist subscript superscript pastetext',]
+            'styles fontfamily fontsize forecolor backcolor bold italic underline strikethrough | bullist numlist subscript superscript pastetext',]
     },
 
     /**
      * Método que devuelve la configuración por defecto del toolbar para una configuración completa
      * @returns Array de botones para el toolbar por defecto
      */
-    getBasicToolbar: function(){         
+    getBasicToolbar: function () {
         // No permitir scripts en editor
-        this.validElements = ""; 
-        this.allowJSElements = false; 
-        
-        if (this.useSingleLineToolbars){                    
-            return `fullscreen | aligncenter alignjustify alignleft alignright | image table media link anchor | forecolor backcolor bold italic underline strikethrough pastetext | hr outdent indent bullist numlist subscript superscript | styles`;  
+        this.validElements = "";
+        this.allowJSElements = false;
 
-        }        
+        if (this.useSingleLineToolbars) {
+            return `fullscreen | aligncenter alignjustify alignleft alignright | image table media link anchor | forecolor backcolor bold italic underline strikethrough pastetext | hr outdent indent bullist numlist subscript superscript | styles`;
+
+        }
         return ['fullscreen | aligncenter alignjustify alignleft alignright | outdent indent image table media hr link anchor',
-                'styles forecolor backcolor bold italic underline strikethrough | bullist numlist subscript superscript pastetext',]
-        
+            'styles forecolor backcolor bold italic underline strikethrough | bullist numlist subscript superscript pastetext',]
+
     },
 
     /**
      * Método que devuelve la configuración por defecto del toolbar para una configuración completa
      * @returns Array de botones para el toolbar por defecto
      */
-    getResourcesToolbar: function(){           
+    getResourcesToolbar: function () {
         // No permitir scripts en editor. Permitir etiquetas script para creación de recursos        
-        this.allowJSElements = false; 
-                
-        if (this.useSingleLineToolbars){                    
-            return `fullscreen codeeditor codesample | aligncenter alignjustify alignleft alignright | image table media link anchor | forecolor backcolor bold italic underline strikethrough pastetext | hr outdent indent bullist numlist subscript superscript | styles`;  
+        this.allowJSElements = false;
+
+        if (this.useSingleLineToolbars) {
+            return `fullscreen codeeditor codesample | aligncenter alignjustify alignleft alignright | image table media link anchor | forecolor backcolor bold italic underline strikethrough pastetext | hr outdent indent bullist numlist subscript superscript | styles`;
         }
-        
+
         return ['fullscreen codeeditor codesample | aligncenter alignjustify alignleft alignright | outdent indent image table media hr link anchor',
-                'styles forecolor backcolor bold italic underline strikethrough | bullist numlist subscript superscript pastetext',]        
-    },    
-      
+            'styles forecolor backcolor bold italic underline strikethrough | bullist numlist subscript superscript pastetext',]
+    },
+
     /**
      * Método que devolverá la configuración básica del toolbar
      * @returns Devuelve un array con los botones necesarios para el toolbar básico
      */
-    getComentariesToolbar: function(){        
+    getComentariesToolbar: function () {
         // No permitir scripts en editor
         this.validElements = "";
-        this.allowJSElements = false; 
+        this.allowJSElements = false;
         return ['link'];
-    },     
+    },
 };
