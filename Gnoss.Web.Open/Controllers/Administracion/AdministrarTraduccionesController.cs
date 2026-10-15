@@ -64,8 +64,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
 		/// Permite ver todas las traducciones.
 		/// </summary>
 		/// <returns></returns>		
-		[TypeFilter(typeof(PermisosAdministracion), Arguments = new object[] { new ulong[] { (ulong)PermisoComunidad.GestionarTraducciones } })]
-		[TypeFilter(typeof(PermisosAdministracionEcosistema), Arguments = new object[] { new ulong[] { (ulong)PermisoEcosistema.GestionarTraduccionesEcosistema } })]
+		[AdministrationPermissions(Community = new[] { PermisoComunidad.GestionarTraducciones }, Ecosystem = new[] { PermisoEcosistema.GestionarTraduccionesEcosistema })]
 		public ActionResult Index()
         {
             EliminarPersonalizacionVistas();
@@ -152,8 +151,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
         /// </summary>
         /// <returns></returns>
         [HttpPost]
-        [TypeFilter(typeof(PermisosAdministracion), Arguments = new object[] { new ulong[] { (ulong)PermisoComunidad.GestionarTraducciones } })]
-        [TypeFilter(typeof(PermisosAdministracionEcosistema), Arguments = new object[] { new ulong[] { (ulong)PermisoEcosistema.GestionarTraduccionesEcosistema } })]
+        [AdministrationPermissions(Community = new[] { PermisoComunidad.GestionarTraducciones }, Ecosystem = new[] { PermisoEcosistema.GestionarTraduccionesEcosistema })]
         public ActionResult CrearLoadModal(TextoTraducidoModel pModelo)
         {
             if (string.IsNullOrEmpty(pModelo.TextoID))
@@ -181,8 +179,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
         /// <param name="pModelo">Modelo con los datos de la nueva traduccion</param>
         /// <returns></returns>
         [HttpPost]
-        [TypeFilter(typeof(PermisosAdministracion), Arguments = new object[] { new ulong[] { (ulong)PermisoComunidad.GestionarTraducciones } })]
-        [TypeFilter(typeof(PermisosAdministracionEcosistema), Arguments = new object[] { new ulong[] { (ulong)PermisoEcosistema.GestionarTraduccionesEcosistema } })]
+        [AdministrationPermissions(Community = new[] { PermisoComunidad.GestionarTraducciones }, Ecosystem = new[] { PermisoEcosistema.GestionarTraduccionesEcosistema })]
         [TypeFilter(typeof(LimitarPeticionesAdministracion), Arguments = new object[] { 30, 120, 15 })]
         public ActionResult Crear(TextoTraducidoModel pModelo)
         {
@@ -224,8 +221,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
         /// </summary>
         /// <param name="pTextoId">Id del texto a editar</param>
         /// <returns></returns>        
-        [TypeFilter(typeof(PermisosAdministracion), Arguments = new object[] { new ulong[] { (ulong)PermisoComunidad.GestionarTraducciones } })]
-        [TypeFilter(typeof(PermisosAdministracionEcosistema), Arguments = new object[] { new ulong[] { (ulong)PermisoEcosistema.GestionarTraduccionesEcosistema } })]
+        [AdministrationPermissions(Community = new[] { PermisoComunidad.GestionarTraducciones }, Ecosystem = new[] { PermisoEcosistema.GestionarTraduccionesEcosistema })]
         public ActionResult EditarLoadModal(string pTextoId)
         {
             EliminarPersonalizacionVistas();
@@ -272,8 +268,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
         /// <param name="pModelo">Datos de la traducción editada</param>
         /// <returns></returns>
         [HttpPost]
-        [TypeFilter(typeof(PermisosAdministracion), Arguments = new object[] { new ulong[] { (ulong)PermisoComunidad.GestionarTraducciones } })]
-        [TypeFilter(typeof(PermisosAdministracionEcosistema), Arguments = new object[] { new ulong[] { (ulong)PermisoEcosistema.GestionarTraduccionesEcosistema } })]
+        [AdministrationPermissions(Community = new[] { PermisoComunidad.GestionarTraducciones }, Ecosystem = new[] { PermisoEcosistema.GestionarTraduccionesEcosistema })]
         [TypeFilter(typeof(LimitarPeticionesAdministracion), Arguments = new object[] { 30, 120, 15 })]
         public ActionResult Editar(TextoTraducidoModel pModelo)
         {
@@ -307,8 +302,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
         /// </summary>
         /// <returns></returns>
         [HttpPost]
-        [TypeFilter(typeof(PermisosAdministracion), Arguments = new object[] { new ulong[] { (ulong)PermisoComunidad.GestionarTraducciones } })]
-        [TypeFilter(typeof(PermisosAdministracionEcosistema), Arguments = new object[] { new ulong[] { (ulong)PermisoEcosistema.GestionarTraduccionesEcosistema } })]
+        [AdministrationPermissions(Community = new[] { PermisoComunidad.GestionarTraducciones }, Ecosystem = new[] { PermisoEcosistema.GestionarTraduccionesEcosistema })]
         [TypeFilter(typeof(LimitarPeticionesAdministracion), Arguments = new object[] { 30, 120, 15 })]
         public ActionResult CrearEntradas()
         {
@@ -434,8 +428,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
         }
 
         [HttpPost]
-        [TypeFilter(typeof(PermisosAdministracion), Arguments = new object[] { new ulong[] { (ulong)PermisoComunidad.GestionarTraducciones } })]
-        [TypeFilter(typeof(PermisosAdministracionEcosistema), Arguments = new object[] { new ulong[] { (ulong)PermisoEcosistema.GestionarTraduccionesEcosistema } })]
+        [AdministrationPermissions(Community = new[] { PermisoComunidad.GestionarTraducciones }, Ecosystem = new[] { PermisoEcosistema.GestionarTraduccionesEcosistema })]
         [TypeFilter(typeof(LimitarPeticionesAdministracion), Arguments = new object[] { 30, 120, 15 })]
         public ActionResult TraducirTexto(string pTexto, string pIdiomaOrigen, List<string> pIdiomasDestino)
         {
@@ -482,8 +475,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
         /// </summary>
         /// <returns></returns>
         [HttpPost]
-        [TypeFilter(typeof(PermisosAdministracion), Arguments = new object[] { new ulong[] { (ulong)PermisoComunidad.GestionarTraducciones } })]
-        [TypeFilter(typeof(PermisosAdministracionEcosistema), Arguments = new object[] { new ulong[] { (ulong)PermisoEcosistema.GestionarTraduccionesEcosistema } })]
+        [AdministrationPermissions(Community = new[] { PermisoComunidad.GestionarTraducciones }, Ecosystem = new[] { PermisoEcosistema.GestionarTraduccionesEcosistema })]
         public ActionResult EliminarEntradas()
         {
             GuardarLogAuditoria();
@@ -665,8 +657,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
         /// </summary>
         /// <returns></returns>
         [HttpPost]
-        [TypeFilter(typeof(PermisosAdministracion), Arguments = new object[] { new ulong[] { (ulong)PermisoComunidad.GestionarTraducciones } })]
-        [TypeFilter(typeof(PermisosAdministracionEcosistema), Arguments = new object[] { new ulong[] { (ulong)PermisoEcosistema.GestionarTraduccionesEcosistema } })]
+        [AdministrationPermissions(Community = new[] { PermisoComunidad.GestionarTraducciones }, Ecosystem = new[] { PermisoEcosistema.GestionarTraduccionesEcosistema })]
         public ActionResult BorrarTraduccion(string textoID)
         {
             GuardarLogAuditoria();

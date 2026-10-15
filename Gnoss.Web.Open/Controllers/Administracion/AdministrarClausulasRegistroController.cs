@@ -62,7 +62,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
 		/// 
 		/// </summary>
 		/// <returns></returns>
-		[TypeFilter(typeof(PermisosAdministracion), Arguments = new object[] { new ulong[] { (ulong)PermisoComunidad.GestionarClausulasDeRegistro } })]
+		[AdministrationPermissions(Community = new[] { PermisoComunidad.GestionarClausulasDeRegistro }, Ecosystem = new[] { PermisoEcosistema.GestionarLaConfiguracionPlataforma })]
 		public ActionResult Index()
         {
 
@@ -76,6 +76,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
 
             // Establecer en el ViewBag el idioma por defecto
             ViewBag.IdiomaPorDefecto = IdiomaPorDefecto;
+            ViewBag.IsEcosystemAdministration = EsAdministracionEcosistema;
 
             EliminarPersonalizacionVistas();
             CargarPermisosAdministracionComunidadEnViewBag();
@@ -87,7 +88,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
         /// </summary>
         /// <returns>ActionResult</returns>
         [HttpPost]
-		[TypeFilter(typeof(PermisosAdministracion), Arguments = new object[] { new ulong[] { (ulong)PermisoComunidad.GestionarClausulasDeRegistro } })]
+		[AdministrationPermissions(Community = new[] { PermisoComunidad.GestionarClausulasDeRegistro }, Ecosystem = new[] { PermisoEcosistema.GestionarLaConfiguracionPlataforma })]
         [TypeFilter(typeof(LimitarPeticionesAdministracion), Arguments = new object[] { 30, 120, 15 })]
         public ActionResult NuevaClausula(ManageRegisterClausesViewModel.ClauseType TipoClausula)
         {
@@ -150,7 +151,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
         /// </summary>
         /// <returns>ActionResult</returns>
         [HttpPost]
-		[TypeFilter(typeof(PermisosAdministracion), Arguments = new object[] { new ulong[] { (ulong)PermisoComunidad.GestionarClausulasDeRegistro } })]
+		[AdministrationPermissions(Community = new[] { PermisoComunidad.GestionarClausulasDeRegistro }, Ecosystem = new[] { PermisoEcosistema.GestionarLaConfiguracionPlataforma })]
         [TypeFilter(typeof(LimitarPeticionesAdministracion), Arguments = new object[] { 30, 120, 15 })]
         public ActionResult Guardar(List<ManageRegisterClausesViewModel.RegisterClauseModel> ListaClausulas)
         {

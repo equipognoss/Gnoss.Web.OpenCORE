@@ -76,7 +76,7 @@ namespace Gnoss.Web.Controllers
         }
 
         [HttpGet]
-        [TypeFilter(typeof(PermisosAdministracionEcosistema), Arguments = new object[] { new ulong[] { (ulong)PermisoEcosistema.AdministrarSolicitudesComunidad } })]
+        [AdministrationPermissions(Ecosystem = new[] { PermisoEcosistema.AdministrarSolicitudesComunidad })]
         public IActionResult Index(int? pagina)
         {
             if (!pagina.HasValue)
@@ -128,7 +128,7 @@ namespace Gnoss.Web.Controllers
         }
 
         [HttpPost]
-		[TypeFilter(typeof(PermisosAdministracionEcosistema), Arguments = new object[] { new ulong[] { (ulong)PermisoEcosistema.AdministrarSolicitudesComunidad } })]
+		[AdministrationPermissions(Ecosystem = new[] { PermisoEcosistema.AdministrarSolicitudesComunidad })]
 		public IActionResult aceptar_peticion(Guid peticion_id)
         {
             ServicioImagenes servicioImagenes = new ServicioImagenes(mLoggingService, mConfigService, mLoggerFactory.CreateLogger<ServicioImagenes>(), mLoggerFactory);
@@ -226,7 +226,7 @@ namespace Gnoss.Web.Controllers
             }
         }
         [HttpPost]
-		[TypeFilter(typeof(PermisosAdministracionEcosistema), Arguments = new object[] { new ulong[] { (ulong)PermisoEcosistema.AdministrarSolicitudesComunidad } })]
+		[AdministrationPermissions(Ecosystem = new[] { PermisoEcosistema.AdministrarSolicitudesComunidad })]
 		public IActionResult rechazar_peticion(Guid peticion_id)
         {
             ServicioImagenes servicioImagenes = new ServicioImagenes(mLoggingService, mConfigService, mLoggerFactory.CreateLogger<ServicioImagenes>(), mLoggerFactory);

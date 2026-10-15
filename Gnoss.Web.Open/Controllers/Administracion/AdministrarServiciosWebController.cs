@@ -39,7 +39,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
         }
 
 		// GET: AdministrarServiciosWeb
-		[TypeFilter(typeof(PermisosAdministracion), Arguments = new object[] { new ulong[] { (ulong)PermisoComunidad.GestionarServiciosExternos } })]
+		[AdministrationPermissions(Community = new[] { PermisoComunidad.GestionarServiciosExternos })]
 		public ActionResult Index()
         {
             EliminarPersonalizacionVistas();
@@ -63,7 +63,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
         /// </summary>
         /// <returns>ActionResult</returns>
         [HttpPost]
-		[TypeFilter(typeof(PermisosAdministracion), Arguments = new object[] { new ulong[] { (ulong)PermisoComunidad.GestionarServiciosExternos } })]
+		[AdministrationPermissions(Community = new[] { PermisoComunidad.GestionarServiciosExternos })]
 		public ActionResult NuevoServicio()
         {
             EliminarPersonalizacionVistas();
@@ -79,7 +79,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
         /// </summary>
         /// <returns>ActionResult</returns>
         [HttpPost]
-		[TypeFilter(typeof(PermisosAdministracion), Arguments = new object[] { new ulong[] { (ulong)PermisoComunidad.GestionarServiciosExternos } })]
+		[AdministrationPermissions(Community = new[] { PermisoComunidad.GestionarServiciosExternos })]
         [TypeFilter(typeof(LimitarPeticionesAdministracion), Arguments = new object[] { 30, 120, 15 })]
         public ActionResult Guardar(List<ProyectoServicioWeb> ListaServicios)
         {

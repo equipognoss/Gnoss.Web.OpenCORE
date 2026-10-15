@@ -261,8 +261,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
 		/// Muestra la pagina de administrar categorías
 		/// </summary>
 		/// <returns>ActionResult</returns>
-		[TypeFilter(typeof(PermisosContenidos), Arguments = new object[] { new ulong[] { (ulong)PermisoContenidos.VerCategorias, (ulong)PermisoContenidos.EliminarCategoria, (ulong)PermisoContenidos.AnyadirCategoria, (ulong)PermisoContenidos.ModificarCategoria } })]
-		[TypeFilter(typeof(PermisosAdministracionEcosistema), Arguments = new object[] { new ulong[] { (ulong)PermisoEcosistema.GestionarCategoriasDePlataforma } })]
+		[AdministrationPermissions(Contents = new[] { PermisoContenidos.VerCategorias, PermisoContenidos.EliminarCategoria, PermisoContenidos.AnyadirCategoria, PermisoContenidos.ModificarCategoria }, Ecosystem = new[] { PermisoEcosistema.GestionarCategoriasDePlataforma })]
 		public ActionResult Index()
 		{
 			EliminarPersonalizacionVistas();
@@ -332,7 +331,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
 		/// </summary>
 		/// <returns></returns>
 		[HttpPost]
-		[TypeFilter(typeof(PermisosContenidos), Arguments = new object[] { new ulong[] { (ulong)PermisoContenidos.ModificarCategoria } })]
+		[AdministrationPermissions(Contents = new[] { PermisoContenidos.ModificarCategoria }, Ecosystem = new[] { PermisoEcosistema.GestionarCategoriasDePlataforma })]
 		public ActionResult LoadDisableMultilenguage()
 		{
 			CargarPermisosCategoriasViewBag();
@@ -350,7 +349,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
 		/// Muestra el panel para realizar la acción solicitada
 		/// </summary>
 		/// <returns>ActionResult</returns>
-		[TypeFilter(typeof(PermisosContenidos), Arguments = new object[] { new ulong[] { (ulong)PermisoContenidos.VerCategorias, (ulong)PermisoContenidos.EliminarCategoria, (ulong)PermisoContenidos.AnyadirCategoria, (ulong)PermisoContenidos.ModificarCategoria } })]
+		[AdministrationPermissions(Contents = new[] { PermisoContenidos.VerCategorias, PermisoContenidos.EliminarCategoria, PermisoContenidos.AnyadirCategoria, PermisoContenidos.ModificarCategoria }, Ecosystem = new[] { PermisoEcosistema.GestionarCategoriasDePlataforma })]
         [TypeFilter(typeof(LimitarPeticionesAdministracion), Arguments = new object[] { 30, 120, 15 })]
         public ActionResult MostrarAccion(string typeAction)
 		{
@@ -506,7 +505,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
         /// Ejecuta la acción solicitada
         /// </summary>
         /// <returns>ActionResult</returns>
-        [TypeFilter(typeof(PermisosContenidos), Arguments = new object[] { new ulong[] { (ulong)PermisoContenidos.VerCategorias, (ulong)PermisoContenidos.EliminarCategoria, (ulong)PermisoContenidos.AnyadirCategoria, (ulong)PermisoContenidos.ModificarCategoria } })]
+        [AdministrationPermissions(Contents = new[] { PermisoContenidos.VerCategorias, PermisoContenidos.EliminarCategoria, PermisoContenidos.AnyadirCategoria, PermisoContenidos.ModificarCategoria }, Ecosystem = new[] { PermisoEcosistema.GestionarCategoriasDePlataforma })]
         [TypeFilter(typeof(LimitarPeticionesAdministracion), Arguments = new object[] { 30, 120, 15 })]
         public ActionResult EjecutarAccion(string typeAction, IFormFile pImagenCategoria, string name, Guid parentKey)
 		{
@@ -598,7 +597,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
 		/// Guardar los cambios
 		/// </summary>
 		/// <returns>ActionResult</returns>
-		[TypeFilter(typeof(PermisosContenidos), Arguments = new object[] { new ulong[] { (ulong)PermisoContenidos.EliminarCategoria, (ulong)PermisoContenidos.AnyadirCategoria, (ulong)PermisoContenidos.ModificarCategoria } })]
+		[AdministrationPermissions(Contents = new[] { PermisoContenidos.EliminarCategoria, PermisoContenidos.AnyadirCategoria, PermisoContenidos.ModificarCategoria }, Ecosystem = new[] { PermisoEcosistema.GestionarCategoriasDePlataforma })]
         [TypeFilter(typeof(LimitarPeticionesAdministracion), Arguments = new object[] { 30, 120, 15 })]
         public ActionResult Guardar()
 		{
@@ -674,7 +673,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
 		/// Guardar los cambios al mover categorias
 		/// </summary>
 		/// <returns>ActionResult</returns>
-		[TypeFilter(typeof(PermisosContenidos), Arguments = new object[] { new ulong[] { (ulong)PermisoContenidos.EliminarCategoria, (ulong)PermisoContenidos.AnyadirCategoria, (ulong)PermisoContenidos.ModificarCategoria } })]
+		[AdministrationPermissions(Contents = new[] { PermisoContenidos.EliminarCategoria, PermisoContenidos.AnyadirCategoria, PermisoContenidos.ModificarCategoria }, Ecosystem = new[] { PermisoEcosistema.GestionarCategoriasDePlataforma })]
         [TypeFilter(typeof(LimitarPeticionesAdministracion), Arguments = new object[] { 30, 120, 15 })]
         public ActionResult GuardarNuevoOrden(List<OrdenCategoria> pListaOrden)
         {
@@ -709,7 +708,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
 		/// </summary>
 		/// <param name="categoriaPadreID">Id de la categoría padre de la cual se va a crear su hija</param>
 		/// <returns></returns>
-		[TypeFilter(typeof(PermisosContenidos), Arguments = new object[] { new ulong[] { (ulong)PermisoContenidos.AnyadirCategoria } })]
+		[AdministrationPermissions(Contents = new[] { PermisoContenidos.AnyadirCategoria }, Ecosystem = new[] { PermisoEcosistema.GestionarCategoriasDePlataforma })]
 		public ActionResult CargarModalCrearCategoriaEnCategoria(Guid categoriaPadreID)
 		{
 			CargarPermisosCategoriasViewBag();

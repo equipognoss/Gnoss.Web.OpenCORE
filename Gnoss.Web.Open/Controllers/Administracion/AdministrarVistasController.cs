@@ -87,8 +87,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
         /// Index
         /// </summary>
         /// <returns>ActionResult</returns>
-        [TypeFilter(typeof(PermisosAdministracion), Arguments = new object[] { new ulong[] { (ulong)PermisoComunidad.GestionarVistas } })]
-        [TypeFilter(typeof(PermisosAdministracionEcosistema), Arguments = new object[] { new ulong[] { (ulong)PermisoEcosistema.GestionarVistasEcosistema } })]
+        [AdministrationPermissions(Community = new[] { PermisoComunidad.GestionarVistas }, Ecosystem = new[] { PermisoEcosistema.GestionarVistasEcosistema })]
         public ActionResult Index()
         {
 
@@ -125,8 +124,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
         /// <param name="Accion">Acción a relizar</param>
         /// <returns>ActionResult</returns>
         [HttpPost]
-		[TypeFilter(typeof(PermisosAdministracion), Arguments = new object[] { new ulong[] { (ulong)PermisoComunidad.GestionarVistas } })]
-		[TypeFilter(typeof(PermisosAdministracionEcosistema), Arguments = new object[] { new ulong[] { (ulong)PermisoEcosistema.GestionarVistasEcosistema } })]
+		[AdministrationPermissions(Community = new[] { PermisoComunidad.GestionarVistas }, Ecosystem = new[] { PermisoEcosistema.GestionarVistasEcosistema })]
         [TypeFilter(typeof(LimitarPeticionesAdministracion), Arguments = new object[] { 30, 120, 15 })]
         public ActionResult Web(string PaginasPersonalizables, string FormulariosSemanticos, IFormFile Fichero, ManageViewsViewModel.Action Accion)
         {
@@ -275,8 +273,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
         /// <param name="Accion">Acción a relizar</param>
         /// <returns>ActionResult</returns>
         [HttpPost]
-		[TypeFilter(typeof(PermisosAdministracion), Arguments = new object[] { new ulong[] { (ulong)PermisoComunidad.GestionarVistas } })]
-		[TypeFilter(typeof(PermisosAdministracionEcosistema), Arguments = new object[] { new ulong[] { (ulong)PermisoEcosistema.GestionarVistasEcosistema } })]
+		[AdministrationPermissions(Community = new[] { PermisoComunidad.GestionarVistas }, Ecosystem = new[] { PermisoEcosistema.GestionarVistasEcosistema })]
 		[TypeFilter(typeof(AccesoIntegracionAttribute))]
         [TypeFilter(typeof(LimitarPeticionesAdministracion), Arguments = new object[] { 30, 120, 15 })]
         public ActionResult Resultados(string PaginasPersonalizables, IFormFile Fichero, ManageViewsViewModel.Action Accion)
@@ -456,8 +453,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
         /// <param name="Accion">Acción a relizar</param>
         /// <returns>ActionResult</returns>
         [HttpPost]
-		[TypeFilter(typeof(PermisosAdministracion), Arguments = new object[] { new ulong[] { (ulong)PermisoComunidad.GestionarVistas } })]
-		[TypeFilter(typeof(PermisosAdministracionEcosistema), Arguments = new object[] { new ulong[] { (ulong)PermisoEcosistema.GestionarVistasEcosistema } })]
+		[AdministrationPermissions(Community = new[] { PermisoComunidad.GestionarVistas }, Ecosystem = new[] { PermisoEcosistema.GestionarVistasEcosistema })]
 		[TypeFilter(typeof(AccesoIntegracionAttribute))]
         [TypeFilter(typeof(LimitarPeticionesAdministracion), Arguments = new object[] { 30, 120, 15 })]
         public ActionResult Facetas(string PaginasPersonalizables, IFormFile Fichero, ManageViewsViewModel.Action Accion)
@@ -617,8 +613,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
         /// <param name="Accion">Acción a relizar</param>
         /// <returns>ActionResult</returns>
         [HttpPost]
-		[TypeFilter(typeof(PermisosAdministracion), Arguments = new object[] { new ulong[] { (ulong)PermisoComunidad.GestionarVistas } })]
-		[TypeFilter(typeof(PermisosAdministracionEcosistema), Arguments = new object[] { new ulong[] { (ulong)PermisoEcosistema.GestionarVistasEcosistema } })]
+		[AdministrationPermissions(Community = new[] { PermisoComunidad.GestionarVistas }, Ecosystem = new[] { PermisoEcosistema.GestionarVistasEcosistema })]
 		[TypeFilter(typeof(AccesoIntegracionAttribute))]
         [TypeFilter(typeof(LimitarPeticionesAdministracion), Arguments = new object[] { 30, 120, 15 })]
         public ActionResult CMS(string ComponentePersonalizable, Guid idPersonalizacion, string Nombre, IFormFile Fichero, ManageViewsViewModel.Action Accion)
@@ -737,8 +732,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
 
 
         [HttpPost]
-		[TypeFilter(typeof(PermisosAdministracion), Arguments = new object[] { new ulong[] { (ulong)PermisoComunidad.GestionarVistas } })]
-		[TypeFilter(typeof(PermisosAdministracionEcosistema), Arguments = new object[] { new ulong[] { (ulong)PermisoEcosistema.GestionarVistasEcosistema } })]
+		[AdministrationPermissions(Community = new[] { PermisoComunidad.GestionarVistas }, Ecosystem = new[] { PermisoEcosistema.GestionarVistasEcosistema })]
 		[TypeFilter(typeof(AccesoIntegracionAttribute))]
         [TypeFilter(typeof(LimitarPeticionesAdministracion), Arguments = new object[] { 30, 120, 15 })]
         public ActionResult CMSExtra(string ComponentePersonalizable, Guid idPersonalizacion, bool ResourcesExtra, bool Identities, bool IdentitiesExtra, ManageViewsViewModel.Action Accion, IFormFile Fichero, string Nombre)
@@ -835,8 +829,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
         }
 
         [HttpPost]
-		[TypeFilter(typeof(PermisosAdministracion), Arguments = new object[] { new ulong[] { (ulong)PermisoComunidad.GestionarVistas } })]
-		[TypeFilter(typeof(PermisosAdministracionEcosistema), Arguments = new object[] { new ulong[] { (ulong)PermisoEcosistema.GestionarVistasEcosistema } })]
+		[AdministrationPermissions(Community = new[] { PermisoComunidad.GestionarVistas }, Ecosystem = new[] { PermisoEcosistema.GestionarVistasEcosistema })]
 		public ActionResult InvalidarVistas()
         {
             LimpiarCacheVistaEntera();
@@ -849,8 +842,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
         }
 
         [HttpPost]
-		[TypeFilter(typeof(PermisosAdministracion), Arguments = new object[] { new ulong[] { (ulong)PermisoComunidad.GestionarVistas } })]
-		[TypeFilter(typeof(PermisosAdministracionEcosistema), Arguments = new object[] { new ulong[] { (ulong)PermisoEcosistema.GestionarVistasEcosistema } })]
+		[AdministrationPermissions(Community = new[] { PermisoComunidad.GestionarVistas }, Ecosystem = new[] { PermisoEcosistema.GestionarVistasEcosistema })]
         [TypeFilter(typeof(LimitarPeticionesAdministracion), Arguments = new object[] { 30, 120, 15 })]
         public ActionResult CompartirVistasEnDominio(string pDominio)
         {
@@ -882,8 +874,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
         }
 
         [HttpPost]
-		[TypeFilter(typeof(PermisosAdministracion), Arguments = new object[] { new ulong[] { (ulong)PermisoComunidad.GestionarVistas } })]
-		[TypeFilter(typeof(PermisosAdministracionEcosistema), Arguments = new object[] { new ulong[] { (ulong)PermisoEcosistema.GestionarVistasEcosistema } })]
+		[AdministrationPermissions(Community = new[] { PermisoComunidad.GestionarVistas }, Ecosystem = new[] { PermisoEcosistema.GestionarVistasEcosistema })]
         [TypeFilter(typeof(LimitarPeticionesAdministracion), Arguments = new object[] { 30, 120, 15 })]
         public ActionResult DejarDeCompartirVistasEnDominio(string pDominios)
         {

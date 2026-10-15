@@ -61,7 +61,7 @@ namespace Gnoss.Web.Controllers.Administracion
         }
 
         [HttpGet]
-        [TypeFilter(typeof(PermisosAdministracionEcosistema), Arguments = new object[] { new ulong[] { (ulong)PermisoEcosistema.ConfiguracionDeSharePoint } })]
+        [AdministrationPermissions(Ecosystem = new[] { PermisoEcosistema.ConfiguracionDeSharePoint })]
         public ActionResult Index()
         {
 
@@ -86,7 +86,7 @@ namespace Gnoss.Web.Controllers.Administracion
         }
 
         [HttpPost]
-		[TypeFilter(typeof(PermisosAdministracionEcosistema), Arguments = new object[] { new ulong[] { (ulong)PermisoEcosistema.ConfiguracionDeSharePoint } })]
+		[AdministrationPermissions(Ecosystem = new[] { PermisoEcosistema.ConfiguracionDeSharePoint })]
         [TypeFilter(typeof(LimitarPeticionesAdministracion), Arguments = new object[] { 30, 120, 15 })]
         public ActionResult Guardar(AdministrarSharepointViewModel pModel)
         {
@@ -121,7 +121,7 @@ namespace Gnoss.Web.Controllers.Administracion
         }
 
         [HttpGet]
-		[TypeFilter(typeof(PermisosAdministracionEcosistema), Arguments = new object[] { new ulong[] { (ulong)PermisoEcosistema.ConfiguracionDeSharePoint } })]
+		[AdministrationPermissions(Ecosystem = new[] { PermisoEcosistema.ConfiguracionDeSharePoint })]
 		public ActionResult Manual()
         {
             EliminarPersonalizacionVistas();

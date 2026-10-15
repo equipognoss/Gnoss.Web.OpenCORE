@@ -47,8 +47,7 @@ namespace Gnoss.Web.Open.Controllers.Administracion
 
         private DataWrapperProyecto mDatosExtraProyectoDataWrapperProyecto = null;
 
-		[TypeFilter(typeof(PermisosAdministracion), Arguments = new object[] { new ulong[] { (ulong)PermisoComunidad.GestionarDatosExtraRegistro } })]
-		[TypeFilter(typeof(PermisosAdministracionEcosistema), Arguments = new object[] { new ulong[] { (ulong)PermisoEcosistema.GestionarDatosExtraRegistroEcosistema} })]
+		[AdministrationPermissions(Community = new[] { PermisoComunidad.GestionarDatosExtraRegistro }, Ecosystem = new[] { PermisoEcosistema.GestionarDatosExtraRegistroEcosistema })]
 		public IActionResult Index()
         {
 			EliminarPersonalizacionVistas();
@@ -70,7 +69,7 @@ namespace Gnoss.Web.Open.Controllers.Administracion
 			return View(PaginaModel);
         }
 
-		[TypeFilter(typeof(PermisosAdministracion), Arguments = new object[] { new ulong[] { (ulong)PermisoComunidad.GestionarDatosExtraRegistro } })]
+		[AdministrationPermissions(Community = new[] { PermisoComunidad.GestionarDatosExtraRegistro }, Ecosystem = new[] { PermisoEcosistema.GestionarDatosExtraRegistroEcosistema })]
         [TypeFilter(typeof(LimitarPeticionesAdministracion), Arguments = new object[] { 30, 120, 15 })]
         public IActionResult Guardar(string pNombre, string pTipo, string pOpciones, bool pObligatorio, int pOrden, string pPredicadoRDF, bool pVisible, string pNombreCorto)
 		{
@@ -174,7 +173,7 @@ namespace Gnoss.Web.Open.Controllers.Administracion
 			return GnossResultOK("El dato extra ha sido creado correctamente");
 		}
 
-		[TypeFilter(typeof(PermisosAdministracion), Arguments = new object[] { new ulong[] { (ulong)PermisoComunidad.GestionarDatosExtraRegistro } })]
+		[AdministrationPermissions(Community = new[] { PermisoComunidad.GestionarDatosExtraRegistro }, Ecosystem = new[] { PermisoEcosistema.GestionarDatosExtraRegistroEcosistema })]
         [TypeFilter(typeof(LimitarPeticionesAdministracion), Arguments = new object[] { 30, 120, 15 })]
         public IActionResult Editar(Guid pDatoExtraID, string pNombre, string pTipo, string pOpciones, bool pObligatorio, int pOrden, string pPredicadoRDF, bool pVisible, string pNombreCorto)
 		{
@@ -302,7 +301,7 @@ namespace Gnoss.Web.Open.Controllers.Administracion
             return GnossResultOK("El dato extra ha sido modificado correctamente");
 		}
 
-		[TypeFilter(typeof(PermisosAdministracion), Arguments = new object[] { new ulong[] { (ulong)PermisoComunidad.GestionarDatosExtraRegistro } })]
+		[AdministrationPermissions(Community = new[] { PermisoComunidad.GestionarDatosExtraRegistro }, Ecosystem = new[] { PermisoEcosistema.GestionarDatosExtraRegistroEcosistema })]
         public IActionResult Eliminar(Guid pDatoExtraID)
 		{
 			GuardarLogAuditoria();
@@ -357,7 +356,7 @@ namespace Gnoss.Web.Open.Controllers.Administracion
 			return GnossResultOK();
 		}
 
-		[TypeFilter(typeof(PermisosAdministracion), Arguments = new object[] { new ulong[] { (ulong)PermisoComunidad.GestionarDatosExtraRegistro } })]
+		[AdministrationPermissions(Community = new[] { PermisoComunidad.GestionarDatosExtraRegistro }, Ecosystem = new[] { PermisoEcosistema.GestionarDatosExtraRegistroEcosistema })]
 		public IActionResult CargarModalEdicion(Guid pDatoID)
 		{
 			DatoExtraEditModel model = new DatoExtraEditModel();

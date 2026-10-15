@@ -34,8 +34,9 @@ namespace Gnoss.Web.Open.Controllers.Administracion
 		/// Muestra la página de subir a premium
 		/// </summary>
 		/// <returns>ActionResult</returns>
-		[TypeFilter(typeof(PermisosAdministracion), Arguments = new object[] { new ulong[] { (ulong)PermisoComunidad.GestionarTraducciones, (ulong)PermisoComunidad.GestionarPesosAutocompletado, (ulong)PermisoComunidad.AccederAlEstadoDeLosServicios, (ulong)PermisoComunidad.GestionarEventosExternos, (ulong)PermisoComunidad.AccederAEstadisticasDeLaComunidad, (ulong)PermisoComunidad.ConsultarCargasMasivas, (ulong)PermisoComunidad.GestionarIntegracionContinua, (ulong)PermisoContenidos.CrearFaceta, (ulong)PermisoComunidad.EjecutarReprocesadosDeRecursos, (ulong)PermisoComunidad.AccesoSparqlEndpoint, (ulong)PermisoComunidad.AccederAlFTP, (ulong)PermisoComunidad.GestionarCache, (ulong)PermisoComunidad.DescargarConfiguracionOAuth, (ulong)PermisoComunidad.GestionarTrazas, (ulong)PermisoComunidad.GestionarAsistentes, (ulong)PermisoComunidad.GestionarAplicacionesEspecificas } })]
-        [TypeFilter(typeof(PermisosAdministracionEcosistema), Arguments = new object[] { new ulong[] { (ulong)PermisoEcosistema.GestionarTraduccionesEcosistema, (ulong)PermisoEcosistema.GestionarEventosExternosEcosistema, (ulong)PermisoEcosistema.AdministrarIntegracionContinua} })]
+		[AdministrationPermissions(Community = new[] {PermisoComunidad.GestionarTraducciones, PermisoComunidad.GestionarPesosAutocompletado, PermisoComunidad.AccederAlEstadoDeLosServicios, PermisoComunidad.GestionarEventosExternos, PermisoComunidad.AccederAEstadisticasDeLaComunidad, PermisoComunidad.ConsultarCargasMasivas, PermisoComunidad.GestionarIntegracionContinua, PermisoComunidad.EjecutarReprocesadosDeRecursos, PermisoComunidad.AccesoSparqlEndpoint, PermisoComunidad.AccederAlFTP, PermisoComunidad.GestionarCache, PermisoComunidad.DescargarConfiguracionOAuth, PermisoComunidad.GestionarTrazas, PermisoComunidad.GestionarAsistentes, PermisoComunidad.GestionarAplicacionesEspecificas }, 
+            Ecosystem = new[] { PermisoEcosistema.GestionarTraduccionesEcosistema, PermisoEcosistema.GestionarEventosExternosEcosistema, PermisoEcosistema.AdministrarIntegracionContinua }, 
+            Contents = new[] { PermisoContenidos.CrearFaceta })]
         public IActionResult Index(string metodo)
         {
             EliminarPersonalizacionVistas();

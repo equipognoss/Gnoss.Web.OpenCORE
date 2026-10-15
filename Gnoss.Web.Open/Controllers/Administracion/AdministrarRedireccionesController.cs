@@ -158,7 +158,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
         /// 
         /// </summary>
         /// <returns></returns>
-		[TypeFilter(typeof(PermisosAdministracion), Arguments = new object[] { new ulong[] { (ulong)PermisoComunidad.GestionarRedirecciones } })]
+		[AdministrationPermissions(Community = new[] { PermisoComunidad.GestionarRedirecciones })]
 		public ActionResult Index()
         {
 
@@ -181,7 +181,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
         /// </summary>
         /// <returns>ActionResult</returns>
         [HttpPost]
-		[TypeFilter(typeof(PermisosAdministracion), Arguments = new object[] { new ulong[] { (ulong)PermisoComunidad.GestionarRedirecciones } })]
+		[AdministrationPermissions(Community = new[] { PermisoComunidad.GestionarRedirecciones })]
 		public ActionResult NuevaRedireccion()
         {
             EliminarPersonalizacionVistas();
@@ -203,7 +203,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
         /// </summary>
         /// <returns>ActionResult</returns>
         [HttpPost]
-		[TypeFilter(typeof(PermisosAdministracion), Arguments = new object[] { new ulong[] { (ulong)PermisoComunidad.GestionarRedirecciones } })]
+		[AdministrationPermissions(Community = new[] { PermisoComunidad.GestionarRedirecciones })]
         [TypeFilter(typeof(LimitarPeticionesAdministracion), Arguments = new object[] { 30, 120, 15 })]
         public ActionResult Guardar(List<ManageRedirectionsViewModel.RedirectionModel> ListaRedirecciones)
         {

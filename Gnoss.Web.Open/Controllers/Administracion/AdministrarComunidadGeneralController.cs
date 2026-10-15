@@ -298,7 +298,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
         /// </summary>
         /// <returns></returns>
         [HttpGet]
-		[TypeFilter(typeof(PermisosAdministracion), Arguments = new object[] { new ulong[] { (ulong)PermisoComunidad.GestionarInformacionGeneral } })]
+		[AdministrationPermissions(Community = new[] { PermisoComunidad.GestionarInformacionGeneral })]
 		public ActionResult Index()
         {
             EliminarPersonalizacionVistas();
@@ -327,7 +327,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
         /// <param name="pModel"></param>
         /// <returns></returns>
         [HttpPost]
-		[TypeFilter(typeof(PermisosAdministracion), Arguments = new object[] { new ulong[] { (ulong)PermisoComunidad.GestionarInformacionGeneral } })]
+		[AdministrationPermissions(Community = new[] { PermisoComunidad.GestionarInformacionGeneral })]
         [TypeFilter(typeof(LimitarPeticionesAdministracion), Arguments = new object[] { 30, 120, 15 })]
         public ActionResult SaveNewCommunityShortName(GuardarNuevoNombreCortoComunidadModel pModel)
         {
@@ -359,7 +359,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
         /// <param name="pModel">Modelo con el nuevo tipo de la comunidad (Publico => 0, Privado => 1, Restringido => 2, Reservado => 3)</param>
         /// <returns></returns>
         [HttpPost]
-		[TypeFilter(typeof(PermisosAdministracion), Arguments = new object[] { new ulong[] { (ulong)PermisoComunidad.GestionarInformacionGeneral } })]
+		[AdministrationPermissions(Community = new[] { PermisoComunidad.GestionarInformacionGeneral })]
         [TypeFilter(typeof(LimitarPeticionesAdministracion), Arguments = new object[] { 30, 120, 15 })]
         public ActionResult SaveNewCommunityType(GuardarTipoAccesoComunidadModel pModel)
         {
@@ -384,7 +384,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
         /// <param name="pModel"></param>
         /// <returns></returns>
         [HttpPost]
-		[TypeFilter(typeof(PermisosAdministracion), Arguments = new object[] { new ulong[] { (ulong)PermisoComunidad.GestionarInformacionGeneral } })]
+		[AdministrationPermissions(Community = new[] { PermisoComunidad.GestionarInformacionGeneral })]
         [TypeFilter(typeof(LimitarPeticionesAdministracion), Arguments = new object[] { 30, 120, 15 })]
         public ActionResult SaveNewDomainUrl(GuardarNuevaUrlDominioModel pModel)
         {
@@ -417,7 +417,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
         /// </summary>
         /// <returns></returns>
         [HttpPost]
-		[TypeFilter(typeof(PermisosAdministracion), Arguments = new object[] { new ulong[] { (ulong)PermisoComunidad.GestionarInformacionGeneral } })]
+		[AdministrationPermissions(Community = new[] { PermisoComunidad.GestionarInformacionGeneral })]
         [TypeFilter(typeof(LimitarPeticionesAdministracion), Arguments = new object[] { 30, 120, 15 })]
         public ActionResult AbrirComunidad()
         {
@@ -454,7 +454,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
             return GnossResultERROR("La comunidad no esta en definicion y no se ha podido abrir");
         }
         [HttpPost]
-		[TypeFilter(typeof(PermisosAdministracion), Arguments = new object[] { new ulong[] { (ulong)PermisoComunidad.GestionarInformacionGeneral } })]
+		[AdministrationPermissions(Community = new[] { PermisoComunidad.GestionarInformacionGeneral })]
         [TypeFilter(typeof(LimitarPeticionesAdministracion), Arguments = new object[] { 30, 120, 15 })]
 		public ActionResult CloseCommunity()
         {
@@ -483,7 +483,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
         /// <param name="Options"></param>
         /// <returns></returns>
         [HttpPost]
-		[TypeFilter(typeof(PermisosAdministracion), Arguments = new object[] { new ulong[] { (ulong)PermisoComunidad.GestionarInformacionGeneral } })]
+		[AdministrationPermissions(Community = new[] { PermisoComunidad.GestionarInformacionGeneral })]
         [TypeFilter(typeof(LimitarPeticionesAdministracion), Arguments = new object[] { 30, 120, 15 })]
         public ActionResult Guardar(AdministrarComunidadGeneralModel Options)
         {
@@ -955,7 +955,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
 		/// </summary>
 		/// <param name="fileUpload"></param>
 		/// <returns></returns>
-		[TypeFilter(typeof(PermisosAdministracion), Arguments = new object[] { new ulong[] { (ulong)PermisoComunidad.GestionarInformacionGeneral } })]
+		[AdministrationPermissions(Community = new[] { PermisoComunidad.GestionarInformacionGeneral })]
 		public ActionResult SubirImagenCabecera(IFormFile fileUpload)
         {
             AdministrarComunidadGeneralModel.ImageCoordenadas ImageHead = new AdministrarComunidadGeneralModel.ImageCoordenadas();
@@ -1019,7 +1019,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
 		/// </summary>
 		/// <param name="fileUpload"></param>
 		/// <returns></returns>
-		[TypeFilter(typeof(PermisosAdministracion), Arguments = new object[] { new ulong[] { (ulong)PermisoComunidad.GestionarInformacionGeneral } })]
+		[AdministrationPermissions(Community = new[] { PermisoComunidad.GestionarInformacionGeneral })]
         [TypeFilter(typeof(LimitarPeticionesAdministracion), Arguments = new object[] { 30, 120, 15 })]
         public ActionResult SubirImagenLogo(IFormFile fileUpload)
         {

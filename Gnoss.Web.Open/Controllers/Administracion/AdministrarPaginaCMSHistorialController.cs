@@ -53,7 +53,7 @@ namespace Gnoss.Web.Open.Controllers.Administracion
         #region Metodos Web
 
         [HttpPost]
-		[TypeFilter(typeof(PermisosContenidos), Arguments = new object[] { new ulong[] { (ulong)PermisoContenidos.VerPagina } })]
+		[AdministrationPermissions(Contents = new[] { PermisoContenidos.VerPagina })]
 		public ActionResult LoadHistory(Guid pPestanyaID)
         {
             UtilPermisos utilPermisos = new UtilPermisos(mEntityContext, mLoggingService, mConfigService, mLoggerFactory.CreateLogger<UtilPermisos>(), mLoggerFactory);
@@ -64,7 +64,7 @@ namespace Gnoss.Web.Open.Controllers.Administracion
             return PartialView("_history", modelo);
         }
 
-		[TypeFilter(typeof(PermisosContenidos), Arguments = new object[] { new ulong[] { (ulong)PermisoContenidos.RestaurarVersionPagina, (ulong)PermisoContenidos.VerPagina } })]
+		[AdministrationPermissions(Contents = new[] { PermisoContenidos.RestaurarVersionPagina, PermisoContenidos.VerPagina })]
 		public ActionResult Compare(string documentosComparar, Guid pPestanyaID, bool pRestaurar = false)
         {
             string[] guids = documentosComparar.Split(new char[] { '&' }, StringSplitOptions.RemoveEmptyEntries);

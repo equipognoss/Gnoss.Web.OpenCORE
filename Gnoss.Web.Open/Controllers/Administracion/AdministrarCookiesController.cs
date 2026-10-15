@@ -191,7 +191,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
         /// </summary>
         /// <returns>ActionResult</returns>
         [HttpGet]
-		[TypeFilter(typeof(PermisosAdministracion), Arguments = new object[] { new ulong[] { (ulong)PermisoComunidad.GestionarCookies } })]
+		[AdministrationPermissions(Community = new[] { PermisoComunidad.GestionarCookies }, Ecosystem = new[] { PermisoEcosistema.GestionarLaConfiguracionPlataforma })]
 		public ActionResult Index()
         {
 
@@ -216,7 +216,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
         /// </summary>
         /// <returns>ActionResult</returns>
         [HttpPost]
-		[TypeFilter(typeof(PermisosAdministracion), Arguments = new object[] { new ulong[] { (ulong)PermisoComunidad.GestionarCookies } })]
+		[AdministrationPermissions(Community = new[] { PermisoComunidad.GestionarCookies }, Ecosystem = new[] { PermisoEcosistema.GestionarLaConfiguracionPlataforma })]
         [TypeFilter(typeof(LimitarPeticionesAdministracion), Arguments = new object[] { 30, 120, 15 })]
         public bool CrearCookiesTecnicasDelProyecto()
         {
@@ -241,7 +241,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
         /// </summary>
         /// <returns></returns>
         [HttpPost]
-		[TypeFilter(typeof(PermisosAdministracion), Arguments = new object[] { new ulong[] { (ulong)PermisoComunidad.GestionarCookies } })]
+		[AdministrationPermissions(Community = new[] { PermisoComunidad.GestionarCookies }, Ecosystem = new[] { PermisoEcosistema.GestionarLaConfiguracionPlataforma })]
 		public ActionResult PintarCookiesMetaproyecto()
         {
             CookieCN cookieCN = new CookieCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<CookieCN>(), mLoggerFactory);
@@ -262,7 +262,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
         /// </summary>
         /// <returns></returns>
         [HttpPost]
-		[TypeFilter(typeof(PermisosAdministracion), Arguments = new object[] { new ulong[] { (ulong)PermisoComunidad.GestionarCookies } })]
+		[AdministrationPermissions(Community = new[] { PermisoComunidad.GestionarCookies }, Ecosystem = new[] { PermisoEcosistema.GestionarLaConfiguracionPlataforma })]
 		public ActionResult PintarCategoriasCookiesMetaproyecto()
         {
             CookieCN cookieCN = new CookieCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<CookieCN>(), mLoggerFactory);
@@ -284,7 +284,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
         /// <param name="Categoria"></param>
         /// <returns></returns>
         [HttpPost]
-		[TypeFilter(typeof(PermisosAdministracion), Arguments = new object[] { new ulong[] { (ulong)PermisoComunidad.GestionarCookies } })]
+		[AdministrationPermissions(Community = new[] { PermisoComunidad.GestionarCookies }, Ecosystem = new[] { PermisoEcosistema.GestionarLaConfiguracionPlataforma })]
         [TypeFilter(typeof(LimitarPeticionesAdministracion), Arguments = new object[] { 30, 120, 15 })]
         public ActionResult AddCookie(string Categoria)
         {
@@ -315,7 +315,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
         /// </summary>
         /// <returns></returns>
         [HttpPost]
-		[TypeFilter(typeof(PermisosAdministracion), Arguments = new object[] { new ulong[] { (ulong)PermisoComunidad.GestionarCookies } })]
+		[AdministrationPermissions(Community = new[] { PermisoComunidad.GestionarCookies }, Ecosystem = new[] { PermisoEcosistema.GestionarLaConfiguracionPlataforma })]
 		public ActionResult PintarCookiesAnaliticas()
         {
             CookieCN cookieCN = new CookieCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<CookieCN>(), mLoggerFactory);
@@ -351,7 +351,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
         /// </summary>
         /// <returns></returns>
         [HttpPost]
-		[TypeFilter(typeof(PermisosAdministracion), Arguments = new object[] { new ulong[] { (ulong)PermisoComunidad.GestionarCookies } })]
+		[AdministrationPermissions(Community = new[] { PermisoComunidad.GestionarCookies }, Ecosystem = new[] { PermisoEcosistema.GestionarLaConfiguracionPlataforma })]
 		public ActionResult PintarCookiesYoutube()
         {
             CookieCN cookieCN = new CookieCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<CookieCN>(), mLoggerFactory);
@@ -388,7 +388,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
         /// </summary>
         /// <param name="ListaCookies"></param>
         [HttpPost]
-		[TypeFilter(typeof(PermisosAdministracion), Arguments = new object[] { new ulong[] { (ulong)PermisoComunidad.GestionarCookies } })]
+		[AdministrationPermissions(Community = new[] { PermisoComunidad.GestionarCookies }, Ecosystem = new[] { PermisoEcosistema.GestionarLaConfiguracionPlataforma })]
         [TypeFilter(typeof(LimitarPeticionesAdministracion), Arguments = new object[] { 30, 120, 15 })]
         public void SaveCookies(CookieEditModel[] ListaCookies)
         {
@@ -547,7 +547,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
         /// </summary>
         /// <param name="ListaCategorias">Lista de categorías a guardar en base de datos</param>
         [HttpPost]
-		[TypeFilter(typeof(PermisosAdministracion), Arguments = new object[] { new ulong[] { (ulong)PermisoComunidad.GestionarCookies } })]
+		[AdministrationPermissions(Community = new[] { PermisoComunidad.GestionarCookies }, Ecosystem = new[] { PermisoEcosistema.GestionarLaConfiguracionPlataforma })]
         [TypeFilter(typeof(LimitarPeticionesAdministracion), Arguments = new object[] { 30, 120, 15 })]
         public void SaveCategories(CategoryEditModel[] ListaCategorias)
         {
@@ -692,7 +692,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
         /// </summary>
         /// <returns></returns>
         [HttpPost]
-		[TypeFilter(typeof(PermisosAdministracion), Arguments = new object[] { new ulong[] { (ulong)PermisoComunidad.GestionarCookies } })]
+		[AdministrationPermissions(Community = new[] { PermisoComunidad.GestionarCookies }, Ecosystem = new[] { PermisoEcosistema.GestionarLaConfiguracionPlataforma })]
         [TypeFilter(typeof(LimitarPeticionesAdministracion), Arguments = new object[] { 30, 120, 15 })]
         public ActionResult AddCategory() 
         {

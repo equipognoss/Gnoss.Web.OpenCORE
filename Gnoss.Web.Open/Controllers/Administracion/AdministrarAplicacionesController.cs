@@ -60,7 +60,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
 		/// Pagina principal donde se muestran todas las aplicaciones del usuario.
 		/// </summary>
 		/// <returns></returns>
-		[TypeFilter(typeof(PermisosAdministracion), Arguments = new object[] { new ulong[] { (ulong)PermisoComunidad.DescargarConfiguracionOAuth } })]
+		[AdministrationPermissions(Community = new[] { PermisoComunidad.DescargarConfiguracionOAuth })]
 		public ActionResult Index()
         {
             EliminarPersonalizacionVistas();
@@ -138,7 +138,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
 		/// Crea y descarga un XML con los datos de config
 		/// </summary>
 		/// <returns>Descarga XML</returns>
-		[TypeFilter(typeof(PermisosAdministracion), Arguments = new object[] { new ulong[] { (ulong)PermisoComunidad.DescargarConfiguracionOAuth } })]
+		[AdministrationPermissions(Community = new[] { PermisoComunidad.DescargarConfiguracionOAuth })]
         [TypeFilter(typeof(LimitarPeticionesAdministracion), Arguments = new object[] { 30, 120, 15 })]
         public ActionResult DescargarXML()
         {
@@ -290,7 +290,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
 		/// Muestra un formulario para crear una nueva aplicación.
 		/// </summary>
 		/// <returns></returns>
-		[TypeFilter(typeof(PermisosAdministracion), Arguments = new object[] { new ulong[] { (ulong)PermisoComunidad.DescargarConfiguracionOAuth } })]
+		[AdministrationPermissions(Community = new[] { PermisoComunidad.DescargarConfiguracionOAuth })]
 		public ActionResult Crear()
         {
             GuardarLogAuditoria();
@@ -303,7 +303,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
         /// <param name="pConsumerId">ConsumerModel con los datos de la aplicación</param>
         /// <returns></returns>        
         [HttpPost]
-		[TypeFilter(typeof(PermisosAdministracion), Arguments = new object[] { new ulong[] { (ulong)PermisoComunidad.DescargarConfiguracionOAuth } })]
+		[AdministrationPermissions(Community = new[] { PermisoComunidad.DescargarConfiguracionOAuth })]
         [TypeFilter(typeof(LimitarPeticionesAdministracion), Arguments = new object[] { 30, 120, 15 })]
         public void Crear(ConsumerModel pModelo)
         {
@@ -385,7 +385,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
 		/// </summary>
 		/// <param name="id">ConsumerId de la aplicación</param>
 		/// <returns></returns>
-		[TypeFilter(typeof(PermisosAdministracion), Arguments = new object[] { new ulong[] { (ulong)PermisoComunidad.DescargarConfiguracionOAuth } })]
+		[AdministrationPermissions(Community = new[] { PermisoComunidad.DescargarConfiguracionOAuth })]
         [TypeFilter(typeof(LimitarPeticionesAdministracion), Arguments = new object[] { 30, 120, 15 })]
         public ActionResult Editar(int id)
         {
@@ -406,7 +406,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
         /// <param name="pModelo">ConsumerModel con los datos de la aplicación</param>
         /// <returns></returns>        
         [HttpPost]
-		[TypeFilter(typeof(PermisosAdministracion), Arguments = new object[] { new ulong[] { (ulong)PermisoComunidad.DescargarConfiguracionOAuth } })]
+		[AdministrationPermissions(Community = new[] { PermisoComunidad.DescargarConfiguracionOAuth })]
         [TypeFilter(typeof(LimitarPeticionesAdministracion), Arguments = new object[] { 30, 120, 15 })]
         public ActionResult Editar(ConsumerModel pModelo)
         {
@@ -453,7 +453,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
 		/// </summary>
 		/// <param name="id">ConsumerId de la aplicación</param>
 		/// <returns></returns>
-		[TypeFilter(typeof(PermisosAdministracion), Arguments = new object[] { new ulong[] { (ulong)PermisoComunidad.DescargarConfiguracionOAuth } })]
+		[AdministrationPermissions(Community = new[] { PermisoComunidad.DescargarConfiguracionOAuth })]
 		public ActionResult Informe(int id)
         {
             ConsumerModel modelo = mOAuthCN.ObtenerAplicacionPorConsumerId(id);
@@ -471,7 +471,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
 		/// </summary>
 		/// <param name="id">ConsumerId de la aplicación</param>
 		/// <returns></returns>
-		[TypeFilter(typeof(PermisosAdministracion), Arguments = new object[] { new ulong[] { (ulong)PermisoComunidad.DescargarConfiguracionOAuth } })]
+		[AdministrationPermissions(Community = new[] { PermisoComunidad.DescargarConfiguracionOAuth })]
         [TypeFilter(typeof(LimitarPeticionesAdministracion), Arguments = new object[] { 30, 120, 15 })]
         public void Tokens(int id)
         {

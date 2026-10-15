@@ -61,7 +61,7 @@ namespace Gnoss.Web.Open.Controllers.Administracion
             mLoggerFactory = loggerFactory;
         }
         [HttpGet]
-		[TypeFilter(typeof(PermisosContenidos), Arguments = new object[] { new ulong[] { (ulong)PermisoContenidos.GestionarOC } })]
+		[AdministrationPermissions(Contents = new[] { PermisoContenidos.GestionarOC })]
 		public ActionResult Index(Guid ontologiaID)
         {
             EliminarPersonalizacionVistas();
@@ -395,7 +395,7 @@ namespace Gnoss.Web.Open.Controllers.Administracion
 		}
 
         [HttpPost]
-		[TypeFilter(typeof(PermisosContenidos), Arguments = new object[] { new ulong[] { (ulong)PermisoContenidos.GestionarOC } })]
+		[AdministrationPermissions(Contents = new[] { PermisoContenidos.GestionarOC })]
         [TypeFilter(typeof(LimitarPeticionesAdministracion), Arguments = new object[] { 30, 120, 15 })]
         public ActionResult GuardarVistas(Guid ontologiaID, List<EntidadModel> listaEntidades, List<string> configuracionGeneral)
         {

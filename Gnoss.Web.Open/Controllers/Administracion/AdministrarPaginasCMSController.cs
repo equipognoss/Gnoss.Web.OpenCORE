@@ -88,7 +88,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
         /// </summary>
         /// <returns></returns>
         [HttpGet]
-		[TypeFilter(typeof(PermisosContenidos), Arguments = new object[] { new ulong[] { (ulong)PermisoContenidos.VerPagina, (ulong)PermisoContenidos.CrearPagina, (ulong)PermisoContenidos.EditarPagina, (ulong)PermisoContenidos.EliminarPagina, (ulong)PermisoContenidos.PublicarPagina } })]
+		[AdministrationPermissions(Contents = new[] { PermisoContenidos.VerPagina, PermisoContenidos.CrearPagina, PermisoContenidos.EditarPagina, PermisoContenidos.EliminarPagina, PermisoContenidos.PublicarPagina })]
 		public ActionResult Index()
         {
             // Añadir clase para el body del Layout
@@ -125,7 +125,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
         /// </summary>
         /// <returns></returns>
         [HttpPost]
-		[TypeFilter(typeof(PermisosContenidos), Arguments = new object[] { new ulong[] { (ulong)PermisoContenidos.CrearPagina, (ulong)PermisoContenidos.EditarPagina, (ulong)PermisoContenidos.EliminarPagina, (ulong)PermisoContenidos.PublicarPagina } })]
+		[AdministrationPermissions(Contents = new[] { PermisoContenidos.CrearPagina, PermisoContenidos.EditarPagina, PermisoContenidos.EliminarPagina, PermisoContenidos.PublicarPagina })]
 		[TypeFilter(typeof(AccesoIntegracionAttribute))]
         public ActionResult Descartar()
         {
@@ -175,7 +175,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
         /// </summary>
         /// <returns></returns>
         [HttpPost]
-		[TypeFilter(typeof(PermisosContenidos), Arguments = new object[] { new ulong[] { (ulong)PermisoContenidos.CrearPagina, (ulong)PermisoContenidos.EditarPagina, (ulong)PermisoContenidos.PublicarPagina } })]
+		[AdministrationPermissions(Contents = new[] { PermisoContenidos.CrearPagina, PermisoContenidos.EditarPagina, PermisoContenidos.PublicarPagina })]
 		[TypeFilter(typeof(AccesoIntegracionAttribute))]
         public ActionResult GuardarBorrador(string Estructura, string OpcionesPropiedades, bool MostrarSoloCuerpo, DateTime FechaModificacion)
         {
@@ -196,7 +196,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
         }
 
         [HttpPost]
-		[TypeFilter(typeof(PermisosContenidos), Arguments = new object[] { new ulong[] { (ulong)PermisoContenidos.RestaurarVersionPagina } })]
+		[AdministrationPermissions(Contents = new[] { PermisoContenidos.RestaurarVersionPagina })]
 		public ActionResult AddCommentVersion(Guid pVersionID)
         {
             try
@@ -211,7 +211,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
         }
 
         [HttpPost]
-		[TypeFilter(typeof(PermisosContenidos), Arguments = new object[] { new ulong[] { (ulong)PermisoContenidos.RestaurarVersionPagina } })]
+		[AdministrationPermissions(Contents = new[] { PermisoContenidos.RestaurarVersionPagina })]
         [TypeFilter(typeof(LimitarPeticionesAdministracion), Arguments = new object[] { 30, 120, 15 })]
 		public ActionResult RestaurarVersion(Guid pVersionID, string pComentario = null)
         {
@@ -250,7 +250,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
         }
 
         [HttpPost]
-        [TypeFilter(typeof(PermisosContenidos), Arguments = new object[] { new ulong[] { (ulong)PermisoContenidos.EliminarVersionPagina } })]
+        [AdministrationPermissions(Contents = new[] { PermisoContenidos.EliminarVersionPagina })]
         public ActionResult EliminarVersion(Guid pPestanyaID, Guid pVersionID)
         {
             try
@@ -272,7 +272,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
         /// </summary>
         /// <returns></returns>
         [HttpPost]
-		[TypeFilter(typeof(PermisosContenidos), Arguments = new object[] { new ulong[] { (ulong)PermisoContenidos.PublicarPagina } })]
+		[AdministrationPermissions(Contents = new[] { PermisoContenidos.PublicarPagina })]
 		[TypeFilter(typeof(AccesoIntegracionAttribute))]
         [TypeFilter(typeof(LimitarPeticionesAdministracion), Arguments = new object[] { 30, 120, 15 })]
         public ActionResult Publicar(string Estructura, string OpcionesPropiedades, bool MostrarSoloCuerpo, DateTime FechaModificacion)
@@ -346,7 +346,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
         /// </summary>
         /// <returns></returns>
         [HttpPost]
-		[TypeFilter(typeof(PermisosContenidos), Arguments = new object[] { new ulong[] { (ulong)PermisoContenidos.VerPagina, (ulong)PermisoContenidos.CrearPagina, (ulong)PermisoContenidos.EditarPagina, (ulong)PermisoContenidos.PublicarPagina } })]
+		[AdministrationPermissions(Contents = new[] { PermisoContenidos.VerPagina, PermisoContenidos.CrearPagina, PermisoContenidos.EditarPagina, PermisoContenidos.PublicarPagina })]
 		[TypeFilter(typeof(AccesoIntegracionAttribute))]
         public ActionResult VistaPrevia(string Estructura, string OpcionesPropiedades, bool MostrarSoloCuerpo, DateTime FechaModificacion)
         {            
@@ -371,7 +371,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
         /// </summary>
         /// <returns></returns>
         [HttpPost]
-		[TypeFilter(typeof(PermisosContenidos), Arguments = new object[] { new ulong[] { (ulong)PermisoContenidos.CrearPagina, (ulong)PermisoContenidos.EditarPagina, (ulong)PermisoContenidos.PublicarPagina } })]
+		[AdministrationPermissions(Contents = new[] { PermisoContenidos.CrearPagina, PermisoContenidos.EditarPagina, PermisoContenidos.PublicarPagina })]
 		public ActionResult CrearComponente(string Estructura, string OpcionesPropiedades, bool MostrarSoloCuerpo, string TipoComponente, string IDContenedor)
         {
             Guardar(Estructura, OpcionesPropiedades, MostrarSoloCuerpo);

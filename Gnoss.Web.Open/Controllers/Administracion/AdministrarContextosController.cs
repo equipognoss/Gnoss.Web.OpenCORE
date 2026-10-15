@@ -94,7 +94,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
         /// </summary>
         /// <returns>ActionResult</returns>
         [HttpGet]
-		[TypeFilter(typeof(PermisosAdministracion), Arguments = new object[] { new ulong[] { (ulong)PermisoComunidad.GestionarInformacionContextual } })]
+		[AdministrationPermissions(Community = new[] { PermisoComunidad.GestionarInformacionContextual })]
 		public ActionResult Index()
         {
 
@@ -119,7 +119,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
         /// </summary>
         /// <returns>ActionResult</returns>
         [HttpPost]
-		[TypeFilter(typeof(PermisosAdministracion), Arguments = new object[] { new ulong[] { (ulong)PermisoComunidad.GestionarInformacionContextual } })]
+		[AdministrationPermissions(Community = new[] { PermisoComunidad.GestionarInformacionContextual })]
 		public ActionResult NuevoGadget(TipoGadget TipoGadget)
         {
             EliminarPersonalizacionVistas();
@@ -165,7 +165,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
         /// </summary>
         /// <returns>ActionResult</returns>
         [HttpPost]
-		[TypeFilter(typeof(PermisosAdministracion), Arguments = new object[] { new ulong[] { (ulong)PermisoComunidad.GestionarInformacionContextual } })]
+		[AdministrationPermissions(Community = new[] { PermisoComunidad.GestionarInformacionContextual })]
 		[TypeFilter(typeof(AccesoIntegracionAttribute))]
         [TypeFilter(typeof(LimitarPeticionesAdministracion), Arguments = new object[] { 30, 120, 15 })]
         public ActionResult Guardar(List<ContextoModel> ListaGadgets)

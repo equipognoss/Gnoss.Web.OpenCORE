@@ -3172,6 +3172,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
             int numClausulas = 0;
 
             Dictionary<Guid, KeyValuePair<string, bool>> listaClausulas = new Dictionary<Guid, KeyValuePair<string, bool>>();
+            List<Guid> ecosystemClauses = new List<Guid>();
             Dictionary<string, KeyValuePair<string, string>> listaCondiciones = new Dictionary<string, KeyValuePair<string, string>>();
 
             foreach (AD.EntityModel.Models.UsuarioDS.ClausulaRegistro filaClausula in ClausulasRegistro.OrderBy(item => item.Tipo).ToList())
@@ -3181,6 +3182,11 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                     string textoClausula = UtilCadenas.ObtenerTextoDeIdioma(filaClausula.Texto, UtilIdiomas.LanguageCode, null);
 
                     listaClausulas.Add(filaClausula.ClausulaID, new KeyValuePair<string, bool>(textoClausula, filaClausula.Tipo == (short)TipoClausulaAdicional.Opcional));
+
+                    if (filaClausula.ProyectoID == ProyectoAD.MetaProyecto)
+                    {
+                        ecosystemClauses.Add(filaClausula.ClausulaID);
+                    }
 
                     numClausulas++;
                 }
@@ -3220,6 +3226,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
             }
 
             pRegistro.Clauses = listaClausulas;
+            pRegistro.EcosystemClauses = ecosystemClauses;
             pRegistro.Terms = listaCondiciones;
 
             return numClausulas;

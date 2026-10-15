@@ -62,7 +62,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
         /// </summary>
         /// <returns>ActionResult</returns>
         [HttpGet]
-		[TypeFilter(typeof(PermisosAdministracion), Arguments = new object[] { new ulong[] { (ulong)PermisoComunidad.EjecutarBorradoMasivo } })]
+		[AdministrationPermissions(Community = new[] { PermisoComunidad.EjecutarBorradoMasivo })]
 		public ActionResult Index()
         {
             // Añadir clase para el body del Layout
@@ -86,7 +86,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
         /// <param name="pOptions">Modelo de Borrado masivo</param>
         /// <returns>ActionResult</returns>
         [HttpPost]
-		[TypeFilter(typeof(PermisosAdministracion), Arguments = new object[] { new ulong[] { (ulong)PermisoComunidad.EjecutarBorradoMasivo } })]
+		[AdministrationPermissions(Community = new[] { PermisoComunidad.EjecutarBorradoMasivo })]
         [TypeFilter(typeof(LimitarPeticionesAdministracion), Arguments = new object[] { 30, 120, 15 })]
         public ActionResult Eliminar(BorradoMasivoViewModel pOptions)
         {

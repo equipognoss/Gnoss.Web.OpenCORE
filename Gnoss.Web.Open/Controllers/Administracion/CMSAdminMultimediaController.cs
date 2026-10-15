@@ -53,7 +53,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
 
         #endregion
 
-        [TypeFilter(typeof(PermisosContenidos), Arguments = new object[] { new ulong[] { (ulong)PermisoContenidos.GestionarMultimediaCMS } })]
+        [AdministrationPermissions(Contents = new[] { PermisoContenidos.GestionarMultimediaCMS })]
         public ActionResult Index(string pagina, string search, string extension, string numusos)
         {
             EliminarPersonalizacionVistas();
@@ -120,7 +120,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
         /// </summary>
         /// <returns></returns>
         [HttpPost]
-		[TypeFilter(typeof(PermisosContenidos), Arguments = new object[] { new ulong[] { (ulong)PermisoContenidos.GestionarMultimediaCMS } })]
+		[AdministrationPermissions(Contents = new[] { PermisoContenidos.GestionarMultimediaCMS })]
 		public ActionResult CargarNuevoItem()
         {
             ActionResult partialView = View();
@@ -137,7 +137,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
         /// </summary>
         /// <returns></returns>
         [HttpPost]
-		[TypeFilter(typeof(PermisosContenidos), Arguments = new object[] { new ulong[] { (ulong)PermisoContenidos.GestionarMultimediaCMS } })]
+		[AdministrationPermissions(Contents = new[] { PermisoContenidos.GestionarMultimediaCMS })]
 		public ActionResult CargarEliminarMultimediaItem()
         {
             // Devolver la vista modal
@@ -464,7 +464,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
 
 		#region Callback
 
-		[TypeFilter(typeof(PermisosContenidos), Arguments = new object[] { new ulong[] { (ulong)PermisoContenidos.GestionarMultimediaCMS } })]
+		[AdministrationPermissions(Contents = new[] { PermisoContenidos.GestionarMultimediaCMS })]
 		public ActionResult ActionCallback()
         {
             string action = RequestParams("callback");

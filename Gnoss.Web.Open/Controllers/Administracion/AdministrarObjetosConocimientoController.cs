@@ -230,7 +230,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
         }
 
         [HttpPost]
-		[TypeFilter(typeof(PermisosContenidos), Arguments = new object[] { new ulong[] { (ulong)PermisoContenidos.GestionarOC, (ulong)PermisoContenidos.AnyadirValorEntidadSecundaria } })]
+		[AdministrationPermissions(Contents = new[] { PermisoContenidos.GestionarOC, PermisoContenidos.AnyadirValorEntidadSecundaria })]
 		public ActionResult CrearLoadModal()
         {
             // Creación objeto de conocimiento "vacío" para el mostrado del modal 
@@ -246,7 +246,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
         /// <param name="Ontologia">Ontología a crear</param>
         /// <returns></returns>
         [HttpPost]        
-		[TypeFilter(typeof(PermisosContenidos), Arguments = new object[] { new ulong[] { (ulong)PermisoContenidos.AnyadirValorEntidadSecundaria, (ulong)PermisoContenidos.GestionarOC } })]
+		[AdministrationPermissions(Contents = new[] { PermisoContenidos.AnyadirValorEntidadSecundaria, PermisoContenidos.GestionarOC })]
 		[TypeFilter(typeof(AccesoIntegracionAttribute))]
         [TypeFilter(typeof(LimitarPeticionesAdministracion), Arguments = new object[] { 30, 120, 15 })]
         public ActionResult CrearOntologia(EditOntologyViewModel Ontologia)
@@ -480,7 +480,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
         /// </summary>
         /// <returns>ActionResult</returns>
         [HttpPost]
-		[TypeFilter(typeof(PermisosContenidos), Arguments = new object[] { new ulong[] { (ulong)PermisoContenidos.GestionarOC, (ulong)PermisoContenidos.AnyadirValorEntidadSecundaria, (ulong)PermisoContenidos.ModificarValorEntidadSecundaria } })]
+		[AdministrationPermissions(Contents = new[] { PermisoContenidos.GestionarOC, PermisoContenidos.AnyadirValorEntidadSecundaria, PermisoContenidos.ModificarValorEntidadSecundaria })]
 		[TypeFilter(typeof(AccesoIntegracionAttribute))]
         [TypeFilter(typeof(LimitarPeticionesAdministracion), Arguments = new object[] { 30, 120, 15 })]
         public ActionResult GuardarEdicionObjetoConocimiento(EditarObjetoConocimientoYOntologiaModel ObjetoConocimiento)
@@ -555,7 +555,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
         /// <param name="Id">Id del objeto de conocimiento del que se desea proceder al borrado</param>
         /// <returns></returns>
         [HttpPost]
-		[TypeFilter(typeof(PermisosContenidos), Arguments = new object[] { new ulong[] { (ulong)PermisoContenidos.GestionarOC, (ulong)PermisoContenidos.EliminarValorEntidadSecundaria } })]
+		[AdministrationPermissions(Contents = new[] { PermisoContenidos.GestionarOC, PermisoContenidos.EliminarValorEntidadSecundaria })]
 		[TypeFilter(typeof(AccesoIntegracionAttribute))]		
 		public ActionResult EliminarObjetoConocimiento(Guid DocumentoId, string Id)
         {
@@ -621,7 +621,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
             }
         }
 
-        [TypeFilter(typeof(PermisosContenidos), Arguments = new object[] { new ulong[] { (ulong)PermisoContenidos.AnyadirValorEntidadSecundaria, (ulong)PermisoContenidos.ModificarValorEntidadSecundaria, (ulong)PermisoContenidos.GestionarOC } })]
+        [AdministrationPermissions(Contents = new[] { PermisoContenidos.AnyadirValorEntidadSecundaria, PermisoContenidos.ModificarValorEntidadSecundaria, PermisoContenidos.GestionarOC })]
         [TypeFilter(typeof(LimitarPeticionesAdministracion), Arguments = new object[] { 30, 120, 15 })]
         //Descargar todas las clases del ecosistema
         public ActionResult DownloadClasses()
@@ -695,7 +695,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
         //    }
         //}
 
-        [TypeFilter(typeof(PermisosContenidos), Arguments = new object[] { new ulong[] { (ulong)PermisoContenidos.AnyadirValorEntidadSecundaria, (ulong)PermisoContenidos.ModificarValorEntidadSecundaria, (ulong)PermisoContenidos.GestionarOC } })]
+        [AdministrationPermissions(Contents = new[] { PermisoContenidos.AnyadirValorEntidadSecundaria, PermisoContenidos.ModificarValorEntidadSecundaria, PermisoContenidos.GestionarOC })]
         [TypeFilter(typeof(LimitarPeticionesAdministracion), Arguments = new object[] { 30, 120, 15 })]
         public ActionResult DownloadClassesJava()
         {
@@ -837,7 +837,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
         /// </summary>
         /// <returns>ActionResult</returns>
         [HttpPost]
-        [TypeFilter(typeof(PermisosContenidos), Arguments = new object[] { new ulong[] { (ulong)PermisoContenidos.AnyadirValorEntidadSecundaria, (ulong)PermisoContenidos.ModificarValorEntidadSecundaria, (ulong)PermisoContenidos.GestionarOC } })]
+        [AdministrationPermissions(Contents = new[] { PermisoContenidos.AnyadirValorEntidadSecundaria, PermisoContenidos.ModificarValorEntidadSecundaria, PermisoContenidos.GestionarOC })]
         public ActionResult NuevoSubTipo()
         {
 			CargarPermisosAdministrarOC();
@@ -851,7 +851,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
         /// </summary>
         /// <returns>ActionResult</returns>
         [HttpPost]
-        [TypeFilter(typeof(PermisosContenidos), Arguments = new object[] { new ulong[] { (ulong)PermisoContenidos.AnyadirValorEntidadSecundaria, (ulong)PermisoContenidos.ModificarValorEntidadSecundaria, (ulong)PermisoContenidos.GestionarOC } })]
+        [AdministrationPermissions(Contents = new[] { PermisoContenidos.AnyadirValorEntidadSecundaria, PermisoContenidos.ModificarValorEntidadSecundaria, PermisoContenidos.GestionarOC })]
         public ActionResult NuevaPropiedad()
         {
 			CargarPermisosAdministrarOC();
@@ -868,7 +868,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
         /// </summary>
         /// <returns>ActionResult</returns>
         [HttpPost]
-        [TypeFilter(typeof(PermisosContenidos), Arguments = new object[] { new ulong[] { (ulong)PermisoContenidos.AnyadirValorEntidadSecundaria, (ulong)PermisoContenidos.ModificarValorEntidadSecundaria, (ulong)PermisoContenidos.GestionarOC } })]
+        [AdministrationPermissions(Contents = new[] { PermisoContenidos.AnyadirValorEntidadSecundaria, PermisoContenidos.ModificarValorEntidadSecundaria, PermisoContenidos.GestionarOC })]
         public ActionResult NuevaPropiedadPersonalizada()
         {
 			CargarPermisosAdministrarOC();
@@ -885,7 +885,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
         /// </summary>
         /// <param name="Grafo">Grafo de la entidad secundaria indicada</param>
         /// <returns>Devuelve vista con todos los elementos pertenecientes a la entidad secundaria indicada<returns>
-        [TypeFilter(typeof(PermisosContenidos), Arguments = new object[] { new ulong[] { (ulong)PermisoContenidos.AnyadirValorEntidadSecundaria, (ulong)PermisoContenidos.ModificarValorEntidadSecundaria, (ulong)PermisoContenidos.GestionarOC } })]
+        [AdministrationPermissions(Contents = new[] { PermisoContenidos.AnyadirValorEntidadSecundaria, PermisoContenidos.ModificarValorEntidadSecundaria, PermisoContenidos.GestionarOC })]
         [TypeFilter(typeof(LimitarPeticionesAdministracion), Arguments = new object[] { 30, 120, 15 })]
         public ActionResult CargarElementosEntidadSecundaria(string Grafo)
         {
@@ -903,7 +903,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
 		/// </summary>
 		/// <param name="Grafo">Grafo del elemento a cargar</param>
 		/// <returns>Vista con las propiedades del tipo de la entidad secundaria vacías</returns>
-		[TypeFilter(typeof(PermisosContenidos), Arguments = new object[] { new ulong[] { (ulong)PermisoContenidos.AnyadirValorEntidadSecundaria, (ulong)PermisoContenidos.ModificarValorEntidadSecundaria, (ulong)PermisoContenidos.GestionarOC } })]
+		[AdministrationPermissions(Contents = new[] { PermisoContenidos.AnyadirValorEntidadSecundaria, PermisoContenidos.ModificarValorEntidadSecundaria, PermisoContenidos.GestionarOC })]
         [TypeFilter(typeof(LimitarPeticionesAdministracion), Arguments = new object[] { 30, 120, 15 })]
         public ActionResult NuevoElementoEntidadSecundaria(string Grafo)
         {
@@ -925,7 +925,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
 		/// <param name="Grafo">Grafo del elemento a mostrar</param>
 		/// <param name="SujetoEntidad">Sujeto del elemento a mostrar</param>
 		/// <returns>Vista con las propiedades del elemento de la entidad secundaria y sus datos</returns>
-		[TypeFilter(typeof(PermisosContenidos), Arguments = new object[] { new ulong[] { (ulong)PermisoContenidos.AnyadirValorEntidadSecundaria, (ulong)PermisoContenidos.ModificarValorEntidadSecundaria, (ulong)PermisoContenidos.GestionarOC } })]
+		[AdministrationPermissions(Contents = new[] { PermisoContenidos.AnyadirValorEntidadSecundaria, PermisoContenidos.ModificarValorEntidadSecundaria, PermisoContenidos.GestionarOC })]
         [TypeFilter(typeof(LimitarPeticionesAdministracion), Arguments = new object[] { 30, 120, 15 })]
         public ActionResult EditarElementoEntidadSecundaria(string Grafo, string SujetoEntidad)
         {
@@ -948,7 +948,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
 		/// <param name="ElementoNuevo">Si es un elemento nuevo o uno modificado</param>
 		/// <param name="Rdf">Valor del rdf del elemento</param>
 		/// <returns></returns>
-		[TypeFilter(typeof(PermisosContenidos), Arguments = new object[] { new ulong[] { (ulong)PermisoContenidos.AnyadirValorEntidadSecundaria, (ulong)PermisoContenidos.ModificarValorEntidadSecundaria, (ulong)PermisoContenidos.GestionarOC } })]
+		[AdministrationPermissions(Contents = new[] { PermisoContenidos.AnyadirValorEntidadSecundaria, PermisoContenidos.ModificarValorEntidadSecundaria, PermisoContenidos.GestionarOC })]
         [TypeFilter(typeof(LimitarPeticionesAdministracion), Arguments = new object[] { 30, 120, 15 })]
         public ActionResult GuardarElementoEntidadSecundaria(string SujetoEntidad, string Grafo, bool ElementoNuevo, string Rdf)
         {
@@ -967,7 +967,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
             return GuardarIntanciaOntologiaSecundaria(SujetoEntidad, Grafo, ElementoNuevo, Rdf);
         }
 
-		[TypeFilter(typeof(PermisosContenidos), Arguments = new object[] { new ulong[] { (ulong)PermisoContenidos.EliminarValorEntidadSecundaria, (ulong)PermisoContenidos.GestionarOC } })]
+		[AdministrationPermissions(Contents = new[] { PermisoContenidos.EliminarValorEntidadSecundaria, PermisoContenidos.GestionarOC })]
 		public ActionResult EliminarElementoEntidadSecundaria(string Grafo, string SujetoEntidad)
         {
 			CargarPermisosAdministrarOC();
@@ -995,7 +995,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
         }
 
         [HttpPost]
-        [TypeFilter(typeof(PermisosContenidos), Arguments = new object[] { new ulong[] { (ulong)PermisoContenidos.AnyadirValorEntidadSecundaria, (ulong)PermisoContenidos.ModificarValorEntidadSecundaria, (ulong)PermisoContenidos.GestionarOC } })]
+        [AdministrationPermissions(Contents = new[] { PermisoContenidos.AnyadirValorEntidadSecundaria, PermisoContenidos.ModificarValorEntidadSecundaria, PermisoContenidos.GestionarOC })]
         public ActionResult HistorialFicheros(Guid ontoID)
         {
             OntologicalTemplatesAdministrationViewModel viewModel = new OntologicalTemplatesAdministrationViewModel() { OntologyID = ontoID };
@@ -1037,7 +1037,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
 		/// Guarda una instancia secundaría.
 		/// </summary>
 		/// <returns>Acción resultado</returns>
-		[TypeFilter(typeof(PermisosContenidos), Arguments = new object[] { new ulong[] { (ulong)PermisoContenidos.AnyadirValorEntidadSecundaria, (ulong)PermisoContenidos.ModificarValorEntidadSecundaria, (ulong)PermisoContenidos.GestionarOC } })]
+		[AdministrationPermissions(Contents = new[] { PermisoContenidos.AnyadirValorEntidadSecundaria, PermisoContenidos.ModificarValorEntidadSecundaria, PermisoContenidos.GestionarOC })]
 		private ActionResult GuardarIntanciaOntologiaSecundaria(string pSujeto, string pGrafo, bool pElementoNuevo, string pRdf)
         {
             GuardarLogAuditoria();

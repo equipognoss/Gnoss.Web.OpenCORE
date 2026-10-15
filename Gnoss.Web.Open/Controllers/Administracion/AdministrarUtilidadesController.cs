@@ -75,7 +75,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
         /// </summary>
         /// <returns></returns>
         [HttpGet]
-		[TypeFilter(typeof(PermisosAdministracion), Arguments = new object[] { new ulong[] { (ulong)PermisoComunidad.GestionarNivelesDeCertificacion } })]
+		[AdministrationPermissions(Community = new[] { PermisoComunidad.GestionarNivelesDeCertificacion })]
 		public ActionResult IndexGestionCertificados()
         {
             EliminarPersonalizacionVistas();
@@ -116,7 +116,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
         /// </summary>
         /// <returns></returns>
         [HttpPost]
-        [TypeFilter(typeof(PermisosAdministracion), Arguments = new object[] { new ulong[] { (ulong)PermisoComunidad.GestionarNivelesDeCertificacion } })]
+        [AdministrationPermissions(Community = new[] { PermisoComunidad.GestionarNivelesDeCertificacion })]
         public ActionResult LoadCreateEditCertification(AdministrarUtilidadesCertificationModel pModel)
         {
             // Devolver la vista modal
@@ -128,7 +128,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
         /// </summary>
         /// <returns></returns>
         [HttpPost]
-        [TypeFilter(typeof(PermisosAdministracion), Arguments = new object[] { new ulong[] { (ulong)PermisoComunidad.GestionarNivelesDeCertificacion } })]
+        [AdministrationPermissions(Community = new[] { PermisoComunidad.GestionarNivelesDeCertificacion })]
         public ActionResult LoadConfirmDeleteCertification(AdministrarUtilidadesCertificationModel pModel)
         {
             // Devolver la vista modal
@@ -137,7 +137,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
 
         // POST: Guardar AdministrarUtilidades
         [HttpPost]		
-		[TypeFilter(typeof(PermisosAdministracion), Arguments = new object[] { new ulong[] { (ulong)PermisoComunidad.GestionarNivelesDeCertificacion } })]
+		[AdministrationPermissions(Community = new[] { PermisoComunidad.GestionarNivelesDeCertificacion })]
 		[TypeFilter(typeof(AccesoIntegracionAttribute))]
         [TypeFilter(typeof(LimitarPeticionesAdministracion), Arguments = new object[] { 30, 120, 15 })]
         public ActionResult Guardar(AdministrarComunidadUtilidades DatosGuardado)
@@ -203,7 +203,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
 
         // POST: Guardar exclusivamente los Certificados de la comunidad.
         [HttpPost]
-		[TypeFilter(typeof(PermisosAdministracion), Arguments = new object[] { new ulong[] { (ulong)PermisoComunidad.GestionarNivelesDeCertificacion } })]
+		[AdministrationPermissions(Community = new[] { PermisoComunidad.GestionarNivelesDeCertificacion })]
 		[TypeFilter(typeof(AccesoIntegracionAttribute))]
         [TypeFilter(typeof(LimitarPeticionesAdministracion), Arguments = new object[] { 30, 120, 15 })]
         public ActionResult SaveCertifications(AdministrarComunidadUtilidades DatosGuardado)

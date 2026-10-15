@@ -58,8 +58,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
 		/// Muestra la pagina de descargar traducciones
 		/// </summary>
 		/// <returns>ActionResult</returns>
-		[TypeFilter(typeof(PermisosAdministracion), Arguments = new object[] { new ulong[] { (ulong)PermisoComunidad.GestionarTraducciones } })]
-		[TypeFilter(typeof(PermisosAdministracionEcosistema), Arguments = new object[] { new ulong[] { (ulong)PermisoEcosistema.GestionarTraduccionesEcosistema } })]
+		[AdministrationPermissions(Community = new[] { PermisoComunidad.GestionarTraducciones }, Ecosystem = new[] { PermisoEcosistema.GestionarTraduccionesEcosistema })]
 		public ActionResult Index()
         {
             // Controlar si es o no del ecosistema            
@@ -141,8 +140,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
         }
 
         [HttpPost]
-		[TypeFilter(typeof(PermisosAdministracion), Arguments = new object[] { new ulong[] { (ulong)PermisoComunidad.GestionarTraducciones } })]
-		[TypeFilter(typeof(PermisosAdministracionEcosistema), Arguments = new object[] { new ulong[] { (ulong)PermisoEcosistema.GestionarTraduccionesEcosistema } })]
+		[AdministrationPermissions(Community = new[] { PermisoComunidad.GestionarTraducciones }, Ecosystem = new[] { PermisoEcosistema.GestionarTraduccionesEcosistema })]
         [TypeFilter(typeof(LimitarPeticionesAdministracion), Arguments = new object[] { 30, 120, 15 })]
         public ActionResult subirFicheros(IFormFile file, bool validar)
         {
@@ -298,8 +296,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
         }
 
         [HttpPost]
-		[TypeFilter(typeof(PermisosAdministracion), Arguments = new object[] { new ulong[] { (ulong)PermisoComunidad.GestionarTraducciones } })]
-		[TypeFilter(typeof(PermisosAdministracionEcosistema), Arguments = new object[] { new ulong[] { (ulong)PermisoEcosistema.GestionarTraduccionesEcosistema } })]
+		[AdministrationPermissions(Community = new[] { PermisoComunidad.GestionarTraducciones }, Ecosystem = new[] { PermisoEcosistema.GestionarTraduccionesEcosistema })]
 		public ActionResult validarHtml(IFormFile file)
         {
             Stream ms = new MemoryStream();
@@ -368,8 +365,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
         }
 
         [HttpPost]
-		[TypeFilter(typeof(PermisosAdministracion), Arguments = new object[] { new ulong[] { (ulong)PermisoComunidad.GestionarTraducciones } })]
-		[TypeFilter(typeof(PermisosAdministracionEcosistema), Arguments = new object[] { new ulong[] { (ulong)PermisoEcosistema.GestionarTraduccionesEcosistema } })]
+		[AdministrationPermissions(Community = new[] { PermisoComunidad.GestionarTraducciones }, Ecosystem = new[] { PermisoEcosistema.GestionarTraduccionesEcosistema })]
         [TypeFilter(typeof(LimitarPeticionesAdministracion), Arguments = new object[] { 30, 120, 15 })]
         public ActionResult getDescargasFicheros(DescargarTraduccionesViewModel OpcionesDescarga)
         {

@@ -9,10 +9,13 @@ Variables
 ----------------------------------------------------------------
 *@
 @{
+@* Url base de la administración de cláusulas (comunidad o ecosistema) *@
+bool isEcosystemAdministration = ViewBag.IsEcosystemAdministration ?? false;
+string urlBaseClause = Html.GetComunidad().Url + "/" + Html.GetText("URLSEM", isEcosystemAdministration ? "ADMINISTRARCLAUSULASREGISTROECOSISTEMA" : "ADMINISTRARCLAUSULASREGISTRO");
 @* Url para crear una cláusula vía modal *@
-string urlCreateClause = Html.GetComunidad().Url + "/" + Html.GetText("URLSEM", "ADMINISTRARCLAUSULASREGISTRO") + "/new-clause"; 
+string urlCreateClause = urlBaseClause + "/new-clause";
 @* Url para confirmar el guardado de la cláusula vía modal *@
-string urlSaveClause = Html.GetComunidad().Url + "/" + Html.GetText("URLSEM", "ADMINISTRARCLAUSULASREGISTRO") + "/save"; 
+string urlSaveClause = urlBaseClause + "/save";
 
 }
 

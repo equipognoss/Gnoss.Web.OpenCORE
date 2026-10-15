@@ -85,7 +85,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
         /// </summary>
         /// <returns>ActionResult</returns>
         [HttpGet]        
-		[TypeFilter(typeof(PermisosAdministracion), Arguments = new object[] { new ulong[] { (ulong)PermisoComunidad.GestionarInteraccionesSociales } })]
+		[AdministrationPermissions(Community = new[] { PermisoComunidad.GestionarInteraccionesSociales })]
 		public ActionResult IndexInteraccionSocial()
         {
             EliminarPersonalizacionVistas();
@@ -113,8 +113,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
         /// </summary>
         /// <returns>ActionResult</returns>
         [HttpGet]
-		[TypeFilter(typeof(PermisosAdministracion), Arguments = new object[] { new ulong[] { (ulong)PermisoComunidad.GestionarBuzonDeCorreo } })]
-		[TypeFilter(typeof(PermisosAdministracionEcosistema), Arguments = new object[] { new ulong[] { (ulong)PermisoEcosistema.GestionarBuzonDeCorreoEcosistema } })]
+		[AdministrationPermissions(Community = new[] { PermisoComunidad.GestionarBuzonDeCorreo }, Ecosystem = new[] { PermisoEcosistema.GestionarBuzonDeCorreoEcosistema })]
 		public ActionResult IndexBuzonCorreo()
         {
             EliminarPersonalizacionVistas();
@@ -213,7 +212,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
         /// </summary>
         /// <returns>ActionResult</returns>
         [HttpPost]
-		[TypeFilter(typeof(PermisosAdministracion), Arguments = new object[] { new ulong[] { (ulong)PermisoComunidad.GestionarInteraccionesSociales } })]
+		[AdministrationPermissions(Community = new[] { PermisoComunidad.GestionarInteraccionesSociales })]
 		[TypeFilter(typeof(AccesoIntegracionAttribute))]
         [TypeFilter(typeof(LimitarPeticionesAdministracion), Arguments = new object[] { 30, 120, 15 })]
         public ActionResult GuardarIntegracionSocial(AdministrarOpcionesAvanzadasViewModel Options)
@@ -279,8 +278,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
 		/// </summary>
 		/// <returns>ActionResult</returns>
 		[HttpPost]
-		[TypeFilter(typeof(PermisosAdministracion), Arguments = new object[] { new ulong[] { (ulong)PermisoComunidad.GestionarBuzonDeCorreo } })]
-		[TypeFilter(typeof(PermisosAdministracionEcosistema), Arguments = new object[] { new ulong[] { (ulong)PermisoEcosistema.GestionarBuzonDeCorreoEcosistema } })]
+		[AdministrationPermissions(Community = new[] { PermisoComunidad.GestionarBuzonDeCorreo }, Ecosystem = new[] { PermisoEcosistema.GestionarBuzonDeCorreoEcosistema })]
 		public ActionResult ValidarCorreo(AdministrarOpcionesAvanzadasViewModel Options)
 		{
 			ConfiguradorCorreo configuracionCorreo = Options?.ConfiguracionCorreo;
@@ -528,8 +526,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
 		/// </summary>
 		/// <returns>ActionResult</returns>
 		[HttpPost]
-		[TypeFilter(typeof(PermisosAdministracion), Arguments = new object[] { new ulong[] { (ulong)PermisoComunidad.GestionarBuzonDeCorreo } })]
-		[TypeFilter(typeof(PermisosAdministracionEcosistema), Arguments = new object[] { new ulong[] { (ulong)PermisoEcosistema.GestionarBuzonDeCorreoEcosistema } })]
+		[AdministrationPermissions(Community = new[] { PermisoComunidad.GestionarBuzonDeCorreo }, Ecosystem = new[] { PermisoEcosistema.GestionarBuzonDeCorreoEcosistema })]
 		public ActionResult GuardarBuzonCorreo(AdministrarOpcionesAvanzadasViewModel Options)
         {
             GuardarLogAuditoria();

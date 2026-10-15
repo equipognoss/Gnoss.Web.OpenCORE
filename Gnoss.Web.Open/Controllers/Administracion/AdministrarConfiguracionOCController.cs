@@ -60,7 +60,7 @@ namespace Gnoss.Web.Open.Controllers.Administracion
         }
 
         [HttpGet]
-		[TypeFilter(typeof(PermisosContenidos), Arguments = new object[] { new ulong[] { (ulong)PermisoContenidos.GestionarOC } })]
+		[AdministrationPermissions(Contents = new[] { PermisoContenidos.GestionarOC })]
 		public ActionResult Index(Guid ontologiaID)
         {
             EliminarPersonalizacionVistas();
@@ -134,7 +134,7 @@ namespace Gnoss.Web.Open.Controllers.Administracion
         }
 
         [HttpPost]
-		[TypeFilter(typeof(PermisosContenidos), Arguments = new object[] { new ulong[] { (ulong)PermisoContenidos.GestionarOC } })]
+		[AdministrationPermissions(Contents = new[] { PermisoContenidos.GestionarOC })]
 		public ActionResult CargarEntidades(string pOntologia)
         {
             List<string> entidades = new List<string>();
@@ -153,7 +153,7 @@ namespace Gnoss.Web.Open.Controllers.Administracion
         }
 
         [HttpPost]
-		[TypeFilter(typeof(PermisosContenidos), Arguments = new object[] { new ulong[] { (ulong)PermisoContenidos.GestionarOC } })]
+		[AdministrationPermissions(Contents = new[] { PermisoContenidos.GestionarOC })]
 		public ActionResult CargarPropiedades(string pOntologia, string pEntidad)
         {
             List<string> propiedades = new List<string>();
@@ -203,7 +203,7 @@ namespace Gnoss.Web.Open.Controllers.Administracion
             return Json(propiedades);
         }
         [HttpPost]
-		[TypeFilter(typeof(PermisosContenidos), Arguments = new object[] { new ulong[] { (ulong)PermisoContenidos.GestionarOC } })]
+		[AdministrationPermissions(Contents = new[] { PermisoContenidos.GestionarOC })]
         [TypeFilter(typeof(LimitarPeticionesAdministracion), Arguments = new object[] { 30, 120, 15 })]
         public ActionResult Save(Guid ontologiaID)
         {

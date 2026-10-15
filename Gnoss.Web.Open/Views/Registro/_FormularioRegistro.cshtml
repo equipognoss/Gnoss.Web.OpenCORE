@@ -475,11 +475,16 @@ Variables
                             @*si es obligatoria y contiene una de las dos máscaras*@
                             if (!Model.Clauses[clausula].Value && (Model.Clauses[clausula].Key.Contains(ManageRegisterClausesViewModel.MascaraCondicionesUso) || Model.Clauses[clausula].Key.Contains(ManageRegisterClausesViewModel.MascaraPoliticaPrivacidad)))
                             {
+                                @* Las cláusulas del ecosistema enlazan a sus propias páginas y muestran el nombre del ecosistema *@
+                                bool isEcosystemClause = Model.EcosystemClauses != null && Model.EcosystemClauses.Contains(clausula);
+                                string clauseBaseUrl = isEcosystemClause ? Html.GetBaseUrlIdioma() : Html.GetComunidad().Url;
+                                string clauseOwner = isEcosystemClause ? Html.GetText("COMADMINCLAUSULASREGISTRO", "DELAPLATAFORMA") : Html.GetText("COMADMINCLAUSULASREGISTRO", "DELACOMUNIDAD", Comunidad.ShortName);
+
                                 textoClausula = Html.GetText("COMADMINCLAUSULASREGISTRO", "HELEIDOYACEPTO");
                                 if (Model.Clauses[clausula].Key.Contains(ManageRegisterClausesViewModel.MascaraCondicionesUso))
                                 {
                                     string condicionesUso = Html.GetText("COMADMINCLAUSULASREGISTRO", "TEXTODEFECTOCCONDICIONESUSOCOM");
-                                    string urlCondicionesUso = $"{Html.GetComunidad().Url}/{Html.GetText("URLSEM", "CONDICIONESUSO")}";
+                                    string urlCondicionesUso = $"{clauseBaseUrl}/{Html.GetText("URLSEM", "CONDICIONESUSO")}";
                                     string enlaceCondicionesUso = $"<a href=\"{urlCondicionesUso}\" target=\"_blank\">{condicionesUso}</a>";
 
                                     textoClausula += enlaceCondicionesUso;
@@ -491,12 +496,12 @@ Variables
                                 if (Model.Clauses[clausula].Key.Contains(ManageRegisterClausesViewModel.MascaraPoliticaPrivacidad))
                                 {
                                     string politicaPriv = Html.GetText("COMADMINCLAUSULASREGISTRO", "TEXTODEFECTOCPOLITICAPRIVACIDADCOM");
-                                    string urlPoliticaPrivacidad = $"{Html.GetComunidad().Url}/{Html.GetText("URLSEM", "POLITICAPRIVACIDAD")}";
+                                    string urlPoliticaPrivacidad = $"{clauseBaseUrl}/{Html.GetText("URLSEM", "POLITICAPRIVACIDAD")}";
                                     string enlacePoliticaPrivacidad = $"<a href=\"{urlPoliticaPrivacidad}\" target=\"_blank\">{politicaPriv}</a>";
 
                                     textoClausula += enlacePoliticaPrivacidad;
                                 }
-                                textoClausula += $" {Html.GetText("COMMON", "DE")} {Comunidad.ShortName}";
+                                textoClausula += $" {clauseOwner}";
                             }
                             <label for="@clausula" class="custom-control-label">@Html.Raw(textoClausula)</label>
                         }

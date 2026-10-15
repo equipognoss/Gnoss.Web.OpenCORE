@@ -581,8 +581,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
             }
         }
 
-        [TypeFilter(typeof(PermisosAdministracion), Arguments = new object[] { new ulong[] { (ulong)PermisoComunidad.GestionarMiembros } })]
-        [TypeFilter(typeof(PermisosAdministracionEcosistema), Arguments = new object[] { new ulong[] { (ulong)PermisoEcosistema.AdministrarMiembrosEcosistema } })]
+        [AdministrationPermissions(Community = new[] { PermisoComunidad.GestionarMiembros }, Ecosystem = new[] { PermisoEcosistema.AdministrarMiembrosEcosistema })]
         public ActionResult CargarModalCambiarRolUsuario(Guid pIdentidadID)
 		{
             try 
@@ -676,8 +675,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
             }
 		}
 
-        [TypeFilter(typeof(PermisosAdministracion), Arguments = new object[] { new ulong[] { (ulong)PermisoComunidad.GestionarMiembros } })]
-        [TypeFilter(typeof(PermisosAdministracionEcosistema), Arguments = new object[] { new ulong[] { (ulong)PermisoEcosistema.AdministrarMiembrosEcosistema } })]
+        [AdministrationPermissions(Community = new[] { PermisoComunidad.GestionarMiembros }, Ecosystem = new[] { PermisoEcosistema.AdministrarMiembrosEcosistema })]
         public ActionResult CargarModalCambiarRolGrupo(Guid pGrupoID)
 		{
             try
@@ -722,8 +720,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
             }
 		}
 
-        [TypeFilter(typeof(PermisosAdministracion), Arguments = new object[] { new ulong[] { (ulong)PermisoComunidad.GestionarMiembros } })]
-        [TypeFilter(typeof(PermisosAdministracionEcosistema), Arguments = new object[] { new ulong[] { (ulong)PermisoEcosistema.AdministrarMiembrosEcosistema } })]
+        [AdministrationPermissions(Community = new[] { PermisoComunidad.GestionarMiembros }, Ecosystem = new[] { PermisoEcosistema.AdministrarMiembrosEcosistema })]
         public ActionResult CambiarRolesGrupo(Guid pGrupoID, string pListaRoles)
         {
 			try
@@ -783,8 +780,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
 			}
         }
 
-        [TypeFilter(typeof(PermisosAdministracion), Arguments = new object[] { new ulong[] { (ulong)PermisoComunidad.GestionarMiembros } })]
-        [TypeFilter(typeof(PermisosAdministracionEcosistema), Arguments = new object[] { new ulong[] { (ulong)PermisoEcosistema.AdministrarMiembrosEcosistema } })]
+        [AdministrationPermissions(Community = new[] { PermisoComunidad.GestionarMiembros }, Ecosystem = new[] { PermisoEcosistema.AdministrarMiembrosEcosistema })]
         public ActionResult CambiarRolesUsuario(Guid pIdentidadID, string pListaRoles)
 		{
 			try
@@ -1020,8 +1016,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
         /// </summary>
         /// <returns></returns>
         [HttpPost]
-		[TypeFilter(typeof(PermisosAdministracion), Arguments = new object[] { new ulong[] { (ulong)PermisoComunidad.GestionarMiembros } })]
-		[TypeFilter(typeof(PermisosAdministracionEcosistema), Arguments = new object[] { new ulong[] { (ulong)PermisoEcosistema.AdministrarMiembrosEcosistema } })]
+		[AdministrationPermissions(Community = new[] { PermisoComunidad.GestionarMiembros }, Ecosystem = new[] { PermisoEcosistema.AdministrarMiembrosEcosistema })]
 		public ActionResult ResetPassord(PeticionContrasenya pModelo)
         {
             try

@@ -58,7 +58,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
         /// </summary>
         /// <returns>Actionresult</returns>
         [HttpGet]
-		[TypeFilter(typeof(PermisosAdministracion), Arguments = new object[] { new ulong[] { (ulong)PermisoComunidad.ConsultarCargasMasivas } })]
+		[AdministrationPermissions(Community = new[] { PermisoComunidad.ConsultarCargasMasivas })]
 		public ActionResult Index()
         {
 

@@ -58,7 +58,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
         /// </summary>
         /// <returns>ActionResult</returns>
         [HttpGet]
-		[TypeFilter(typeof(PermisosAdministracion), Arguments = new object[] { new ulong[] { (ulong)PermisoComunidad.GestionarParametrosDeBusquedaPersonalizados } })]
+		[AdministrationPermissions(Community = new[] { PermisoComunidad.GestionarParametrosDeBusquedaPersonalizados })]
 		public ActionResult Index()
         {
 
@@ -78,7 +78,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
         }
 
         [HttpPost]
-		[TypeFilter(typeof(PermisosAdministracion), Arguments = new object[] { new ulong[] { (ulong)PermisoComunidad.GestionarParametrosDeBusquedaPersonalizados } })]
+		[AdministrationPermissions(Community = new[] { PermisoComunidad.GestionarParametrosDeBusquedaPersonalizados })]
 		public ActionResult CrearLoadModal()
         {
             // Creo un parámetro "nuevo/vacío" para la construcción correcta posterioro del modal
@@ -93,7 +93,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
         /// <param name="ListaPestanyas"></param>
         /// <returns>ActionResult</returns>
         [HttpPost]
-		[TypeFilter(typeof(PermisosAdministracion), Arguments = new object[] { new ulong[] { (ulong)PermisoComunidad.GestionarParametrosDeBusquedaPersonalizados } })]
+		[AdministrationPermissions(Community = new[] { PermisoComunidad.GestionarParametrosDeBusquedaPersonalizados })]
 		[TypeFilter(typeof(AccesoIntegracionAttribute))]
         [TypeFilter(typeof(LimitarPeticionesAdministracion), Arguments = new object[] { 30, 120, 15 })]
         public ActionResult Guardar(List<ParametroBusquedaPersonalizadoModel> ListaPestanyas)

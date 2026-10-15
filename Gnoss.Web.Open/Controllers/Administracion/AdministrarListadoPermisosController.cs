@@ -58,8 +58,7 @@ namespace Gnoss.Web.Open.Controllers.Administracion
 		{
 		}
 
-		[TypeFilter(typeof(PermisosAdministracion), Arguments = new object[] { new ulong[] { (ulong)PermisoComunidad.GestionarRolesYPermisos } })]
-		[TypeFilter(typeof(PermisosAdministracionEcosistema), Arguments = new object[] { new ulong[] { (ulong)PermisoEcosistema.GestionarRolesYPermisosEcosistema } })]
+		[AdministrationPermissions(Community = new[] { PermisoComunidad.GestionarRolesYPermisos }, Ecosystem = new[] { PermisoEcosistema.GestionarRolesYPermisosEcosistema })]
 		public ActionResult Index()
 		{
 			ViewBag.isInEcosistemaPlatform = EsAdministracionEcosistema ? "true" : "false";
