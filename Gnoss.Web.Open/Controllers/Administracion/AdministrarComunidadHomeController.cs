@@ -36,7 +36,6 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Infrastructure;
 using Microsoft.AspNetCore.Mvc.ViewEngines;
-using SixLabors.ImageSharp;
 using System;
 using System.Collections.Generic;
 using System.IO;
