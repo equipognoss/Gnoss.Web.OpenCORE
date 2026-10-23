@@ -4,7 +4,6 @@ on:
   push:
     tags:
       - "*"
-
 jobs:
   build-push-image:
     if: github.event.base_ref == 'refs/heads/5.21'
