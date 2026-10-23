@@ -158,7 +158,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
         /// Acción inicial del controlador.
         /// </summary>
         /// <returns>Acción resultante</returns>
-        [TypeFilter(typeof(PermisosContenidos), Arguments = new object[] { new ulong[] { (ulong)PermisoContenidos.VerTesauroSemantico, (ulong)PermisoContenidos.AnyadirValorTesauro, (ulong)PermisoContenidos.ModificarValorTesauro, (ulong)PermisoContenidos.EliminarValorTesauro } })]
+        [AdministrationPermissions(Contents = new[] { PermisoContenidos.VerTesauroSemantico, PermisoContenidos.AnyadirValorTesauro, PermisoContenidos.ModificarValorTesauro, PermisoContenidos.EliminarValorTesauro })]
         public ActionResult Index()
         {
             EliminarPersonalizacionVistas();
@@ -208,7 +208,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
             return View(mModelAdmin);
         }
 
-        [TypeFilter(typeof(PermisosContenidos), Arguments = new object[] { new ulong[] { (ulong)PermisoContenidos.VerTesauroSemantico, (ulong)PermisoContenidos.AnyadirValorTesauro, (ulong)PermisoContenidos.ModificarValorTesauro } })]
+        [AdministrationPermissions(Contents = new[] { PermisoContenidos.VerTesauroSemantico, PermisoContenidos.AnyadirValorTesauro, PermisoContenidos.ModificarValorTesauro })]
         public ActionResult CrearLoadModal()
         {
             ViewBag.IdiomaPorDefecto = IdiomaPorDefecto;
@@ -225,7 +225,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
         /// <param name="Source"></param>
         /// <param name="Ontologia"></param>
         /// <returns>Acción resultante</returns>
-        [TypeFilter(typeof(PermisosContenidos), Arguments = new object[] { new ulong[] { (ulong)PermisoContenidos.EliminarValorTesauro } })]
+        [AdministrationPermissions(Contents = new[] { PermisoContenidos.EliminarValorTesauro })]
         public ActionResult EliminarTesauro(string Source, string Ontologia)
         {
             EliminarPersonalizacionVistas();
@@ -266,7 +266,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
         /// <param name="Prefijo"></param>
         /// <param name="Source"></param>
         /// <returns>Acción resultante</returns>
-        [TypeFilter(typeof(PermisosContenidos), Arguments = new object[] { new ulong[] { (ulong)PermisoContenidos.AnyadirValorTesauro } })]
+        [AdministrationPermissions(Contents = new[] { PermisoContenidos.AnyadirValorTesauro })]
         public ActionResult AddTesauro(string Nombre, string Ontologia, string Prefijo, string Source)
         {
             EliminarPersonalizacionVistas();
@@ -361,7 +361,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
         /// </summary>
         /// <param name="pModel">Modelo de la acción</param>
         /// <returns>Acción resultante</returns>
-        [TypeFilter(typeof(PermisosContenidos), Arguments = new object[] { new ulong[] { (ulong)PermisoContenidos.VerTesauroSemantico, (ulong)PermisoContenidos.ModificarValorTesauro } })]
+        [AdministrationPermissions(Contents = new[] { PermisoContenidos.VerTesauroSemantico, PermisoContenidos.ModificarValorTesauro })]
         public ActionResult EditarTesauro(EditSemanticThesaurusModel pModel)
         {
             EliminarPersonalizacionVistas();

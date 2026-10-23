@@ -58,79 +58,64 @@ namespace Es.Riam.Gnoss.Web.MVC.Filters
         /// </summary>
         /// <param name="pFilterContext"></param>
         protected override void RealizarComprobaciones(ActionExecutingContext pFilterContext)
-        {          
-            bool tienePermisoPagina = false;
-			UtilPermisos utilPermisos = new UtilPermisos(mEntityContext, mLoggingService, mConfigService, mLoggerFactory.CreateLogger<UtilPermisos>(), mLoggerFactory);
-			if (TipoDePermisoRequerido.Equals(TipoDePermiso.Ecosistema))
-			{
-				if (PermisosRequeridosParaAcceso != null && PermisosRequeridosParaAcceso.Length > 0)
-				{
-					foreach (ulong permisoRequerido in PermisosRequeridosParaAcceso)
-					{
-						tienePermisoPagina = utilPermisos.UsuarioTienePermisoAdministracionEcosistema(permisoRequerido, mControladorBase.UsuarioActual.UsuarioID);
-						if (tienePermisoPagina)
-						{
-							break;
-						}
-					}
-				}
-			}
-			else
-			{
-				if (PermisosRequeridosParaAcceso != null && PermisosRequeridosParaAcceso.Length > 0)
-				{
-					foreach (ulong permisoRequerido in PermisosRequeridosParaAcceso)
-					{
-						tienePermisoPagina = utilPermisos.IdentidadTienePermiso(permisoRequerido, mControladorBase.IdentidadActual.Clave, mControladorBase.IdentidadActual.IdentidadMyGNOSS.Clave, TipoDePermisoRequerido);
-						if (tienePermisoPagina)
-						{
-							break;
-						}
-					}
-				}
-			}
-			if (!tienePermisoPagina && !ComprobarPermisoUsuarioNoAdministrador)
-            {
-                string urlRedirectBase = mControladorBase.BaseURLIdioma + mControladorBase.UrlPerfil;
-                if (mControladorBase.ProyectoSeleccionado.Clave != ProyectoAD.MetaProyecto)
-                {
-                    urlRedirectBase = mControladorBase.UrlsSemanticas.ObtenerURLComunidad(mControladorBase.UtilIdiomas, mControladorBase.BaseURLIdioma, mControladorBase.ProyectoSeleccionado.NombreCorto) + "/";
-                }
+        {
+            bool tienePermisoPagina = HasPermission(TipoDePermisoRequerido, PermisosRequeridosParaAcceso);
 
-                Redireccionar(urlRedirectBase, pFilterContext);
+            if (!tienePermisoPagina && !ComprobarPermisoUsuarioNoAdministrador)
+            {
+                RedirectWithoutPermission(pFilterContext);
             }
         }
 
-        protected bool EsAdministracionEcosistema()
-        {			
-			try
-			{
-				string paramEcosistema = "ecosistema";
-				string valorParametro = null;
-
-				if (mHttpContextAccessor.HttpContext.Request.Query.ContainsKey(paramEcosistema))
-				{
-					valorParametro = mHttpContextAccessor.HttpContext.Request.Query[paramEcosistema];
-				}
-				else if (mHttpContextAccessor.HttpContext.Request.RouteValues.ContainsKey(paramEcosistema))
-				{
-					valorParametro = mHttpContextAccessor.HttpContext.Request.RouteValues[paramEcosistema] as string;
-				}
-				else if (mHttpContextAccessor.HttpContext.Request.HasFormContentType && mHttpContextAccessor.HttpContext.Request.Form != null && mHttpContextAccessor.HttpContext.Request.Form.ContainsKey(paramEcosistema))
-				{
-					valorParametro = mHttpContextAccessor.HttpContext.Request.Form[paramEcosistema];
-				}
-
-				bool.TryParse(valorParametro, out bool esEcosistema);
-
-                return esEcosistema;
-			}
-			catch (Exception ex)
-			{
-				mLoggingService.GuardarLogError(ex.Message, mLogger);
+        /// <summary>
+        /// Comprueba si el usuario actual tiene alguno de los permisos indicados del tipo indicado
+        /// </summary>
+        /// <param name="pPermissionType">Tipo de permiso a comprobar</param>
+        /// <param name="pPermissions">Permisos que dan acceso. Si no hay ninguno, no se concede el acceso</param>
+        /// <returns>True si el usuario tiene alguno de los permisos</returns>
+        protected bool HasPermission(TipoDePermiso pPermissionType, ulong[] pPermissions)
+        {
+            if (pPermissions == null || pPermissions.Length == 0)
+            {
                 return false;
-			}
-		}
+            }
+
+            UtilPermisos utilPermisos = new UtilPermisos(mEntityContext, mLoggingService, mConfigService, mLoggerFactory.CreateLogger<UtilPermisos>(), mLoggerFactory);
+            foreach (ulong permisoRequerido in pPermissions)
+            {
+                bool tienePermiso;
+                if (pPermissionType.Equals(TipoDePermiso.Ecosistema))
+                {
+                    tienePermiso = utilPermisos.UsuarioTienePermisoAdministracionEcosistema(permisoRequerido, mControladorBase.UsuarioActual.UsuarioID);
+                }
+                else
+                {
+                    tienePermiso = utilPermisos.IdentidadTienePermiso(permisoRequerido, mControladorBase.IdentidadActual.Clave, mControladorBase.IdentidadActual.IdentidadMyGNOSS.Clave, pPermissionType);
+                }
+
+                if (tienePermiso)
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        /// <summary>
+        /// Redirige al usuario sin permisos a la home de la comunidad o a su perfil si está en el ecosistema
+        /// </summary>
+        /// <param name="pFilterContext">Contexto del filtro</param>
+        protected void RedirectWithoutPermission(ActionExecutingContext pFilterContext)
+        {
+            string urlRedirectBase = mControladorBase.BaseURLIdioma + mControladorBase.UrlPerfil;
+            if (mControladorBase.ProyectoSeleccionado.Clave != ProyectoAD.MetaProyecto)
+            {
+                urlRedirectBase = mControladorBase.UrlsSemanticas.ObtenerURLComunidad(mControladorBase.UtilIdiomas, mControladorBase.BaseURLIdioma, mControladorBase.ProyectoSeleccionado.NombreCorto) + "/";
+            }
+
+            Redireccionar(urlRedirectBase, pFilterContext);
+        }
 
         private bool EstaActivadaPaginaDeAdministracion()
         {
@@ -163,8 +148,8 @@ namespace Es.Riam.Gnoss.Web.MVC.Filters
         /// </summary>
         public bool ComprobarPermisoUsuarioNoAdministrador { get; set; }
 
-		public TipoDePermiso TipoDePermisoRequerido { get; set; }
+        public TipoDePermiso TipoDePermisoRequerido { get; set; }
 
-		public ulong[] PermisosRequeridosParaAcceso { get; set; }
+        public ulong[] PermisosRequeridosParaAcceso { get; set; }
     }
 }

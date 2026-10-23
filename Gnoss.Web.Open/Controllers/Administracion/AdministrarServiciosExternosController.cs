@@ -61,8 +61,8 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
 		/// </summary>
 		/// <returns>ActionResult</returns>
 		[HttpGet]
-		[TypeFilter(typeof(PermisosAdministracion), Arguments = new object[] { new ulong[] { (ulong)PermisoComunidad.GestionarServiciosExternos } })]
-		public ActionResult Index()
+        [AdministrationPermissions(Community = new[] { PermisoComunidad.GestionarServiciosExternos })]
+        public ActionResult Index()
 		{
 			EliminarPersonalizacionVistas();
 			CargarPermisosAdministracionComunidadEnViewBag();
@@ -86,8 +86,8 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
 		/// </summary>
 		/// <returns>ActionResult</returns>
 		[HttpPost]
-		[TypeFilter(typeof(PermisosAdministracion), Arguments = new object[] { new ulong[] { (ulong)PermisoComunidad.GestionarServiciosExternos } })]
-		public ActionResult CargarNuevoItem()
+        [AdministrationPermissions(Community = new[] { PermisoComunidad.GestionarServiciosExternos })]
+        public ActionResult CargarNuevoItem()
 		{
 			ServiceNameModel serviceName = new ServiceNameModel();
 			serviceName.Deleted = false;
@@ -103,8 +103,8 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
 		/// </summary>
 		/// <returns>ActionResult</returns>
 		[HttpPost]
-		[TypeFilter(typeof(PermisosAdministracion), Arguments = new object[] { new ulong[] { (ulong)PermisoComunidad.GestionarServiciosExternos } })]
-		public ActionResult GuardarUrl(AdministrarServiciosExternosViewModel pOptions)
+        [AdministrationPermissions(Community = new[] { PermisoComunidad.GestionarServiciosExternos })]
+        public ActionResult GuardarUrl(AdministrarServiciosExternosViewModel pOptions)
 		{
 			GuardarLogAuditoria();
 			try
@@ -133,8 +133,8 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
 		/// </summary>
 		/// <returns>ActionResult</returns>
 		[HttpPost]
-		[TypeFilter(typeof(PermisosAdministracion), Arguments = new object[] { new ulong[] { (ulong)PermisoComunidad.GestionarServiciosExternos } })]
-		public ActionResult Guardar(List<ServiceNameModel> listaPestanyas)
+        [AdministrationPermissions(Community = new[] { PermisoComunidad.GestionarServiciosExternos })]
+        public ActionResult Guardar(List<ServiceNameModel> listaPestanyas)
 		{
 			try
 			{

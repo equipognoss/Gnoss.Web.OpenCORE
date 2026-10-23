@@ -88,9 +88,9 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
         /// Index para mostrar/cargar la información relativa a la Interacción social de usuarios en la comunidad. Se realiza desde "Comunidad -> Integración social
         /// </summary>
         /// <returns>ActionResult</returns>
-        [HttpGet]        
-		[TypeFilter(typeof(PermisosAdministracion), Arguments = new object[] { new ulong[] { (ulong)PermisoComunidad.GestionarInteraccionesSociales } })]
-		public ActionResult IndexInteraccionSocial()
+        [HttpGet]
+        [AdministrationPermissions(Community = new[] { PermisoComunidad.GestionarInteraccionesSociales })]
+        public ActionResult IndexInteraccionSocial()
         {
             EliminarPersonalizacionVistas();
             CargarPermisosAdministracionComunidadEnViewBag();
@@ -117,9 +117,8 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
         /// </summary>
         /// <returns>ActionResult</returns>
         [HttpGet]
-		[TypeFilter(typeof(PermisosAdministracion), Arguments = new object[] { new ulong[] { (ulong)PermisoComunidad.GestionarBuzonDeCorreo } })]
-		[TypeFilter(typeof(PermisosAdministracionEcosistema), Arguments = new object[] { new ulong[] { (ulong)PermisoEcosistema.GestionarBuzonDeCorreoEcosistema } })]
-		public ActionResult IndexBuzonCorreo()
+        [AdministrationPermissions(Community = new[] { PermisoComunidad.GestionarBuzonDeCorreo }, Ecosystem = new[] { PermisoEcosistema.GestionarBuzonDeCorreoEcosistema })]
+        public ActionResult IndexBuzonCorreo()
         {
             EliminarPersonalizacionVistas();
             CargarPermisosAdministracionComunidadEnViewBag();
@@ -216,8 +215,8 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
         /// </summary>
         /// <returns>ActionResult</returns>
         [HttpPost]
-		[TypeFilter(typeof(PermisosAdministracion), Arguments = new object[] { new ulong[] { (ulong)PermisoComunidad.GestionarInteraccionesSociales } })]
-		[TypeFilter(typeof(AccesoIntegracionAttribute))]
+        [AdministrationPermissions(Community = new[] { PermisoComunidad.GestionarInteraccionesSociales })]
+        [TypeFilter(typeof(AccesoIntegracionAttribute))]
         public ActionResult GuardarIntegracionSocial(AdministrarOpcionesAvanzadasViewModel Options)
         {
             GuardarLogAuditoria();
@@ -281,9 +280,8 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
 		/// </summary>
 		/// <returns>ActionResult</returns>
 		[HttpPost]
-		[TypeFilter(typeof(PermisosAdministracion), Arguments = new object[] { new ulong[] { (ulong)PermisoComunidad.GestionarBuzonDeCorreo } })]
-		[TypeFilter(typeof(PermisosAdministracionEcosistema), Arguments = new object[] { new ulong[] { (ulong)PermisoEcosistema.GestionarBuzonDeCorreoEcosistema } })]
-		public ActionResult ValidarCorreo(AdministrarOpcionesAvanzadasViewModel Options)
+        [AdministrationPermissions(Community = new[] { PermisoComunidad.GestionarBuzonDeCorreo }, Ecosystem = new[] { PermisoEcosistema.GestionarBuzonDeCorreoEcosistema })]
+        public ActionResult ValidarCorreo(AdministrarOpcionesAvanzadasViewModel Options)
 		{
            
 			try
@@ -317,9 +315,8 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
 		/// </summary>
 		/// <returns>ActionResult</returns>
 		[HttpPost]
-		[TypeFilter(typeof(PermisosAdministracion), Arguments = new object[] { new ulong[] { (ulong)PermisoComunidad.GestionarBuzonDeCorreo } })]
-		[TypeFilter(typeof(PermisosAdministracionEcosistema), Arguments = new object[] { new ulong[] { (ulong)PermisoEcosistema.GestionarBuzonDeCorreoEcosistema } })]
-		public ActionResult GuardarBuzonCorreo(AdministrarOpcionesAvanzadasViewModel Options)
+        [AdministrationPermissions(Community = new[] { PermisoComunidad.GestionarBuzonDeCorreo }, Ecosystem = new[] { PermisoEcosistema.GestionarBuzonDeCorreoEcosistema })]
+        public ActionResult GuardarBuzonCorreo(AdministrarOpcionesAvanzadasViewModel Options)
         {
             GuardarLogAuditoria();
             GuardarDatosConfiguracionCorreo(Options);

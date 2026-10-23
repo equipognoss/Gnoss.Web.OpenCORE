@@ -265,15 +265,14 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
 
 		private IAvailableServices mAvailableServices;
 
-		#endregion
+        #endregion
 
-		/// <summary>
-		/// Muestra la pagina de administrar categorías
-		/// </summary>
-		/// <returns>ActionResult</returns>
-		[TypeFilter(typeof(PermisosContenidos), Arguments = new object[] { new ulong[] { (ulong)PermisoContenidos.VerCategorias, (ulong)PermisoContenidos.EliminarCategoria, (ulong)PermisoContenidos.AnyadirCategoria, (ulong)PermisoContenidos.ModificarCategoria } })]
-		[TypeFilter(typeof(PermisosAdministracionEcosistema), Arguments = new object[] { new ulong[] { (ulong)PermisoEcosistema.GestionarCategoriasDePlataforma } })]
-		public ActionResult Index()
+        /// <summary>
+        /// Muestra la pagina de administrar categorías
+        /// </summary>
+        /// <returns>ActionResult</returns>
+        [AdministrationPermissions(Contents = new[] { PermisoContenidos.VerCategorias, PermisoContenidos.EliminarCategoria, PermisoContenidos.AnyadirCategoria, PermisoContenidos.ModificarCategoria }, Ecosystem = new[] { PermisoEcosistema.GestionarCategoriasDePlataforma })]
+        public ActionResult Index()
 		{
 			EliminarPersonalizacionVistas();
 			CargarPermisosAdministracionComunidadEnViewBag();
@@ -342,8 +341,8 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
 		/// </summary>
 		/// <returns></returns>
 		[HttpPost]
-		[TypeFilter(typeof(PermisosContenidos), Arguments = new object[] { new ulong[] { (ulong)PermisoContenidos.ModificarCategoria } })]
-		public ActionResult LoadDisableMultilenguage()
+        [AdministrationPermissions(Contents = new[] { PermisoContenidos.ModificarCategoria }, Ecosystem = new[] { PermisoEcosistema.GestionarCategoriasDePlataforma })]
+        public ActionResult LoadDisableMultilenguage()
 		{
 			CargarPermisosCategoriasViewBag();
 			ActionResult partialView = View();
@@ -356,12 +355,12 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
 
 
 
-		/// <summary>
-		/// Muestra el panel para realizar la acción solicitada
-		/// </summary>
-		/// <returns>ActionResult</returns>
-		[TypeFilter(typeof(PermisosContenidos), Arguments = new object[] { new ulong[] { (ulong)PermisoContenidos.VerCategorias, (ulong)PermisoContenidos.EliminarCategoria, (ulong)PermisoContenidos.AnyadirCategoria, (ulong)PermisoContenidos.ModificarCategoria } })]
-		public ActionResult MostrarAccion(string typeAction)
+        /// <summary>
+        /// Muestra el panel para realizar la acción solicitada
+        /// </summary>
+        /// <returns>ActionResult</returns>
+        [AdministrationPermissions(Contents = new[] { PermisoContenidos.VerCategorias, PermisoContenidos.EliminarCategoria, PermisoContenidos.AnyadirCategoria, PermisoContenidos.ModificarCategoria }, Ecosystem = new[] { PermisoEcosistema.GestionarCategoriasDePlataforma })]
+        public ActionResult MostrarAccion(string typeAction)
 		{
 			CargarPermisosCategoriasViewBag();
 			typeAction = typeAction.Replace('-', '_');
@@ -511,11 +510,12 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
 			}
 		}
 
-		/// <summary>
-		/// Ejecuta la acción solicitada
-		/// </summary>
-		/// <returns>ActionResult</returns>
-		public ActionResult EjecutarAccion(string typeAction, IFormFile pImagenCategoria, string name, Guid parentKey)
+        /// <summary>
+        /// Ejecuta la acción solicitada
+        /// </summary>
+        /// <returns>ActionResult</returns>
+        [AdministrationPermissions(Contents = new[] { PermisoContenidos.VerCategorias, PermisoContenidos.EliminarCategoria, PermisoContenidos.AnyadirCategoria, PermisoContenidos.ModificarCategoria }, Ecosystem = new[] { PermisoEcosistema.GestionarCategoriasDePlataforma })]
+        public ActionResult EjecutarAccion(string typeAction, IFormFile pImagenCategoria, string name, Guid parentKey)
 		{
 			GuardarLogAuditoria();
 			CargarPermisosCategoriasViewBag();
@@ -601,12 +601,12 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
 			return GnossResultERROR();
 		}
 
-		/// <summary>
-		/// Guardar los cambios
-		/// </summary>
-		/// <returns>ActionResult</returns>
-		[TypeFilter(typeof(PermisosContenidos), Arguments = new object[] { new ulong[] { (ulong)PermisoContenidos.EliminarCategoria, (ulong)PermisoContenidos.AnyadirCategoria, (ulong)PermisoContenidos.ModificarCategoria } })]
-		public ActionResult Guardar()
+        /// <summary>
+        /// Guardar los cambios
+        /// </summary>
+        /// <returns>ActionResult</returns>
+        [AdministrationPermissions(Contents = new[] { PermisoContenidos.EliminarCategoria, PermisoContenidos.AnyadirCategoria, PermisoContenidos.ModificarCategoria }, Ecosystem = new[] { PermisoEcosistema.GestionarCategoriasDePlataforma })]
+        public ActionResult Guardar()
 		{
 			GuardarLogAuditoria();
 			CargarPermisosCategoriasViewBag();
@@ -676,12 +676,12 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
 		}
 
 
-		/// <summary>
-		/// Guardar los cambios al mover categorias
-		/// </summary>
-		/// <returns>ActionResult</returns>
-		[TypeFilter(typeof(PermisosContenidos), Arguments = new object[] { new ulong[] { (ulong)PermisoContenidos.EliminarCategoria, (ulong)PermisoContenidos.AnyadirCategoria, (ulong)PermisoContenidos.ModificarCategoria } })]
-		public ActionResult GuardarNuevoOrden(List<OrdenCategoria> pListaOrden)
+        /// <summary>
+        /// Guardar los cambios al mover categorias
+        /// </summary>
+        /// <returns>ActionResult</returns>
+        [AdministrationPermissions(Contents = new[] { PermisoContenidos.EliminarCategoria, PermisoContenidos.AnyadirCategoria, PermisoContenidos.ModificarCategoria }, Ecosystem = new[] { PermisoEcosistema.GestionarCategoriasDePlataforma })]
+        public ActionResult GuardarNuevoOrden(List<OrdenCategoria> pListaOrden)
         {
 			try
 			{
@@ -709,13 +709,13 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
 			}            
         }
 
-		/// <summary>
-		/// Carga el modal para crear una subcategoría dentro de otra
-		/// </summary>
-		/// <param name="categoriaPadreID">Id de la categoría padre de la cual se va a crear su hija</param>
-		/// <returns></returns>
-		[TypeFilter(typeof(PermisosContenidos), Arguments = new object[] { new ulong[] { (ulong)PermisoContenidos.AnyadirCategoria } })]
-		public ActionResult CargarModalCrearCategoriaEnCategoria(Guid categoriaPadreID)
+        /// <summary>
+        /// Carga el modal para crear una subcategoría dentro de otra
+        /// </summary>
+        /// <param name="categoriaPadreID">Id de la categoría padre de la cual se va a crear su hija</param>
+        /// <returns></returns>
+        [AdministrationPermissions(Contents = new[] { PermisoContenidos.AnyadirCategoria }, Ecosystem = new[] { PermisoEcosistema.GestionarCategoriasDePlataforma })]
+        public ActionResult CargarModalCrearCategoriaEnCategoria(Guid categoriaPadreID)
 		{
 			CargarPermisosCategoriasViewBag();
 			PintarModalCrearSubCategoria model = new PintarModalCrearSubCategoria();

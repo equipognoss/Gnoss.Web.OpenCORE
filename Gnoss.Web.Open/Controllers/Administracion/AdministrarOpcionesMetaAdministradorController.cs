@@ -80,8 +80,8 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
 		/// </summary>
 		/// <returns>ActionResult</returns>
 		[HttpGet]
-		[TypeFilter(typeof(PermisosAdministracion), Arguments = new object[] { new ulong[] { (ulong)PermisoComunidad.GestionarOpcionesDelMetaadministrador } })]
-		public ActionResult Index()
+        [AdministrationPermissions(Community = new[] { PermisoComunidad.GestionarOpcionesDelMetaadministrador })]
+        public ActionResult Index()
 		{
 			// Añadir clases para el body del Layout
 			ViewBag.BodyClassPestanya = "meta-administrador";
@@ -104,8 +104,8 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
 		/// </summary>
 		/// <returns>ActionResult</returns>
 		[HttpPost]
-		[TypeFilter(typeof(PermisosAdministracion), Arguments = new object[] { new ulong[] { (ulong)PermisoComunidad.GestionarOpcionesDelMetaadministrador } })]
-		public ActionResult Guardar(AdministrarOpcionesMetaadministradorViewModel Options)
+        [AdministrationPermissions(Community = new[] { PermisoComunidad.GestionarOpcionesDelMetaadministrador })]
+        public ActionResult Guardar(AdministrarOpcionesMetaadministradorViewModel Options)
 		{
 			GuardarLogAuditoria();
 			try
@@ -138,8 +138,8 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
 		}
 
 		[HttpPost]
-		[TypeFilter(typeof(PermisosAdministracion), Arguments = new object[] { new ulong[] { (ulong)PermisoComunidad.GestionarOpcionesDelMetaadministrador } })]
-		public void Shutdown()
+        [AdministrationPermissions(Community = new[] { PermisoComunidad.GestionarOpcionesDelMetaadministrador })]
+        public void Shutdown()
 		{
 			ProyectoCL proyectoCL = new ProyectoCL(mEntityContext, mLoggingService, mRedisCacheWrapper, mConfigService, mVirtuosoAD, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<ProyectoCL>(), mLoggerFactory);
 			Guid clave = Guid.NewGuid();

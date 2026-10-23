@@ -78,8 +78,7 @@ namespace Gnoss.Web.Open.Controllers.Administracion
 
         #region Metodos web
 
-        [TypeFilter(typeof(PermisosAdministracion), Arguments = new object[] { new ulong[] { (ulong)PermisoComunidad.GestionarRolesYPermisos } })]
-        [TypeFilter(typeof(PermisosAdministracionEcosistema), Arguments = new object[] { new ulong[] { (ulong)PermisoEcosistema.GestionarRolesYPermisosEcosistema } })]
+        [AdministrationPermissions(Community = new[] { PermisoComunidad.GestionarRolesYPermisos }, Ecosystem = new[] { PermisoEcosistema.GestionarRolesYPermisosEcosistema })]
         public ActionResult Index()
         {
             ViewBag.isInEcosistemaPlatform = EsAdministracionEcosistema ? "true" : "false";
@@ -113,15 +112,13 @@ namespace Gnoss.Web.Open.Controllers.Administracion
             return View(PaginaModel);
         }
 
-        [TypeFilter(typeof(PermisosAdministracion), Arguments = new object[] { new ulong[] { (ulong)PermisoComunidad.GestionarRolesYPermisos } })]
-        [TypeFilter(typeof(PermisosAdministracionEcosistema), Arguments = new object[] { new ulong[] { (ulong)PermisoEcosistema.GestionarRolesYPermisosEcosistema } })]
+        [AdministrationPermissions(Community = new[] { PermisoComunidad.GestionarRolesYPermisos }, Ecosystem = new[] { PermisoEcosistema.GestionarRolesYPermisosEcosistema })]
         public ActionResult CrearNuevoRol(string pNombre, string pDescripcion, short pAmbito, string pPermisos, string pPermisosRecursos, string pPermisosEcosistema, string pPermisosContenidos, string pPermisosRecursosSemanticos)
         {
             return GuardarRol(Guid.NewGuid(), pNombre, pDescripcion, pAmbito, pPermisos, pPermisosRecursos, pPermisosEcosistema, pPermisosContenidos, pPermisosRecursosSemanticos);
         }
 
-        [TypeFilter(typeof(PermisosAdministracion), Arguments = new object[] { new ulong[] { (ulong)PermisoComunidad.GestionarRolesYPermisos } })]
-        [TypeFilter(typeof(PermisosAdministracionEcosistema), Arguments = new object[] { new ulong[] { (ulong)PermisoEcosistema.GestionarRolesYPermisosEcosistema } })]
+        [AdministrationPermissions(Community = new[] { PermisoComunidad.GestionarRolesYPermisos }, Ecosystem = new[] { PermisoEcosistema.GestionarRolesYPermisosEcosistema })]
         public ActionResult GuardarRol(Guid pRolID, string pNombre, string pDescripcion, short pAmbito, string pPermisos, string pPermisosRecursos, string pPermisosEcosistema, string pPermisosContenidos, string pPermisosRecursosSemanticos)
         {
             try
@@ -233,8 +230,7 @@ namespace Gnoss.Web.Open.Controllers.Administracion
             }
         }
 
-        [TypeFilter(typeof(PermisosAdministracion), Arguments = new object[] { new ulong[] { (ulong)PermisoComunidad.GestionarRolesYPermisos } })]
-        [TypeFilter(typeof(PermisosAdministracionEcosistema), Arguments = new object[] { new ulong[] { (ulong)PermisoEcosistema.GestionarRolesYPermisosEcosistema } })]
+        [AdministrationPermissions(Community = new[] { PermisoComunidad.GestionarRolesYPermisos }, Ecosystem = new[] { PermisoEcosistema.GestionarRolesYPermisosEcosistema })]
         public ActionResult EliminarRol(Guid pRolID)
         {
             try
@@ -272,8 +268,7 @@ namespace Gnoss.Web.Open.Controllers.Administracion
             }
         }
 
-        [TypeFilter(typeof(PermisosAdministracion), Arguments = new object[] { new ulong[] { (ulong)PermisoComunidad.GestionarRolesYPermisos } })]
-        [TypeFilter(typeof(PermisosAdministracionEcosistema), Arguments = new object[] { new ulong[] { (ulong)PermisoEcosistema.GestionarRolesYPermisosEcosistema } })]
+        [AdministrationPermissions(Community = new[] { PermisoComunidad.GestionarRolesYPermisos }, Ecosystem = new[] { PermisoEcosistema.GestionarRolesYPermisosEcosistema })]
         public ActionResult CargarModalNuevoRol()
         {
             ViewBag.isInEcosistemaPlatform = EsAdministracionEcosistema ? "true" : "false";
@@ -283,8 +278,7 @@ namespace Gnoss.Web.Open.Controllers.Administracion
             return PartialView("_modal-views/_new-rol-form", PaginaModel);
         }
 
-        [TypeFilter(typeof(PermisosAdministracion), Arguments = new object[] { new ulong[] { (ulong)PermisoComunidad.GestionarRolesYPermisos } })]
-        [TypeFilter(typeof(PermisosAdministracionEcosistema), Arguments = new object[] { new ulong[] { (ulong)PermisoEcosistema.GestionarRolesYPermisosEcosistema } })]
+        [AdministrationPermissions(Community = new[] { PermisoComunidad.GestionarRolesYPermisos }, Ecosystem = new[] { PermisoEcosistema.GestionarRolesYPermisosEcosistema })]
         public ActionResult CargarModalVerRol(Guid pRolID)
         {
             ViewBag.isInEcosistemaPlatform = EsAdministracionEcosistema ? "true" : "false";
@@ -292,8 +286,7 @@ namespace Gnoss.Web.Open.Controllers.Administracion
             return PartialView("_modal-views/_see-rol-form", rol);
         }
 
-        [TypeFilter(typeof(PermisosAdministracion), Arguments = new object[] { new ulong[] { (ulong)PermisoComunidad.GestionarRolesYPermisos } })]
-        [TypeFilter(typeof(PermisosAdministracionEcosistema), Arguments = new object[] { new ulong[] { (ulong)PermisoEcosistema.GestionarRolesYPermisosEcosistema } })]
+        [AdministrationPermissions(Community = new[] { PermisoComunidad.GestionarRolesYPermisos }, Ecosystem = new[] { PermisoEcosistema.GestionarRolesYPermisosEcosistema })]
         public ActionResult CargarModalEditarRol(Guid pRolID)
         {
             ViewBag.isInEcosistemaPlatform = EsAdministracionEcosistema ? "true" : "false";
@@ -301,8 +294,7 @@ namespace Gnoss.Web.Open.Controllers.Administracion
             return PartialView("_modal-views/_edit-rol-form", rol);
         }
 
-        [TypeFilter(typeof(PermisosAdministracion), Arguments = new object[] { new ulong[] { (ulong)PermisoComunidad.GestionarRolesYPermisos } })]
-        [TypeFilter(typeof(PermisosAdministracionEcosistema), Arguments = new object[] { new ulong[] { (ulong)PermisoEcosistema.GestionarRolesYPermisosEcosistema } })]
+        [AdministrationPermissions(Community = new[] { PermisoComunidad.GestionarRolesYPermisos }, Ecosystem = new[] { PermisoEcosistema.GestionarRolesYPermisosEcosistema })]
         public ActionResult CargarModalEliminarRol(Guid pRolID)
         {
             ViewBag.isInEcosistemaPlatform = EsAdministracionEcosistema ? "true" : "false";
@@ -318,8 +310,7 @@ namespace Gnoss.Web.Open.Controllers.Administracion
             return PartialView("_modal-views/_confirm-delete", modelo);
         }
 
-        [TypeFilter(typeof(PermisosAdministracion), Arguments = new object[] { new ulong[] { (ulong)PermisoComunidad.GestionarRolesYPermisos } })]
-        [TypeFilter(typeof(PermisosAdministracionEcosistema), Arguments = new object[] { new ulong[] { (ulong)PermisoEcosistema.GestionarRolesYPermisosEcosistema } })]
+        [AdministrationPermissions(Community = new[] { PermisoComunidad.GestionarRolesYPermisos }, Ecosystem = new[] { PermisoEcosistema.GestionarRolesYPermisosEcosistema })]
         public ActionResult GuardarDescargarFicheroUsuarioInvitado(bool pPermitirDescargarDocUsuInvitado)
         {
             try
@@ -343,8 +334,7 @@ namespace Gnoss.Web.Open.Controllers.Administracion
             return GnossResultERROR("Error al guardar la configuración");
         }
 
-        [TypeFilter(typeof(PermisosAdministracion), Arguments = new object[] { new ulong[] { (ulong)PermisoComunidad.GestionarRolesYPermisos } })]
-        [TypeFilter(typeof(PermisosAdministracionEcosistema), Arguments = new object[] { new ulong[] { (ulong)PermisoEcosistema.GestionarRolesYPermisosEcosistema } })]
+        [AdministrationPermissions(Community = new[] { PermisoComunidad.GestionarRolesYPermisos }, Ecosystem = new[] { PermisoEcosistema.GestionarRolesYPermisosEcosistema })]
         public ActionResult EliminarMiembroDeRol(Guid pRolID, Guid pMiembroID, bool pEsGrupo)
         {
             try

@@ -71,8 +71,8 @@ namespace Gnoss.Web.Open.Controllers.Administracion
         }
 
         [HttpGet]
-		[TypeFilter(typeof(PermisosContenidos), Arguments = new object[] { new ulong[] { (ulong)PermisoContenidos.GestionarOC } })]
-		public ActionResult Index(Guid ontologiaID)
+        [AdministrationPermissions(Contents = new[] { PermisoContenidos.GestionarOC })]
+        public ActionResult Index(Guid ontologiaID)
         {
             EliminarPersonalizacionVistas();
             CargarPermisosAdministracionComunidadEnViewBag();
@@ -145,8 +145,8 @@ namespace Gnoss.Web.Open.Controllers.Administracion
         }
 
         [HttpPost]
-		[TypeFilter(typeof(PermisosContenidos), Arguments = new object[] { new ulong[] { (ulong)PermisoContenidos.GestionarOC } })]
-		public ActionResult CargarEntidades(string pOntologia)
+        [AdministrationPermissions(Contents = new[] { PermisoContenidos.GestionarOC })]
+        public ActionResult CargarEntidades(string pOntologia)
         {
             List<string> entidades = new List<string>();
             foreach (KeyValuePair<string, Dictionary<string, List<string>>> fila in ListaOntologiasPropiedades)
@@ -164,8 +164,8 @@ namespace Gnoss.Web.Open.Controllers.Administracion
         }
 
         [HttpPost]
-		[TypeFilter(typeof(PermisosContenidos), Arguments = new object[] { new ulong[] { (ulong)PermisoContenidos.GestionarOC } })]
-		public ActionResult CargarPropiedades(string pOntologia, string pEntidad)
+        [AdministrationPermissions(Contents = new[] { PermisoContenidos.GestionarOC })]
+        public ActionResult CargarPropiedades(string pOntologia, string pEntidad)
         {
             List<string> propiedades = new List<string>();
             if (string.IsNullOrEmpty(pOntologia) && string.IsNullOrEmpty(pEntidad))
@@ -214,8 +214,8 @@ namespace Gnoss.Web.Open.Controllers.Administracion
             return Json(propiedades);
         }
         [HttpPost]
-		[TypeFilter(typeof(PermisosContenidos), Arguments = new object[] { new ulong[] { (ulong)PermisoContenidos.GestionarOC } })]
-		public ActionResult Save(Guid ontologiaID)
+        [AdministrationPermissions(Contents = new[] { PermisoContenidos.GestionarOC })]
+        public ActionResult Save(Guid ontologiaID)
         {
             GuardarLogAuditoria();
             XmlReader xmlReaderXML = ObtenerXmlReaderXML(ontologiaID);

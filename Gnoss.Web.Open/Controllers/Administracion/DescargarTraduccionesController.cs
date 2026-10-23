@@ -54,13 +54,12 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
             mLoggerFactory = loggerFactory;
         }
 
-		/// <summary>
-		/// Muestra la pagina de descargar traducciones
-		/// </summary>
-		/// <returns>ActionResult</returns>
-		[TypeFilter(typeof(PermisosAdministracion), Arguments = new object[] { new ulong[] { (ulong)PermisoComunidad.GestionarTraducciones } })]
-		[TypeFilter(typeof(PermisosAdministracionEcosistema), Arguments = new object[] { new ulong[] { (ulong)PermisoEcosistema.GestionarTraduccionesEcosistema } })]
-		public ActionResult Index()
+        /// <summary>
+        /// Muestra la pagina de descargar traducciones
+        /// </summary>
+        /// <returns>ActionResult</returns>
+        [AdministrationPermissions(Community = new[] { PermisoComunidad.GestionarTraducciones }, Ecosystem = new[] { PermisoEcosistema.GestionarTraduccionesEcosistema })]
+        public ActionResult Index()
         {
             // Controlar si es o no del ecosistema            
             bool isInEcosistemaPlatform = !string.IsNullOrEmpty(RequestParams("ecosistema")) ? (bool.Parse(RequestParams("ecosistema"))) : false;
@@ -141,9 +140,8 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
         }
 
         [HttpPost]
-		[TypeFilter(typeof(PermisosAdministracion), Arguments = new object[] { new ulong[] { (ulong)PermisoComunidad.GestionarTraducciones } })]
-		[TypeFilter(typeof(PermisosAdministracionEcosistema), Arguments = new object[] { new ulong[] { (ulong)PermisoEcosistema.GestionarTraduccionesEcosistema } })]
-		public ActionResult subirFicheros(IFormFile file, bool validar)
+        [AdministrationPermissions(Community = new[] { PermisoComunidad.GestionarTraducciones }, Ecosystem = new[] { PermisoEcosistema.GestionarTraduccionesEcosistema })]
+        public ActionResult subirFicheros(IFormFile file, bool validar)
         {
             GuardarLogAuditoria();
             if (!validar)
@@ -297,9 +295,8 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
         }
 
         [HttpPost]
-		[TypeFilter(typeof(PermisosAdministracion), Arguments = new object[] { new ulong[] { (ulong)PermisoComunidad.GestionarTraducciones } })]
-		[TypeFilter(typeof(PermisosAdministracionEcosistema), Arguments = new object[] { new ulong[] { (ulong)PermisoEcosistema.GestionarTraduccionesEcosistema } })]
-		public ActionResult validarHtml(IFormFile file)
+        [AdministrationPermissions(Community = new[] { PermisoComunidad.GestionarTraducciones }, Ecosystem = new[] { PermisoEcosistema.GestionarTraduccionesEcosistema })]
+        public ActionResult validarHtml(IFormFile file)
         {
             Stream ms = new MemoryStream();
 
@@ -367,9 +364,8 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
         }
 
         [HttpPost]
-		[TypeFilter(typeof(PermisosAdministracion), Arguments = new object[] { new ulong[] { (ulong)PermisoComunidad.GestionarTraducciones } })]
-		[TypeFilter(typeof(PermisosAdministracionEcosistema), Arguments = new object[] { new ulong[] { (ulong)PermisoEcosistema.GestionarTraduccionesEcosistema } })]
-		public ActionResult getDescargasFicheros(DescargarTraduccionesViewModel OpcionesDescarga)
+        [AdministrationPermissions(Community = new[] { PermisoComunidad.GestionarTraducciones }, Ecosystem = new[] { PermisoEcosistema.GestionarTraduccionesEcosistema })]
+        public ActionResult getDescargasFicheros(DescargarTraduccionesViewModel OpcionesDescarga)
         {
             //comprobar errores
             BaseDeDatos bd = new BaseDeDatos(ProyectoSeleccionado, mEntityContext, mLoggingService, mConfigService, mVirtuosoAD, mRedisCacheWrapper, mHttpContextAccessor, mGnossCache, mEntityContextBASE, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<BaseDeDatos>(), mLoggerFactory);

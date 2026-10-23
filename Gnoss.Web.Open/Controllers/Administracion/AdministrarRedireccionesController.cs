@@ -153,8 +153,8 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
         /// 
         /// </summary>
         /// <returns></returns>
-		[TypeFilter(typeof(PermisosAdministracion), Arguments = new object[] { new ulong[] { (ulong)PermisoComunidad.GestionarRedirecciones } })]
-		public ActionResult Index()
+		[AdministrationPermissions(Community = new[] { PermisoComunidad.GestionarRedirecciones })]
+        public ActionResult Index()
         {
 
             // Añadir clase para el body del Layout
@@ -176,8 +176,8 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
         /// </summary>
         /// <returns>ActionResult</returns>
         [HttpPost]
-		[TypeFilter(typeof(PermisosAdministracion), Arguments = new object[] { new ulong[] { (ulong)PermisoComunidad.GestionarRedirecciones } })]
-		public ActionResult NuevaRedireccion()
+        [AdministrationPermissions(Community = new[] { PermisoComunidad.GestionarRedirecciones })]
+        public ActionResult NuevaRedireccion()
         {
             EliminarPersonalizacionVistas();
 
@@ -198,8 +198,8 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
         /// </summary>
         /// <returns>ActionResult</returns>
         [HttpPost]
-		[TypeFilter(typeof(PermisosAdministracion), Arguments = new object[] { new ulong[] { (ulong)PermisoComunidad.GestionarRedirecciones } })]
-		public ActionResult Guardar(List<ManageRedirectionsViewModel.RedirectionModel> ListaRedirecciones)
+        [AdministrationPermissions(Community = new[] { PermisoComunidad.GestionarRedirecciones })]
+        public ActionResult Guardar(List<ManageRedirectionsViewModel.RedirectionModel> ListaRedirecciones)
         {
             GuardarLogAuditoria();
             string errores = "";

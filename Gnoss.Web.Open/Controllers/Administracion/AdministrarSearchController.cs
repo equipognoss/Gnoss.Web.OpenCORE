@@ -64,8 +64,8 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
         /// </summary>
         /// <returns>ActionResult</returns>
         [HttpGet]
-		[TypeFilter(typeof(PermisosAdministracion), Arguments = new object[] { new ulong[] { (ulong)PermisoComunidad.GestionarSugerenciasDeBusqueda } })]
-		public ActionResult Index()
+        [AdministrationPermissions(Community = new[] { PermisoComunidad.GestionarSugerenciasDeBusqueda })]
+        public ActionResult Index()
         {
             // Añadir clase para el body del Layout
             ViewBag.BodyClassPestanya = "configuracion sugerencias-busqueda max-width-container";
@@ -86,8 +86,8 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
         /// </summary>
         /// <returns>ActionResult</returns>
         [HttpPost]
-		[TypeFilter(typeof(PermisosAdministracion), Arguments = new object[] { new ulong[] { (ulong)PermisoComunidad.GestionarSugerenciasDeBusqueda } })]
-		public ActionResult Guardar(AdministrarSearchViewModel pOptions)
+        [AdministrationPermissions(Community = new[] { PermisoComunidad.GestionarSugerenciasDeBusqueda })]
+        public ActionResult Guardar(AdministrarSearchViewModel pOptions)
         {
             GuardarLogAuditoria();
             bool iniciado = false;
@@ -152,8 +152,8 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
         }
 
         [HttpPost]
-		[TypeFilter(typeof(PermisosAdministracion), Arguments = new object[] { new ulong[] { (ulong)PermisoComunidad.GestionarSugerenciasDeBusqueda } })]
-		public ActionResult VerificarPrefijo(string propertyValue,string identidad, string organizacion, string proyecto, string lista)
+        [AdministrationPermissions(Community = new[] { PermisoComunidad.GestionarSugerenciasDeBusqueda })]
+        public ActionResult VerificarPrefijo(string propertyValue,string identidad, string organizacion, string proyecto, string lista)
         {
             HttpRequest pRequest = null;
             string re = @"^[^\r\n]+@@@[^\r\n]+$";

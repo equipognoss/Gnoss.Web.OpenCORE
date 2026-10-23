@@ -46,8 +46,8 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
             mlogger = logger;
             mLoggerFactory = loggerFactory;
         }
-		[TypeFilter(typeof(PermisosAdministracion), Arguments = new object[] { new ulong[] { (ulong)PermisoComunidad.GestionarSolicitudesDeAccesoAGrupo } })]
-		public ActionResult Index()
+        [AdministrationPermissions(Community = new[] { PermisoComunidad.GestionarSolicitudesDeAccesoAGrupo })]
+        public ActionResult Index()
         {
             ViewBag.HeaderTitle = UtilIdiomas.GetText("GRUPO", "GRUPOS");
             if (!string.IsNullOrEmpty(RequestParams("grupoOrg")) && RequestParams("grupoOrg") == "true")
@@ -165,8 +165,8 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
             return paginaModel;
         }
 
-		[TypeFilter(typeof(PermisosAdministracion), Arguments = new object[] { new ulong[] { (ulong)PermisoComunidad.GestionarSolicitudesDeAccesoAGrupo } })]
-		public ActionResult AcceptRequest(Guid IdentidadID, Guid GrupoID)
+        [AdministrationPermissions(Community = new[] { PermisoComunidad.GestionarSolicitudesDeAccesoAGrupo })]
+        public ActionResult AcceptRequest(Guid IdentidadID, Guid GrupoID)
         {
             if (!string.IsNullOrEmpty(RequestParams("grupoOrg")) && RequestParams("grupoOrg") == "true")
             {
@@ -224,8 +224,8 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
             return GnossResultERROR();
         }
 
-		[TypeFilter(typeof(PermisosAdministracion), Arguments = new object[] { new ulong[] { (ulong)PermisoComunidad.GestionarSolicitudesDeAccesoAGrupo } })]
-		public ActionResult RejectRequest(Guid IdentidadID, Guid GrupoID)
+        [AdministrationPermissions(Community = new[] { PermisoComunidad.GestionarSolicitudesDeAccesoAGrupo })]
+        public ActionResult RejectRequest(Guid IdentidadID, Guid GrupoID)
         {
             if (!string.IsNullOrEmpty(RequestParams("grupoOrg")) && RequestParams("grupoOrg") == "true")
             {

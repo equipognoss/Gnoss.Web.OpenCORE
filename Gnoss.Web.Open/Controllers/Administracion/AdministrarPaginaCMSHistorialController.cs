@@ -53,8 +53,8 @@ namespace Gnoss.Web.Open.Controllers.Administracion
         #region Metodos Web
 
         [HttpPost]
-		[TypeFilter(typeof(PermisosContenidos), Arguments = new object[] { new ulong[] { (ulong)PermisoContenidos.VerPagina } })]
-		public ActionResult LoadHistory(Guid pPestanyaID)
+        [AdministrationPermissions(Contents = new[] { PermisoContenidos.VerPagina })]
+        public ActionResult LoadHistory(Guid pPestanyaID)
         {
             UtilPermisos utilPermisos = new UtilPermisos(mEntityContext, mLoggingService, mConfigService, mLoggerFactory.CreateLogger<UtilPermisos>(), mLoggerFactory);
             ViewBag.RestaurarVersionPaginaPermitido = utilPermisos.IdentidadTienePermiso((ulong)PermisoContenidos.RestaurarVersionPagina, mControladorBase.IdentidadActual.Clave, mControladorBase.IdentidadActual.IdentidadMyGNOSS.Clave, TipoDePermiso.Contenidos);
@@ -64,8 +64,8 @@ namespace Gnoss.Web.Open.Controllers.Administracion
             return PartialView("_history", modelo);
         }
 
-		[TypeFilter(typeof(PermisosContenidos), Arguments = new object[] { new ulong[] { (ulong)PermisoContenidos.RestaurarVersionPagina, (ulong)PermisoContenidos.VerPagina } })]
-		public ActionResult Compare(string documentosComparar, Guid pPestanyaID, bool pRestaurar = false)
+        [AdministrationPermissions(Contents = new[] { PermisoContenidos.RestaurarVersionPagina, PermisoContenidos.VerPagina })]
+        public ActionResult Compare(string documentosComparar, Guid pPestanyaID, bool pRestaurar = false)
         {
             string[] guids = documentosComparar.Split(new char[] { '&' }, StringSplitOptions.RemoveEmptyEntries);
             AdministrarPaginaCMSComparadorViewModel modelo = CargarComparadorEstructuraPaginaCMS(Guid.Parse(guids[0]), Guid.Parse(guids[1]), pPestanyaID, pRestaurar);

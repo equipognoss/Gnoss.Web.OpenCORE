@@ -52,7 +52,7 @@ namespace Gnoss.Web.Open.Controllers.Administracion
         #region Metodos Web
 
         [HttpGet]
-        [TypeFilter(typeof(PermisosAdministracion), Arguments = new object[] { new ulong[] { (ulong)PermisoComunidad.GestionarFlujos } })]
+        [AdministrationPermissions(Community = new[] { PermisoComunidad.GestionarFlujos })]
         public IActionResult Index()
         {
             CargarPermisosAdministracionComunidadEnViewBag();
@@ -70,7 +70,7 @@ namespace Gnoss.Web.Open.Controllers.Administracion
         }
 
         [HttpPost]
-        [TypeFilter(typeof(PermisosAdministracion), Arguments = new object[] { new ulong[] { (ulong)PermisoComunidad.GestionarFlujos } })]
+        [AdministrationPermissions(Community = new[] { PermisoComunidad.GestionarFlujos })]
         public ActionResult EditarFlujo(Guid pFlujoID)
         {
             try
@@ -86,7 +86,7 @@ namespace Gnoss.Web.Open.Controllers.Administracion
         }
 
         [HttpPost]
-        [TypeFilter(typeof(PermisosAdministracion), Arguments = new object[] { new ulong[] { (ulong)PermisoComunidad.GestionarFlujos } })]
+        [AdministrationPermissions(Community = new[] { PermisoComunidad.GestionarFlujos })]
         public ActionResult GuardarFlujo(FlujoViewModel pModelo)
         {
             try
@@ -136,7 +136,7 @@ namespace Gnoss.Web.Open.Controllers.Administracion
         }
 
         [HttpPost]
-        [TypeFilter(typeof(PermisosAdministracion), Arguments = new object[] { new ulong[] { (ulong)PermisoComunidad.GestionarFlujos } })]
+        [AdministrationPermissions(Community = new[] { PermisoComunidad.GestionarFlujos })]
         public ActionResult EliminarFlujo(Guid pFlujoID)
         {
             try
@@ -184,7 +184,7 @@ namespace Gnoss.Web.Open.Controllers.Administracion
         }
 
         [HttpPost]
-        [TypeFilter(typeof(PermisosAdministracion), Arguments = new object[] { new ulong[] { (ulong)PermisoComunidad.GestionarFlujos } })]
+        [AdministrationPermissions(Community = new[] { PermisoComunidad.GestionarFlujos })]
         public ActionResult VerFlujo(Guid pFlujoID)
         {
             ControladorFlujos controladorFlujos = new ControladorFlujos(mLoggingService, mConfigService, mEntityContext, mRedisCacheWrapper, mGnossCache, mVirtuosoAD, mHttpContextAccessor, mServicesUtilVirtuosoAndReplication, mAvailableServices, mLoggerFactory.CreateLogger<ControladorFlujos>(), mLoggerFactory);
@@ -194,7 +194,7 @@ namespace Gnoss.Web.Open.Controllers.Administracion
         }
 
         [HttpPost]
-        [TypeFilter(typeof(PermisosAdministracion), Arguments = new object[] { new ulong[] { (ulong)PermisoComunidad.GestionarFlujos } })]
+        [AdministrationPermissions(Community = new[] { PermisoComunidad.GestionarFlujos })]
         public ActionResult EliminarEstado(Guid pEstadoID, Guid pFlujoID)
         {
             string error = "";
@@ -221,7 +221,7 @@ namespace Gnoss.Web.Open.Controllers.Administracion
         }
 
         [HttpPost]
-        [TypeFilter(typeof(PermisosAdministracion), Arguments = new object[] { new ulong[] { (ulong)PermisoComunidad.GestionarFlujos } })]
+        [AdministrationPermissions(Community = new[] { PermisoComunidad.GestionarFlujos })]
         public ActionResult EliminarTransicion(Guid pTransicionID, Guid pFlujoID)
         {
             string error = "";

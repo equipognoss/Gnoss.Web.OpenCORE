@@ -38,9 +38,9 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
             mLoggerFactory = loggerFactory;
         }
 
-		// GET: AdministrarServiciosWeb
-		[TypeFilter(typeof(PermisosAdministracion), Arguments = new object[] { new ulong[] { (ulong)PermisoComunidad.GestionarServiciosExternos } })]
-		public ActionResult Index()
+        // GET: AdministrarServiciosWeb
+        [AdministrationPermissions(Community = new[] { PermisoComunidad.GestionarServiciosExternos })]
+        public ActionResult Index()
         {
             EliminarPersonalizacionVistas();
             CargarPermisosAdministracionComunidadEnViewBag();
@@ -63,8 +63,8 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
         /// </summary>
         /// <returns>ActionResult</returns>
         [HttpPost]
-		[TypeFilter(typeof(PermisosAdministracion), Arguments = new object[] { new ulong[] { (ulong)PermisoComunidad.GestionarServiciosExternos } })]
-		public ActionResult NuevoServicio()
+        [AdministrationPermissions(Community = new[] { PermisoComunidad.GestionarServiciosExternos })]
+        public ActionResult NuevoServicio()
         {
             EliminarPersonalizacionVistas();
             CargarPermisosAdministracionComunidadEnViewBag();
@@ -79,8 +79,8 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
         /// </summary>
         /// <returns>ActionResult</returns>
         [HttpPost]
-		[TypeFilter(typeof(PermisosAdministracion), Arguments = new object[] { new ulong[] { (ulong)PermisoComunidad.GestionarServiciosExternos } })]
-		public ActionResult Guardar(List<ProyectoServicioWeb> ListaServicios)
+        [AdministrationPermissions(Community = new[] { PermisoComunidad.GestionarServiciosExternos })]
+        public ActionResult Guardar(List<ProyectoServicioWeb> ListaServicios)
         {
             GuardarLogAuditoria();
             //Es necesario comprobar todos los datos para insertarlos en la BBDD

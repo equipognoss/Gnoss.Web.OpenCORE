@@ -62,8 +62,8 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
         /// </summary>
         /// <returns>ActionResult</returns>
         [HttpGet]
-		[TypeFilter(typeof(PermisosAdministracion), Arguments = new object[] { new ulong[] { (ulong)PermisoComunidad.EjecutarBorradoMasivo } })]
-		public ActionResult Index()
+        [AdministrationPermissions(Community = new[] { PermisoComunidad.EjecutarBorradoMasivo })]
+        public ActionResult Index()
         {
             // Añadir clase para el body del Layout
             ViewBag.BodyClassPestanya = "grafo-de-conocimiento borrado-grafo edicion no-max-width-container";
@@ -86,8 +86,8 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
         /// <param name="pOptions">Modelo de Borrado masivo</param>
         /// <returns>ActionResult</returns>
         [HttpPost]
-		[TypeFilter(typeof(PermisosAdministracion), Arguments = new object[] { new ulong[] { (ulong)PermisoComunidad.EjecutarBorradoMasivo } })]
-		public ActionResult Eliminar(BorradoMasivoViewModel pOptions)
+        [AdministrationPermissions(Community = new[] { PermisoComunidad.EjecutarBorradoMasivo })]
+        public ActionResult Eliminar(BorradoMasivoViewModel pOptions)
         {
             GuardarLogAuditoria();
             DocumentacionCN docCN = new DocumentacionCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<DocumentacionCN>(), mLoggerFactory);

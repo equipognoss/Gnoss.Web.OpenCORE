@@ -48,7 +48,7 @@ namespace Gnoss.Web.Open.Controllers.Administracion
         #endregion
 
         [HttpPost]
-        [TypeFilter(typeof(PermisosContenidos), Arguments = new object[] { new ulong[] { (ulong)PermisoContenidos.RestaurarVersionCMS, (ulong)PermisoContenidos.EliminarVersionCMS } })]
+        [AdministrationPermissions(Contents = new[] { PermisoContenidos.RestaurarVersionCMS, PermisoContenidos.EliminarVersionCMS })]
         public ActionResult LoadHistory(string idComponente)
         {
             UtilPermisos utilPermisos = new UtilPermisos(mEntityContext, mLoggingService, mConfigService, mLoggerFactory.CreateLogger<UtilPermisos>(), mLoggerFactory);
@@ -60,7 +60,7 @@ namespace Gnoss.Web.Open.Controllers.Administracion
         }
 
         [HttpPost]
-        [TypeFilter(typeof(PermisosContenidos), Arguments = new object[] { new ulong[] { (ulong)PermisoContenidos.RestaurarVersionCMS, (ulong)PermisoContenidos.EliminarVersionCMS } })]
+        [AdministrationPermissions(Contents = new[] { PermisoContenidos.RestaurarVersionCMS, PermisoContenidos.EliminarVersionCMS })]
         public ActionResult Compare(string documentosComparar)
         {
             string[] param = documentosComparar.Split(new char[] { '&' }, StringSplitOptions.RemoveEmptyEntries);

@@ -61,7 +61,7 @@ namespace Gnoss.Web.Controllers.Administracion
         }
 
         [HttpGet]
-        [TypeFilter(typeof(PermisosAdministracionEcosistema), Arguments = new object[] { new ulong[] { (ulong)PermisoEcosistema.ConfiguracionDeSharePoint } })]
+        [AdministrationPermissions(Ecosystem = new[] { PermisoEcosistema.ConfiguracionDeSharePoint })]
         public ActionResult Index()
         {
 
@@ -86,8 +86,8 @@ namespace Gnoss.Web.Controllers.Administracion
         }
 
         [HttpPost]
-		[TypeFilter(typeof(PermisosAdministracionEcosistema), Arguments = new object[] { new ulong[] { (ulong)PermisoEcosistema.ConfiguracionDeSharePoint } })]
-		public ActionResult Guardar(AdministrarSharepointViewModel pModel)
+        [AdministrationPermissions(Ecosystem = new[] { PermisoEcosistema.ConfiguracionDeSharePoint })]
+        public ActionResult Guardar(AdministrarSharepointViewModel pModel)
         {
             GuardarLogAuditoria();
             ProyectoAD proyAD = new ProyectoAD(mLoggingService, mEntityContext, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<ProyectoAD>(), mLoggerFactory);
@@ -120,8 +120,8 @@ namespace Gnoss.Web.Controllers.Administracion
         }
 
         [HttpGet]
-		[TypeFilter(typeof(PermisosAdministracionEcosistema), Arguments = new object[] { new ulong[] { (ulong)PermisoEcosistema.ConfiguracionDeSharePoint } })]
-		public ActionResult Manual()
+        [AdministrationPermissions(Ecosystem = new[] { PermisoEcosistema.ConfiguracionDeSharePoint })]
+        public ActionResult Manual()
         {
             EliminarPersonalizacionVistas();
             CargarPermisosAdministracionComunidadEnViewBag();

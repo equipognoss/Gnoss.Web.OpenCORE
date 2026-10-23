@@ -73,7 +73,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
         /// </summary>
         /// <returns>ActionResult</returns>
         [HttpGet]
-        [TypeFilter(typeof(PermisosAdministracionEcosistema), Arguments = new object[] { new ulong[] { (ulong)PermisoEcosistema.GestionarLaConfiguracionPlataforma} })]
+        [AdministrationPermissions(Ecosystem = new[] { PermisoEcosistema.GestionarLaConfiguracionPlataforma })]
         public ActionResult Index()
         {
             EliminarPersonalizacionVistas();
@@ -97,8 +97,8 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
         /// </summary>
         /// <returns>ActionResult</returns>
         [HttpPost]
-		[TypeFilter(typeof(PermisosAdministracionEcosistema), Arguments = new object[] { new ulong[] { (ulong)PermisoEcosistema.GestionarLaConfiguracionPlataforma } })]
-		public ActionResult Guardar(AdministrarOpcionesAvanzadasPlataformaViewModel Options)
+        [AdministrationPermissions(Ecosystem = new[] { PermisoEcosistema.GestionarLaConfiguracionPlataforma })]
+        public ActionResult Guardar(AdministrarOpcionesAvanzadasPlataformaViewModel Options)
         {
             GuardarLogAuditoria();
             try
@@ -155,8 +155,8 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
         /// <param name="customLanguage"> Idiomas personalizados a añadir en la vista </param>
         /// <returns></returns>
         [HttpPost]
-		[TypeFilter(typeof(PermisosAdministracionEcosistema), Arguments = new object[] { new ulong[] { (ulong)PermisoEcosistema.GestionarLaConfiguracionPlataforma } })]
-		public ActionResult AddCustomLanguage(string customLanguage)
+        [AdministrationPermissions(Ecosystem = new[] { PermisoEcosistema.GestionarLaConfiguracionPlataforma })]
+        public ActionResult AddCustomLanguage(string customLanguage)
         {
             return PartialView("_partial-views/_language-row", customLanguage + "|custom");
         }
@@ -357,8 +357,8 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
         }
 
         [HttpPost]
-		[TypeFilter(typeof(PermisosAdministracionEcosistema), Arguments = new object[] { new ulong[] { (ulong)PermisoEcosistema.GestionarLaConfiguracionPlataforma } })]
-		public void Shutdown()
+        [AdministrationPermissions(Ecosystem = new[] { PermisoEcosistema.GestionarLaConfiguracionPlataforma })]
+        public void Shutdown()
         {
             ProyectoCL proyectoCL = new ProyectoCL(mEntityContext, mLoggingService, mRedisCacheWrapper, mConfigService, mVirtuosoAD, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<ProyectoCL>(), mLoggerFactory);
             Guid clave = Guid.NewGuid();

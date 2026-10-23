@@ -58,8 +58,8 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
         /// </summary>
         /// <returns>ActionResult</returns>
         [HttpGet]
-		[TypeFilter(typeof(PermisosAdministracion), Arguments = new object[] { new ulong[] { (ulong)PermisoComunidad.AccederAEstadisticasDeLaComunidad } })]
-		public ActionResult Index()
+        [AdministrationPermissions(Community = new[] { PermisoComunidad.AccederAEstadisticasDeLaComunidad })]
+        public ActionResult Index()
         {
             EliminarPersonalizacionVistas();
             CargarPermisosAdministracionComunidadEnViewBag();
@@ -85,8 +85,8 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
         /// <param name="pModel">Gráfico que queremos leer</param>
         /// <returns>-</returns>
         [HttpPost]
-		[TypeFilter(typeof(PermisosAdministracion), Arguments = new object[] { new ulong[] { (ulong)PermisoComunidad.AccederAEstadisticasDeLaComunidad } })]
-		public ActionResult Graphic(MatomoGraphicsViewModel pModel)
+        [AdministrationPermissions(Community = new[] { PermisoComunidad.AccederAEstadisticasDeLaComunidad })]
+        public ActionResult Graphic(MatomoGraphicsViewModel pModel)
         {
             try
             {
@@ -116,8 +116,8 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
         /// <param name="pModel">Gráfico que queremos leer</param>
         /// <returns>-</returns>
         [HttpPost]
-		[TypeFilter(typeof(PermisosAdministracion), Arguments = new object[] { new ulong[] { (ulong)PermisoComunidad.AccederAEstadisticasDeLaComunidad } })]
-		public ActionResult TopUsersGraphic(MatomoGraphicsViewModel pModel)
+        [AdministrationPermissions(Community = new[] { PermisoComunidad.AccederAEstadisticasDeLaComunidad })]
+        public ActionResult TopUsersGraphic(MatomoGraphicsViewModel pModel)
         {
             try
             {
@@ -192,8 +192,8 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
         /// <param name="pModel">Gráfico que queremos leer</param>
         /// <returns>-</returns>
         [HttpPost]
-		[TypeFilter(typeof(PermisosAdministracion), Arguments = new object[] { new ulong[] { (ulong)PermisoComunidad.AccederAEstadisticasDeLaComunidad } })]
-		public ActionResult TopDownloadsGraphic(MatomoGraphicsViewModel pModel)
+        [AdministrationPermissions(Community = new[] { PermisoComunidad.AccederAEstadisticasDeLaComunidad })]
+        public ActionResult TopDownloadsGraphic(MatomoGraphicsViewModel pModel)
         {
             try
             {
@@ -314,8 +314,8 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
         /// <param name="pModel">Gráfico que queremos leer</param>
         /// <returns>-</returns>
         [HttpPost]
-		[TypeFilter(typeof(PermisosAdministracion), Arguments = new object[] { new ulong[] { (ulong)PermisoComunidad.AccederAEstadisticasDeLaComunidad } })]
-		public ActionResult TopResourcesGraphic(MatomoGraphicsViewModel pModel)
+        [AdministrationPermissions(Community = new[] { PermisoComunidad.AccederAEstadisticasDeLaComunidad })]
+        public ActionResult TopResourcesGraphic(MatomoGraphicsViewModel pModel)
         {
             try
             {
@@ -386,13 +386,13 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
         }
 
 
-		/// <summary>
-		/// Se devuelve el src del widget de la estadística de Matomo correspondiente .
-		/// </summary>
-		/// <param name="pModel">Widget que queremos leer</param>
-		/// <returns>-</returns>
-		[TypeFilter(typeof(PermisosAdministracion), Arguments = new object[] { new ulong[] { (ulong)PermisoComunidad.AccederAEstadisticasDeLaComunidad } })]
-		public ActionResult Widget(MatomoWidgetViewModel pModel)
+        /// <summary>
+        /// Se devuelve el src del widget de la estadística de Matomo correspondiente .
+        /// </summary>
+        /// <param name="pModel">Widget que queremos leer</param>
+        /// <returns>-</returns>
+        [AdministrationPermissions(Community = new[] { PermisoComunidad.AccederAEstadisticasDeLaComunidad })]
+        public ActionResult Widget(MatomoWidgetViewModel pModel)
         {
             try
             {
@@ -418,13 +418,13 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
         }
 
 
-		/// <summary>
-		/// Se devuelve el src del widget de la estadística de Matomo correspondiente .
-		/// </summary>
-		/// <param name="pModel">Widget que queremos leer</param>
-		/// <returns>-</returns>
-		[TypeFilter(typeof(PermisosAdministracion), Arguments = new object[] { new ulong[] { (ulong)PermisoComunidad.AccederAEstadisticasDeLaComunidad } })]
-		public ActionResult MatomoRequest(MatomoWidgetViewModel pModel)
+        /// <summary>
+        /// Se devuelve el src del widget de la estadística de Matomo correspondiente .
+        /// </summary>
+        /// <param name="pModel">Widget que queremos leer</param>
+        /// <returns>-</returns>
+        [AdministrationPermissions(Community = new[] { PermisoComunidad.AccederAEstadisticasDeLaComunidad })]
+        public ActionResult MatomoRequest(MatomoWidgetViewModel pModel)
         {
             try
             {
@@ -460,8 +460,8 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
         /// <param name="pPassword">Contraseña actual del usuario</param>
         /// <returns>ActionResult</returns>
         [HttpPost]
-		[TypeFilter(typeof(PermisosAdministracion), Arguments = new object[] { new ulong[] { (ulong)PermisoComunidad.AccederAEstadisticasDeLaComunidad } })]
-		public ActionResult RestoreCurrentUser(string pPassword)
+        [AdministrationPermissions(Community = new[] { PermisoComunidad.AccederAEstadisticasDeLaComunidad })]
+        public ActionResult RestoreCurrentUser(string pPassword)
         {
             if (!string.IsNullOrEmpty(mConfigService.ObtenerUrlMatomo()))
             {
@@ -502,8 +502,8 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
         /// <param name="pPassword">Contraseña a establecer para el adminsitrador de matomo</param>
         /// <returns>ActionResult</returns>
         [HttpPost]
-		[TypeFilter(typeof(PermisosAdministracion), Arguments = new object[] { new ulong[] { (ulong)PermisoComunidad.AccederAEstadisticasDeLaComunidad } })]
-		public ActionResult RestoreAdminMatomoPassword(string pPassword)
+        [AdministrationPermissions(Community = new[] { PermisoComunidad.AccederAEstadisticasDeLaComunidad })]
+        public ActionResult RestoreAdminMatomoPassword(string pPassword)
         {
             GuardarLogAuditoria();
             if (!string.IsNullOrEmpty(mConfigService.ObtenerUrlMatomo()))

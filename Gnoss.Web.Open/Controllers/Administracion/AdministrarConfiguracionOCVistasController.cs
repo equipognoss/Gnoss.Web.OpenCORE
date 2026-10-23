@@ -61,8 +61,8 @@ namespace Gnoss.Web.Open.Controllers.Administracion
             mLoggerFactory = loggerFactory;
         }
         [HttpGet]
-		[TypeFilter(typeof(PermisosContenidos), Arguments = new object[] { new ulong[] { (ulong)PermisoContenidos.GestionarOC } })]
-		public ActionResult Index(Guid ontologiaID)
+        [AdministrationPermissions(Contents = new[] { PermisoContenidos.GestionarOC })]
+        public ActionResult Index(Guid ontologiaID)
         {
             EliminarPersonalizacionVistas();
             CargarPermisosAdministracionComunidadEnViewBag();
@@ -395,8 +395,8 @@ namespace Gnoss.Web.Open.Controllers.Administracion
 		}
 
         [HttpPost]
-		[TypeFilter(typeof(PermisosContenidos), Arguments = new object[] { new ulong[] { (ulong)PermisoContenidos.GestionarOC } })]
-		public ActionResult GuardarVistas(Guid ontologiaID, List<EntidadModel> listaEntidades, List<string> configuracionGeneral)
+        [AdministrationPermissions(Contents = new[] { PermisoContenidos.GestionarOC })]
+        public ActionResult GuardarVistas(Guid ontologiaID, List<EntidadModel> listaEntidades, List<string> configuracionGeneral)
         {
             GuardarLogAuditoria();
             try

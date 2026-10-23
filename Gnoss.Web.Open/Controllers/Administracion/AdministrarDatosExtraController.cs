@@ -52,9 +52,8 @@ namespace Gnoss.Web.Open.Controllers.Administracion
 
         private DataWrapperProyecto mDatosExtraProyectoDataWrapperProyecto = null;
 
-		[TypeFilter(typeof(PermisosAdministracion), Arguments = new object[] { new ulong[] { (ulong)PermisoComunidad.GestionarDatosExtraRegistro } })]
-		[TypeFilter(typeof(PermisosAdministracionEcosistema), Arguments = new object[] { new ulong[] { (ulong)PermisoEcosistema.GestionarDatosExtraRegistroEcosistema} })]
-		public IActionResult Index()
+        [AdministrationPermissions(Community = new[] { PermisoComunidad.GestionarDatosExtraRegistro }, Ecosystem = new[] { PermisoEcosistema.GestionarDatosExtraRegistroEcosistema })]
+        public IActionResult Index()
         {
 			EliminarPersonalizacionVistas();
 			CargarPermisosAdministracionComunidadEnViewBag();
@@ -75,8 +74,8 @@ namespace Gnoss.Web.Open.Controllers.Administracion
 			return View(PaginaModel);
         }
 
-		[TypeFilter(typeof(PermisosAdministracion), Arguments = new object[] { new ulong[] { (ulong)PermisoComunidad.GestionarDatosExtraRegistro } })]
-		public IActionResult Guardar(string pNombre, string pTipo, string pOpciones, bool pObligatorio, int pOrden, string pPredicadoRDF, bool pVisible, string pNombreCorto)
+        [AdministrationPermissions(Community = new[] { PermisoComunidad.GestionarDatosExtraRegistro }, Ecosystem = new[] { PermisoEcosistema.GestionarDatosExtraRegistroEcosistema })]
+        public IActionResult Guardar(string pNombre, string pTipo, string pOpciones, bool pObligatorio, int pOrden, string pPredicadoRDF, bool pVisible, string pNombreCorto)
 		{
 			GuardarLogAuditoria();
 			string error = ComprobarErrores(pNombre, pTipo, pOpciones, pNombreCorto);
@@ -178,8 +177,8 @@ namespace Gnoss.Web.Open.Controllers.Administracion
 			return GnossResultOK("El dato extra ha sido creado correctamente");
 		}
 
-		[TypeFilter(typeof(PermisosAdministracion), Arguments = new object[] { new ulong[] { (ulong)PermisoComunidad.GestionarDatosExtraRegistro } })]
-		public IActionResult Editar(Guid pDatoExtraID, string pNombre, string pTipo, string pOpciones, bool pObligatorio, int pOrden, string pPredicadoRDF, bool pVisible, string pNombreCorto)
+        [AdministrationPermissions(Community = new[] { PermisoComunidad.GestionarDatosExtraRegistro }, Ecosystem = new[] { PermisoEcosistema.GestionarDatosExtraRegistroEcosistema })]
+        public IActionResult Editar(Guid pDatoExtraID, string pNombre, string pTipo, string pOpciones, bool pObligatorio, int pOrden, string pPredicadoRDF, bool pVisible, string pNombreCorto)
 		{
             string error = ComprobarErrores(pNombre, pTipo, pOpciones, pNombreCorto);
 
@@ -305,8 +304,8 @@ namespace Gnoss.Web.Open.Controllers.Administracion
             return GnossResultOK("El dato extra ha sido modificado correctamente");
 		}
 
-		[TypeFilter(typeof(PermisosAdministracion), Arguments = new object[] { new ulong[] { (ulong)PermisoComunidad.GestionarDatosExtraRegistro } })]
-		public IActionResult Eliminar(Guid pDatoExtraID)
+        [AdministrationPermissions(Community = new[] { PermisoComunidad.GestionarDatosExtraRegistro }, Ecosystem = new[] { PermisoEcosistema.GestionarDatosExtraRegistroEcosistema })]
+        public IActionResult Eliminar(Guid pDatoExtraID)
 		{
 			GuardarLogAuditoria();
 			bool iniciado = false;
@@ -360,8 +359,8 @@ namespace Gnoss.Web.Open.Controllers.Administracion
 			return GnossResultOK();
 		}
 
-		[TypeFilter(typeof(PermisosAdministracion), Arguments = new object[] { new ulong[] { (ulong)PermisoComunidad.GestionarDatosExtraRegistro } })]
-		public IActionResult CargarModalEdicion(Guid pDatoID)
+        [AdministrationPermissions(Community = new[] { PermisoComunidad.GestionarDatosExtraRegistro }, Ecosystem = new[] { PermisoEcosistema.GestionarDatosExtraRegistroEcosistema })]
+        public IActionResult CargarModalEdicion(Guid pDatoID)
 		{
 			DatoExtraEditModel model = new DatoExtraEditModel();
 			DatoExtraModel datoExtraOpcion = PaginaModel.ListaDatosExtraProyecto.Where(item => item.DatoExtraID.Equals(pDatoID)).FirstOrDefault();

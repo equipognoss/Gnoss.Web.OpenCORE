@@ -54,8 +54,8 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
         /// </summary>
         /// <returns>ActionResult</returns>
         [HttpGet]
-		[TypeFilter(typeof(PermisosAdministracion), Arguments = new object[] { new ulong[] { (ulong)PermisoComunidad.AdministrarSEOYGoogleAnalytics } })]
-		public ActionResult Index()
+        [AdministrationPermissions(Community = new[] { PermisoComunidad.AdministrarSEOYGoogleAnalytics })]
+        public ActionResult Index()
         {
             EliminarPersonalizacionVistas();
             CargarPermisosAdministracionComunidadEnViewBag();
@@ -76,8 +76,8 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
         /// </summary>
         /// <returns>ActionResult</returns>
         [HttpPost]
-		[TypeFilter(typeof(PermisosAdministracion), Arguments = new object[] { new ulong[] { (ulong)PermisoComunidad.AdministrarSEOYGoogleAnalytics } })]
-		public ActionResult Guardar(AdministrarSeoGoogleViewModel pParametros)
+        [AdministrationPermissions(Community = new[] { PermisoComunidad.AdministrarSEOYGoogleAnalytics })]
+        public ActionResult Guardar(AdministrarSeoGoogleViewModel pParametros)
         {
             GuardarLogAuditoria();
             ControladorSeoGoogle contrSeoGoogle = new ControladorSeoGoogle(ProyectoSeleccionado, mEntityContext, mLoggingService, mRedisCacheWrapper, mConfigService, mVirtuosoAD, mHttpContextAccessor, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<ControladorSeoGoogle>(), mLoggerFactory);

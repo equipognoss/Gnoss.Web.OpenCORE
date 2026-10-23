@@ -56,14 +56,14 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
 
         private DataWrapperUsuario mUsuarioDR = null;
 
-		#endregion
+        #endregion
 
-		/// <summary>
-		/// 
-		/// </summary>
-		/// <returns></returns>
-		[TypeFilter(typeof(PermisosAdministracion), Arguments = new object[] { new ulong[] { (ulong)PermisoComunidad.GestionarClausulasDeRegistro } })]
-		public ActionResult Index()
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <returns></returns>
+        [AdministrationPermissions(Community = new[] { PermisoComunidad.GestionarClausulasDeRegistro }, Ecosystem = new[] { PermisoEcosistema.GestionarLaConfiguracionPlataforma })]
+        public ActionResult Index()
         {
 
             // Añadir clase para el body del Layout
@@ -87,8 +87,8 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
         /// </summary>
         /// <returns>ActionResult</returns>
         [HttpPost]
-		[TypeFilter(typeof(PermisosAdministracion), Arguments = new object[] { new ulong[] { (ulong)PermisoComunidad.GestionarClausulasDeRegistro } })]
-		public ActionResult NuevaClausula(ManageRegisterClausesViewModel.ClauseType TipoClausula)
+        [AdministrationPermissions(Community = new[] { PermisoComunidad.GestionarClausulasDeRegistro }, Ecosystem = new[] { PermisoEcosistema.GestionarLaConfiguracionPlataforma })]
+        public ActionResult NuevaClausula(ManageRegisterClausesViewModel.ClauseType TipoClausula)
         {
             GuardarLogAuditoria();
             EliminarPersonalizacionVistas();
@@ -149,8 +149,8 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
         /// </summary>
         /// <returns>ActionResult</returns>
         [HttpPost]
-		[TypeFilter(typeof(PermisosAdministracion), Arguments = new object[] { new ulong[] { (ulong)PermisoComunidad.GestionarClausulasDeRegistro } })]
-		public ActionResult Guardar(List<ManageRegisterClausesViewModel.RegisterClauseModel> ListaClausulas)
+        [AdministrationPermissions(Community = new[] { PermisoComunidad.GestionarClausulasDeRegistro }, Ecosystem = new[] { PermisoEcosistema.GestionarLaConfiguracionPlataforma })]
+        public ActionResult Guardar(List<ManageRegisterClausesViewModel.RegisterClauseModel> ListaClausulas)
         {
             GuardarLogAuditoria();
             GuardarClausulas(ListaClausulas);

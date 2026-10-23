@@ -131,7 +131,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
         /// </summary>
         /// <returns>ActionResult</returns>
         [HttpGet]
-        [TypeFilter(typeof(PermisosContenidos), Arguments = new object[] { new ulong[] { (ulong)PermisoContenidos.VerPagina, (ulong)PermisoContenidos.CrearPagina, (ulong)PermisoContenidos.EditarPagina, (ulong)PermisoContenidos.EliminarPagina, (ulong)PermisoContenidos.PublicarPagina } })]
+        [AdministrationPermissions(Contents = new[] { PermisoContenidos.VerPagina, PermisoContenidos.CrearPagina, PermisoContenidos.EditarPagina, PermisoContenidos.EliminarPagina, PermisoContenidos.PublicarPagina })]
         public ActionResult Index()
         {
 
@@ -159,7 +159,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
         /// </summary>
         /// <returns>ActionResult</returns>
         [HttpPost]
-        [TypeFilter(typeof(PermisosContenidos), Arguments = new object[] { new ulong[] { (ulong)PermisoContenidos.CrearPagina } })]
+        [AdministrationPermissions(Contents = new[] { PermisoContenidos.CrearPagina })]
         public ActionResult NuevaPestanya(short TipoPestanya, string nameonto)
         {
             EliminarPersonalizacionVistas();
@@ -484,7 +484,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
         /// </summary>
         /// <returns>ActionResult</returns>
         [HttpPost]
-        [TypeFilter(typeof(PermisosContenidos), Arguments = new object[] { new ulong[] { (ulong)PermisoContenidos.CrearPagina, (ulong)PermisoContenidos.EditarPagina, (ulong)PermisoContenidos.EliminarPagina } })]
+        [AdministrationPermissions(Contents = new[] { PermisoContenidos.CrearPagina, PermisoContenidos.EditarPagina, PermisoContenidos.EliminarPagina })]
         [TypeFilter(typeof(AccesoIntegracionAttribute))]
         public ActionResult Guardar(List<TabModel> ListaPestanyas)
         {
@@ -591,7 +591,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
         /// <returns>ActionResult</returns>
         [HttpPost]
         [TypeFilter(typeof(AccesoIntegracionAttribute))]
-        [TypeFilter(typeof(PermisosContenidos), Arguments = new object[] { new ulong[] { (ulong)PermisoContenidos.CrearPagina, (ulong)PermisoContenidos.EditarPagina } })]
+        [AdministrationPermissions(Contents = new[] { PermisoContenidos.CrearPagina, PermisoContenidos.EditarPagina })]
         public ActionResult GuardarPestanya(List<TabModel> ListaPestanyas)
         {
             TabModel Pestanya = ListaPestanyas[0];
@@ -696,7 +696,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
         }
 
         [HttpPost]
-        [TypeFilter(typeof(PermisosContenidos), Arguments = new object[] { new ulong[] { (ulong)PermisoContenidos.RestaurarVersionPagina, (ulong)PermisoContenidos.VerPagina } })]
+        [AdministrationPermissions(Contents = new[] { PermisoContenidos.RestaurarVersionPagina, PermisoContenidos.VerPagina })]
         public ActionResult CompararVersionConfigPestanya(string documentosComparar, bool pRestaurar = false)
         {
             ParametroAplicacionCL paramCL = new ParametroAplicacionCL(mEntityContext, mLoggingService, mRedisCacheWrapper, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<ParametroAplicacionCL>(), mLoggerFactory);
@@ -725,7 +725,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
         }
 
         [HttpPost]
-        [TypeFilter(typeof(PermisosContenidos), Arguments = new object[] { new ulong[] { (ulong)PermisoContenidos.RestaurarVersionPagina } })]
+        [AdministrationPermissions(Contents = new[] { PermisoContenidos.RestaurarVersionPagina })]
         public ActionResult RestaurarVersion(Guid pVersionID, string pComentario = null)
         {
             bool iniciado = false;
@@ -756,7 +756,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
         }
 
         [HttpPost]
-        [TypeFilter(typeof(PermisosContenidos), Arguments = new object[] { new ulong[] { (ulong)PermisoContenidos.EliminarVersionPagina } })]
+        [AdministrationPermissions(Contents = new[] { PermisoContenidos.EliminarVersionPagina })]
         public ActionResult EliminarVersion(Guid pPestanyaID, Guid pVersionID)
         {
             try
@@ -775,7 +775,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
         }
 
         [HttpPost]
-        [TypeFilter(typeof(PermisosContenidos), Arguments = new object[] { new ulong[] { (ulong)PermisoContenidos.VerPagina } })]
+        [AdministrationPermissions(Contents = new[] { PermisoContenidos.VerPagina })]
         public ActionResult CargarHistorial(Guid pPestanyaID)
         {
             UtilPermisos utilPermisos = new UtilPermisos(mEntityContext, mLoggingService, mConfigService, mLoggerFactory.CreateLogger<UtilPermisos>(), mLoggerFactory);
@@ -788,7 +788,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
         }
 
         [HttpPost]
-        [TypeFilter(typeof(PermisosContenidos), Arguments = new object[] { new ulong[] { (ulong)PermisoContenidos.RestaurarVersionPagina, (ulong)PermisoContenidos.EditarPagina } })]
+        [AdministrationPermissions(Contents = new[] { PermisoContenidos.RestaurarVersionPagina, PermisoContenidos.EditarPagina })]
         public ActionResult AddCommentVersion(Guid pVersionID)
         {
             try

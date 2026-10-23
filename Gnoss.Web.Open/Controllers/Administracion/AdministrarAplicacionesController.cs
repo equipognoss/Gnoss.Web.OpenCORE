@@ -56,12 +56,12 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
             mOAuthCN = new OAuthCN(mEntityContext, mLoggingService, mConfigService, entityContextOauth, servicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<OAuthCN>(), mLoggerFactory);
         }
 
-		/// <summary>
-		/// Pagina principal donde se muestran todas las aplicaciones del usuario.
-		/// </summary>
-		/// <returns></returns>
-		[TypeFilter(typeof(PermisosAdministracion), Arguments = new object[] { new ulong[] { (ulong)PermisoComunidad.DescargarConfiguracionOAuth } })]
-		public ActionResult Index()
+        /// <summary>
+        /// Pagina principal donde se muestran todas las aplicaciones del usuario.
+        /// </summary>
+        /// <returns></returns>
+        [AdministrationPermissions(Community = new[] { PermisoComunidad.DescargarConfiguracionOAuth })]
+        public ActionResult Index()
         {
             EliminarPersonalizacionVistas();
             CargarPermisosAdministracionComunidadEnViewBag();
@@ -134,12 +134,12 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
             return oauthModel;
 		}
 
-		/// <summary>
-		/// Crea y descarga un XML con los datos de config
-		/// </summary>
-		/// <returns>Descarga XML</returns>
-		[TypeFilter(typeof(PermisosAdministracion), Arguments = new object[] { new ulong[] { (ulong)PermisoComunidad.DescargarConfiguracionOAuth } })]
-		public ActionResult DescargarXML()
+        /// <summary>
+        /// Crea y descarga un XML con los datos de config
+        /// </summary>
+        /// <returns>Descarga XML</returns>
+        [AdministrationPermissions(Community = new[] { PermisoComunidad.DescargarConfiguracionOAuth })]
+        public ActionResult DescargarXML()
         {
             OAuthModel model = ObtenerOAuth();
 			//Se genera el XML con los datos aportados
@@ -285,12 +285,12 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
         }
 
 
-		/// <summary>
-		/// Muestra un formulario para crear una nueva aplicación.
-		/// </summary>
-		/// <returns></returns>
-		[TypeFilter(typeof(PermisosAdministracion), Arguments = new object[] { new ulong[] { (ulong)PermisoComunidad.DescargarConfiguracionOAuth } })]
-		public ActionResult Crear()
+        /// <summary>
+        /// Muestra un formulario para crear una nueva aplicación.
+        /// </summary>
+        /// <returns></returns>
+        [AdministrationPermissions(Community = new[] { PermisoComunidad.DescargarConfiguracionOAuth })]
+        public ActionResult Crear()
         {
             GuardarLogAuditoria();
             return View("Editar", new ConsumerModel(0, "", "", "", "", ""));
@@ -302,8 +302,8 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
         /// <param name="pConsumerId">ConsumerModel con los datos de la aplicación</param>
         /// <returns></returns>        
         [HttpPost]
-		[TypeFilter(typeof(PermisosAdministracion), Arguments = new object[] { new ulong[] { (ulong)PermisoComunidad.DescargarConfiguracionOAuth } })]
-		public void Crear(ConsumerModel pModelo)
+        [AdministrationPermissions(Community = new[] { PermisoComunidad.DescargarConfiguracionOAuth })]
+        public void Crear(ConsumerModel pModelo)
         {
             Boolean insertarUsuario = false;
             //Creamos los Consumers para la aplicación
@@ -378,13 +378,13 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
             }
         }
 
-		/// <summary>
-		/// Muestra un formulario para editar algunos datos de la aplicación.
-		/// </summary>
-		/// <param name="id">ConsumerId de la aplicación</param>
-		/// <returns></returns>
-		[TypeFilter(typeof(PermisosAdministracion), Arguments = new object[] { new ulong[] { (ulong)PermisoComunidad.DescargarConfiguracionOAuth } })]
-		public ActionResult Editar(int id)
+        /// <summary>
+        /// Muestra un formulario para editar algunos datos de la aplicación.
+        /// </summary>
+        /// <param name="id">ConsumerId de la aplicación</param>
+        /// <returns></returns>
+        [AdministrationPermissions(Community = new[] { PermisoComunidad.DescargarConfiguracionOAuth })]
+        public ActionResult Editar(int id)
         {
             GuardarLogAuditoria();
             ConsumerModel modelo = mOAuthCN.ObtenerAplicacionPorConsumerId(id);
@@ -403,8 +403,8 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
         /// <param name="pModelo">ConsumerModel con los datos de la aplicación</param>
         /// <returns></returns>        
         [HttpPost]
-		[TypeFilter(typeof(PermisosAdministracion), Arguments = new object[] { new ulong[] { (ulong)PermisoComunidad.DescargarConfiguracionOAuth } })]
-		public ActionResult Editar(ConsumerModel pModelo)
+        [AdministrationPermissions(Community = new[] { PermisoComunidad.DescargarConfiguracionOAuth })]
+        public ActionResult Editar(ConsumerModel pModelo)
         {
             GuardarLogAuditoria();
             if (ModelState.IsValid)
@@ -444,13 +444,13 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
             }
         }
 
-		/// <summary>
-		/// Muestra la información de la aplicación.
-		/// </summary>
-		/// <param name="id">ConsumerId de la aplicación</param>
-		/// <returns></returns>
-		[TypeFilter(typeof(PermisosAdministracion), Arguments = new object[] { new ulong[] { (ulong)PermisoComunidad.DescargarConfiguracionOAuth } })]
-		public ActionResult Informe(int id)
+        /// <summary>
+        /// Muestra la información de la aplicación.
+        /// </summary>
+        /// <param name="id">ConsumerId de la aplicación</param>
+        /// <returns></returns>
+        [AdministrationPermissions(Community = new[] { PermisoComunidad.DescargarConfiguracionOAuth })]
+        public ActionResult Informe(int id)
         {
             ConsumerModel modelo = mOAuthCN.ObtenerAplicacionPorConsumerId(id);
             OAuthToken tokens = mOAuthCN.ConsultarTokensPorUsuarioIDyConsumerId(mControladorBase.UsuarioActual.UsuarioID, id);
@@ -462,13 +462,13 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
             return View(modelo);
         }
 
-		/// <summary>
-		/// Genera el token, el tokenSecret y los almacena en la BD.
-		/// </summary>
-		/// <param name="id">ConsumerId de la aplicación</param>
-		/// <returns></returns>
-		[TypeFilter(typeof(PermisosAdministracion), Arguments = new object[] { new ulong[] { (ulong)PermisoComunidad.DescargarConfiguracionOAuth } })]
-		public void Tokens(int id)
+        /// <summary>
+        /// Genera el token, el tokenSecret y los almacena en la BD.
+        /// </summary>
+        /// <param name="id">ConsumerId de la aplicación</param>
+        /// <returns></returns>
+        [AdministrationPermissions(Community = new[] { PermisoComunidad.DescargarConfiguracionOAuth })]
+        public void Tokens(int id)
         {
             ConsumerModel modelo = mOAuthCN.ObtenerAplicacionPorConsumerId(id);
 

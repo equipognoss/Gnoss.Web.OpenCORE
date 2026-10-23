@@ -199,7 +199,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
         #endregion
 
         #region Métodos públicos
-        [TypeFilter(typeof(PermisosContenidos), Arguments = new object[] { new ulong[] { (ulong)PermisoContenidos.VerComponenteCMS, (ulong)PermisoContenidos.EliminarComponenteCMS, (ulong)PermisoContenidos.CrearComponenteCMS, (ulong)PermisoContenidos.EditarComponenteCMS } })]
+        [AdministrationPermissions(Contents = new[] { PermisoContenidos.VerComponenteCMS, PermisoContenidos.EliminarComponenteCMS, PermisoContenidos.CrearComponenteCMS, PermisoContenidos.EditarComponenteCMS })]
         public ActionResult Index(string tipoComponente, string idBloqueContenedor, string pagina, string search, string numusos)
         {
             // Añadir clase para el body del Layout

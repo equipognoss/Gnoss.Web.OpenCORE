@@ -91,8 +91,8 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
         /// </summary>
         /// <returns></returns>
         [HttpGet]
-		[TypeFilter(typeof(PermisosContenidos), Arguments = new object[] { new ulong[] { (ulong)PermisoContenidos.VerPagina, (ulong)PermisoContenidos.CrearPagina, (ulong)PermisoContenidos.EditarPagina, (ulong)PermisoContenidos.EliminarPagina, (ulong)PermisoContenidos.PublicarPagina } })]
-		public ActionResult Index()
+        [AdministrationPermissions(Contents = new[] { PermisoContenidos.VerPagina, PermisoContenidos.CrearPagina, PermisoContenidos.EditarPagina, PermisoContenidos.EliminarPagina, PermisoContenidos.PublicarPagina })]
+        public ActionResult Index()
         {
             // Añadir clase para el body del Layout
             ViewBag.BodyClassPestanya = "edicion page-builder comunidad no-max-width-container";
@@ -128,8 +128,8 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
         /// </summary>
         /// <returns></returns>
         [HttpPost]
-		[TypeFilter(typeof(PermisosContenidos), Arguments = new object[] { new ulong[] { (ulong)PermisoContenidos.CrearPagina, (ulong)PermisoContenidos.EditarPagina, (ulong)PermisoContenidos.EliminarPagina, (ulong)PermisoContenidos.PublicarPagina } })]
-		[TypeFilter(typeof(AccesoIntegracionAttribute))]
+        [AdministrationPermissions(Contents = new[] { PermisoContenidos.CrearPagina, PermisoContenidos.EditarPagina, PermisoContenidos.EliminarPagina, PermisoContenidos.PublicarPagina })]
+        [TypeFilter(typeof(AccesoIntegracionAttribute))]
         public ActionResult Descartar()
         {
             GestionCMS gestorCMSDescartar = new GestionCMS(new DataWrapperCMS(), mLoggingService, mEntityContext);
@@ -178,8 +178,8 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
         /// </summary>
         /// <returns></returns>
         [HttpPost]
-		[TypeFilter(typeof(PermisosContenidos), Arguments = new object[] { new ulong[] { (ulong)PermisoContenidos.CrearPagina, (ulong)PermisoContenidos.EditarPagina, (ulong)PermisoContenidos.PublicarPagina } })]
-		[TypeFilter(typeof(AccesoIntegracionAttribute))]
+        [AdministrationPermissions(Contents = new[] { PermisoContenidos.CrearPagina, PermisoContenidos.EditarPagina, PermisoContenidos.PublicarPagina })]
+        [TypeFilter(typeof(AccesoIntegracionAttribute))]
         public ActionResult GuardarBorrador(string Estructura, string OpcionesPropiedades, bool MostrarSoloCuerpo, DateTime FechaModificacion)
         {
             GuardarLogAuditoria();
@@ -199,8 +199,8 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
         }
 
         [HttpPost]
-		[TypeFilter(typeof(PermisosContenidos), Arguments = new object[] { new ulong[] { (ulong)PermisoContenidos.RestaurarVersionPagina } })]
-		public ActionResult AddCommentVersion(Guid pVersionID)
+        [AdministrationPermissions(Contents = new[] { PermisoContenidos.RestaurarVersionPagina })]
+        public ActionResult AddCommentVersion(Guid pVersionID)
         {
             try
             {
@@ -214,8 +214,8 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
         }
 
         [HttpPost]
-		[TypeFilter(typeof(PermisosContenidos), Arguments = new object[] { new ulong[] { (ulong)PermisoContenidos.RestaurarVersionPagina } })]
-		public ActionResult RestaurarVersion(Guid pVersionID, string pComentario = null)
+        [AdministrationPermissions(Contents = new[] { PermisoContenidos.RestaurarVersionPagina })]
+        public ActionResult RestaurarVersion(Guid pVersionID, string pComentario = null)
         {
             bool iniciado = false;
             try
@@ -252,7 +252,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
         }
 
         [HttpPost]
-        [TypeFilter(typeof(PermisosContenidos), Arguments = new object[] { new ulong[] { (ulong)PermisoContenidos.EliminarVersionPagina } })]
+        [AdministrationPermissions(Contents = new[] { PermisoContenidos.EliminarVersionPagina })]
         public ActionResult EliminarVersion(Guid pPestanyaID, Guid pVersionID)
         {
             try
@@ -274,8 +274,8 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
         /// </summary>
         /// <returns></returns>
         [HttpPost]
-		[TypeFilter(typeof(PermisosContenidos), Arguments = new object[] { new ulong[] { (ulong)PermisoContenidos.PublicarPagina } })]
-		[TypeFilter(typeof(AccesoIntegracionAttribute))]
+        [AdministrationPermissions(Contents = new[] { PermisoContenidos.PublicarPagina })]
+        [TypeFilter(typeof(AccesoIntegracionAttribute))]
         public ActionResult Publicar(string Estructura, string OpcionesPropiedades, bool MostrarSoloCuerpo, DateTime FechaModificacion)
         {
             bool iniciado = false;
@@ -347,8 +347,8 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
         /// </summary>
         /// <returns></returns>
         [HttpPost]
-		[TypeFilter(typeof(PermisosContenidos), Arguments = new object[] { new ulong[] { (ulong)PermisoContenidos.VerPagina, (ulong)PermisoContenidos.CrearPagina, (ulong)PermisoContenidos.EditarPagina, (ulong)PermisoContenidos.PublicarPagina } })]
-		[TypeFilter(typeof(AccesoIntegracionAttribute))]
+        [AdministrationPermissions(Contents = new[] { PermisoContenidos.VerPagina, PermisoContenidos.CrearPagina, PermisoContenidos.EditarPagina, PermisoContenidos.PublicarPagina })]
+        [TypeFilter(typeof(AccesoIntegracionAttribute))]
         public ActionResult VistaPrevia(string Estructura, string OpcionesPropiedades, bool MostrarSoloCuerpo, DateTime FechaModificacion)
         {            
             if (mPestanya != null)
@@ -372,8 +372,8 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
         /// </summary>
         /// <returns></returns>
         [HttpPost]
-		[TypeFilter(typeof(PermisosContenidos), Arguments = new object[] { new ulong[] { (ulong)PermisoContenidos.CrearPagina, (ulong)PermisoContenidos.EditarPagina, (ulong)PermisoContenidos.PublicarPagina } })]
-		public ActionResult CrearComponente(string Estructura, string OpcionesPropiedades, bool MostrarSoloCuerpo, string TipoComponente, string IDContenedor)
+        [AdministrationPermissions(Contents = new[] { PermisoContenidos.CrearPagina, PermisoContenidos.EditarPagina, PermisoContenidos.PublicarPagina })]
+        public ActionResult CrearComponente(string Estructura, string OpcionesPropiedades, bool MostrarSoloCuerpo, string TipoComponente, string IDContenedor)
         {
             Guardar(Estructura, OpcionesPropiedades, MostrarSoloCuerpo);
 

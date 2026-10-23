@@ -197,8 +197,8 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
         /// </summary>
         /// <returns>ActionResult</returns>
         [HttpGet]
-		[TypeFilter(typeof(PermisosAdministracion), Arguments = new object[] { new ulong[] { (ulong)PermisoComunidad.GestionarCookies } })]
-		public ActionResult Index()
+        [AdministrationPermissions(Community = new[] { PermisoComunidad.GestionarCookies }, Ecosystem = new[] { PermisoEcosistema.GestionarLaConfiguracionPlataforma })]
+        public ActionResult Index()
         {
 
             // Añadir clase para el body del Layout
@@ -222,8 +222,8 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
         /// </summary>
         /// <returns>ActionResult</returns>
         [HttpPost]
-		[TypeFilter(typeof(PermisosAdministracion), Arguments = new object[] { new ulong[] { (ulong)PermisoComunidad.GestionarCookies } })]
-		public bool CrearCookiesTecnicasDelProyecto()
+        [AdministrationPermissions(Community = new[] { PermisoComunidad.GestionarCookies }, Ecosystem = new[] { PermisoEcosistema.GestionarLaConfiguracionPlataforma })]
+        public bool CrearCookiesTecnicasDelProyecto()
         {
             try
             {
@@ -246,8 +246,8 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
         /// </summary>
         /// <returns></returns>
         [HttpPost]
-		[TypeFilter(typeof(PermisosAdministracion), Arguments = new object[] { new ulong[] { (ulong)PermisoComunidad.GestionarCookies } })]
-		public ActionResult PintarCookiesMetaproyecto()
+        [AdministrationPermissions(Community = new[] { PermisoComunidad.GestionarCookies }, Ecosystem = new[] { PermisoEcosistema.GestionarLaConfiguracionPlataforma })]
+        public ActionResult PintarCookiesMetaproyecto()
         {
             CookieCN cookieCN = new CookieCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<CookieCN>(), mLoggerFactory);
             List<ProyectoCookie> listaCookiesProyecto = cookieCN.ObtenerCookiesDeProyecto(new Guid("11111111-1111-1111-1111-111111111111"));
@@ -267,8 +267,8 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
         /// </summary>
         /// <returns></returns>
         [HttpPost]
-		[TypeFilter(typeof(PermisosAdministracion), Arguments = new object[] { new ulong[] { (ulong)PermisoComunidad.GestionarCookies } })]
-		public ActionResult PintarCategoriasCookiesMetaproyecto()
+        [AdministrationPermissions(Community = new[] { PermisoComunidad.GestionarCookies }, Ecosystem = new[] { PermisoEcosistema.GestionarLaConfiguracionPlataforma })]
+        public ActionResult PintarCategoriasCookiesMetaproyecto()
         {
             CookieCN cookieCN = new CookieCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<CookieCN>(), mLoggerFactory);
             List<CategoriaProyectoCookie> listaCategoriaCookiesMetaproyecto = cookieCN.ObtenerCategoriasProyectoCookie(new Guid("11111111-1111-1111-1111-111111111111"), false);
@@ -289,8 +289,8 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
         /// <param name="Categoria"></param>
         /// <returns></returns>
         [HttpPost]
-		[TypeFilter(typeof(PermisosAdministracion), Arguments = new object[] { new ulong[] { (ulong)PermisoComunidad.GestionarCookies } })]
-		public ActionResult AddCookie(string Categoria)
+        [AdministrationPermissions(Community = new[] { PermisoComunidad.GestionarCookies }, Ecosystem = new[] { PermisoEcosistema.GestionarLaConfiguracionPlataforma })]
+        public ActionResult AddCookie(string Categoria)
         {
             ProyectoCN proyectoCN = new ProyectoCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<ProyectoCN>(), mLoggerFactory);
             ProyectoCookie cookie = new ProyectoCookie();
@@ -319,8 +319,8 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
         /// </summary>
         /// <returns></returns>
         [HttpPost]
-		[TypeFilter(typeof(PermisosAdministracion), Arguments = new object[] { new ulong[] { (ulong)PermisoComunidad.GestionarCookies } })]
-		public ActionResult PintarCookiesAnaliticas()
+        [AdministrationPermissions(Community = new[] { PermisoComunidad.GestionarCookies }, Ecosystem = new[] { PermisoEcosistema.GestionarLaConfiguracionPlataforma })]
+        public ActionResult PintarCookiesAnaliticas()
         {
             CookieCN cookieCN = new CookieCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<CookieCN>(), mLoggerFactory);
             if (!cookieCN.ExistenCookiesAnaliticas())
@@ -355,8 +355,8 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
         /// </summary>
         /// <returns></returns>
         [HttpPost]
-		[TypeFilter(typeof(PermisosAdministracion), Arguments = new object[] { new ulong[] { (ulong)PermisoComunidad.GestionarCookies } })]
-		public ActionResult PintarCookiesYoutube()
+        [AdministrationPermissions(Community = new[] { PermisoComunidad.GestionarCookies }, Ecosystem = new[] { PermisoEcosistema.GestionarLaConfiguracionPlataforma })]
+        public ActionResult PintarCookiesYoutube()
         {
             CookieCN cookieCN = new CookieCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<CookieCN>(), mLoggerFactory);
             if (!cookieCN.ExistenCookiesYoutube())
@@ -392,8 +392,8 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
         /// </summary>
         /// <param name="ListaCookies"></param>
         [HttpPost]
-		[TypeFilter(typeof(PermisosAdministracion), Arguments = new object[] { new ulong[] { (ulong)PermisoComunidad.GestionarCookies } })]
-		public void SaveCookies(CookieEditModel[] ListaCookies)
+        [AdministrationPermissions(Community = new[] { PermisoComunidad.GestionarCookies }, Ecosystem = new[] { PermisoEcosistema.GestionarLaConfiguracionPlataforma })]
+        public void SaveCookies(CookieEditModel[] ListaCookies)
         {
             ProyectoCN proyectoCN = new ProyectoCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<ProyectoCN>(), mLoggerFactory);
             CookieCN cookieCN = new CookieCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<CookieCN>(), mLoggerFactory);
@@ -550,8 +550,8 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
         /// </summary>
         /// <param name="ListaCategorias">Lista de categorías a guardar en base de datos</param>
         [HttpPost]
-		[TypeFilter(typeof(PermisosAdministracion), Arguments = new object[] { new ulong[] { (ulong)PermisoComunidad.GestionarCookies } })]
-		public void SaveCategories(CategoryEditModel[] ListaCategorias)
+        [AdministrationPermissions(Community = new[] { PermisoComunidad.GestionarCookies }, Ecosystem = new[] { PermisoEcosistema.GestionarLaConfiguracionPlataforma })]
+        public void SaveCategories(CategoryEditModel[] ListaCategorias)
         {
             ProyectoCN proyectoCN = new ProyectoCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<ProyectoCN>(), mLoggerFactory);
             CookieCN cookieCN = new CookieCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<CookieCN>(), mLoggerFactory);
@@ -694,8 +694,8 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
         /// </summary>
         /// <returns></returns>
         [HttpPost]
-		[TypeFilter(typeof(PermisosAdministracion), Arguments = new object[] { new ulong[] { (ulong)PermisoComunidad.GestionarCookies } })]
-		public ActionResult AddCategory() 
+        [AdministrationPermissions(Community = new[] { PermisoComunidad.GestionarCookies }, Ecosystem = new[] { PermisoEcosistema.GestionarLaConfiguracionPlataforma })]
+        public ActionResult AddCategory() 
         {
             ProyectoCN proyectoCN = new ProyectoCN(mEntityContext, mLoggingService, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<ProyectoCN>(), mLoggerFactory);
             CategoriaProyectoCookie categoriaProyectoCookie = new CategoriaProyectoCookie();

@@ -99,7 +99,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
         /// </summary>
         /// <returns>ActionResult</returns>
         [HttpGet]
-        [TypeFilter(typeof(PermisosContenidos), Arguments = new object[] { new ulong[] { (ulong)PermisoContenidos.VerFaceta, (ulong)PermisoContenidos.CrearFaceta, (ulong)PermisoContenidos.EliminarFaceta, (ulong)PermisoContenidos.ModificarFaceta } })]
+        [AdministrationPermissions(Contents = new[] { PermisoContenidos.VerFaceta, PermisoContenidos.CrearFaceta, PermisoContenidos.EliminarFaceta, PermisoContenidos.ModificarFaceta })]
         public ActionResult Index()
         {
 
@@ -136,8 +136,8 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
         /// </summary>
         /// <returns>ActionResult</returns>
         [HttpPost]
-		[TypeFilter(typeof(PermisosContenidos), Arguments = new object[] { new ulong[] { (ulong)PermisoContenidos.CrearFaceta } })]
-		public ActionResult NuevaFaceta(TipoFaceta TipoFaceta, Guid? pestanyaPropuestaID = null)
+        [AdministrationPermissions(Contents = new[] { PermisoContenidos.CrearFaceta })]
+        public ActionResult NuevaFaceta(TipoFaceta TipoFaceta, Guid? pestanyaPropuestaID = null)
         {
             EliminarPersonalizacionVistas();
             CargarPermisosFacetasEnViewBag();
@@ -176,8 +176,8 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
         /// </summary>
         /// <returns>ActionResult</returns>
         [HttpPost]
-		[TypeFilter(typeof(PermisosContenidos), Arguments = new object[] { new ulong[] { (ulong)PermisoContenidos.CrearFaceta, (ulong)PermisoContenidos.ModificarFaceta } })]
-		public ActionResult NuevoFiltro()
+        [AdministrationPermissions(Contents = new[] { PermisoContenidos.CrearFaceta, PermisoContenidos.ModificarFaceta })]
+        public ActionResult NuevoFiltro()
         {
             EliminarPersonalizacionVistas();
             CargarPermisosAdministracionComunidadEnViewBag();
@@ -197,8 +197,8 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
         /// </summary>
         /// <returns>ActionResult</returns>
         [HttpPost]
-		[TypeFilter(typeof(PermisosContenidos), Arguments = new object[] { new ulong[] { (ulong)PermisoContenidos.CrearFaceta, (ulong)PermisoContenidos.ModificarFaceta, (ulong)PermisoContenidos.EliminarFaceta } })]
-		[TypeFilter(typeof(AccesoIntegracionAttribute))]
+        [AdministrationPermissions(Contents = new[] { PermisoContenidos.CrearFaceta, PermisoContenidos.ModificarFaceta, PermisoContenidos.EliminarFaceta })]
+        [TypeFilter(typeof(AccesoIntegracionAttribute))]
         public ActionResult Guardar(List<FacetaModel> ListaFacetas)
         {
             GuardarLogAuditoria();

@@ -101,8 +101,8 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
         /// </summary>
         /// <returns>ActionResult</returns>
         [HttpGet]
-		[TypeFilter(typeof(PermisosAdministracion), Arguments = new object[] { new ulong[] { (ulong)PermisoComunidad.GestionarInformacionContextual } })]
-		public ActionResult Index()
+        [AdministrationPermissions(Community = new[] { PermisoComunidad.GestionarInformacionContextual })]
+        public ActionResult Index()
         {
 
             // Añadir clase para el body del Layout
@@ -126,8 +126,8 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
         /// </summary>
         /// <returns>ActionResult</returns>
         [HttpPost]
-		[TypeFilter(typeof(PermisosAdministracion), Arguments = new object[] { new ulong[] { (ulong)PermisoComunidad.GestionarInformacionContextual } })]
-		public ActionResult NuevoGadget(TipoGadget TipoGadget)
+        [AdministrationPermissions(Community = new[] { PermisoComunidad.GestionarInformacionContextual })]
+        public ActionResult NuevoGadget(TipoGadget TipoGadget)
         {
             EliminarPersonalizacionVistas();
 
@@ -172,8 +172,8 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
         /// </summary>
         /// <returns>ActionResult</returns>
         [HttpPost]
-		[TypeFilter(typeof(PermisosAdministracion), Arguments = new object[] { new ulong[] { (ulong)PermisoComunidad.GestionarInformacionContextual } })]
-		[TypeFilter(typeof(AccesoIntegracionAttribute))]
+        [AdministrationPermissions(Community = new[] { PermisoComunidad.GestionarInformacionContextual })]
+        [TypeFilter(typeof(AccesoIntegracionAttribute))]
 		public ActionResult Guardar(List<ContextoModel> ListaGadgets)
         {
             GuardarLogAuditoria();

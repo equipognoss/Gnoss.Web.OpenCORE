@@ -48,8 +48,8 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
             mLoggerFactory = loggerFactory;
         }
 
-		[TypeFilter(typeof(PermisosAdministracion), Arguments = new object[] { new ulong[] { (ulong)PermisoComunidad.GestionarMapa } })]
-		public ActionResult AdministrarMapa()
+        [AdministrationPermissions(Community = new[] { PermisoComunidad.GestionarMapa })]
+        public ActionResult AdministrarMapa()
         {
             AdministrarMapaViewModel modelo = ControladorMapasCharts.LoadMapFromBBDD();
 
@@ -66,8 +66,8 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
             return View("_EditarMapa", modelo);
         }
 
-		[TypeFilter(typeof(PermisosAdministracion), Arguments = new object[] { new ulong[] { (ulong)PermisoComunidad.AdministrarGraficos } })]
-		public ActionResult AdministrarChart()
+        [AdministrationPermissions(Community = new[] { PermisoComunidad.AdministrarGraficos })]
+        public ActionResult AdministrarChart()
         {
             AdministrarChartsViewModel modelo = ControladorMapasCharts.LoadChartsFromBBDD();
             modelo.IdiomaUsuario = IdiomaUsuario;
@@ -91,8 +91,8 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
 			return View("Index", modelo);
 		}
 
-		[TypeFilter(typeof(PermisosAdministracion), Arguments = new object[] { new ulong[] { (ulong)PermisoComunidad.GestionarMapa } })]
-		public ActionResult GuardarMapa(AdministrarMapaViewModel pMapa)
+        [AdministrationPermissions(Community = new[] { PermisoComunidad.GestionarMapa })]
+        public ActionResult GuardarMapa(AdministrarMapaViewModel pMapa)
         {
             GuardarLogAuditoria();
             GnossResult resultado = new GnossResult("Se han guardado con exito", GnossResult.GnossStatus.OK, mViewEngine);
@@ -127,15 +127,15 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
             return resultado;
         }
 
-		/// <summary>
-		/// Método para realizar el guardado de los gráficos
-		/// </summary>
-		/// <param name="pCharts">Chart o gráfico con los datos que se desea guardar</param>
-		/// <param name="ChartViewInfoOrderList">Lista con los gráficos existentes en la comunidad donde se incluye el id del gráfico y su posición actual</param>
-		/// <returns></returns>
+        /// <summary>
+        /// Método para realizar el guardado de los gráficos
+        /// </summary>
+        /// <param name="pCharts">Chart o gráfico con los datos que se desea guardar</param>
+        /// <param name="ChartViewInfoOrderList">Lista con los gráficos existentes en la comunidad donde se incluye el id del gráfico y su posición actual</param>
+        /// <returns></returns>
 
-		[TypeFilter(typeof(PermisosAdministracion), Arguments = new object[] { new ulong[] { (ulong)PermisoComunidad.AdministrarGraficos } })]
-		public ActionResult GuardarChart(ChartViewModel pCharts, List<ChartViewInfoOrder> ChartViewInfoOrderList)
+        [AdministrationPermissions(Community = new[] { PermisoComunidad.AdministrarGraficos })]
+        public ActionResult GuardarChart(ChartViewModel pCharts, List<ChartViewInfoOrder> ChartViewInfoOrderList)
         {
             GuardarLogAuditoria();          
 
@@ -181,8 +181,8 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
             return resultado;
         }
 
-		[TypeFilter(typeof(PermisosAdministracion), Arguments = new object[] { new ulong[] { (ulong)PermisoComunidad.AdministrarGraficos } })]
-		public ActionResult CrearFila()
+        [AdministrationPermissions(Community = new[] { PermisoComunidad.AdministrarGraficos })]
+        public ActionResult CrearFila()
         {
             ChartViewModel chart = new ChartViewModel();
             chart.ChartID = Guid.NewGuid().ToString();
@@ -201,8 +201,8 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
 			return PartialView("_partial-views/_graphListItem", chart);
         }
 
-		[TypeFilter(typeof(PermisosAdministracion), Arguments = new object[] { new ulong[] { (ulong)PermisoComunidad.AdministrarGraficos } })]
-		public ActionResult EliminarChart(string ChartID)
+        [AdministrationPermissions(Community = new[] { PermisoComunidad.AdministrarGraficos })]
+        public ActionResult EliminarChart(string ChartID)
         {
             List<ChartViewModel> graficos = null;
 
