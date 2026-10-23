@@ -4,7 +4,8 @@ on:
   push:
     tags:
       - "*"
-
+    branches:
+      - main
 jobs:
   build-push-image:
     runs-on: ubuntu-latest
