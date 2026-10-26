@@ -7116,7 +7116,7 @@ const operativaGestionMultimediaCMS = {
      * @param {String} urlString : Url o cadena que se mostrará al usuario y que se copiará al portapapeles
      */
     handleCopyToClickBoard(urlString) {
-        copyTextToClipBoard(urlString);
+        copyTextToClipBoard(urlString, "URL copiada al portapapeles");
     },
 
 
@@ -9387,7 +9387,7 @@ const operativaGestionComponentsCMS = {
      * @param {String} urlString : Url o cadena que se mostrará al usuario y que se copiará al portapapeles
      */
     handleCopyToClickBoard(urlString) {
-        copyTextToClipBoard(urlString);
+        copyTextToClipBoard(urlString, "ID del componente copiado al portapapeles");
     },
 
 

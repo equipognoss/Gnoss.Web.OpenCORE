@@ -848,6 +848,11 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
         {
             string error = string.Empty;
 
+            if (string.IsNullOrWhiteSpace(pDominio))
+            {
+                return GnossResultERROR("No se ha indicado ningún dominio.");
+            }
+
             bool yaCompartido = ComprobarDominioYaCompartido(pDominio.ToLower());
             if (!yaCompartido)
             {

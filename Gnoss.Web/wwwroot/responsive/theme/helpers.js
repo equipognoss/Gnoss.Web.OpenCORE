@@ -750,7 +750,7 @@ function createElementFromHTML(htmlString) {
 function copyTextToClipBoard(text, notificacion = undefined){
 	
 
-	notificacion === undefined && "ID copiado al portapapeles";
+	if (notificacion === undefined) notificacion = "ID copiado al portapapeles";
 
 	if (!navigator.clipboard) {
 		fallbackCopyTextToClipboard(text,notificacion);
@@ -771,7 +771,7 @@ function copyTextToClipBoard(text, notificacion = undefined){
  * @param {String} text : Texto que se desea copiar en el portapapeles
  */
 function fallbackCopyTextToClipboard(text, notificacion = undefined) {
-	notificacion === undefined && "ID copiado al portapapeles";
+	if (notificacion === undefined) notificacion = "ID copiado al portapapeles";
  
 	const textarea = document.createElement('textarea');
 	textarea.textContent = text;

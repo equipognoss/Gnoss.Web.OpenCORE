@@ -189,7 +189,15 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
                 }
             }
 
-            Guardar(Estructura, OpcionesPropiedades, MostrarSoloCuerpo);
+            try
+            {
+                Guardar(Estructura, OpcionesPropiedades, MostrarSoloCuerpo);
+            }
+            catch (Exception ex)
+            {
+                return GnossResultERROR(ex.Message);
+            }
+
             CmsPageEvent modelo = new CmsPageEvent(mPestanyaID, ProyectoSeleccionado.Clave, UsuarioActual.UsuarioID, DateTime.Now, ActionTypeExternalEvent.SaveDraft);
             mIPublishEvents.PublishPageCms(modelo);
             return GnossResultOK();
@@ -332,7 +340,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
             {
                 if (transaccionIniciada)
                 {
-                    proyAD.TerminarTransaccion(false);
+                    mEntityContext.TerminarTransaccionesPendientes(false);
                 }
 
                 return GnossResultERROR(ex.Message);
@@ -360,7 +368,14 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
             }
 
 
-            Guardar(Estructura, OpcionesPropiedades, MostrarSoloCuerpo);
+            try
+            {
+                Guardar(Estructura, OpcionesPropiedades, MostrarSoloCuerpo);
+            }
+            catch (Exception ex)
+            {
+                return GnossResultERROR(ex.Message);
+            }
 
             string enlaceVistaPrevia = mControladorBase.UrlsSemanticas.ObtenerURLComunidad(UtilIdiomas, BaseURLIdioma, ProyectoSeleccionado.NombreCorto) + "/CMSPagina?PaginaCMS=" + TipoUbicacionCMSPaginaActual.ToString() + "&preView=true";
             return GnossResultUrl(enlaceVistaPrevia);
@@ -374,7 +389,14 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
 		[AdministrationPermissions(Contents = new[] { PermisoContenidos.CrearPagina, PermisoContenidos.EditarPagina, PermisoContenidos.PublicarPagina })]
 		public ActionResult CrearComponente(string Estructura, string OpcionesPropiedades, bool MostrarSoloCuerpo, string TipoComponente, string IDContenedor)
         {
-            Guardar(Estructura, OpcionesPropiedades, MostrarSoloCuerpo);
+            try
+            {
+                Guardar(Estructura, OpcionesPropiedades, MostrarSoloCuerpo);
+            }
+            catch (Exception ex)
+            {
+                return GnossResultERROR(ex.Message);
+            }
 
             string enlaceEdicion = mControladorBase.UrlsSemanticas.ObtenerURLAdministracionComunidad(UtilIdiomas, BaseURLIdioma, ProyectoSeleccionado.NombreCorto, "ADMINISTRARCOMUNIDADCMSNUEVOCOMPONENTE") + "/" + TipoComponente + "/" + IDContenedor;
             return GnossResultUrl(enlaceEdicion);
@@ -387,7 +409,14 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
         [HttpPost]
         public ActionResult SeleccionarComponente(string Estructura, string OpcionesPropiedades, bool MostrarSoloCuerpo, string TipoComponente, string IDContenedor)
         {
-            Guardar(Estructura, OpcionesPropiedades, MostrarSoloCuerpo);
+            try
+            {
+                Guardar(Estructura, OpcionesPropiedades, MostrarSoloCuerpo);
+            }
+            catch (Exception ex)
+            {
+                return GnossResultERROR(ex.Message);
+            }
 
             string enlaceEdicion = $"{mControladorBase.UrlsSemanticas.ObtenerURLAdministracionComunidad(UtilIdiomas, BaseURLIdioma, ProyectoSeleccionado.NombreCorto, "ADMINISTRARCOMUNIDADCMSLISTADOCOMPONENTES")}/{TipoComponente}/{IDContenedor}";
             return GnossResultUrl(enlaceEdicion);
