@@ -3473,7 +3473,8 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                     {
                         string filtroLimpio = filtro;
 
-                        listaFiltrosOrden.Add(FiltrosOrdenConfig[filtro], filtroLimpio);
+                        //Si la comunidad tiene configurado un orden con el mismo nombre que el de relevancia, el configurado sustituye al de por defecto
+                        listaFiltrosOrden[FiltrosOrdenConfig[filtro]] = filtroLimpio;
                     }
                 }
                 else if (ListaItemsBusqueda.Contains(FacetadoAD.BUSQUEDA_PERSONA) || ListaItemsBusqueda.Contains(FacetadoAD.BUSQUEDA_ORGANIZACION))
