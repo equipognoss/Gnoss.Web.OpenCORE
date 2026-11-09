@@ -139,12 +139,26 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                     }
                     catch(WebException ex)
                     {
-                        string response = new StreamReader(ex.Response.GetResponseStream()).ReadToEnd();
-                        string error = $"Error {Response.StatusCode} al enviar una petición al servicio {urlServicio} con los parámetros: {string.Join("\n", parametros.Select(item => $"{item.Key} -> {item.Value}"))} Error: {response}";
-                        GuardarLogError(ex, error);
+                        string requestParameters = string.Join("\n", parametros.Select(item => $"{item.Key} -> {item.Value}"));
 
-                        return new ContentResult() { Content = response, ContentType = ((HttpWebResponse)ex.Response).ContentType, StatusCode = (int)((HttpWebResponse)ex.Response).StatusCode };
-                        //return GnossResultERROR(mensajeRespuesta);
+                        if (ex.Response is not HttpWebResponse errorResponse)
+                        {
+                            // No hay respuesta HTTP (DNS, conexión, SSL, timeout...): no se llegó al servicio externo
+							string connectionError = $"Error {ex.Status} al enviar una petición al servicio {urlServicio} con los parámetros: {requestParameters} Error: {ex.Message} {ex.InnerException?.Message}";
+                            GuardarLogError(ex, connectionError);
+
+                            return new ContentResult() { Content = $"Error en la petición al servicio externo {pNombreServicio}: {ex.Status}", StatusCode = (int)HttpStatusCode.BadGateway };
+                        }
+
+                        using (errorResponse)
+                        using (StreamReader reader = new StreamReader(errorResponse.GetResponseStream()))
+                        {
+							string response = reader.ReadToEnd();
+							string error = $"Error {(int)errorResponse.StatusCode} al enviar una petición al servicio {urlServicio} con los parámetros: {requestParameters} Error: {response}";
+							GuardarLogError(ex, error);
+
+							return new ContentResult() { Content = response, ContentType = errorResponse.ContentType, StatusCode = (int)errorResponse.StatusCode };
+                        }
                     }
                 }
             }

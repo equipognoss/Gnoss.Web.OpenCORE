@@ -807,7 +807,15 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers.Administracion
                     mPaginaModel = new AdministrarFacetasViewModel();
                     ParametroAplicacionCL paramCL = new ParametroAplicacionCL(mEntityContext, mLoggingService, mRedisCacheWrapper, mConfigService, mServicesUtilVirtuosoAndReplication, mLoggerFactory.CreateLogger<ParametroAplicacionCL>(), mLoggerFactory);
 
-                    mPaginaModel.ListaIdiomas = paramCL.ObtenerListaIdiomasDictionary();
+                    if (ParametrosGeneralesRow.IdiomasDisponibles)
+                    {
+                        mPaginaModel.ListaIdiomas = paramCL.ObtenerListaIdiomasDictionary();
+                    }
+                    else
+                    {
+                        mPaginaModel.ListaIdiomas = new Dictionary<string, string>();
+                        mPaginaModel.ListaIdiomas.Add(IdiomaPorDefecto, paramCL.ObtenerListaIdiomasDictionary()[IdiomaPorDefecto]);
+                    }
 
                     mPaginaModel.IdiomaPorDefecto = IdiomaPorDefecto;
 

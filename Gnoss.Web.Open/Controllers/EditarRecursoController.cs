@@ -8910,7 +8910,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                         {
                             propImagen = 1;
                             especialID = Guid.NewGuid().ToString();
-                            nombreEspecialRdf = $"videossemanticos/{recursoID}/{especialID}.flv";
+                            nombreEspecialRdf = $"videossemanticos/{recursoID}/{especialID}{Path.GetExtension(nombreFichero).ToLower()}";
                         }
                         else if (propArchivo != null && propArchivo.EspecifPropiedad.TipoCampo == TipoCampoOntologia.Archivo)
                         {

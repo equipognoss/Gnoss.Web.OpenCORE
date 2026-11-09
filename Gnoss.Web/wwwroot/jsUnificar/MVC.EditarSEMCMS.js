@@ -4559,7 +4559,9 @@ function AgregarArchivoComoPropiedad(pTxtHackID, pDocumentoID, pTxtHackImgPrinci
     
     if (fileUpload == 'videofileUpLoad')
     {
-        valorProp = pRutaVideos + documentoID.substring(0, 2) + '/' + documentoID.substring(0, 4) + '/' + documentoID + '/' + elementoID + '.flv';
+        // El vídeo se almacena con la extensión original del fichero subido
+        var extensionVideo = (pExtension != null && pExtension.indexOf('.') == 0) ? pExtension : '';
+        valorProp = pRutaVideos + documentoID.substring(0, 2) + '/' + documentoID.substring(0, 4) + '/' + documentoID + '/' + elementoID + extensionVideo;
     }
     else if (fileUpload == 'archivofileUpLoad' || fileUpload == 'archivoLinkfileUpLoad')
     {
