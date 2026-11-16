@@ -670,7 +670,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
                     Response.Headers.Add("Content-Disposition", $"inline; filename=\"{HttpUtility.UrlEncode(nombre).Replace("+", " ")}\"");
                     ConcurrentDictionary<string, string> mimetypes = Conexion.ObtenerMimeType();
                     string mimetype = "";
-                    if (mimetypes.TryGetValue(ext, out mimetype))
+                    if (mimetypes.TryGetValue(ext.ToLowerInvariant(), out mimetype))
                     {
                         Response.Headers.Add("Content-Type", mimetype);
                         contentType = mimetype;
