@@ -30,7 +30,7 @@ namespace Gnoss.Web.Services.VirtualPathProvider
 
         public IChangeToken Watch(string filter)
         {
-            var bdChangeToken = new BDChangeToken(filter);
+            var bdChangeToken = new BDChangeToken(filter, null);
             return bdChangeToken;
         }
     }

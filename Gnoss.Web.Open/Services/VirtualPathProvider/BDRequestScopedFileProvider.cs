@@ -41,6 +41,6 @@ namespace Gnoss.Web.Services.VirtualPathProvider
             => NotFoundDirectoryContents.Singleton;
 
         public IChangeToken Watch(string filter)
-            => filter.Contains("$$$") ? new BDChangeToken(filter) : NullChangeToken.Singleton;
+            => filter.Contains("$$$") ? new BDChangeToken(filter, _httpContextAccessor) : NullChangeToken.Singleton;
     }
 }

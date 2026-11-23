@@ -1,8 +1,8 @@
-﻿using Microsoft.Extensions.Primitives;
+﻿using Es.Riam.Gnoss.Util.General;
+using Microsoft.AspNetCore.Http;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Primitives;
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
 
 namespace Gnoss.Web.Services.VirtualPathProvider
 {
@@ -12,11 +12,14 @@ namespace Gnoss.Web.Services.VirtualPathProvider
     public class BDChangeToken : IChangeToken
     {
         readonly private string _viewPath;
-        public BDChangeToken(string viewPath)
+        readonly private IHttpContextAccessor _httpContextAccessor;
+
+        public BDChangeToken(string viewPath, IHttpContextAccessor httpContextAccessor)
         {
             _viewPath = viewPath;
-
+            _httpContextAccessor = httpContextAccessor;
         }
+
         public bool ActiveChangeCallbacks => false;
 
         public bool HasChanged
@@ -25,6 +28,11 @@ namespace Gnoss.Web.Services.VirtualPathProvider
             {
                 if (_viewPath.Contains("$$$") && !BDVirtualPath.ListaRutasVirtuales.ContainsKey(_viewPath))
                 {
+                    // Razor descartará la vista compilada y la volverá a pedir y compilar
+                    if (LoggingService.TrazaHabilitada)
+                    {
+                        _httpContextAccessor?.HttpContext?.RequestServices?.GetService<LoggingService>()?.AgregarEntrada($"BDChangeToken: vista cambiada, se invalidará la vista compilada {_viewPath}");
+                    }
                     return true;
                 }
                 return false;

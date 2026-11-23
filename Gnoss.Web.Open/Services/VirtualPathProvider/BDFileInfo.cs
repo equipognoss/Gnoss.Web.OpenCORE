@@ -70,6 +70,7 @@ namespace Gnoss.Web.Services.VirtualPathProvider
         private void GetView(string viewPath)
         {
             _loggingService.AgregarEntrada($"GetFile {viewPath}");
+            long inicio = System.Diagnostics.Stopwatch.GetTimestamp();
 
             string virtualPathAux = GetRealPath(viewPath);
 
@@ -83,7 +84,7 @@ namespace Gnoss.Web.Services.VirtualPathProvider
                     _viewContent = Encoding.UTF8.GetBytes(data);
                 }
             }
-            _loggingService.AgregarEntrada($"Fin GetFile");
+            _loggingService.AgregarEntrada($"Fin GetFile {viewPath} existe={_exists} ({(int)System.Diagnostics.Stopwatch.GetElapsedTime(inicio).TotalMilliseconds} ms)");
         }
 
         private string GetRealPath(string virtualPath)

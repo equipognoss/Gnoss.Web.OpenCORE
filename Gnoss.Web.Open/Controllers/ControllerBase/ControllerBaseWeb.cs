@@ -1343,7 +1343,7 @@ namespace Es.Riam.Gnoss.Web.MVC.Controllers
         private void ComprobarRedireccionProyectoConUrlPropia(string pUrlPropiaProyecto, ActionExecutingContext pFilterContext)
         {
 
-            if (!string.IsNullOrEmpty(pUrlPropiaProyecto) && mControladorBase.DominoAplicacion != null && !mControladorBase.DominoAplicacion.Equals(ObtenerDominioUrl(new Uri(pUrlPropiaProyecto), false)) && (!mConfigService.ObtenerProyectoConexion().HasValue || (mConfigService.ObtenerProyectoConexion().HasValue && !ProyectoSeleccionado.Clave.Equals(ProyectoAD.MetaProyecto))))
+            if (!string.IsNullOrEmpty(pUrlPropiaProyecto) && mControladorBase.DominoAplicacion != null && !mControladorBase.DominoAplicacion.Equals(ObtenerDominioUrl(new Uri(pUrlPropiaProyecto), false)) && (string.IsNullOrEmpty(DominioPaginasAdministracion) || !mControladorBase.DominoAplicacion.Equals(ObtenerDominioUrl(new Uri(DominioPaginasAdministracion), false))) && (!mConfigService.ObtenerProyectoConexion().HasValue || (mConfigService.ObtenerProyectoConexion().HasValue && !ProyectoSeleccionado.Clave.Equals(ProyectoAD.MetaProyecto))))
             {
                 //Obtengo la URL a la que el usuario intenta acceder
                 string url = Request.Path.ToString();

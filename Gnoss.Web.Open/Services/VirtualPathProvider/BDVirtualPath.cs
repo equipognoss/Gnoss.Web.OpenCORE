@@ -52,7 +52,8 @@ namespace Gnoss.Web.Services.VirtualPathProvider
         {
             _loggingService.AgregarEntrada($"FindPage {virtualPath}");
             string html = string.Empty;
-
+            string origen = "cache";
+            long inicio = System.Diagnostics.Stopwatch.GetTimestamp();
 
             if (ListaRutasVirtuales.ContainsKey(virtualPath))
             {
@@ -60,6 +61,7 @@ namespace Gnoss.Web.Services.VirtualPathProvider
             }
             else
             {
+                origen = "BD";
                 string[] parametrosRuta = virtualPath.Split(new char[] { '/' }, StringSplitOptions.RemoveEmptyEntries);
 
                 if (parametrosRuta.Length > 2 && parametrosRuta[0].Equals("Views") && parametrosRuta[1].Equals("TESTvistaTEST") && parametrosRuta.Last().EndsWith(".cshtml") && parametrosRuta.Last().Contains("$$$") && !parametrosRuta.Last().EndsWith(".Mobile.cshtml"))
@@ -139,7 +141,7 @@ namespace Gnoss.Web.Services.VirtualPathProvider
                     }
                 }
             }
-            _loggingService.AgregarEntrada($"fin FindPage {virtualPath}");
+            _loggingService.AgregarEntrada($"fin FindPage {virtualPath} origen={origen} ({(int)System.Diagnostics.Stopwatch.GetElapsedTime(inicio).TotalMilliseconds} ms)");
             return html;
         }
 
